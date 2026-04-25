@@ -1,0 +1,1 @@
+//playlist tab contains 2 playlist: pinned and favorites

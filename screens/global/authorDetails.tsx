@@ -1,0 +1,1 @@
+//this screen allows users to view the details of an author, including their name, bio, and a list of their stories

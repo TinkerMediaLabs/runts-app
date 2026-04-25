@@ -1,0 +1,1 @@
+//this is the screen that shows the genres and the top stories in each genre

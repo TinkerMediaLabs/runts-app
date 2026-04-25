@@ -1,0 +1,1 @@
+//this screen displays the information about the app such as the version number and the developer's contact information

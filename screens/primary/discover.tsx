@@ -1,0 +1,1 @@
+//discover tab contains the serach bar, genre categories, author highlights, and tags 

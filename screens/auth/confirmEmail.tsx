@@ -1,0 +1,1 @@
+//screen for confirming the email address of the user after registration
