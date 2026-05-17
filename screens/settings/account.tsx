@@ -1,1 +1,0 @@
-//this is the screen that shows the users account information

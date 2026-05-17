@@ -1,1 +1,0 @@
-//this is the screen where users can view a notification

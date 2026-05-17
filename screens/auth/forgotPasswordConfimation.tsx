@@ -1,1 +1,0 @@
-//confirmation screen for when a user has successfully reset their password

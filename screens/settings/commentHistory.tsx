@@ -1,1 +1,0 @@
-//this screen is for users to view the comments they have left on stories

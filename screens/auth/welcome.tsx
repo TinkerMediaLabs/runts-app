@@ -1,1 +1,0 @@
-//this is the welcome screen for the app, it will be shown when the user opens the app for the first time

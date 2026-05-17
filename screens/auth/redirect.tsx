@@ -1,1 +1,0 @@
-//loading screen for pulling the users data from the backend and then redirecting to the home screen

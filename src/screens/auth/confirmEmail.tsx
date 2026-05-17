@@ -1,23 +1,16 @@
-//screen for confirming the email address of the user after registration
-
 import React, { useState, useEffect } from 'react';
-
 import {
     View,
     Text,
-    Dimensions,
     TextInput,
     TouchableOpacity,
+    Dimensions,
+    ActivityIndicator,
     Keyboard,
     TouchableWithoutFeedback,
-    ActivityIndicator,
-    ScrollView,
-    Linking,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
-
-import { LinearGradient } from 'expo-linear-gradient';
-
-import { StatusBar } from 'expo-status-bar';
 
 import Animated, {
     FadeIn,
@@ -26,544 +19,239 @@ import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withSpring,
-    withSequence,
     withTiming,
+    withSequence,
 } from 'react-native-reanimated';
 
-import Feather from '@react-native-vector-icons/feather';
-
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import useStyles from '../../theme/authStyles';
+import { confirmUserEmail, resendCode } from '../../services/auth';
 
 const { width, height } = Dimensions.get('window');
 
-const ConfirmEmail = ({
-    navigation,
-    route,
-}: {
-    navigation: any;
-    route: any;
-}) => {
+const ConfirmEmail = ({ navigation, route }: any) => {
     const styles = useStyles();
+    const email = route?.params?.email ?? '';
 
-    const [loggingIn, setLoggingIn] = useState(false);
+    const [code, setCode] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [resending, setResending] = useState(false);
+    const [error, setError] = useState('');
+    const [resentMsg, setResentMsg] = useState('');
 
-    const { username, password } = route.params;
-
-    const [data, setData] = useState({
-        username: username,
-        code: '',
-        password: password,
-    });
-
-    // animations
-    const formOpacity = useSharedValue(0);
-
-    const formTranslateY = useSharedValue(40);
-
+    const contentOpacity = useSharedValue(0);
+    const contentTranslateY = useSharedValue(30);
     const buttonScale = useSharedValue(1);
 
     useEffect(() => {
-        formOpacity.value = withTiming(1, {
-            duration: 700,
-        });
-
-        formTranslateY.value = withSpring(0, {
-            damping: 14,
-            stiffness: 120,
-        });
+        contentOpacity.value = withTiming(1, { duration: 700 });
+        contentTranslateY.value = withSpring(0, { damping: 14, stiffness: 120 });
     }, []);
 
-    const formAnimatedStyle = useAnimatedStyle(() => {
-        return {
-            opacity: formOpacity.value,
-            transform: [
-                {
-                    translateY: formTranslateY.value,
-                },
-            ],
-        };
-    });
+    const animatedContainerStyle = useAnimatedStyle(() => ({
+        opacity: contentOpacity.value,
+        transform: [{ translateY: contentTranslateY.value }],
+    }));
 
-    const buttonAnimatedStyle = useAnimatedStyle(() => {
-        return {
-            transform: [
-                {
-                    scale: buttonScale.value,
-                },
-            ],
-        };
-    });
+    const buttonAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: buttonScale.value }],
+    }));
 
-    async function confirmSignUp() {
-        const { username, code, password } = data;
+    const handleConfirm = async () => {
+        if (!code.trim()) {
+            setError('Please enter the verification code.');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
 
         buttonScale.value = withSequence(
-            withTiming(0.96, {
-                duration: 100,
-            }),
+            withTiming(0.96, { duration: 100 }),
             withSpring(1)
         );
 
-        setLoggingIn(true);
-
         try {
-            let result = await Auth.confirmSignUp(
-                username,
-                code
-            );
-
-            if (result) {
-                let signin = await Auth.signIn(
-                    username,
-                    password
-                );
-
-                if (signin) {
-                    const userInfo =
-                        await Auth.currentAuthenticatedUser({
-                            bypassCache: true,
-                        });
-
-                    if (userInfo) {
-                        const newUser = {
-                            id: userInfo.attributes.sub,
-                            type: 'User',
-                            name: userInfo.attributes.name,
-                        };
-
-                        const createdUser =
-                            await API.graphql(
-                                graphqlOperation(
-                                    createUser,
-                                    {
-                                        input: newUser,
-                                    }
-                                )
-                            );
-
-                        if (createdUser) {
-                            navigation.navigate(
-                                'Welcome'
-                            );
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.log(
-                'error confirming sign up',
-                error
-            );
-
-            alert(
-                'Error confirming account. Please try again.'
-            );
+            await confirmUserEmail(email, code.trim());
+            navigation.navigate('EmailSignIn');
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Invalid code. Please try again.');
         }
 
-        setLoggingIn(false);
-    }
+        setLoading(false);
+    };
 
-    async function resendConfirmationCode() {
+    const handleResend = async () => {
+        setResending(true);
+        setError('');
+        setResentMsg('');
+
         try {
-            await Auth.resendSignUp(username);
-
-            alert(
-                'Confirmation code resent. Please check your email.'
-            );
-        } catch (err) {
-            console.log(
-                'error resending code: ',
-                err
-            );
-
-            alert('Error sending code.');
+            await resendCode(email);
+            setResentMsg('A new code has been sent to your email.');
+        } catch (err: any) {
+            setError(err?.message || 'Error resending code.');
         }
-    }
 
-    const handleCode = (val: any) => {
-        setData({
-            ...data,
-            code: val,
-        });
+        setResending(false);
     };
 
     return (
-        <TouchableWithoutFeedback
-            onPress={Keyboard.dismiss}
-        >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <LinearGradient
-                colors={[
-                    '#000000',
-                    '#050505',
-                    '#0a0a0a',
-                ]}
-                style={{
-                    flex: 1,
-                }}
+                colors={['#000000', '#050505', '#0a0a0a']}
+                style={{ flex: 1 }}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             >
-                {/* glow background */}
-                <View
-                    pointerEvents="none"
-                    style={{
-                        position: 'absolute',
-                        top: -120,
-                        right: -80,
-                        width: 260,
-                        height: 260,
-                        borderRadius: 260,
-                        backgroundColor: '#00ffff15',
-                    }}
-                />
-
-                <View
-                    pointerEvents="none"
-                    style={{
-                        position: 'absolute',
-                        bottom: -120,
-                        left: -80,
-                        width: 240,
-                        height: 240,
-                        borderRadius: 240,
-                        backgroundColor: '#00ffff10',
-                    }}
-                />
-
-                <ScrollView
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={
-                        false
-                    }
-                    contentContainerStyle={{
-                        minHeight: height,
-                        justifyContent: 'center',
-                        paddingVertical: 40,
-                    }}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={{ flex: 1 }}
                 >
-                    <Animated.View
+                    <View
                         style={[
+                            styles.container,
                             {
-                                paddingHorizontal: 24,
+                                justifyContent: 'center',
+                                minHeight: height,
+                                backgroundColor: 'transparent',
                             },
-                            formAnimatedStyle,
                         ]}
                     >
-                        {/* header */}
                         <Animated.View
-                            entering={FadeInDown.delay(
-                                100
-                            ).duration(700)}
+                            style={[{ paddingHorizontal: 24 }, animatedContainerStyle]}
                         >
-                            <View
-                                style={{
-                                    alignSelf: 'center',
-                                    width: 74,
-                                    height: 74,
-                                    borderRadius: 74,
-                                    backgroundColor:
-                                        '#00ffff15',
-                                    borderWidth: 1,
-                                    borderColor:
-                                        '#00ffff25',
-                                    justifyContent:
-                                        'center',
-                                    alignItems:
-                                        'center',
-                                    marginBottom: 28,
-                                }}
-                            >
-                                <Feather
-                                    name="mail"
-                                    size={30}
-                                    color="#00ffff"
-                                />
-                            </View>
-
-                            <Text
-                                style={[
-                                    styles.title,
-                                    {
-                                        fontSize: 34,
-                                        textAlign:
-                                            'center',
-                                        marginBottom: 10,
-                                    },
-                                ]}
-                            >
-                                Verify Email
-                            </Text>
-
-                            <Text
-                                style={[
-                                    styles.paragraph,
-                                    {
-                                        color:
-                                            '#ffffff88',
-                                        textAlign:
-                                            'center',
-                                        lineHeight: 22,
-                                        marginBottom: 40,
-                                        paddingHorizontal: 8,
-                                    },
-                                ]}
-                            >
-                                Enter the confirmation
-                                code sent to your email
-                                address to finish creating
-                                your account.
-                            </Text>
-                        </Animated.View>
-
-                        {/* confirmation code */}
-                        <Animated.View
-                            entering={FadeInUp.delay(
-                                250
-                            ).duration(700)}
-                        >
-                            <Text
-                                style={[
-                                    styles.title,
-                                    {
-                                        marginHorizontal: 0,
-                                        marginBottom: 8,
-                                        fontSize: 14,
-                                    },
-                                ]}
-                            >
-                                Confirmation Code
-                            </Text>
-
-                            <View
-                                style={[
-                                    styles.inputfield,
-                                    {
-                                        //height: 58,
-                                        borderRadius: 18,
-                                        backgroundColor:
-                                            '#151515',
-                                        //borderWidth: 1,
-                                        borderColor:
-                                            '#ffffff12',
-                                        justifyContent:
-                                            'center',
-                                        marginBottom: 12,
-                                    },
-                                ]}
-                            >
-                                <TextInput
-                                    placeholder="Check your email for the code"
-                                    placeholderTextColor="#ffffff40"
-                                    style={[
-                                        styles.textInputTitle,
-                                        {
-                                            fontSize: 16,
-                                            paddingHorizontal: 4,
-                                        },
-                                    ]}
-                                    maxLength={30}
-                                    onChangeText={
-                                        handleCode
-                                    }
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    keyboardType="number-pad"
-                                    cursorColor="#00ffff"
-                                    selectionColor="#00ffff"
-                                />
-                            </View>
-                        </Animated.View>
-
-                        {/* resend */}
-                        <Animated.View
-                            entering={FadeInUp.delay(
-                                350
-                            ).duration(700)}
-                            style={{
-                                marginBottom: 40,
-                            }}
-                        >
-                            <TouchableOpacity
-                                activeOpacity={0.7}
-                                onPress={
-                                    resendConfirmationCode
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        styles.paragraph,
-                                        {
-                                            color:
-                                                '#00ffff99',
-                                        },
-                                    ]}
-                                >
-                                    Resend confirmation
-                                    code
+                            {/* Header */}
+                            <Animated.View entering={FadeInDown.duration(700)}>
+                                <Text style={[styles.title, { fontSize: 34, marginBottom: 12 }]}>
+                                    Verify Email
                                 </Text>
-                            </TouchableOpacity>
-                        </Animated.View>
+                                <Text style={[styles.paragraph, { color: '#ffffff88', lineHeight: 22, marginBottom: 40 }]}>
+                                    We sent a verification code to{' '}
+                                    <Text style={{ color: '#00ffff' }}>{email}</Text>
+                                </Text>
+                            </Animated.View>
 
-                        {/* button */}
-                        <Animated.View
-                            entering={FadeInUp.delay(
-                                450
-                            ).duration(700)}
-                        >
-                            {loggingIn ? (
-                                <ActivityIndicator
-                                    size="small"
-                                    color="#00ffff"
-                                />
+                            {/* Error */}
+                            {error ? (
+                                <Animated.View
+                                    entering={FadeIn.duration(250)}
+                                    style={{
+                                        backgroundColor: '#ff444415',
+                                        borderWidth: 1,
+                                        borderColor: '#ff444440',
+                                        borderRadius: 18,
+                                        padding: 14,
+                                        marginBottom: 24,
+                                    }}
+                                >
+                                    <Text style={{ color: '#ff8a8a', fontSize: 13, textAlign: 'center' }}>
+                                        {error}
+                                    </Text>
+                                </Animated.View>
+                            ) : null}
+
+                            {/* Success resend msg */}
+                            {resентMsg ? (
+                                <Animated.View
+                                    entering={FadeIn.duration(250)}
+                                    style={{
+                                        backgroundColor: '#00ffff15',
+                                        borderWidth: 1,
+                                        borderColor: '#00ffff40',
+                                        borderRadius: 18,
+                                        padding: 14,
+                                        marginBottom: 24,
+                                    }}
+                                >
+                                    <Text style={{ color: '#00ffff', fontSize: 13, textAlign: 'center' }}>
+                                        {resентMsg}
+                                    </Text>
+                                </Animated.View>
+                            ) : null}
+
+                            {/* Code Input */}
+                            <Animated.View entering={FadeInUp.delay(150).duration(700)}>
+                                <Text style={[styles.title, { marginBottom: 8, marginHorizontal: 0, fontSize: 14 }]}>
+                                    Verification Code
+                                </Text>
+                                <View style={[styles.inputfield, { borderRadius: 18, backgroundColor: '#1a1a1a', borderColor: '#ffffff10', justifyContent: 'center', marginBottom: 32 }]}>
+                                    <TextInput
+                                        placeholder="Enter your code"
+                                        placeholderTextColor="#ffffff55"
+                                        style={[styles.textInputTitle, { fontSize: 16, color: '#fff' }]}
+                                        maxLength={6}
+                                        keyboardType="number-pad"
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        selectionColor="#00ffff"
+                                        cursorColor="#00ffff"
+                                        value={code}
+                                        onChangeText={setCode}
+                                    />
+                                </View>
+                            </Animated.View>
+
+                            {/* Button */}
+                            {loading ? (
+                                <ActivityIndicator size="small" color="#00ffff" />
                             ) : (
                                 <Animated.View
-                                    style={
-                                        buttonAnimatedStyle
-                                    }
+                                    entering={FadeInUp.delay(300).duration(700)}
+                                    style={buttonAnimatedStyle}
                                 >
-                                    <TouchableOpacity
-                                        activeOpacity={
-                                            0.9
-                                        }
-                                        onPress={
-                                            confirmSignUp
-                                        }
-                                    >
+                                    <TouchableOpacity activeOpacity={0.9} onPress={handleConfirm}>
                                         <View
                                             style={[
-                                                styles.socialbuttonlayout,
+                                                styles.buttonlayout,
                                                 {
-                                                    justifyContent:
-                                                        'center',
-                                                    backgroundColor:
-                                                        '#00ffff',
-                                                    borderRadius: 18,
-                                                    marginBottom: 18,
-                                                    shadowColor:
-                                                        '#00ffff',
+                                                    alignSelf: 'center',
+                                                    width: width * 0.86,
+                                                    borderRadius: 22,
+                                                    backgroundColor: '#00ffff',
+                                                    shadowColor: '#00ffff',
                                                     shadowOpacity: 0.3,
-                                                    shadowRadius: 20,
-                                                    //elevation: 10,
+                                                    shadowRadius: 18,
                                                 },
                                             ]}
                                         >
-                                            <Text
-                                                style={[
-                                                    styles.socialbuttontext,
-                                                    {
-                                                        width:
-                                                            width *
-                                                            0.62,
-                                                        color:
-                                                            '#000',
-                                                        //marginVertical: 6,
-                                                        fontWeight:
-                                                            '700',
-                                                    },
-                                                ]}
-                                            >
-                                                Confirm
-                                                Account
+                                            <Text style={[styles.buttontext, { width: '100%', fontSize: 16, fontWeight: '700' }]}>
+                                                Verify Email
                                             </Text>
                                         </View>
                                     </TouchableOpacity>
                                 </Animated.View>
                             )}
+
+                            {/* Resend */}
+                            <Animated.View entering={FadeIn.delay(500).duration(900)}>
+                                {resending ? (
+                                    <ActivityIndicator size="small" color="#ffffff55" style={{ marginTop: 32 }} />
+                                ) : (
+                                    <TouchableOpacity onPress={handleResend}>
+                                        <Text style={{ fontSize: 14, color: '#ffffff66', alignSelf: 'center', marginTop: 32 }}>
+                                            Didn't get a code?{' '}
+                                            <Text style={{ color: '#00ffff' }}>Resend</Text>
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            </Animated.View>
+
+                            {/* Back */}
+                            <Animated.View entering={FadeIn.delay(600).duration(900)}>
+                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                    <Text style={{ fontSize: 14, color: '#ffffff66', alignSelf: 'center', marginTop: 16 }}>
+                                        Go Back
+                                    </Text>
+                                </TouchableOpacity>
+                            </Animated.View>
                         </Animated.View>
 
-                        {/* go back */}
-                        <Animated.View
-                            entering={FadeIn.delay(
-                                700
-                            ).duration(900)}
-                        >
-                            <TouchableOpacity
-                                onPress={() =>
-                                    navigation.navigate(
-                                        'SignUp'
-                                    )
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        styles.buttontext,
-                                        {
-                                            fontWeight:
-                                                '400',
-                                            color:
-                                                '#ffffff66',
-                                            alignSelf:
-                                                'center',
-                                            marginTop: 20,
-                                        },
-                                    ]}
-                                >
-                                    Go Back
-                                </Text>
-                            </TouchableOpacity>
-                        </Animated.View>
-
-                        {/* footer */}
-                        <Animated.View
-                            entering={FadeIn.delay(
-                                1000
-                            ).duration(1000)}
-                            style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent:
-                                    'space-between',
-                                marginTop: 60,
-                                paddingHorizontal: 10,
-                            }}
-                        >
-                            <TouchableOpacity
-                                onPress={() =>
-                                    Linking.openURL(
-                                        'mailto:admin@tinkermedia.net'
-                                    )
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        styles.paragraph,
-                                        {
-                                            color:
-                                                '#ffffff55',
-                                        },
-                                    ]}
-                                >
-                                    Contact us
-                                </Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={() =>
-                                    Linking.openURL(
-                                        'https://www.tinkermedia.net/runts/terms/'
-                                    )
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        styles.paragraph,
-                                        {
-                                            color:
-                                                '#ffffff55',
-                                        },
-                                    ]}
-                                >
-                                    Terms of Use
-                                </Text>
-                            </TouchableOpacity>
-                        </Animated.View>
-                    </Animated.View>
-                </ScrollView>
-
-                <StatusBar
-                    style="light"
-                    backgroundColor="transparent"
-                />
+                        <StatusBar style="light" backgroundColor="transparent" />
+                    </View>
+                </KeyboardAvoidingView>
             </LinearGradient>
         </TouchableWithoutFeedback>
     );
