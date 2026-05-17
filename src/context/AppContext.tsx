@@ -5,71 +5,88 @@ import {
   useEffect,
   ReactNode,
 } from 'react';
-
-import { getCurrentUser, fetchAuthSession, signOut } from 'aws-amplify/auth';
+import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
+import { getOrCreateUser } from '../services/auth';
 
 // ---- Types ---- //
-
 type UserProfile = {
-  name?: string;
-  avatar?: string;
+  id: string;
+  name?: string | null;
+  avatar?: string | null;
+  isPublisher?: boolean | null;
+  plan?: string | null;
 };
 
 type AppContextType = {
   userId: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   profile: UserProfile | null;
-
   setProfile: (profile: UserProfile | null) => void;
-
   refreshAuth: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
 // ---- Context ---- //
-
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // ---- Provider ---- //
-
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  // 🔐 Check auth state on app load
   const refreshAuth = async () => {
     try {
       const user = await getCurrentUser();
-      const session = await fetchAuthSession();
+      const dbUser = await getOrCreateUser();
 
-      if (user && session) {
-        setUserId(user.userId);
-        setIsAuthenticated(true);
-      }
+      setUserId(user.userId);
+      setIsAuthenticated(true);
+      setProfile({
+        id: user.userId,
+        name: dbUser?.name,
+        avatar: dbUser?.profilePicUri,
+        isPublisher: dbUser?.isPublisher,
+        plan: dbUser?.plan,
+      });
     } catch (err) {
       setUserId(null);
       setIsAuthenticated(false);
+      setProfile(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // 🚀 Run on mount
   useEffect(() => {
     refreshAuth();
+
+    // Listen for auth events
+    const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      switch (payload.event) {
+        case 'signedIn':
+          refreshAuth();
+          break;
+        case 'signedOut':
+          setUserId(null);
+          setIsAuthenticated(false);
+          setProfile(null);
+          break;
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
-  // 🚪 Logout
   const logout = async () => {
     try {
       await signOut();
-
-      // Reset all local state
       setUserId(null);
       setIsAuthenticated(false);
       setProfile(null);
-
-      // 🔥 IMPORTANT: clear React Query cache if you're using it
-      // queryClient.clear(); ← you’ll wire this where queryClient exists
     } catch (err) {
       console.error('Logout error:', err);
     }
@@ -80,10 +97,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={{
         userId,
         isAuthenticated,
+        isLoading,
         profile,
-
         setProfile,
-
         refreshAuth,
         logout,
       }}
@@ -94,7 +110,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 };
 
 // ---- Hook ---- //
-
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {
