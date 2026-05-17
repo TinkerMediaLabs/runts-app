@@ -4,12 +4,12 @@ import {
 } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import AppShell from './src/navigation/AppShell';
 import { PlayerUIProvider } from '@/context/PlayerUIContext';
-import {AppProvider} from './src/context/AppContext';
-import {PlayerProvider} from './src/context/PlayerContext';
+import { AppProvider } from './src/context/AppContext';
+import { PlayerProvider } from './src/context/PlayerContext';
 import Navigation from './src/navigation';
 import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
@@ -23,7 +23,6 @@ SplashScreen.preventAutoHideAsync();
 export default function App() {
     const resourcesLoaded = useCachedResources();
     const [appReady, setAppReady] = useState(false);
-    const [initialRoute] = useState('SignIn');
 
     useEffect(() => {
         let mounted = true;
@@ -62,10 +61,7 @@ export default function App() {
                     <PlayerUIProvider>
                         <PlayerProvider>
                             <AppShell>
-                                <Navigation
-                                    colorScheme="dark"
-                                    initialRoute={initialRoute}
-                                />
+                                <Navigation colorScheme="dark" />
                             </AppShell>
                             <StatusBar
                                 style="light"

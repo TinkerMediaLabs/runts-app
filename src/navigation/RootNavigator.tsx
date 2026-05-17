@@ -1,10 +1,21 @@
-import { createRef } from 'react';
-import { NavigationContainerRef, ParamListBase } from '@react-navigation/native';
+function RootNavigator({ initialRoute }: { initialRoute: undefined }) {
+  const { isAuthenticated, isLoading } = useApp();
 
-export const navigationRef = createRef<NavigationContainerRef<ParamListBase>>();
-
-export function navigate(name: string, params?: object) {
-  if (navigationRef.current?.isReady()) {
-    navigationRef.current.navigate(name as any, params);
+  if (isLoading) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Waiting" component={WaitingScreen} />
+      </Stack.Navigator>
+    );
   }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      detachInactiveScreens={false}
+      initialRouteName={isAuthenticated ? 'Root' : 'SignIn'}
+    >
+      {/* rest of your screens unchanged */}
+    </Stack.Navigator>
+  );
 }
