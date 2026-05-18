@@ -9,7 +9,6 @@ import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
 import { getOrCreateUser } from '../services/auth';
 
-// ---- Types ---- //
 type UserProfile = {
   id: string;
   name?: string | null;
@@ -22,20 +21,20 @@ type AppContextType = {
   userId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isNewUser: boolean;
   profile: UserProfile | null;
   setProfile: (profile: UserProfile | null) => void;
   refreshAuth: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
-// ---- Context ---- //
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// ---- Provider ---- //
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const refreshAuth = async () => {
@@ -45,6 +44,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       setUserId(user.userId);
       setIsAuthenticated(true);
+      setIsNewUser(!dbUser?.name);
       setProfile({
         id: user.userId,
         name: dbUser?.name,
@@ -55,6 +55,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       setUserId(null);
       setIsAuthenticated(false);
+      setIsNewUser(false);
       setProfile(null);
     } finally {
       setIsLoading(false);
@@ -64,7 +65,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     refreshAuth();
 
-    // Listen for auth events
     const unsubscribe = Hub.listen('auth', ({ payload }) => {
       switch (payload.event) {
         case 'signedIn':
@@ -73,6 +73,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         case 'signedOut':
           setUserId(null);
           setIsAuthenticated(false);
+          setIsNewUser(false);
           setProfile(null);
           break;
       }
@@ -86,6 +87,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await signOut();
       setUserId(null);
       setIsAuthenticated(false);
+      setIsNewUser(false);
       setProfile(null);
     } catch (err) {
       console.error('Logout error:', err);
@@ -98,6 +100,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         userId,
         isAuthenticated,
         isLoading,
+        isNewUser,
         profile,
         setProfile,
         refreshAuth,
@@ -109,7 +112,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// ---- Hook ---- //
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {

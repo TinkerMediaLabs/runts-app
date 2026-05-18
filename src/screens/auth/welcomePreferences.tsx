@@ -23,7 +23,41 @@ import dummytags from '../../../dummydata/dummytags';
 
 import useStyles from "@/theme/styles";
 
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource';
+import { getCurrentUser } from 'aws-amplify/auth';
+import { useApp } from '../../context/AppContext';
+
+let _client: ReturnType<typeof generateClient<Schema>> | null = null;
+
+function getClient() {
+  if (!_client) _client = generateClient<Schema>();
+  return _client;
+}
+
 const SplashCarousel = ({ navigation }: any) => {
+
+    const { refreshAuth } = useApp();
+
+    const UpdateThree = async () => {
+        if (top3.length !== 3) {
+            alert('Please select 3 genres');
+            return;
+        }
+
+        try {
+            const { userId } = await getCurrentUser();
+
+            await getClient().models.User.update({
+                id: userId,
+                name: 'user', // marks them as no longer new
+            });
+
+            await refreshAuth(); // re-checks isNewUser → triggers navigation to Root
+        } catch (e) {
+            console.log(e);
+        }
+    };
 
     //const styles = useStyles();
 
@@ -47,32 +81,7 @@ const SplashCarousel = ({ navigation }: any) => {
     // -----------------------
     // NEXT
     // -----------------------
-    const UpdateThree = async () => {
 
-        if (top3.length !== 3) {
-            alert('Please select 3 genres');
-            return;
-        }
-
-        try {
-            // const userInfo = await Auth.currentAuthenticatedUser();
-
-            // await API.graphql(graphqlOperation(
-            //     updateUser,
-            //     {
-            //         input: {
-            //             id: userInfo.attributes.sub,
-            //             topthree: top3
-            //         }
-            //     }
-            // ));
-
-            navigation.navigate('Root', {});
-
-        } catch (e) {
-            console.log(e);
-        }
-    };
 
     return (
         <Screen>

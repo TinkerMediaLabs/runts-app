@@ -101,9 +101,13 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   // Register with module-level ref so any component can collapse/expand
   // the player without needing context or navigation prop.
+  // NOTE: Registration is triggered from onLayout (not a useEffect dependency
+  // on containerHeight.value) to avoid reading a shared value during render.
+  const controlsRegistered = useRef(false);
   useEffect(() => {
     registerPlayerControls(collapsePlayer, expandPlayer);
-  }, [containerHeight.value]);
+    controlsRegistered.current = true;
+  }, []);
 
   // -------------------------
   // GESTURE
@@ -289,6 +293,9 @@ export default function TrackPlayerWidget({ expanded }: any) {
           if (containerHeight.value === 0) {
             containerHeight.value = h;
             translateY.value = h - MINI_PLAYER_HEIGHT;
+            // Re-register now that containerHeight is set so collapsePlayer
+            // uses the real height. Safe here — layout callback is not render.
+            registerPlayerControls(collapsePlayer, expandPlayer);
           }
         }}
       >

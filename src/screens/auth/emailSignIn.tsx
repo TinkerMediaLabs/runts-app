@@ -14,7 +14,6 @@ import {
 
 import Animated, {
     FadeIn,
-    FadeInDown,
     FadeInUp,
     useSharedValue,
     useAnimatedStyle,
@@ -46,11 +45,6 @@ const EmailSignIn = ({ navigation }: any) => {
         contentOpacity.value = withTiming(1, { duration: 700 });
         contentTranslateY.value = withSpring(0, { damping: 14, stiffness: 120 });
     }, []);
-
-    const animatedContainerStyle = useAnimatedStyle(() => ({
-        opacity: contentOpacity.value,
-        transform: [{ translateY: contentTranslateY.value }],
-    }));
 
     const buttonAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: buttonScale.value }],
@@ -109,15 +103,14 @@ const EmailSignIn = ({ navigation }: any) => {
                             },
                         ]}
                     >
-                        <Animated.View
-                            style={[{ paddingHorizontal: 24 }, animatedContainerStyle]}
-                        >
+                        <Animated.View style={{ opacity: contentOpacity, paddingHorizontal: 24 }}>
+                        <Animated.View style={{ transform: [{ translateY: contentTranslateY }] }}>
                             {/* Header */}
-                            <Animated.View entering={FadeInDown.duration(700)}>
+                            <View>
                                 <Text style={[styles.title, { fontSize: 34, marginBottom: 12 }]}>
                                     Sign In
                                 </Text>
-                            </Animated.View>
+                            </View>
 
                             {/* Error */}
                             {error ? (
@@ -196,10 +189,8 @@ const EmailSignIn = ({ navigation }: any) => {
                             {loading ? (
                                 <ActivityIndicator size="small" color="#00ffff" />
                             ) : (
-                                <Animated.View
-                                    entering={FadeInUp.delay(300).duration(700)}
-                                    style={buttonAnimatedStyle}
-                                >
+                                <Animated.View entering={FadeInUp.delay(300).duration(700)}>
+                                <Animated.View style={buttonAnimatedStyle}>
                                     <TouchableOpacity activeOpacity={0.9} onPress={handleSignIn}>
                                         <View
                                             style={[
@@ -221,6 +212,7 @@ const EmailSignIn = ({ navigation }: any) => {
                                         </View>
                                     </TouchableOpacity>
                                 </Animated.View>
+                                </Animated.View>
                             )}
 
                             {/* Sign Up Link */}
@@ -241,6 +233,7 @@ const EmailSignIn = ({ navigation }: any) => {
                                     </Text>
                                 </TouchableOpacity>
                             </Animated.View>
+                        </Animated.View>
                         </Animated.View>
 
                         <StatusBar style="light" backgroundColor="transparent" />
