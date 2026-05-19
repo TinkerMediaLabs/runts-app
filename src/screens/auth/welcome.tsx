@@ -152,6 +152,7 @@ const Welcome = ({ navigation }: any) => {
                     onConfirm={onConfirmDate}
                     onCancel={() => setPickerVisible(false)}
                     onDismiss={() => setPickerVisible(false)}
+                    onValueChange={() => {}}
                     themeVariant={"dark"}
                     display="spinner"
                     textColor="gray"
