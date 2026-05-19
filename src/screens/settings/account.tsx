@@ -1,756 +1,887 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
-    ScrollView,
-    Alert,
+    TouchableWithoutFeedback,
     TextInput,
-    Modal,
     ActivityIndicator,
+    ScrollView,
+    Modal,
+    StyleSheet,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import Screen from '@/components/common/Screen';
-import useStyles from '@/theme/styles';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import MenuHeader from '../../components/common/MenuHeader';
+import Screen from '../../components/common/Screen';
+
 import { useApp } from '@/context/AppContext';
+import { spacing } from '../../theme/spacing';
+
 import {
     updateUserAttribute,
+    confirmUserAttribute,
     updatePassword,
     deleteUser,
 } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
-
-
 const client = generateClient<Schema>();
+const { width } = Dimensions.get('window');
 
-// const AccountScreen = ({ navigation }: any) => {
-//     const styles = useStyles();
-//     const { profile, logout, userId } = useApp();
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-//     // ─── MODAL STATE ────────────────────────────────────────
-//     const [activeModal, setActiveModal] = useState
-//         'email' | 'password' | null
-//     >(null);
+type ModalType =
+    | 'name'
+    | 'email'
+    | 'password'
+    | 'signout'
+    | 'delete'
+    | null;
 
-//     // ─── EMAIL STATE ─────────────────────────────────────────
-//     const [newEmail, setNewEmail] = useState('');
-//     const [emailLoading, setEmailLoading] = useState(false);
-//     const [emailError, setEmailError] = useState('');
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
-//     // ─── PASSWORD STATE ──────────────────────────────────────
-//     const [currentPassword, setCurrentPassword] = useState('');
-//     const [newPassword, setNewPassword] = useState('');
-//     const [confirmPassword, setConfirmPassword] = useState('');
-//     const [passwordLoading, setPasswordLoading] = useState(false);
-//     const [passwordError, setPasswordError] = useState('');
+const SettingRow = ({
+    icon,
+    label,
+    value,
+    onPress,
+    destructive = false,
+    chevron = true,
+}: {
+    icon: any;
+    label: string;
+    value?: string;
+    onPress?: () => void;
+    destructive?: boolean;
+    chevron?: boolean;
+}) => (
+    <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.row}
+        disabled={!onPress}
+    >
+        <View style={styles.rowLeft}>
+            <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
+                <FontAwesome5
+                    name={icon}
+                    size={14}
+                    color={destructive ? '#ff4444bf' : '#ffffffa5'}
+                    iconStyle="solid"
+                />
+            </View>
+            <Text style={[styles.rowLabel, destructive && styles.rowLabelDestructive]}>
+                {label}
+            </Text>
+        </View>
+        <View style={styles.rowRight}>
+            {value ? (
+                <Text style={styles.rowValue} numberOfLines={1}>{value}</Text>
+            ) : null}
+            {chevron && onPress && (
+                <FontAwesome5
+                    name="chevron-right"
+                    size={11}
+                    color="#ffffff40"
+                    iconStyle="solid"
+                />
+            )}
+        </View>
+    </TouchableOpacity>
+);
 
-//     // ─── SIGN OUT ────────────────────────────────────────────
-//     const handleSignOut = () => {
-//         Alert.alert(
-//             'Sign Out',
-//             'Are you sure you want to sign out?',
-//             [
-//                 { text: 'Cancel', style: 'cancel' },
-//                 {
-//                     text: 'Sign Out',
-//                     style: 'destructive',
-//                     onPress: async () => {
-//                         await logout();
-//                     },
-//                 },
-//             ]
-//         );
-//     };
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.sectionCard}>{children}</View>
+    </View>
+);
 
-//     // ─── CHANGE EMAIL ────────────────────────────────────────
-//     const handleChangeEmail = async () => {
-//         if (!newEmail.trim()) {
-//             setEmailError('Please enter a new email address.');
-//             return;
-//         }
+const RowDivider = () => <View style={styles.divider} />;
 
-//         setEmailLoading(true);
-//         setEmailError('');
+const Sheet = ({
+    visible,
+    onClose,
+    title,
+    children,
+}: {
+    visible: boolean;
+    onClose: () => void;
+    title: string;
+    children: React.ReactNode;
+}) => {
+    const insets = useSafeAreaInsets();
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="slide"
+            onRequestClose={onClose}
+        >
+            <TouchableWithoutFeedback onPress={onClose}>
+                <View style={styles.sheetBackdrop} />
+            </TouchableWithoutFeedback>
 
-//         try {
-//             await updateUserAttribute({
-//                 userAttribute: {
-//                     attributeKey: 'email',
-//                     value: newEmail.replace(/ /g, ''),
-//                 },
-//             });
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.sheetWrapper}
+                pointerEvents="box-none"
+            >
+                <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
+                    <View style={styles.sheetHandle} />
+                    <View style={styles.sheetHeader}>
+                        <Text style={styles.sheetTitle}>{title}</Text>
+                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                            <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
+                        </TouchableOpacity>
+                    </View>
+                    {children}
+                </View>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+};
 
-//             setActiveModal(null);
-//             setNewEmail('');
+const PasswordField = ({
+    label,
+    value,
+    onChange,
+    placeholder,
+}: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+}) => {
+    const [hidden, setHidden] = useState(true);
+    return (
+        <View style={{ marginBottom: 16 }}>
+            <Text style={styles.fieldLabel}>{label}</Text>
+            <View style={styles.inputRow}>
+                <TextInput
+                    style={{
+                        flex: 1,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        fontSize: 15,
+                        color: '#fff',
+                    }}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder={placeholder ?? ''}
+                    placeholderTextColor="#ffffff40"
+                    secureTextEntry={hidden}
+                    maxLength={32}
+                    autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye}>
+                    <FontAwesome5
+                        name={hidden ? 'eye-slash' : 'eye'}
+                        size={14}
+                        color="#ffffffa5"
+                        iconStyle="solid"
+                    />
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+};
 
-//             Alert.alert(
-//                 'Verify New Email',
-//                 'A verification link has been sent to your new email address. Please verify it to complete the change.',
-//                 [{ text: 'OK' }]
-//             );
-//         } catch (err: any) {
-//             console.log(err);
-//             setEmailError(err?.message || 'Error updating email. Please try again.');
-//         }
+const ActionButton = ({
+    label,
+    onPress,
+    loading = false,
+    destructive = false,
+    disabled = false,
+}: {
+    label: string;
+    onPress: () => void;
+    loading?: boolean;
+    destructive?: boolean;
+    disabled?: boolean;
+}) => (
+    <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onPress}
+        disabled={disabled || loading}
+        style={[
+            styles.actionButton,
+            destructive && styles.actionButtonDestructive,
+            (disabled || loading) && styles.actionButtonDisabled,
+        ]}
+    >
+        {loading ? (
+            <ActivityIndicator size="small" color={destructive ? '#fff' : '#000'} />
+        ) : (
+            <Text style={[styles.actionButtonText, destructive && styles.actionButtonTextDestructive]}>
+                {label}
+            </Text>
+        )}
+    </TouchableOpacity>
+);
 
-//         setEmailLoading(false);
-//     };
+const SuccessBanner = ({ message }: { message: string }) => (
+    <View style={styles.successBanner}>
+        <FontAwesome5 name="check-circle" size={14} color="#00ffff" iconStyle="solid" />
+        <Text style={styles.successBannerText}>{message}</Text>
+    </View>
+);
 
-//     // ─── CHANGE PASSWORD ─────────────────────────────────────
-//     const handleChangePassword = async () => {
-//         if (!currentPassword.trim() || !newPassword.trim()) {
-//             setPasswordError('Please fill in all fields.');
-//             return;
-//         }
+const ErrorBanner = ({ message }: { message: string }) => (
+    <View style={styles.dangerBanner}>
+        <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
+        <Text style={styles.dangerBannerText}>{message}</Text>
+    </View>
+);
 
-//         if (newPassword !== confirmPassword) {
-//             setPasswordError('New passwords do not match.');
-//             return;
-//         }
-
-//         if (newPassword.length < 8) {
-//             setPasswordError('Password must be at least 8 characters.');
-//             return;
-//         }
-
-//         setPasswordLoading(true);
-//         setPasswordError('');
-
-//         try {
-//             await updatePassword({
-//                 oldPassword: currentPassword,
-//                 newPassword,
-//             });
-
-//             setActiveModal(null);
-//             setCurrentPassword('');
-//             setNewPassword('');
-//             setConfirmPassword('');
-
-//             Alert.alert(
-//                 'Password Updated',
-//                 'Your password has been changed successfully.',
-//                 [{ text: 'OK' }]
-//             );
-//         } catch (err: any) {
-//             console.log(err);
-//             setPasswordError(err?.message || 'Error updating password. Please try again.');
-//         }
-
-//         setPasswordLoading(false);
-//     };
-
-//     // ─── DELETE ACCOUNT ──────────────────────────────────────
-//     const handleDeleteAccount = () => {
-//         Alert.alert(
-//             'Delete Account',
-//             'This will permanently delete your account and all associated data. This action cannot be undone.',
-//             [
-//                 { text: 'Cancel', style: 'cancel' },
-//                 {
-//                     text: 'Delete',
-//                     style: 'destructive',
-//                     onPress: async () => {
-//                         try {
-//                             // Delete user record from DynamoDB first
-//                             if (userId) {
-//                                 await client.models.User.delete({ id: userId });
-//                             }
-
-//                             // Delete from Cognito
-//                             await deleteUser();
-
-//                             // logout clears local state
-//                             await logout();
-//                         } catch (err: any) {
-//                             console.log(err);
-//                             Alert.alert(
-//                                 'Error',
-//                                 err?.message || 'Error deleting account. Please try again.'
-//                             );
-//                         }
-//                     },
-//                 },
-//             ]
-//         );
-//     };
-
-//     // ─── MODAL RESET ─────────────────────────────────────────
-//     const closeModal = () => {
-//         setActiveModal(null);
-//         setNewEmail('');
-//         setEmailError('');
-//         setCurrentPassword('');
-//         setNewPassword('');
-//         setConfirmPassword('');
-//         setPasswordError('');
-//     };
-
-//     return (
-//         <Screen>
-//             <StatusBar style="light" />
-
-//             <ScrollView
-//                 style={{ flex: 1 }}
-//                 contentContainerStyle={{ paddingBottom: 60 }}
-//                 showsVerticalScrollIndicator={false}
-//             >
-//                 {/* HEADER */}
-//                 <View style={{ paddingHorizontal: 24, paddingTop: 60, marginBottom: 40 }}>
-//                     <Text style={{ color: '#fff', fontSize: 28, fontWeight: '700' }}>
-//                         Account
-//                     </Text>
-//                     <Text style={{ color: '#ffffff66', fontSize: 14, marginTop: 6 }}>
-//                         Manage your account settings
-//                     </Text>
-//                 </View>
-
-//                 {/* SECTION: Account */}
-//                 <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
-//                     <Text style={{ color: '#ffffff44', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>
-//                         Account
-//                     </Text>
-
-//                     <View style={{ backgroundColor: '#111', borderRadius: 18, overflow: 'hidden' }}>
-
-//                         {/* Change Email */}
-//                         <TouchableOpacity
-//                             onPress={() => setActiveModal('email')}
-//                             activeOpacity={0.7}
-//                             style={{
-//                                 flexDirection: 'row',
-//                                 alignItems: 'center',
-//                                 justifyContent: 'space-between',
-//                                 padding: 18,
-//                                 borderBottomWidth: 1,
-//                                 borderBottomColor: '#ffffff0a',
-//                             }}
-//                         >
-//                             <Text style={{ color: '#fff', fontSize: 15 }}>Change Email</Text>
-//                             <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-//                         </TouchableOpacity>
-
-//                         {/* Change Password */}
-//                         <TouchableOpacity
-//                             onPress={() => setActiveModal('password')}
-//                             activeOpacity={0.7}
-//                             style={{
-//                                 flexDirection: 'row',
-//                                 alignItems: 'center',
-//                                 justifyContent: 'space-between',
-//                                 padding: 18,
-//                             }}
-//                         >
-//                             <Text style={{ color: '#fff', fontSize: 15 }}>Change Password</Text>
-//                             <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-//                         </TouchableOpacity>
-//                     </View>
-//                 </View>
-
-//                 {/* SECTION: Session */}
-//                 <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
-//                     <Text style={{ color: '#ffffff44', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>
-//                         Session
-//                     </Text>
-
-//                     <View style={{ backgroundColor: '#111', borderRadius: 18, overflow: 'hidden' }}>
-//                         <TouchableOpacity
-//                             onPress={handleSignOut}
-//                             activeOpacity={0.7}
-//                             style={{
-//                                 flexDirection: 'row',
-//                                 alignItems: 'center',
-//                                 justifyContent: 'space-between',
-//                                 padding: 18,
-//                             }}
-//                         >
-//                             <Text style={{ color: '#00ffff', fontSize: 15 }}>Sign Out</Text>
-//                             <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-//                         </TouchableOpacity>
-//                     </View>
-//                 </View>
-
-//                 {/* SECTION: Danger Zone */}
-//                 <View style={{ paddingHorizontal: 24 }}>
-//                     <Text style={{ color: '#ffffff44', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>
-//                         Danger Zone
-//                     </Text>
-
-//                     <View style={{ backgroundColor: '#111', borderRadius: 18, overflow: 'hidden' }}>
-//                         <TouchableOpacity
-//                             onPress={handleDeleteAccount}
-//                             activeOpacity={0.7}
-//                             style={{
-//                                 flexDirection: 'row',
-//                                 alignItems: 'center',
-//                                 justifyContent: 'space-between',
-//                                 padding: 18,
-//                             }}
-//                         >
-//                             <Text style={{ color: '#ff4444', fontSize: 15 }}>Delete Account</Text>
-//                             <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-//                         </TouchableOpacity>
-//                     </View>
-//                 </View>
-//             </ScrollView>
-
-//             {/* ─── CHANGE EMAIL MODAL ─────────────────────────────── */}
-//             <Modal
-//                 visible={activeModal === 'email'}
-//                 animationType="slide"
-//                 presentationStyle="pageSheet"
-//                 onRequestClose={closeModal}
-//             >
-//                 <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 24, paddingTop: 40 }}>
-//                     <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 }}>
-//                         Change Email
-//                     </Text>
-//                     <Text style={{ color: '#ffffff66', fontSize: 14, marginBottom: 32 }}>
-//                         A verification link will be sent to your new email.
-//                     </Text>
-
-//                     {emailError ? (
-//                         <View style={{ backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 20 }}>
-//                             <Text style={{ color: '#ff8a8a', fontSize: 13, textAlign: 'center' }}>
-//                                 {emailError}
-//                             </Text>
-//                         </View>
-//                     ) : null}
-
-//                     <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>New Email</Text>
-//                     <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 32 }}>
-//                         <TextInput
-//                             placeholder="Enter new email"
-//                             placeholderTextColor="#ffffff33"
-//                             style={{ color: '#fff', fontSize: 16 }}
-//                             keyboardType="email-address"
-//                             autoCapitalize="none"
-//                             autoCorrect={false}
-//                             value={newEmail}
-//                             onChangeText={setNewEmail}
-//                         />
-//                     </View>
-
-//                     {emailLoading ? (
-//                         <ActivityIndicator color="#00ffff" />
-//                     ) : (
-//                         <TouchableOpacity
-//                             onPress={handleChangeEmail}
-//                             style={{ backgroundColor: '#00ffff', borderRadius: 16, padding: 18 }}
-//                         >
-//                             <Text style={{ color: '#000', fontWeight: '700', textAlign: 'center', fontSize: 16 }}>
-//                                 Update Email
-//                             </Text>
-//                         </TouchableOpacity>
-//                     )}
-
-//                     <TouchableOpacity onPress={closeModal} style={{ marginTop: 20 }}>
-//                         <Text style={{ color: '#ffffff44', textAlign: 'center', fontSize: 14 }}>
-//                             Cancel
-//                         </Text>
-//                     </TouchableOpacity>
-//                 </View>
-//             </Modal>
-
-//             {/* ─── CHANGE PASSWORD MODAL ──────────────────────────── */}
-//             <Modal
-//                 visible={activeModal === 'password'}
-//                 animationType="slide"
-//                 presentationStyle="pageSheet"
-//                 onRequestClose={closeModal}
-//             >
-//                 <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 24, paddingTop: 40 }}>
-//                     <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 }}>
-//                         Change Password
-//                     </Text>
-//                     <Text style={{ color: '#ffffff66', fontSize: 14, marginBottom: 32 }}>
-//                         Enter your current password and choose a new one.
-//                     </Text>
-
-//                     {passwordError ? (
-//                         <View style={{ backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 20 }}>
-//                             <Text style={{ color: '#ff8a8a', fontSize: 13, textAlign: 'center' }}>
-//                                 {passwordError}
-//                             </Text>
-//                         </View>
-//                     ) : null}
-
-//                     <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>Current Password</Text>
-//                     <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 16 }}>
-//                         <TextInput
-//                             placeholder="Enter current password"
-//                             placeholderTextColor="#ffffff33"
-//                             style={{ color: '#fff', fontSize: 16 }}
-//                             secureTextEntry
-//                             autoCapitalize="none"
-//                             value={currentPassword}
-//                             onChangeText={setCurrentPassword}
-//                         />
-//                     </View>
-
-//                     <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>New Password</Text>
-//                     <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 16 }}>
-//                         <TextInput
-//                             placeholder="At least 8 characters"
-//                             placeholderTextColor="#ffffff33"
-//                             style={{ color: '#fff', fontSize: 16 }}
-//                             secureTextEntry
-//                             autoCapitalize="none"
-//                             value={newPassword}
-//                             onChangeText={setNewPassword}
-//                         />
-//                     </View>
-
-//                     <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>Confirm New Password</Text>
-//                     <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 32 }}>
-//                         <TextInput
-//                             placeholder="Re-enter new password"
-//                             placeholderTextColor="#ffffff33"
-//                             style={{ color: '#fff', fontSize: 16 }}
-//                             secureTextEntry
-//                             autoCapitalize="none"
-//                             value={confirmPassword}
-//                             onChangeText={setConfirmPassword}
-//                         />
-//                     </View>
-
-//                     {passwordLoading ? (
-//                         <ActivityIndicator color="#00ffff" />
-//                     ) : (
-//                         <TouchableOpacity
-//                             onPress={handleChangePassword}
-//                             style={{ backgroundColor: '#00ffff', borderRadius: 16, padding: 18 }}
-//                         >
-//                             <Text style={{ color: '#000', fontWeight: '700', textAlign: 'center', fontSize: 16 }}>
-//                                 Update Password
-//                             </Text>
-//                         </TouchableOpacity>
-//                     )}
-
-//                     <TouchableOpacity onPress={closeModal} style={{ marginTop: 20 }}>
-//                         <Text style={{ color: '#ffffff44', textAlign: 'center', fontSize: 14 }}>
-//                             Cancel
-//                         </Text>
-//                     </TouchableOpacity>
-//                 </View>
-//             </Modal>
-//         </Screen>
-//     );
-// };
+// ---------------------------------------------------------------------------
+// Main screen
+// ---------------------------------------------------------------------------
 
 const AccountScreen = ({ navigation }: any) => {
-    const [activeModal, setActiveModal] = useState<'email' | 'password' | null>(null);
-    const [newEmail, setNewEmail] = useState('');
-    const [emailLoading, setEmailLoading] = useState(false);
-    const [emailError, setEmailError] = useState('');
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [passwordLoading, setPasswordLoading] = useState(false);
-    const [passwordError, setPasswordError] = useState('');
 
-    const { profile, logout, userId } = useApp();
-    const client = generateClient<Schema>();
+    const { userId, logout, profile } = useApp();
 
-    const handleSignOut = () => {
-        Alert.alert(
-            'Sign Out',
-            'Are you sure you want to sign out?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Sign Out',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await logout();
-                    },
-                },
-            ]
-        );
+    // ── Modal state ───────────────────────────────────────────────────────────
+    const [activeModal, setActiveModal] = useState<ModalType>(null);
+    const open  = (modal: ModalType) => setActiveModal(modal);
+    const close = () => {
+        setActiveModal(null);
+        setName('');
+        setEmail('');
+        setEmailCode('');
+        setEmailStep('input');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setDeleteConfirm('');
+        setError('');
+        setSuccess('');
     };
 
-    const handleChangeEmail = async () => {
-        if (!newEmail.trim()) {
-            setEmailError('Please enter a new email address.');
-            return;
+    // ── Form state ────────────────────────────────────────────────────────────
+    const [name, setName]                       = useState('');
+    const [email, setEmail]                     = useState('');
+    const [emailCode, setEmailCode]             = useState('');
+    const [emailStep, setEmailStep]             = useState<'input' | 'verify'>('input');
+    const [newPassword, setNewPassword]         = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [oldPassword, setOldPassword]         = useState('');
+    const [deleteConfirm, setDeleteConfirm]     = useState('');
+
+    // ── Loading / feedback ────────────────────────────────────────────────────
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError]         = useState('');
+    const [success, setSuccess]     = useState('');
+
+    // ── Update Display Name ───────────────────────────────────────────────────
+    const handleUpdateName = async () => {
+        if (!name.trim()) return;
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await updateUserAttribute({
+                userAttribute: {
+                    attributeKey: 'name',
+                    value: name.trim(),
+                },
+            });
+            setSuccess('Your display name has been updated.');
+            setName('');
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Error updating name. Please try again.');
         }
-        setEmailLoading(true);
-        setEmailError('');
+        setIsLoading(false);
+    };
+
+    // ── Update Email — step 1: send code ─────────────────────────────────────
+    const handleUpdateEmail = async () => {
+        if (!email.trim()) return;
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
         try {
             await updateUserAttribute({
                 userAttribute: {
                     attributeKey: 'email',
-                    value: newEmail.replace(/ /g, ''),
+                    value: email.replace(/ /g, ''),
                 },
             });
-            setActiveModal(null);
-            setNewEmail('');
-            Alert.alert('Verify New Email', 'A verification link has been sent to your new email address.', [{ text: 'OK' }]);
+            setEmailStep('verify');
+            setSuccess('A verification code has been sent to your new email address.');
         } catch (err: any) {
-            setEmailError(err?.message || 'Error updating email. Please try again.');
+            console.log(err);
+            setError(err?.message || 'Error updating email. Please try again.');
         }
-        setEmailLoading(false);
+        setIsLoading(false);
     };
 
-    const handleChangePassword = async () => {
-        if (!currentPassword.trim() || !newPassword.trim()) {
-            setPasswordError('Please fill in all fields.');
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            setPasswordError('New passwords do not match.');
-            return;
-        }
-        if (newPassword.length < 8) {
-            setPasswordError('Password must be at least 8 characters.');
-            return;
-        }
-        setPasswordLoading(true);
-        setPasswordError('');
+    // ── Update Email — step 2: confirm code ──────────────────────────────────
+    const handleConfirmEmailCode = async () => {
+        if (!emailCode.trim()) return;
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
         try {
-            await updatePassword({ oldPassword: currentPassword, newPassword });
-            setActiveModal(null);
-            setCurrentPassword('');
+            await confirmUserAttribute({
+                userAttributeKey: 'email',
+                confirmationCode: emailCode.trim(),
+            });
+            setSuccess('Your email has been updated successfully.');
+            setTimeout(() => close(), 1500);
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Invalid code. Please try again.');
+        }
+        setIsLoading(false);
+    };
+
+    // ── Change Password ───────────────────────────────────────────────────────
+    const handleUpdatePassword = async () => {
+        if (oldPassword.length < 6 || newPassword.length < 6) return;
+        if (newPassword !== confirmPassword) {
+            setError('New passwords do not match.');
+            return;
+        }
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await updatePassword({ oldPassword, newPassword });
+            setSuccess('Your password has been changed successfully.');
+            setOldPassword('');
             setNewPassword('');
             setConfirmPassword('');
-            Alert.alert('Password Updated', 'Your password has been changed successfully.', [{ text: 'OK' }]);
         } catch (err: any) {
-            setPasswordError(err?.message || 'Error updating password. Please try again.');
+            console.log(err);
+            setError(err?.message || 'Error updating password. Please try again.');
         }
-        setPasswordLoading(false);
+        setIsLoading(false);
     };
 
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            'Delete Account',
-            'This will permanently delete your account and all associated data. This action cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            if (userId) {
-                                await client.models.User.delete({ id: userId });
-                            }
-                            await deleteUser();
-                            await logout();
-                        } catch (err: any) {
-                            Alert.alert('Error', err?.message || 'Error deleting account. Please try again.');
-                        }
-                    },
-                },
-            ]
-        );
+    // ── Sign Out ──────────────────────────────────────────────────────────────
+    const handleSignOut = async () => {
+        setIsLoading(true);
+        setError('');
+        try {
+            await logout();
+            close();
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Error signing out. Please try again.');
+        }
+        setIsLoading(false);
     };
 
-    const closeModal = () => {
-        setActiveModal(null);
-        setNewEmail('');
-        setEmailError('');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setPasswordError('');
+    // ── Delete Account ────────────────────────────────────────────────────────
+    const handleDeleteAccount = async () => {
+        if (deleteConfirm.toLowerCase() !== 'delete') return;
+        setIsLoading(true);
+        setError('');
+        try {
+            if (userId) {
+                await client.models.User.delete({ id: userId });
+            }
+            await deleteUser();
+            await logout();
+            close();
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Error deleting account. Please try again.');
+        }
+        setIsLoading(false);
     };
 
-   return (
-    <Screen>
-        <StatusBar style="light" />
+    // ── Render ────────────────────────────────────────────────────────────────
+    return (
+        <Screen>
+            <LinearGradient
+                colors={['#000', '#12121a', '#000']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ flex: 1 }}
+            >
+                <MenuHeader title="Account" navigation={navigation} />
 
-        <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 60 }}
-            showsVerticalScrollIndicator={false}
-        >
-            {/* HEADER */}
-            <View style={{ paddingHorizontal: 24, paddingTop: 60, marginBottom: 40 }}>
-                <Text style={{ color: '#fff', fontSize: 28, fontWeight: '700' }}>
-                    Account
-                </Text>
-                <Text style={{ color: '#ffffff66', fontSize: 14, marginTop: 6 }}>
-                    Manage your account settings
-                </Text>
-            </View>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* ── Account info ── */}
+                    <Section title="Account">
+                        <SettingRow
+                            icon="crown"
+                            label="Plan"
+                            value={profile?.plan ?? 'Free'}
+                            onPress={() => {/* TODO: navigate to upgrade */}}
+                        />
+                        <RowDivider />
+                        <SettingRow
+                            icon="user"
+                            label="Display Name"
+                            value={profile?.name ?? 'Not set'}
+                            onPress={() => open('name')}
+                        />
+                        <RowDivider />
+                        <SettingRow
+                            icon="envelope"
+                            label="Email"
+                            onPress={() => open('email')}
+                        />
+                    </Section>
 
-            {/* SECTION: Account */}
-            <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
-                <Text style={{ color: '#ffffff44', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>
-                    Account
-                </Text>
-                <View style={{ backgroundColor: '#111', borderRadius: 18, overflow: 'hidden' }}>
-                    <TouchableOpacity
-                        onPress={() => setActiveModal('email')}
-                        activeOpacity={0.7}
-                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18, borderBottomWidth: 1, borderBottomColor: '#ffffff0a' }}
-                    >
-                        <Text style={{ color: '#fff', fontSize: 15 }}>Change Email</Text>
-                        <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => setActiveModal('password')}
-                        activeOpacity={0.7}
-                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18 }}
-                    >
-                        <Text style={{ color: '#fff', fontSize: 15 }}>Change Password</Text>
-                        <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+                    {/* ── Security ── */}
+                    <Section title="Security">
+                        <SettingRow
+                            icon="lock"
+                            label="Change Password"
+                            onPress={() => open('password')}
+                        />
+                    </Section>
 
-            {/* SECTION: Session */}
-            <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
-                <Text style={{ color: '#ffffff44', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>
-                    Session
-                </Text>
-                <View style={{ backgroundColor: '#111', borderRadius: 18, overflow: 'hidden' }}>
-                    <TouchableOpacity
-                        onPress={handleSignOut}
-                        activeOpacity={0.7}
-                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18 }}
-                    >
-                        <Text style={{ color: '#00ffff', fontSize: 15 }}>Sign Out</Text>
-                        <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+                    {/* ── Session ── */}
+                    <Section title="Session">
+                        <SettingRow
+                            icon="sign-out-alt"
+                            label="Sign Out"
+                            onPress={() => open('signout')}
+                        />
+                    </Section>
 
-            {/* SECTION: Danger Zone */}
-            <View style={{ paddingHorizontal: 24 }}>
-                <Text style={{ color: '#ffffff44', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>
-                    Danger Zone
-                </Text>
-                <View style={{ backgroundColor: '#111', borderRadius: 18, overflow: 'hidden' }}>
-                    <TouchableOpacity
-                        onPress={handleDeleteAccount}
-                        activeOpacity={0.7}
-                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18 }}
-                    >
-                        <Text style={{ color: '#ff4444', fontSize: 15 }}>Delete Account</Text>
-                        <Text style={{ color: '#ffffff44', fontSize: 18 }}>›</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </ScrollView>
+                    {/* ── Danger zone ── */}
+                    <Section title="Danger Zone">
+                        <SettingRow
+                            icon="trash"
+                            label="Delete Account"
+                            onPress={() => open('delete')}
+                            destructive
+                        />
+                    </Section>
 
-        {/* CHANGE EMAIL MODAL */}
-        <Modal
-            visible={activeModal === 'email'}
-            animationType="slide"
-            presentationStyle="pageSheet"
-            onRequestClose={closeModal}
-        >
-            <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 24, paddingTop: 40 }}>
-                <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 }}>
-                    Change Email
-                </Text>
-                <Text style={{ color: '#ffffff66', fontSize: 14, marginBottom: 32 }}>
-                    A verification link will be sent to your new email.
-                </Text>
-                {emailError ? (
-                    <View style={{ backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 20 }}>
-                        <Text style={{ color: '#ff8a8a', fontSize: 13, textAlign: 'center' }}>{emailError}</Text>
-                    </View>
-                ) : null}
-                <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>New Email</Text>
-                <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 32 }}>
-                    <TextInput
-                        placeholder="Enter new email"
-                        placeholderTextColor="#ffffff33"
-                        style={{ color: '#fff', fontSize: 16 }}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        value={newEmail}
-                        onChangeText={setNewEmail}
-                    />
-                </View>
-                {emailLoading ? (
-                    <ActivityIndicator color="#00ffff" />
+                    <Text style={styles.version}>Version 1.0.0</Text>
+                </ScrollView>
+            </LinearGradient>
+
+            {/* ── Update Name sheet ── */}
+            <Sheet visible={activeModal === 'name'} onClose={close} title="Update Display Name">
+                {error ? <ErrorBanner message={error} /> : null}
+                {success ? <SuccessBanner message={success} /> : null}
+                <Text style={styles.fieldLabel}>New name</Text>
+                <TextInput
+                    style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Your display name"
+                    placeholderTextColor="#ffffff40"
+                    maxLength={30}
+                    autoCapitalize="words"
+                />
+                <ActionButton
+                    label="Save Name"
+                    onPress={handleUpdateName}
+                    loading={isLoading}
+                    disabled={name.trim().length === 0}
+                />
+            </Sheet>
+
+            {/* ── Update Email sheet ── */}
+            <Sheet
+                visible={activeModal === 'email'}
+                onClose={close}
+                title={emailStep === 'input' ? 'Update Email' : 'Verify New Email'}
+            >
+                {error ? <ErrorBanner message={error} /> : null}
+                {success ? <SuccessBanner message={success} /> : null}
+
+                {emailStep === 'input' ? (
+                    <>
+                        <Text style={styles.sheetNote}>
+                            A verification code will be sent to your new address.
+                        </Text>
+                        <Text style={styles.fieldLabel}>New email</Text>
+                        <TextInput
+                            style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder="new@email.com"
+                            placeholderTextColor="#ffffff40"
+                            maxLength={60}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                        <ActionButton
+                            label="Send Verification Code"
+                            onPress={handleUpdateEmail}
+                            loading={isLoading}
+                            disabled={email.trim().length === 0}
+                        />
+                    </>
                 ) : (
-                    <TouchableOpacity onPress={handleChangeEmail} style={{ backgroundColor: '#00ffff', borderRadius: 16, padding: 18 }}>
-                        <Text style={{ color: '#000', fontWeight: '700', textAlign: 'center', fontSize: 16 }}>Update Email</Text>
-                    </TouchableOpacity>
+                    <>
+                        <Text style={styles.sheetNote}>
+                            Enter the verification code sent to{' '}
+                            <Text style={{ color: '#00ffff' }}>{email}</Text>
+                        </Text>
+                        <Text style={styles.fieldLabel}>Verification code</Text>
+                        <TextInput
+                            style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                            value={emailCode}
+                            onChangeText={setEmailCode}
+                            placeholder="000000"
+                            placeholderTextColor="#ffffff40"
+                            maxLength={6}
+                            keyboardType="number-pad"
+                            autoCapitalize="none"
+                        />
+                        <ActionButton
+                            label="Confirm Email Change"
+                            onPress={handleConfirmEmailCode}
+                            loading={isLoading}
+                            disabled={emailCode.trim().length === 0}
+                        />
+                        <TouchableOpacity
+                            onPress={() => {
+                                setEmailStep('input');
+                                setEmailCode('');
+                                setError('');
+                                setSuccess('');
+                            }}
+                            style={styles.cancelButton}
+                        >
+                            <Text style={styles.cancelText}>← Back</Text>
+                        </TouchableOpacity>
+                    </>
                 )}
-                <TouchableOpacity onPress={closeModal} style={{ marginTop: 20 }}>
-                    <Text style={{ color: '#ffffff44', textAlign: 'center', fontSize: 14 }}>Cancel</Text>
-                </TouchableOpacity>
-            </View>
-        </Modal>
+            </Sheet>
 
-        {/* CHANGE PASSWORD MODAL */}
-        <Modal
-            visible={activeModal === 'password'}
-            animationType="slide"
-            presentationStyle="pageSheet"
-            onRequestClose={closeModal}
-        >
-            <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 24, paddingTop: 40 }}>
-                <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 }}>
-                    Change Password
+            {/* ── Change Password sheet ── */}
+            <Sheet visible={activeModal === 'password'} onClose={close} title="Change Password">
+                {error ? <ErrorBanner message={error} /> : null}
+                {success ? <SuccessBanner message={success} /> : null}
+                <PasswordField
+                    label="Current password"
+                    value={oldPassword}
+                    onChange={setOldPassword}
+                    placeholder="••••••••"
+                />
+                <PasswordField
+                    label="New password"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    placeholder="••••••••"
+                />
+                <PasswordField
+                    label="Confirm new password"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    placeholder="••••••••"
+                />
+                <ActionButton
+                    label="Update Password"
+                    onPress={handleUpdatePassword}
+                    loading={isLoading}
+                    disabled={oldPassword.length < 6 || newPassword.length < 6 || confirmPassword.length < 6}
+                />
+            </Sheet>
+
+            {/* ── Sign Out sheet ── */}
+            <Sheet visible={activeModal === 'signout'} onClose={close} title="Sign Out">
+                {error ? <ErrorBanner message={error} /> : null}
+                <Text style={styles.sheetNote}>
+                    You'll need to sign back in to access your account.
                 </Text>
-                <Text style={{ color: '#ffffff66', fontSize: 14, marginBottom: 32 }}>
-                    Enter your current password and choose a new one.
-                </Text>
-                {passwordError ? (
-                    <View style={{ backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 20 }}>
-                        <Text style={{ color: '#ff8a8a', fontSize: 13, textAlign: 'center' }}>{passwordError}</Text>
-                    </View>
-                ) : null}
-                <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>Current Password</Text>
-                <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 16 }}>
-                    <TextInput
-                        placeholder="Enter current password"
-                        placeholderTextColor="#ffffff33"
-                        style={{ color: '#fff', fontSize: 16 }}
-                        secureTextEntry
-                        autoCapitalize="none"
-                        value={currentPassword}
-                        onChangeText={setCurrentPassword}
-                    />
-                </View>
-                <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>New Password</Text>
-                <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 16 }}>
-                    <TextInput
-                        placeholder="At least 8 characters"
-                        placeholderTextColor="#ffffff33"
-                        style={{ color: '#fff', fontSize: 16 }}
-                        secureTextEntry
-                        autoCapitalize="none"
-                        value={newPassword}
-                        onChangeText={setNewPassword}
-                    />
-                </View>
-                <Text style={{ color: '#ffffff88', fontSize: 13, marginBottom: 8 }}>Confirm New Password</Text>
-                <View style={{ backgroundColor: '#1a1a1a', borderRadius: 14, padding: 16, marginBottom: 32 }}>
-                    <TextInput
-                        placeholder="Re-enter new password"
-                        placeholderTextColor="#ffffff33"
-                        style={{ color: '#fff', fontSize: 16 }}
-                        secureTextEntry
-                        autoCapitalize="none"
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                    />
-                </View>
-                {passwordLoading ? (
-                    <ActivityIndicator color="#00ffff" />
-                ) : (
-                    <TouchableOpacity onPress={handleChangePassword} style={{ backgroundColor: '#00ffff', borderRadius: 16, padding: 18 }}>
-                        <Text style={{ color: '#000', fontWeight: '700', textAlign: 'center', fontSize: 16 }}>Update Password</Text>
-                    </TouchableOpacity>
-                )}
-                <TouchableOpacity onPress={closeModal} style={{ marginTop: 20 }}>
-                    <Text style={{ color: '#ffffff44', textAlign: 'center', fontSize: 14 }}>Cancel</Text>
+                <ActionButton
+                    label="Sign Out"
+                    onPress={handleSignOut}
+                    loading={isLoading}
+                />
+                <TouchableOpacity onPress={close} style={styles.cancelButton}>
+                    <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
-            </View>
-        </Modal>
-    </Screen>
-);
+            </Sheet>
+
+            {/* ── Delete Account sheet ── */}
+            <Sheet visible={activeModal === 'delete'} onClose={close} title="Delete Account">
+                <View style={styles.dangerBanner}>
+                    <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
+                    <Text style={styles.dangerBannerText}>
+                        This action is permanent and cannot be undone. All account data will be removed.
+                    </Text>
+                </View>
+                {error ? <ErrorBanner message={error} /> : null}
+                <Text style={styles.fieldLabel}>
+                    Type <Text style={{ color: '#ff4444bf' }}>delete</Text> to confirm
+                </Text>
+                <TextInput
+                    style={[styles.input, { marginBottom: 24, color: '#fff', borderColor: deleteConfirm.toLowerCase() === 'delete' ? '#ff4444' : '#333' }]}
+                    value={deleteConfirm}
+                    onChangeText={setDeleteConfirm}
+                    placeholder="delete"
+                    placeholderTextColor="#ffffff20"
+                    autoCapitalize="none"
+                />
+                <ActionButton
+                    label="Permanently Delete Account"
+                    onPress={handleDeleteAccount}
+                    loading={isLoading}
+                    destructive
+                    disabled={deleteConfirm.toLowerCase() !== 'delete'}
+                />
+                <TouchableOpacity onPress={close} style={styles.cancelButton}>
+                    <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+            </Sheet>
+
+        </Screen>
+    );
 };
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+
+    scrollContent: {
+        paddingBottom: 60,
+    },
+
+    // ── Sections ──────────────────────────────────────────────────────────────
+    section: {
+        marginTop: 28,
+        paddingHorizontal: spacing.margin,
+    },
+    sectionTitle: {
+        fontSize: 11,
+        fontWeight: '600',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+        color: '#ffffff50',
+        marginBottom: 10,
+        marginLeft: 4,
+    },
+    sectionCard: {
+        backgroundColor: '#1a1a1a',
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#2a2a2a',
+        overflow: 'hidden',
+    },
+
+    // ── Rows ─────────────────────────────────────────────────────────────────
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+    rowLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    rowIcon: {
+        width: 30,
+        height: 30,
+        borderRadius: 8,
+        backgroundColor: '#2a2a2a',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    rowIconDestructive: {
+        backgroundColor: '#2d1111',
+    },
+    rowLabel: {
+        fontSize: 15,
+        color: '#fff',
+        fontWeight: '500',
+    },
+    rowLabelDestructive: {
+        color: '#ff4444bf',
+    },
+    rowRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        maxWidth: width * 0.4,
+    },
+    rowValue: {
+        fontSize: 14,
+        color: '#ffffff50',
+    },
+    divider: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: '#2a2a2a',
+        marginLeft: 58,
+    },
+
+    // ── Bottom sheet ──────────────────────────────────────────────────────────
+    sheetBackdrop: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+    },
+    sheetWrapper: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    sheet: {
+        backgroundColor: '#111',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        borderWidth: 1,
+        borderBottomWidth: 0,
+        borderColor: '#2a2a2a',
+    },
+    sheetHandle: {
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: '#ffffff30',
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    sheetHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    sheetTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    sheetNote: {
+        fontSize: 13,
+        color: '#ffffff70',
+        lineHeight: 20,
+        marginBottom: 20,
+    },
+
+    // ── Form fields ───────────────────────────────────────────────────────────
+    fieldLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#ffffff70',
+        letterSpacing: 0.5,
+        marginBottom: 8,
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e1e1e',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    input: {
+        backgroundColor: '#1e1e1e',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#333',
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 15,
+        color: '#fff',
+    },
+    inputEye: {
+        paddingHorizontal: 14,
+    },
+
+    // ── Buttons ───────────────────────────────────────────────────────────────
+    actionButton: {
+        backgroundColor: 'cyan',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    actionButtonDestructive: {
+        backgroundColor: '#cc2222',
+    },
+    actionButtonDisabled: {
+        opacity: 0.4,
+    },
+    actionButtonText: {
+        color: '#000',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    actionButtonTextDestructive: {
+        color: '#fff',
+    },
+    cancelButton: {
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    cancelText: {
+        color: '#ffffff60',
+        fontSize: 14,
+    },
+
+    // ── Notices ───────────────────────────────────────────────────────────────
+    dangerBanner: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#2d1111',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ff444440',
+        padding: 12,
+        marginBottom: 24,
+        gap: 10,
+    },
+    dangerBannerText: {
+        flex: 1,
+        fontSize: 13,
+        color: '#ff8888',
+        lineHeight: 19,
+    },
+    successBanner: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#00ffff12',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#00ffff40',
+        padding: 12,
+        marginBottom: 24,
+        gap: 10,
+    },
+    successBannerText: {
+        flex: 1,
+        fontSize: 13,
+        color: '#00ffff',
+        lineHeight: 19,
+    },
+
+    // ── Footer ────────────────────────────────────────────────────────────────
+    version: {
+        textAlign: 'center',
+        color: '#ffffff25',
+        fontSize: 12,
+        marginTop: 40,
+    },
+});
 
 export default AccountScreen;
