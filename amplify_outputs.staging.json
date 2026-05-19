@@ -1,5 +1,180 @@
 {
-  "version": "1.4",
-  "auth": {},
-  "data": {}
+  "auth": {
+    "user_pool_id": "us-east-2_3WCalvOgx",
+    "aws_region": "us-east-2",
+    "user_pool_client_id": "3ind6nd2f8e7m4rpajsh6tn0",
+    "identity_pool_id": "us-east-2:28830cca-54a9-4baf-a39e-b86ba259dc5a",
+    "mfa_methods": [],
+    "standard_required_attributes": [
+      "email"
+    ],
+    "username_attributes": [
+      "email"
+    ],
+    "user_verification_types": [
+      "email"
+    ],
+    "groups": [],
+    "mfa_configuration": "NONE",
+    "password_policy": {
+      "min_length": 8,
+      "require_lowercase": true,
+      "require_numbers": true,
+      "require_symbols": true,
+      "require_uppercase": true
+    },
+    "unauthenticated_identities_enabled": true
+  },
+  "data": {
+    "url": "https://nflzecthnfb2noim4kgzmddjre.appsync-api.us-east-2.amazonaws.com/graphql",
+    "aws_region": "us-east-2",
+    "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
+    "authorization_types": [
+      "AWS_IAM"
+    ],
+    "model_introspection": {
+      "version": 1,
+      "models": {
+        "User": {
+          "name": "User",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "type": {
+              "name": "type",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "profilePicUri": {
+              "name": "profilePicUri",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "isPublisher": {
+              "name": "isPublisher",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
+            "plan": {
+              "name": "plan",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "Users",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "fields": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "provider": "userPools",
+                    "ownerField": "owner",
+                    "allow": "owner",
+                    "identityClaim": "cognito:username",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        }
+      },
+      "enums": {},
+      "nonModels": {}
+    }
+  },
+  "storage": {
+    "aws_region": "us-east-2",
+    "bucket_name": "amplify-runts-staging-san-runtsstoragebucketf8df8e-ixeas7ief3e3",
+    "buckets": [
+      {
+        "name": "runtsStorage",
+        "bucket_name": "amplify-runts-staging-san-runtsstoragebucketf8df8e-ixeas7ief3e3",
+        "aws_region": "us-east-2",
+        "paths": {
+          "profile-pictures/${cognito-identity.amazonaws.com:sub}/*": {
+            "entityidentity": [
+              "get",
+              "list",
+              "write",
+              "delete"
+            ]
+          },
+          "profile-pictures/*": {
+            "authenticated": [
+              "get",
+              "list"
+            ]
+          },
+          "stories/*": {
+            "authenticated": [
+              "get",
+              "list"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "version": "1.4"
 }
