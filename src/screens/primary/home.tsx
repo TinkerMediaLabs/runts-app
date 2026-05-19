@@ -56,7 +56,7 @@ const HomeScreen = ({navigation} : any) => {
         "Find your next escape",
         "Drift into a new tale",
         "Step beyond the page",
-        "Close your eyes. Press play.",
+        "Step 1: Press play.",
         "Leave here for a while"
     ]
 

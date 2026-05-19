@@ -78,7 +78,7 @@ export async function getOrCreateUser() {
   const { data: newUser } = await getClient().models.User.create({
     id: userId,
     type: 'user',
-    name: attrs.name ?? attrs.email?.split('@')[0],
+    name: null,
     isPublisher: false,
     plan: 'free',
   });

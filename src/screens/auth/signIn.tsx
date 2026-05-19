@@ -18,7 +18,6 @@ import Animated, {
     FadeInDown,
     FadeInUp,
     useSharedValue,
-    useAnimatedStyle,
     withTiming,
     withSpring,
     Easing,
@@ -57,16 +56,6 @@ const SignIn = ({ navigation }: any) => {
             stiffness: 120,
         });
     }, []);
-
-    const logoAnimatedStyle = useAnimatedStyle(() => {
-        return {
-            opacity: logoOpacity.value,
-            transform: [
-                { translateY: logoTranslateY.value },
-                { scale: logoScale.value },
-            ],
-        };
-    });
 
     async function signInWithGoogle() {
         setSigningIn(true);
@@ -115,28 +104,33 @@ const SignIn = ({ navigation }: any) => {
 
                         {/* LOGO */}
                         <Animated.View
-                            style={[
-                                {
-                                    alignItems: 'center',
-                                    marginTop: 10,
-                                },
-                                logoAnimatedStyle,
-                            ]}
+                            style={{
+                                alignItems: 'center',
+                                marginTop: 10,
+                                opacity: logoOpacity,
+                            }}
                         >
-                            <Image
+                            <Animated.View
                                 style={{
-                                    height: width * 0.52,
-                                    width: width * 0.52,
-                                    resizeMode: 'contain',
+                                    transform: [
+                                        { translateY: logoTranslateY },
+                                        { scale: logoScale },
+                                    ],
                                 }}
-                                source={require('../../../assets/images/icon.png')}
-                            />
+                            >
+                                <Image
+                                    style={{
+                                        height: width * 0.52,
+                                        width: width * 0.52,
+                                        resizeMode: 'contain',
+                                    }}
+                                    source={require('../../../assets/images/icon.png')}
+                                />
+                            </Animated.View>
                         </Animated.View>
 
                         {/* BUTTONS */}
-                        <Animated.View
-                            entering={FadeInDown.delay(200).duration(700)}
-                        >
+                        <View>
 
                             {/* EMAIL */}
                             <Animated.View
@@ -271,7 +265,7 @@ const SignIn = ({ navigation }: any) => {
                                     </View>
                                 </TouchableOpacity>
                             </Animated.View>
-                        </Animated.View>
+                        </View>
 
                         {/* FOOTER */}
                         <Animated.View

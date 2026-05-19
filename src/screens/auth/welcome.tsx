@@ -28,45 +28,38 @@ const Welcome = ({ navigation }: any) => {
     const [date, setDate] = useState(new Date());
     const [isPickerVisible, setPickerVisible] = useState(false);
 
-    const isDark = true; // replace with your theme hook
-
     // -----------------------
     // ANIMATIONS
     // -----------------------
-    const logoOpacity = useSharedValue(0);
+    const logoOpacity    = useSharedValue(0);
     const logoTranslateY = useSharedValue(20);
 
-    const textOpacity = useSharedValue(0);
+    const textOpacity    = useSharedValue(0);
     const textTranslateY = useSharedValue(20);
 
-    const buttonScale = useSharedValue(0.9);
+    const buttonScale   = useSharedValue(0.9);
     const buttonOpacity = useSharedValue(0);
 
     useEffect(() => {
-        logoOpacity.value = withTiming(1, { duration: 600 });
+        logoOpacity.value    = withTiming(1, { duration: 600 });
         logoTranslateY.value = withTiming(0, { duration: 600 });
 
-        textOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
+        textOpacity.value    = withDelay(200, withTiming(1, { duration: 600 }));
         textTranslateY.value = withDelay(200, withTiming(0, { duration: 600 }));
 
         buttonOpacity.value = withDelay(400, withTiming(1, { duration: 500 }));
-        buttonScale.value = withDelay(400, withSpring(1));
+        buttonScale.value   = withDelay(400, withSpring(1));
     }, []);
 
-    const logoStyle = useAnimatedStyle(() => ({
-        opacity: logoOpacity.value,
-        transform: [{ translateY: logoTranslateY.value }],
-    }));
+    // Each style touches ONE property only — no node mixes opacity + transform
+    const logoOpacityStyle    = useAnimatedStyle(() => ({ opacity: logoOpacity.value }));
+    const logoTransformStyle  = useAnimatedStyle(() => ({ transform: [{ translateY: logoTranslateY.value }] }));
 
-    const textStyle = useAnimatedStyle(() => ({
-        opacity: textOpacity.value,
-        transform: [{ translateY: textTranslateY.value }],
-    }));
+    const textOpacityStyle    = useAnimatedStyle(() => ({ opacity: textOpacity.value }));
+    const textTransformStyle  = useAnimatedStyle(() => ({ transform: [{ translateY: textTranslateY.value }] }));
 
-    const buttonStyle = useAnimatedStyle(() => ({
-        opacity: buttonOpacity.value,
-        transform: [{ scale: buttonScale.value }],
-    }));
+    const buttonOpacityStyle  = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
+    const buttonScaleStyle    = useAnimatedStyle(() => ({ transform: [{ scale: buttonScale.value }] }));
 
     // -----------------------
     // DATE PICKER
@@ -84,15 +77,18 @@ const Welcome = ({ navigation }: any) => {
                 <View style={{ alignItems: "center", marginTop: SCREEN_HEIGHT * 0.15 }}>
 
                     {/* LOGO */}
-                    <Animated.View style={logoStyle}>
+                    <Animated.View style={logoOpacityStyle}>
+                    <Animated.View style={logoTransformStyle}>
                         <Image
                             source={require("../../../assets/images/icon.png")}
                             style={{ height: 110, width: 110 }}
                         />
                     </Animated.View>
+                    </Animated.View>
 
                     {/* TITLE */}
-                    <Animated.View style={[{ marginTop: 20 }, textStyle]}>
+                    <Animated.View style={[{ marginTop: 20 }, textOpacityStyle]}>
+                    <Animated.View style={textTransformStyle}>
                         <Text style={{ color: "#fff", fontSize: 24, fontWeight: "700", textAlign: "center" }}>
                             Welcome to Runts
                         </Text>
@@ -100,6 +96,7 @@ const Welcome = ({ navigation }: any) => {
                         <Text style={{ color: "#aaa", fontSize: 15, marginTop: 10, textAlign: "center" }}>
                             Your home for audio short stories
                         </Text>
+                    </Animated.View>
                     </Animated.View>
 
                     {/* DIVIDER */}
@@ -129,7 +126,8 @@ const Welcome = ({ navigation }: any) => {
                 </View>
 
                 {/* FOOTER CTA */}
-                <Animated.View style={[{ paddingBottom: 40 }, buttonStyle]}>
+                <Animated.View style={[{ paddingBottom: 40 }, buttonOpacityStyle]}>
+                <Animated.View style={buttonScaleStyle}>
                     <TouchableOpacity
                         onPress={() => navigation.navigate("WelcomePref")}
                         style={{
@@ -144,6 +142,7 @@ const Welcome = ({ navigation }: any) => {
                         </Text>
                     </TouchableOpacity>
                 </Animated.View>
+                </Animated.View>
 
                 {/* DATE PICKER */}
                 <DateTimePickerModal
@@ -152,11 +151,12 @@ const Welcome = ({ navigation }: any) => {
                     date={date}
                     onConfirm={onConfirmDate}
                     onCancel={() => setPickerVisible(false)}
+                    onDismiss={() => setPickerVisible(false)}
                     themeVariant={"dark"}
                     display="spinner"
                     textColor="gray"
-                    positiveButton={{label: 'OK', textColor: 'cyan'}}
-                    negativeButton={{label: 'Cancel', textColor: '#ffffff'}}
+                    positiveButton={{ label: 'OK', textColor: 'cyan' }}
+                    negativeButton={{ label: 'Cancel', textColor: '#ffffff' }}
                 />
             </View>
         </Screen>
