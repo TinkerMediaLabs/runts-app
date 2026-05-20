@@ -154,7 +154,7 @@ const Welcome = ({ navigation }: any) => {
                     onDismiss={() => setPickerVisible(false)}
                     onValueChange={() => {}}
                     themeVariant={"dark"}
-                    display="spinner"
+                    display="default"
                     textColor="gray"
                     positiveButton={{ label: 'OK', textColor: 'cyan' }}
                     negativeButton={{ label: 'Cancel', textColor: '#ffffff' }}

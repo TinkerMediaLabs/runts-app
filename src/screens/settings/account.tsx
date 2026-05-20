@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,6 +12,7 @@ import {
     Dimensions,
     KeyboardAvoidingView,
     Platform,
+    Image
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,7 @@ import {
     confirmUserAttribute,
     updatePassword,
     deleteUser,
+    fetchAuthSession,
 } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
@@ -48,6 +50,8 @@ type ModalType =
     | 'delete'
     | null;
 
+type AuthProvider = 'email' | 'google' | 'apple' | 'unknown';
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -59,6 +63,7 @@ const SettingRow = ({
     onPress,
     destructive = false,
     chevron = true,
+    badge,
 }: {
     icon: any;
     label: string;
@@ -66,6 +71,7 @@ const SettingRow = ({
     onPress?: () => void;
     destructive?: boolean;
     chevron?: boolean;
+    badge?: string;
 }) => (
     <TouchableOpacity
         activeOpacity={0.7}
@@ -75,18 +81,41 @@ const SettingRow = ({
     >
         <View style={styles.rowLeft}>
             <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
-                <FontAwesome5
-                    name={icon}
-                    size={14}
-                    color={destructive ? '#ff4444bf' : '#ffffffa5'}
-                    iconStyle="solid"
+                {icon === 'google' ? (
+                    <Image
+                    source={require('../../../assets/images/google-logo.png')}
+                    style={{
+                        width: 28,
+                        height: 28,
+                    }}
                 />
+                ) : icon === 'apple' ? (
+                    <Image
+                    source={require('../../../assets/images/apple-logo.png')}
+                    style={{
+                        width: 28,
+                        height: 28,
+                    }}
+                />
+                ) : (
+                    <FontAwesome5
+                        name={icon}
+                        size={14}
+                        color={'#ffffffa5'}
+                        iconStyle="solid"
+                    />
+                )}
             </View>
             <Text style={[styles.rowLabel, destructive && styles.rowLabelDestructive]}>
                 {label}
             </Text>
         </View>
         <View style={styles.rowRight}>
+            {badge ? (
+                <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{badge}</Text>
+                </View>
+            ) : null}
             {value ? (
                 <Text style={styles.rowValue} numberOfLines={1}>{value}</Text>
             ) : null}
@@ -246,6 +275,13 @@ const ErrorBanner = ({ message }: { message: string }) => (
     </View>
 );
 
+const InfoBanner = ({ message }: { message: string }) => (
+    <View style={styles.infoBanner}>
+        <FontAwesome5 name="info-circle" size={14} color="#ffffff88" iconStyle="solid" />
+        <Text style={styles.infoBannerText}>{message}</Text>
+    </View>
+);
+
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
@@ -253,6 +289,43 @@ const ErrorBanner = ({ message }: { message: string }) => (
 const AccountScreen = ({ navigation }: any) => {
 
     const { userId, logout, profile } = useApp();
+
+    // ── Auth provider detection ───────────────────────────────────────────────
+    const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
+
+    useEffect(() => {
+        async function detectProvider() {
+            try {
+                const session = await fetchAuthSession();
+                const idToken = session.tokens?.idToken;
+                if (!idToken) return;
+
+                // Check identities claim for social provider
+                const payload = idToken.payload as any;
+                const identities = payload?.identities;
+
+                if (identities && Array.isArray(identities) && identities.length > 0) {
+                    const providerType = identities[0].providerType?.toLowerCase();
+                    if (providerType === 'google') {
+                        setAuthProvider('google');
+                    } else if (providerType === 'signinwithapple') {
+                        setAuthProvider('apple');
+                    } else {
+                        setAuthProvider('email');
+                    }
+                } else {
+                    setAuthProvider('email');
+                }
+            } catch (err) {
+                console.log('Provider detection error:', err);
+                setAuthProvider('email');
+            }
+        }
+        detectProvider();
+    }, []);
+
+    const isSocialUser = authProvider === 'google' || authProvider === 'apple';
+    const providerLabel = authProvider === 'google' ? 'Google' : authProvider === 'apple' ? 'Apple' : null;
 
     // ── Modal state ───────────────────────────────────────────────────────────
     const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -441,18 +514,33 @@ const AccountScreen = ({ navigation }: any) => {
                         <SettingRow
                             icon="envelope"
                             label="Email"
-                            onPress={() => open('email')}
+                            badge={providerLabel ?? undefined}
+                            onPress={isSocialUser ? undefined : () => open('email')}
+                            chevron={!isSocialUser}
                         />
                     </Section>
 
-                    {/* ── Security ── */}
-                    <Section title="Security">
-                        <SettingRow
-                            icon="lock"
-                            label="Change Password"
-                            onPress={() => open('password')}
-                        />
-                    </Section>
+                    {/* ── Security — only for email users ── */}
+                    {!isSocialUser && (
+                        <Section title="Security">
+                            <SettingRow
+                                icon="lock"
+                                label="Change Password"
+                                onPress={() => open('password')}
+                            />
+                        </Section>
+                    )}
+
+                    {/* ── Connected account — only for social users ── */}
+                    {isSocialUser && (
+                        <Section title="Connected Account">
+                            <SettingRow
+                                icon={authProvider === 'google' ? 'google' : 'apple'}
+                                label={`Signed in with ${providerLabel}`}
+                                chevron={false}
+                            />
+                        </Section>
+                    )}
 
                     {/* ── Session ── */}
                     <Section title="Session">
@@ -499,7 +587,7 @@ const AccountScreen = ({ navigation }: any) => {
                 />
             </Sheet>
 
-            {/* ── Update Email sheet ── */}
+            {/* ── Update Email sheet — email users only ── */}
             <Sheet
                 visible={activeModal === 'email'}
                 onClose={close}
@@ -569,7 +657,7 @@ const AccountScreen = ({ navigation }: any) => {
                 )}
             </Sheet>
 
-            {/* ── Change Password sheet ── */}
+            {/* ── Change Password sheet — email users only ── */}
             <Sheet visible={activeModal === 'password'} onClose={close} title="Change Password">
                 {error ? <ErrorBanner message={error} /> : null}
                 {success ? <SuccessBanner message={success} /> : null}
@@ -623,6 +711,9 @@ const AccountScreen = ({ navigation }: any) => {
                         This action is permanent and cannot be undone. All account data will be removed.
                     </Text>
                 </View>
+                {isSocialUser && (
+                    <InfoBanner message={`Your ${providerLabel} account will be disconnected from Runts but not deleted.`} />
+                )}
                 {error ? <ErrorBanner message={error} /> : null}
                 <Text style={styles.fieldLabel}>
                     Type <Text style={{ color: '#ff4444bf' }}>delete</Text> to confirm
@@ -706,7 +797,7 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     rowIconDestructive: {
-        backgroundColor: '#2d1111',
+        backgroundColor: '#2a2a2a',
     },
     rowLabel: {
         fontSize: 15,
@@ -714,7 +805,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     rowLabelDestructive: {
-        color: '#ff4444bf',
+        color: '#ffffffa5',
     },
     rowRight: {
         flexDirection: 'row',
@@ -730,6 +821,21 @@ const styles = StyleSheet.create({
         height: StyleSheet.hairlineWidth,
         backgroundColor: '#2a2a2a',
         marginLeft: 58,
+    },
+
+    // ── Badge ─────────────────────────────────────────────────────────────────
+    badge: {
+        backgroundColor: '#00ffff18',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#00ffff40',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    badgeText: {
+        color: '#00ffff',
+        fontSize: 11,
+        fontWeight: '600',
     },
 
     // ── Bottom sheet ──────────────────────────────────────────────────────────
@@ -872,6 +978,23 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 13,
         color: '#00ffff',
+        lineHeight: 19,
+    },
+    infoBanner: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#ffffff08',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ffffff20',
+        padding: 12,
+        marginBottom: 24,
+        gap: 10,
+    },
+    infoBannerText: {
+        flex: 1,
+        fontSize: 13,
+        color: '#ffffff70',
         lineHeight: 19,
     },
 
