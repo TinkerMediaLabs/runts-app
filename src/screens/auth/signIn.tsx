@@ -25,7 +25,7 @@ import Animated, {
 
 import useStyles from '../../theme/authStyles';
 
-import { signInWithGoogle as googleSignIn } from '../../services/auth';
+import { signInWithGoogle as googleSignIn, signInWithApple as appleSignIn } from '../../services/auth';
 import { signInWithRedirect } from 'aws-amplify/auth';
 
 const { width, height } = Dimensions.get('window');
@@ -75,12 +75,15 @@ const SignIn = ({ navigation }: any) => {
 
     async function signInWithApple() {
         setSigningIn(true);
-
-        // TODO: wire up Apple sign in
-
-        setTimeout(() => {
+        try {
+            await appleSignIn();
+        } catch (err: any) {
+            console.log('Apple sign in error:', err);
+            setIsErr(true);
+            setErr(err?.message || 'Error signing in with Apple.');
+        } finally {
             setSigningIn(false);
-        }, 1000);
+        }
     }
 
     return (

@@ -23,6 +23,13 @@ export async function signInWithGoogle() {
   });
 }
 
+// ─── APPLE SIGN IN ───────────────────────────────────────────────────────────
+export async function signInWithApple() {
+  await signInWithRedirect({
+    provider: 'Apple',
+  });
+}
+
 // ─── SIGN UP ────────────────────────────────────────────
 export async function registerUser(email: string, password: string) {
   return signUp({
