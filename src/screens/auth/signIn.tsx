@@ -25,6 +25,8 @@ import Animated, {
 
 import useStyles from '../../theme/authStyles';
 
+import { signInWithGoogle as googleSignIn } from '../../services/auth';
+
 const { width, height } = Dimensions.get('window');
 
 const SignIn = ({ navigation }: any) => {
@@ -59,18 +61,21 @@ const SignIn = ({ navigation }: any) => {
 
     async function signInWithGoogle() {
         setSigningIn(true);
-
-        // auth logic
-
-        setTimeout(() => {
+        try {
+            await googleSignIn();
+        } catch (err: any) {
+            console.log('Google sign in error:', err);
+            setIsErr(true);
+            setErr(err?.message || 'Error signing in with Google.');
+        } finally {
             setSigningIn(false);
-        }, 1000);
+        }
     }
 
     async function signInWithApple() {
         setSigningIn(true);
 
-        // auth logic
+        // TODO: wire up Apple sign in
 
         setTimeout(() => {
             setSigningIn(false);
@@ -132,6 +137,31 @@ const SignIn = ({ navigation }: any) => {
                         {/* BUTTONS */}
                         <View>
 
+                            {/* ERROR */}
+                            {isErr ? (
+                                <Animated.View
+                                    entering={FadeIn.duration(250)}
+                                    style={{
+                                        backgroundColor: '#ff444415',
+                                        borderWidth: 1,
+                                        borderColor: '#ff444440',
+                                        borderRadius: 18,
+                                        padding: 14,
+                                        marginBottom: 16,
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: '#ff8a8a',
+                                            fontSize: 13,
+                                            textAlign: 'center',
+                                        }}
+                                    >
+                                        {err}
+                                    </Text>
+                                </Animated.View>
+                            ) : null}
+
                             {/* EMAIL */}
                             <Animated.View
                                 entering={FadeInUp.delay(250).springify()}
@@ -140,7 +170,6 @@ const SignIn = ({ navigation }: any) => {
                                     activeOpacity={0.85}
                                     onPress={() =>
                                         !signingIn
-                                            //? navigation.navigate('Waiting')
                                             ? navigation.navigate('EmailSignIn')
                                             : null
                                     }

@@ -14,6 +14,9 @@ import Navigation from './src/navigation';
 import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
 import { configureAmplify } from './src/lib/amplifyConfig';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
 
 // Configure Amplify before anything renders
 configureAmplify();
