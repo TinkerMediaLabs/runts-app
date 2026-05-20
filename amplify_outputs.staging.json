@@ -23,6 +23,25 @@
       "require_symbols": true,
       "require_uppercase": true
     },
+    "oauth": {
+  "identity_providers": [
+    "GOOGLE",
+    "SIGN_IN_WITH_APPLE"
+  ],
+  "domain": "runts-auth-staging.auth.us-east-2.amazoncognito.com",
+  "redirect_sign_in_uri": [
+    "runts://callback"
+  ],
+  "redirect_sign_out_uri": [
+    "runts://signout"
+  ],
+  "response_type": "code",
+  "scopes": [
+    "email",
+    "openid",
+    "profile"
+  ]
+},
     "unauthenticated_identities_enabled": true
   },
   "data": {
