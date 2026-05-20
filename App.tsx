@@ -16,6 +16,7 @@ import TrackPlayer from '@rntp/player';
 import { configureAmplify } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
 
+// Must be called first to complete OAuth session on redirect back to app
 WebBrowser.maybeCompleteAuthSession();
 
 // Configure Amplify before anything renders

@@ -26,6 +26,7 @@ import Animated, {
 import useStyles from '../../theme/authStyles';
 
 import { signInWithGoogle as googleSignIn } from '../../services/auth';
+import { signInWithRedirect } from 'aws-amplify/auth';
 
 const { width, height } = Dimensions.get('window');
 

@@ -1,6 +1,5 @@
 {
   "expo": {
-    "name": "runts",
     "slug": "runts",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,29 +17,27 @@
       "color": "#000000"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.runtsapp.myapp"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.runts.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "intentFilters": [
-    {
-      "action": "VIEW",
-      "autoVerify": true,
-      "data": [
         {
-          "scheme": "runts"
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "runts"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
         }
-      ],
-      "category": ["BROWSABLE", "DEFAULT"]
-    }
-  ]
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
