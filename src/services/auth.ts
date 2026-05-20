@@ -17,6 +17,7 @@ const client = generateClient<Schema>();
 
 // ─── GOOGLE SIGN IN ──────────────────────────────────────────────────────────
 export async function signInWithGoogle() {
+  console.log('Attempting Google sign in...');
   await signInWithRedirect({
     provider: 'Google',
   });
