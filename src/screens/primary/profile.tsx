@@ -233,7 +233,7 @@ const ProfileScreen = ({ navigation }: any) => {
                     </Section>
 
                     {/* ── Sign out ── */}
-                    <View style={[styles.section, { marginTop: 32 }]}>
+                    {/* <View style={[styles.section, { marginTop: 32 }]}>
                         <TouchableOpacity
                             activeOpacity={0.7}
                             onPress={logout}
@@ -242,7 +242,7 @@ const ProfileScreen = ({ navigation }: any) => {
                             <FontAwesome5 name="sign-out-alt" size={14} color="gray" iconStyle="solid" style={{ marginRight: 10 }} />
                             <Text style={styles.signOutText}>Sign Out</Text>
                         </TouchableOpacity>
-                    </View>
+                    </View> */}
 
                 </Animated.ScrollView>
             </LinearGradient>

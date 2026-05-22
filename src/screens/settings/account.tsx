@@ -12,7 +12,7 @@ import {
     Dimensions,
     KeyboardAvoidingView,
     Platform,
-    Image
+    Image,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,6 +37,11 @@ import type { Schema } from '../../../amplify/data/resource';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
+
+// ---------------------------------------------------------------------------
+// Config — update this URL after deploying API Gateway
+// ---------------------------------------------------------------------------
+const DELETE_USER_API_URL = 'https://691umui6i9.execute-api.us-east-2.amazonaws.com/prod/delete-user';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,20 +88,14 @@ const SettingRow = ({
             <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
                 {icon === 'google' ? (
                     <Image
-                    source={require('../../../assets/images/google-logo.png')}
-                    style={{
-                        width: 28,
-                        height: 28,
-                    }}
-                />
+                        source={require('../../../assets/images/google-logo.png')}
+                        style={{ width: 28, height: 28 }}
+                    />
                 ) : icon === 'apple' ? (
                     <Image
-                    source={require('../../../assets/images/apple-logo.png')}
-                    style={{
-                        width: 28,
-                        height: 28,
-                    }}
-                />
+                        source={require('../../../assets/images/apple-logo.png')}
+                        style={{ width: 28, height: 28 }}
+                    />
                 ) : (
                     <FontAwesome5
                         name={icon}
@@ -292,6 +291,8 @@ const AccountScreen = ({ navigation }: any) => {
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
+    const [cognitoUsername, setCognitoUsername] = useState<string | null>(null);
+    const [userPoolId, setUserPoolId] = useState<string | null>(null);
 
     useEffect(() => {
         async function detectProvider() {
@@ -300,9 +301,21 @@ const AccountScreen = ({ navigation }: any) => {
                 const idToken = session.tokens?.idToken;
                 if (!idToken) return;
 
-                // Check identities claim for social provider
                 const payload = idToken.payload as any;
                 const identities = payload?.identities;
+
+                // Get cognito username for admin delete
+                setCognitoUsername(payload?.['cognito:username'] ?? null);
+
+                // Get user pool ID from the token's issuer URL
+                // Format: https://cognito-idp.us-east-2.amazonaws.com/us-east-2_XXXXXXX
+                const iss = payload?.iss as string;
+                if (iss) {
+                    const parts = iss.split('/');
+                    const poolId = parts[parts.length - 1];
+                    setUserPoolId(poolId ?? null);
+                    console.log('parsed userPoolId:', poolId);
+                }
 
                 if (identities && Array.isArray(identities) && identities.length > 0) {
                     const providerType = identities[0].providerType?.toLowerCase();
@@ -461,23 +474,111 @@ const AccountScreen = ({ navigation }: any) => {
     };
 
     // ── Delete Account ────────────────────────────────────────────────────────
+    // const handleDeleteAccount = async () => {
+    //     if (deleteConfirm.toLowerCase() !== 'delete') return;
+    //     setIsLoading(true);
+    //     setError('');
+    //     try {
+    //         // 1. Delete DynamoDB record first
+    //         if (userId) {
+    //             await client.models.User.delete({ id: userId });
+    //         }
+
+    //         if (isSocialUser) {
+    //             // 2a. For social users use Admin API via Lambda
+    //             // since deleteUser() requires aws.cognito.signin.user.admin scope
+    //             // which federated tokens don't include
+    //             if (!cognitoUsername || !userPoolId) {
+    //                 throw new Error('Unable to identify user for deletion.');
+    //             }
+
+    //             const response = await fetch(DELETE_USER_API_URL, {
+    //                 method: 'POST',
+    //                 headers: { 'Content-Type': 'application/json' },
+    //                 body: JSON.stringify({
+    //                     userPoolId,
+    //                     username: cognitoUsername,
+    //                 }),
+    //             });
+
+    //             const result = await response.json();
+
+    //             if (!response.ok || result.error) {
+    //                 throw new Error(result.error || 'Failed to delete account.');
+    //             }
+
+    //             // Sign out after successful deletion
+    //             await logout();
+    //         } else {
+    //             // 2b. For email users use standard Amplify deleteUser
+    //             await deleteUser();
+    //             await logout();
+    //         }
+
+    //         close();
+    //     } catch (err: any) {
+    //         console.log(err);
+    //         setError(err?.message || 'Error deleting account. Please try again.');
+    //     }
+    //     setIsLoading(false);
+    // };
+
     const handleDeleteAccount = async () => {
-        if (deleteConfirm.toLowerCase() !== 'delete') return;
-        setIsLoading(true);
-        setError('');
-        try {
-            if (userId) {
-                await client.models.User.delete({ id: userId });
+    if (deleteConfirm.toLowerCase() !== 'delete') return;
+    setIsLoading(true);
+    setError('');
+    try {
+        if (userId) {
+            await client.models.User.delete({ id: userId });
+        }
+
+        if (isSocialUser) {
+            if (!cognitoUsername || !userPoolId) {
+                throw new Error('Unable to identify user for deletion.');
             }
+
+            console.log('Calling delete API with:', { userPoolId, username: cognitoUsername });
+
+            const response = await fetch(DELETE_USER_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userPoolId,
+                    username: cognitoUsername,
+                }),
+            });
+
+            const rawText = await response.text();
+            console.log('API response status:', response.status);
+            console.log('API response raw:', rawText);
+
+            const result = JSON.parse(rawText);
+            console.log('API result:', JSON.stringify(result));
+
+            // API Gateway wraps Lambda response in another layer
+            const innerBody = typeof result.body === 'string' 
+                ? JSON.parse(result.body) 
+                : result.body;
+
+            console.log('Inner body:', JSON.stringify(innerBody));
+
+            if (result.statusCode >= 400 || innerBody?.error) {
+                throw new Error(innerBody?.error || 'Failed to delete account.');
+            }
+
+            await logout();
+        } else {
             await deleteUser();
             await logout();
-            close();
-        } catch (err: any) {
-            console.log(err);
-            setError(err?.message || 'Error deleting account. Please try again.');
         }
-        setIsLoading(false);
-    };
+
+        close();
+    } catch (err: any) {
+        console.log('Delete error:', err);
+        setError(err?.message || 'Error deleting account. Please try again.');
+    }
+    setIsLoading(false);
+};
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
