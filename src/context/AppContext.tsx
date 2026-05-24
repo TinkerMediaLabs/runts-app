@@ -9,6 +9,8 @@ import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
 import { getOrCreateUser } from '../services/auth';
 
+import { queryClient } from '../lib/queryClient';
+
 type UserProfile = {
   id: string;
   name?: string | null;
@@ -36,6 +38,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  const logout = async () => {
+    try {
+        await signOut();
+        queryClient.clear(); // clear all cached data on sign out
+        setUserId(null);
+        setIsAuthenticated(false);
+        setIsNewUser(false);
+        setProfile(null);
+    } catch (err) {
+        console.error('Logout error:', err);
+    }
+};
 
   const refreshAuth = async () => {
     try {

@@ -15,6 +15,8 @@ import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
 import { configureAmplify } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './src/lib/queryClient';
 
 // Must be called first to complete OAuth session on redirect back to app
 WebBrowser.maybeCompleteAuthSession();
@@ -23,6 +25,7 @@ WebBrowser.maybeCompleteAuthSession();
 configureAmplify();
 
 SplashScreen.preventAutoHideAsync();
+
 
 export default function App() {
     const resourcesLoaded = useCachedResources();
@@ -59,22 +62,24 @@ export default function App() {
     }
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-                <AppProvider>
-                    <PlayerUIProvider>
-                        <PlayerProvider>
-                            <AppShell>
-                                <Navigation colorScheme="dark" />
-                            </AppShell>
-                            <StatusBar
-                                style="light"
-                                backgroundColor="#000000"
-                            />
-                        </PlayerProvider>
-                    </PlayerUIProvider>
-                </AppProvider>
-            </SafeAreaProvider>
-        </GestureHandlerRootView>
+        <QueryClientProvider client={queryClient}>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <SafeAreaProvider>
+                    <AppProvider>
+                        <PlayerUIProvider>
+                            <PlayerProvider>
+                                <AppShell>
+                                    <Navigation colorScheme="dark" />
+                                </AppShell>
+                                <StatusBar
+                                    style="light"
+                                    backgroundColor="#000000"
+                                />
+                            </PlayerProvider>
+                        </PlayerUIProvider>
+                    </AppProvider>
+                </SafeAreaProvider>
+            </GestureHandlerRootView>
+        </QueryClientProvider>
     );
 }
