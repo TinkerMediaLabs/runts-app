@@ -7,6 +7,7 @@ const schema = a.schema({
       type: a.string(),
       name: a.string(),
       profilePicUri: a.string(),
+      birthdate: a.date(),
       isPublisher: a.boolean(),
       plan: a.string(),
     })

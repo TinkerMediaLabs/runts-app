@@ -14,54 +14,22 @@ import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withSpring,
-    interpolate,
 } from 'react-native-reanimated';
 
 import Screen from "@/components/common/Screen";
-
 import dummytags from '../../../dummydata/dummytags';
-
-import useStyles from "@/theme/styles";
 
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { useApp } from '../../context/AppContext';
 
-let _client: ReturnType<typeof generateClient<Schema>> | null = null;
+const client = generateClient<Schema>();
 
-function getClient() {
-  if (!_client) _client = generateClient<Schema>();
-  return _client;
-}
-
-const SplashCarousel = ({ navigation }: any) => {
+const SplashCarousel = ({ navigation, route }: any) => {
 
     const { refreshAuth } = useApp();
-
-    const UpdateThree = async () => {
-        if (top3.length !== 3) {
-            alert('Please select 3 genres');
-            return;
-        }
-
-        try {
-            const { userId } = await getCurrentUser();
-
-            await getClient().models.User.update({
-                id: userId,
-                name: 'user', // marks them as no longer new
-            });
-
-            await refreshAuth(); // re-checks isNewUser → triggers navigation to Root
-        } catch (e) {
-            console.log(e);
-        }
-    };
-
-    //const styles = useStyles();
-
-    const [genres, setGenres] = useState(dummytags);
+    const [genres] = useState(dummytags);
     const [top3, setTop3] = useState<string[]>([]);
 
     // -----------------------
@@ -72,7 +40,6 @@ const SplashCarousel = ({ navigation }: any) => {
             setTop3(prev => prev.filter(item => item !== id));
             return;
         }
-
         if (top3.length < 3) {
             setTop3(prev => [...prev, id]);
         }
@@ -81,7 +48,28 @@ const SplashCarousel = ({ navigation }: any) => {
     // -----------------------
     // NEXT
     // -----------------------
+    const UpdateThree = async () => {
+        if (top3.length !== 3) {
+            alert('Please select 3 genres');
+            return;
+        }
 
+        try {
+            const { userId } = await getCurrentUser();
+            const birthdate = route?.params?.birthdate ?? null;
+
+            await client.models.User.update({
+                id: userId,
+                name: 'user',       // marks them as no longer new
+                birthdate: birthdate,
+            });
+
+            await refreshAuth();    // re-checks isNewUser → triggers navigation to Root
+
+        } catch (e) {
+            console.log(e);
+        }
+    };
 
     return (
         <Screen>
@@ -93,7 +81,7 @@ const SplashCarousel = ({ navigation }: any) => {
                     style={styles.headerContainer}
                 >
                     <Text style={styles.title}>
-                        Let’s Get Started
+                        Let's Get Started
                     </Text>
 
                     <Text style={styles.subtitle}>
@@ -166,19 +154,16 @@ const GenreChip = ({
 
     const scale = useSharedValue(1);
 
-    const animatedStyle = useAnimatedStyle(() => {
-
-        return {
-            transform: [
-                {
-                    scale: withSpring(scale.value, {
-                        damping: 12,
-                        stiffness: 180,
-                    }),
-                },
-            ],
-        };
-    });
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [
+            {
+                scale: withSpring(scale.value, {
+                    damping: 12,
+                    stiffness: 180,
+                }),
+            },
+        ],
+    }));
 
     useEffect(() => {
         scale.value = selected ? 1.05 : 1;
@@ -193,12 +178,8 @@ const GenreChip = ({
             <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={onPress}
-                onPressIn={() => {
-                    scale.value = 0.96;
-                }}
-                onPressOut={() => {
-                    scale.value = selected ? 1.05 : 1;
-                }}
+                onPressIn={() => { scale.value = 0.96; }}
+                onPressOut={() => { scale.value = selected ? 1.05 : 1; }}
                 style={[
                     styles.chip,
                     selected && styles.chipSelected,

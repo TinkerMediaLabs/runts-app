@@ -84,7 +84,7 @@ export async function confirmNewPassword(
 }
 
 // ─── GET OR CREATE USER IN DYNAMODB ─────────────────────
-export async function getOrCreateUser() {
+export async function getOrCreateUser(birthdate?: string) {
   const { userId } = await getCurrentUser();
 
   const { data: existing } = await client.models.User.get({ id: userId });
@@ -95,6 +95,8 @@ export async function getOrCreateUser() {
     id: userId,
     type: 'user',
     name: null,
+    profilePicUri: null,
+    birthdate: birthdate ?? null,
     isPublisher: false,
     plan: 'free',
   });

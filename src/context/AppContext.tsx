@@ -17,6 +17,7 @@ type UserProfile = {
   avatar?: string | null;
   isPublisher?: boolean | null;
   plan?: string | null;
+  birthdate?: string | null;
 };
 
 type AppContextType = {
@@ -66,6 +67,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         avatar: dbUser?.profilePicUri,
         isPublisher: dbUser?.isPublisher,
         plan: dbUser?.plan,
+        birthdate: dbUser?.birthdate,
       });
     } catch (err) {
       setUserId(null);
@@ -76,6 +78,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
+
+    const isAdult = (() => {
+      if (!profile?.birthdate) return false;
+      const birth = new Date(profile.birthdate);
+      const age = new Date().getFullYear() - birth.getFullYear();
+      const monthDiff = new Date().getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && new Date().getDate() < birth.getDate())) {
+        return age - 1 >= 18;
+      }
+      return age >= 18;
+    })();
 
   useEffect(() => {
     refreshAuth();
@@ -96,18 +109,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     return unsubscribe;
   }, []);
-
-  const logout = async () => {
-    try {
-      await signOut();
-      setUserId(null);
-      setIsAuthenticated(false);
-      setIsNewUser(false);
-      setProfile(null);
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
-  };
 
   return (
     <AppContext.Provider

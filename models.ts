@@ -1,18 +1,19 @@
 
 
-const User = {
-    id: '1',
-    type: 'String',
-    name: '',
-    profilePicUri: '',
-    publisher: 'Publisher', //boolean?
-    pinned: [Story],
-    finished: [Story],
-    inProgress: [Story],
+type User = {
+    id: ID!
+    type: String
+    name: String
+    profilePicUri: String
+    birthdate: Date
+    publisher: Boolean
+    //pinned: [Story]
+    //finished: [Story]
+    //inProgress: [Story]
 }
 
 
-const Story = {
+type Story = {
         id: 1,
         type: 'String',
         title: '', //determine was typecase this should be in
@@ -33,7 +34,7 @@ const Story = {
         transcript: ''
 }
 
-const Tag = {
+type Tag = {
     id: '1',
     name: '',
     isPrimary: true, //boolean to determine if this is the primary genre or not
@@ -44,14 +45,14 @@ const Tag = {
     tileImageUri: '',
 }
 
-const PinnedStory = {
+type PinnedStory = {
     id: '1',
     type: 'String',
     user: User,
     story: Story, 
 }
 
-const InProgressStory = {
+type InProgressStory = {
     id: '1',
     type: 'String',
     user: User,
@@ -59,20 +60,20 @@ const InProgressStory = {
     playbaclPosition: 'Int',
 }
 
-const FinishedStory = {
+type FinishedStory = {
     id: '1',
     type: 'String',
     user: User,
     story: Story,
 }
 
-const HorizontalList = {
+type HorizontalList = {
     id: '1',
     title: '',
     stories: [Story],
 }
 
-const Author = {
+type Author = {
     id: '1',
     name: '',
     profilePicUri: '',
@@ -80,7 +81,7 @@ const Author = {
     publisher: Publisher,
 }
 
-const Publisher = {
+type Publisher = {
     id: '1',
     name: '',
     authors: [Author],

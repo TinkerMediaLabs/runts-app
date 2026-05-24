@@ -12,6 +12,8 @@ import useStyles from "@/theme/styles";
 import { format } from "date-fns";
 
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -64,9 +66,11 @@ const Welcome = ({ navigation }: any) => {
     // -----------------------
     // DATE PICKER
     // -----------------------
-    const onConfirmDate = (selectedDate: Date) => {
-        setPickerVisible(false);
-        setDate(selectedDate);
+   const onConfirmDate = (selectedDate: Date) => {
+        setTimeout(() => {
+            setPickerVisible(false);
+            setDate(selectedDate);
+        }, 100);
     };
 
     return (
@@ -129,7 +133,9 @@ const Welcome = ({ navigation }: any) => {
                 <Animated.View style={[{ paddingBottom: 40 }, buttonOpacityStyle]}>
                 <Animated.View style={buttonScaleStyle}>
                     <TouchableOpacity
-                        onPress={() => navigation.navigate("WelcomePref")}
+                        onPress={() => navigation.navigate('WelcomePref', {
+                            birthdate: format(date, 'yyyy-MM-dd'),
+                        })}
                         style={{
                             backgroundColor: "#00C2C2",
                             paddingVertical: 14,
@@ -145,20 +151,21 @@ const Welcome = ({ navigation }: any) => {
                 </Animated.View>
 
                 {/* DATE PICKER */}
-                <DateTimePickerModal
-                    isVisible={isPickerVisible}
-                    mode="date"
-                    date={date}
-                    onConfirm={onConfirmDate}
-                    onCancel={() => setPickerVisible(false)}
-                    onDismiss={() => setPickerVisible(false)}
-                    onValueChange={() => {}}
-                    themeVariant={"dark"}
-                    display="default"
-                    textColor="gray"
-                    positiveButton={{ label: 'OK', textColor: 'cyan' }}
-                    negativeButton={{ label: 'Cancel', textColor: '#ffffff' }}
-                />
+               {isPickerVisible && (
+                    <DateTimePicker
+                        value={date}
+                        mode="date"
+                        display="spinner"
+                        onChange={(event, selectedDate) => {
+                            setPickerVisible(false);
+                            if (event.type === 'set' && selectedDate) {
+                                setTimeout(() => setDate(selectedDate), 100);
+                            }
+                        }}
+                        themeVariant="dark"
+                        maximumDate={new Date()}
+                    />
+                )}
             </View>
         </Screen>
     );
