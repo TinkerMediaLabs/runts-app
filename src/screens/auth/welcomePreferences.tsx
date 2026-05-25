@@ -58,16 +58,20 @@ const SplashCarousel = ({ navigation, route }: any) => {
             const { userId } = await getCurrentUser();
             const birthdate = route?.params?.birthdate ?? null;
 
-            await client.models.User.update({
+            console.log('Updating user:', userId, 'birthdate:', birthdate);
+
+            const result = await client.models.User.update({
                 id: userId,
-                name: 'user',       // marks them as no longer new
-                birthdate: birthdate,
+                birthdate,
+                onboardingComplete: true,
             });
 
-            await refreshAuth();    // re-checks isNewUser → triggers navigation to Root
+            console.log('Update result:', JSON.stringify(result));
+
+            await refreshAuth();
 
         } catch (e) {
-            console.log(e);
+            console.log('UpdateThree error:', e);
         }
     };
 

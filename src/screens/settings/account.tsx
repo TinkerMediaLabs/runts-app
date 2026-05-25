@@ -287,7 +287,7 @@ const InfoBanner = ({ message }: { message: string }) => (
 
 const AccountScreen = ({ navigation }: any) => {
 
-    const { userId, logout, profile } = useApp();
+    const { userId, logout, profile, setProfile } = useApp();
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
@@ -396,7 +396,7 @@ const AccountScreen = ({ navigation }: any) => {
             }
 
             // Update local AppContext state
-            setProfile(prev => prev ? { ...prev, name: name.trim() } : prev);
+            setProfile(profile ? { ...profile, name: name.trim() } : null);
 
             setSuccess('Your display name has been updated.');
             setName('');

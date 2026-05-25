@@ -51,6 +51,7 @@ const refreshAuth = async () => {
         await new Promise(resolve => setTimeout(resolve, 100));
         const user = await getCurrentUser();
         const dbUser = await getOrCreateUser();
+        const isNew = !dbUser?.onboardingComplete && !dbUser?.birthdate;
 
         // Generate signed URL if profilePicUri is an S3 path
         let profilePicUri = dbUser?.profilePicUri ?? null;
@@ -64,7 +65,7 @@ const refreshAuth = async () => {
 
         setUserId(user.userId);
         setIsAuthenticated(true);
-        setIsNewUser(!dbUser?.onboardingComplete);
+        setIsNewUser(isNew);
         setProfile({
             id: user.userId,
             name: dbUser?.name,
