@@ -7,14 +7,18 @@ import {
 } from 'react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../amplify/data/resource';
 import { getOrCreateUser } from '../services/auth';
-
 import { queryClient } from '../lib/queryClient';
+import { getProfilePicUrl } from '../services/auth';
+
+const client = generateClient<Schema>();
 
 type UserProfile = {
   id: string;
   name?: string | null;
-  avatar?: string | null;
+  profilePicUri?: string | null;
   isPublisher?: boolean | null;
   plan?: string | null;
   birthdate?: string | null;
@@ -29,6 +33,7 @@ type AppContextType = {
   setProfile: (profile: UserProfile | null) => void;
   refreshAuth: () => Promise<void>;
   logout: () => Promise<void>;
+  updateProfilePic: (uri: string) => Promise<void>;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -40,23 +45,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isNewUser, setIsNewUser] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  const logout = async () => {
-    try {
-        await signOut();
-        queryClient.clear(); // clear all cached data on sign out
-        setUserId(null);
-        setIsAuthenticated(false);
-        setIsNewUser(false);
-        setProfile(null);
-    } catch (err) {
-        console.error('Logout error:', err);
-    }
-};
-
   const refreshAuth = async () => {
     try {
+      await new Promise(resolve => setTimeout(resolve, 100));
       const user = await getCurrentUser();
       const dbUser = await getOrCreateUser();
+
+      let avatarUrl = dbUser?.profilePicUri ?? null;
+      if (avatarUrl && avatarUrl.startsWith('profile-pictures/')) {
+          try {
+              avatarUrl = await getProfilePicUrl(avatarUrl);
+          } catch {
+              avatarUrl = null;
+          }
+      }
 
       setUserId(user.userId);
       setIsAuthenticated(true);
@@ -64,11 +66,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setProfile({
         id: user.userId,
         name: dbUser?.name,
-        avatar: dbUser?.profilePicUri,
+        profilePicUri: avatarUrl,
         isPublisher: dbUser?.isPublisher,
         plan: dbUser?.plan,
         birthdate: dbUser?.birthdate,
-      });
+    });
     } catch (err) {
       setUserId(null);
       setIsAuthenticated(false);
@@ -79,16 +81,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-    const isAdult = (() => {
-      if (!profile?.birthdate) return false;
-      const birth = new Date(profile.birthdate);
-      const age = new Date().getFullYear() - birth.getFullYear();
-      const monthDiff = new Date().getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && new Date().getDate() < birth.getDate())) {
-        return age - 1 >= 18;
-      }
-      return age >= 18;
-    })();
+  // Update profile pic in DynamoDB and local state
+  const updateProfilePic = async (uri: string) => {
+    if (!userId) return;
+    try {
+      await client.models.User.update({
+        id: userId,
+        profilePicUri: uri,
+      });
+      setProfile(prev => prev ? { ...prev, profilePicUri: uri } : prev);
+    } catch (err) {
+      console.error('Error updating profile pic:', err);
+      throw err;
+    }
+  };
 
   useEffect(() => {
     refreshAuth();
@@ -110,6 +116,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return unsubscribe;
   }, []);
 
+  const logout = async () => {
+    try {
+      await signOut();
+      queryClient.clear();
+      setUserId(null);
+      setIsAuthenticated(false);
+      setIsNewUser(false);
+      setProfile(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -121,6 +140,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setProfile,
         refreshAuth,
         logout,
+        updateProfilePic,
       }}
     >
       {children}

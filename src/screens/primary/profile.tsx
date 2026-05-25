@@ -8,17 +8,21 @@ import {
     Animated,
     StyleSheet,
     Dimensions,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 
 import Screen from '@/components/common/Screen';
 import CloseButton from '../../components/common/CloseButton';
 import { spacing } from '../../theme/spacing';
 import { useApp } from '@/context/AppContext';
+import { uploadProfilePicture } from '../../services/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -68,21 +72,14 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
 
 const ProfileScreen = ({ navigation }: any) => {
 
-    const { userId, isAuthenticated, logout } = useApp();
+    const { userId, profile, updateProfilePic } = useApp();
     const insets = useSafeAreaInsets();
 
-    const [user] = useState({
-        name: 'Listener',
-        imageUri: null as string | null,
-        numFollowing: 0,
-        storiesListened: 0,
-        hoursListened: 0,
-    });
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     const scrollY = useRef(new Animated.Value(0)).current;
 
     const AVATAR_SIZE   = 88;
-    const HERO_HEIGHT   = 220;
     const FADE_START    = 80;
     const FADE_END      = 160;
 
@@ -97,6 +94,83 @@ const ProfileScreen = ({ navigation }: any) => {
         outputRange: [0, -24],
         extrapolate: 'clamp',
     });
+
+    // ── Profile picture picker ────────────────────────────────────────────────
+    const handleChangePhoto = async () => {
+        Alert.alert(
+            'Change Profile Photo',
+            'Choose a photo source',
+            [
+                {
+                    text: 'Camera',
+                    onPress: () => pickImage('camera'),
+                },
+                {
+                    text: 'Photo Library',
+                    onPress: () => pickImage('library'),
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+            ]
+        );
+    };
+
+    const pickImage = async (source: 'camera' | 'library') => {
+        try {
+            let result;
+
+            if (source === 'camera') {
+                const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert('Permission required', 'Camera access is needed to take a photo.');
+                    return;
+                }
+                result = await ImagePicker.launchCameraAsync({
+                    mediaTypes: ['images'],
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.8,
+                });
+            } else {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert('Permission required', 'Photo library access is needed to select a photo.');
+                    return;
+                }
+                result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ['images'],
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.8,
+                });
+            }
+
+            if (result.canceled || !result.assets?.[0]) return;
+
+            const asset = result.assets[0];
+            setUploadingPhoto(true);
+
+            // Upload to S3
+            const s3Url = await uploadProfilePicture(
+                userId!,
+                asset.uri,
+                asset.mimeType ?? 'image/jpeg'
+            );
+
+            // Update DynamoDB and local state
+            await updateProfilePic(s3Url);
+
+       } catch (err: any) {
+        console.log('Photo upload error full:', JSON.stringify(err));
+        console.log('Photo upload error message:', err?.message);
+        console.log('Photo upload error name:', err?.name);
+        Alert.alert('Error', err?.message || 'Failed to update profile photo. Please try again.');
+    } finally {
+            setUploadingPhoto(false);
+        }
+    };
 
     const NAV_TILES: NavTile[] = [
         {
@@ -156,9 +230,9 @@ const ProfileScreen = ({ navigation }: any) => {
                     contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
                 >
 
-                  <View style={{marginTop:40, marginHorizontal: 20, width: 60,}}>
-                    <CloseButton navigation={navigation} />
-                  </View>
+                    <View style={{ marginTop: 40, marginHorizontal: 20, width: 60 }}>
+                        <CloseButton navigation={navigation} />
+                    </View>
 
                     {/* ── Hero ── */}
                     <Animated.View style={[
@@ -168,21 +242,42 @@ const ProfileScreen = ({ navigation }: any) => {
 
                         {/* Avatar */}
                         <View style={styles.avatarWrapper}>
-                            <Image
-                                source={
-                                    user.imageUri
-                                        ? { uri: user.imageUri }
-                                        : require('../../../assets/images/blankprofile.png')
-                                }
-                                style={[styles.avatar, { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2 }]}
-                            />
-                            <TouchableOpacity style={styles.avatarEdit} activeOpacity={0.8}>
+                            {uploadingPhoto ? (
+                                <View style={[
+                                    styles.avatar,
+                                    {
+                                        width: AVATAR_SIZE,
+                                        height: AVATAR_SIZE,
+                                        borderRadius: AVATAR_SIZE / 2,
+                                        backgroundColor: '#2a2a2a',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    }
+                                ]}>
+                                    <ActivityIndicator color="cyan" />
+                                </View>
+                            ) : (
+                                <Image
+                                    source={
+                                        profile?.profilePicUri
+                                            ? { uri: profile.profilePicUri }
+                                            : require('../../../assets/images/blankprofile.png')
+                                    }
+                                    style={[styles.avatar, { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2 }]}
+                                />
+                            )}
+                            <TouchableOpacity
+                                style={styles.avatarEdit}
+                                activeOpacity={0.8}
+                                onPress={handleChangePhoto}
+                                disabled={uploadingPhoto}
+                            >
                                 <FontAwesome5 name="camera" size={11} color="#000" iconStyle="solid" />
                             </TouchableOpacity>
                         </View>
 
                         <Text style={styles.heroName}>
-                            {user.name}
+                            {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
                         </Text>
 
                         {/* Stats row */}
@@ -192,21 +287,21 @@ const ProfileScreen = ({ navigation }: any) => {
                                 activeOpacity={0.7}
                                 onPress={() => navigation.navigate('AuthorFollowing')}
                             >
-                                <Text style={styles.statValue}>{user.numFollowing}</Text>
+                                <Text style={styles.statValue}>0</Text>
                                 <Text style={styles.statLabel}>Following</Text>
                             </TouchableOpacity>
 
                             <View style={styles.statSeparator} />
 
                             <View style={styles.statItem}>
-                                <Text style={styles.statValue}>{user.storiesListened}</Text>
+                                <Text style={styles.statValue}>0</Text>
                                 <Text style={styles.statLabel}>Stories</Text>
                             </View>
 
                             <View style={styles.statSeparator} />
 
                             <View style={styles.statItem}>
-                                <Text style={styles.statValue}>{user.hoursListened}h</Text>
+                                <Text style={styles.statValue}>0h</Text>
                                 <Text style={styles.statLabel}>Listened</Text>
                             </View>
                         </View>
@@ -215,7 +310,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
                     {/* ── Navigation ── */}
                     <Section title="My Library">
-                        {NAV_TILES.filter(t => ['2','3'].includes(t.id)).map((tile, i, arr) => (
+                        {NAV_TILES.filter(t => ['2', '3'].includes(t.id)).map((tile, i, arr) => (
                             <React.Fragment key={tile.id}>
                                 <NavRow {...tile} />
                                 {i < arr.length - 1 && <RowDivider />}
@@ -224,25 +319,13 @@ const ProfileScreen = ({ navigation }: any) => {
                     </Section>
 
                     <Section title="Preferences">
-                        {NAV_TILES.filter(t => ['1','4','5'].includes(t.id)).map((tile, i, arr) => (
+                        {NAV_TILES.filter(t => ['1', '4', '5'].includes(t.id)).map((tile, i, arr) => (
                             <React.Fragment key={tile.id}>
                                 <NavRow {...tile} />
                                 {i < arr.length - 1 && <RowDivider />}
                             </React.Fragment>
                         ))}
                     </Section>
-
-                    {/* ── Sign out ── */}
-                    {/* <View style={[styles.section, { marginTop: 32 }]}>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={logout}
-                            style={styles.signOutButton}
-                        >
-                            <FontAwesome5 name="sign-out-alt" size={14} color="gray" iconStyle="solid" style={{ marginRight: 10 }} />
-                            <Text style={styles.signOutText}>Sign Out</Text>
-                        </TouchableOpacity>
-                    </View> */}
 
                 </Animated.ScrollView>
             </LinearGradient>
