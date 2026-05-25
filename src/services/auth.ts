@@ -125,29 +125,38 @@ export async function getOrCreateUser() {
 
   if (existing) return existing;
 
-  // Try to get profile picture from social provider token
+  // Try to get name and profile pic from social provider token
   let profilePicUri: string | null = null;
+  let name: string | null = null;
+
   try {
     const session = await fetchAuthSession();
     const payload = session.tokens?.idToken?.payload as any;
     const identities = payload?.identities;
 
     if (identities && Array.isArray(identities) && identities.length > 0) {
-      // Google provides picture in the token
+      // Google provides name and picture in the token
       profilePicUri = payload?.picture ?? null;
+      name = payload?.name ?? null;
+
+      // Apple may provide name on first sign in only
+      if (!name && payload?.given_name) {
+        name = [payload.given_name, payload.family_name].filter(Boolean).join(' ');
+      }
     }
   } catch {
-    // Not a social user or no picture available
+    // Not a social user or no data available
   }
 
   const { data: newUser } = await client.models.User.create({
     id: userId,
     type: 'user',
-    name: null,
+    name,
     profilePicUri,
     birthdate: null,
     isPublisher: false,
     plan: 'free',
+    onboardingComplete: false,
   });
 
   return newUser;

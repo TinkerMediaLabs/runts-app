@@ -10,6 +10,7 @@ const schema = a.schema({
       birthdate: a.date(),
       isPublisher: a.boolean(),
       plan: a.string(),
+      onboardingComplete: a.boolean(),
     })
     .authorization(allow => [allow.owner()]),
 });

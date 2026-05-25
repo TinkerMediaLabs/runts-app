@@ -379,12 +379,25 @@ const AccountScreen = ({ navigation }: any) => {
         setError('');
         setSuccess('');
         try {
+            // Update Cognito attribute
             await updateUserAttribute({
                 userAttribute: {
                     attributeKey: 'name',
                     value: name.trim(),
                 },
             });
+
+            // Also update DynamoDB
+            if (userId) {
+                await client.models.User.update({
+                    id: userId,
+                    name: name.trim(),
+                });
+            }
+
+            // Update local AppContext state
+            setProfile(prev => prev ? { ...prev, name: name.trim() } : prev);
+
             setSuccess('Your display name has been updated.');
             setName('');
         } catch (err: any) {

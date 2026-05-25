@@ -22,6 +22,7 @@ type UserProfile = {
   isPublisher?: boolean | null;
   plan?: string | null;
   birthdate?: string | null;
+  onboardingComplete?: boolean | null;
 };
 
 type AppContextType = {
@@ -45,41 +46,43 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isNewUser, setIsNewUser] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  const refreshAuth = async () => {
+const refreshAuth = async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const user = await getCurrentUser();
-      const dbUser = await getOrCreateUser();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const user = await getCurrentUser();
+        const dbUser = await getOrCreateUser();
 
-      let avatarUrl = dbUser?.profilePicUri ?? null;
-      if (avatarUrl && avatarUrl.startsWith('profile-pictures/')) {
-          try {
-              avatarUrl = await getProfilePicUrl(avatarUrl);
-          } catch {
-              avatarUrl = null;
-          }
-      }
+        // Generate signed URL if profilePicUri is an S3 path
+        let profilePicUri = dbUser?.profilePicUri ?? null;
+        if (profilePicUri && profilePicUri.startsWith('profile-pictures/')) {
+            try {
+                profilePicUri = await getProfilePicUrl(profilePicUri);
+            } catch {
+                profilePicUri = null;
+            }
+        }
 
-      setUserId(user.userId);
-      setIsAuthenticated(true);
-      setIsNewUser(!dbUser?.name);
-      setProfile({
-        id: user.userId,
-        name: dbUser?.name,
-        profilePicUri: avatarUrl,
-        isPublisher: dbUser?.isPublisher,
-        plan: dbUser?.plan,
-        birthdate: dbUser?.birthdate,
-    });
+        setUserId(user.userId);
+        setIsAuthenticated(true);
+        setIsNewUser(!dbUser?.onboardingComplete);
+        setProfile({
+            id: user.userId,
+            name: dbUser?.name,
+            profilePicUri,
+            isPublisher: dbUser?.isPublisher,
+            plan: dbUser?.plan,
+            birthdate: dbUser?.birthdate,
+            onboardingComplete: dbUser?.onboardingComplete,
+        });
     } catch (err) {
-      setUserId(null);
-      setIsAuthenticated(false);
-      setIsNewUser(false);
-      setProfile(null);
+        setUserId(null);
+        setIsAuthenticated(false);
+        setIsNewUser(false);
+        setProfile(null);
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   // Update profile pic in DynamoDB and local state
   const updateProfilePic = async (uri: string) => {
