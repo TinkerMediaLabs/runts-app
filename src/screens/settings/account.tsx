@@ -18,6 +18,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 
 import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
@@ -675,7 +676,9 @@ const AccountScreen = ({ navigation }: any) => {
                         />
                     </Section>
 
-                    <Text style={styles.version}>Version 1.0.0</Text>
+                    <Text style={styles.version}>
+                        Version {Constants.expoConfig?.version ?? '1.0.0'}
+                    </Text>
                 </ScrollView>
             </LinearGradient>
 

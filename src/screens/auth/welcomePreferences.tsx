@@ -48,32 +48,29 @@ const SplashCarousel = ({ navigation, route }: any) => {
     // -----------------------
     // NEXT
     // -----------------------
-    const UpdateThree = async () => {
-        if (top3.length !== 3) {
-            alert('Please select 3 genres');
-            return;
-        }
+const UpdateThree = async () => {
+    if (top3.length !== 3) {
+        alert('Please select 3 genres');
+        return;
+    }
 
-        try {
-            const { userId } = await getCurrentUser();
-            const birthdate = route?.params?.birthdate ?? null;
+    try {
+        const { userId } = await getCurrentUser();
+        const birthdate = route?.params?.birthdate ?? null;
 
-            console.log('Updating user:', userId, 'birthdate:', birthdate);
+        await client.models.User.update({
+            id: userId,
+            birthdate,
+            onboardingComplete: true,
+        });
 
-            const result = await client.models.User.update({
-                id: userId,
-                birthdate,
-                onboardingComplete: true,
-            });
+        await refreshAuth();
 
-            console.log('Update result:', JSON.stringify(result));
-
-            await refreshAuth();
-
-        } catch (e) {
-            console.log('UpdateThree error:', e);
-        }
-    };
+    } catch (e: any) {
+        console.log('UpdateThree error:', e?.message || e);
+        alert('Error: ' + (e?.message || 'Something went wrong'));
+    }
+};
 
     return (
         <Screen>
