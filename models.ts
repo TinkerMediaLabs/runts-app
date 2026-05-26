@@ -12,37 +12,55 @@ type User = {
     //inProgress: [Story]
 }
 
-
 type Story = {
-        id: 1,
-        type: 'String',
-        title: '', //determine was typecase this should be in
-        audioUri: '',
-        summary: '',
-        description: '',
-        credit: '', //narrator, author, etc
-        imageUri: '',
-        author: 'Author',
-        duration: 'Num', //use seconds
-        numListens: 'Num',
-        primaryTag: Tag, //this is the primary genre
-        secondaryTag: Tag, //secondary genre, optional
-        tags: [Tag],
-        publisher: Publisher, 
-        nsfw: 'Boolean',
-        published: 'Boolean', //is the story is published live or not
-        transcript: ''
+    id: ID
+    type: String
+    title: String
+    audioUri: String
+    summary: String //short teaser of the story
+    description: String //full description of the story
+    credit: String //additional credit for narrator, author, etc
+    imageUri: String
+    author: Author
+    duration: Int
+    numListens: Int
+    primaryTag: Tag //primary genre
+    secondaryTag: Tag//secondary genre, optional
+    tags: [Tag],
+    publisher: Publisher
+    nsfw: Boolean
+    live: Boolean //is the story is published live or not
+    transcript: String
+}
+
+type Author = {
+    id: ID
+    name: String
+    profilePicUri: String
+    stories: [Story]
+    publisher: Publisher
 }
 
 type Tag = {
-    id: '1',
-    name: '',
-    isPrimary: true, //boolean to determine if this is the primary genre or not
-    stories: [Story],
-    color: '', //color
-    icon: '', //icon name from fontawesome,
-    imageUri: '',
-    tileImageUri: '',
+    id: ID
+    name: String
+    isPrimary: Boolean //boolean to determine if this is the major genre or not. Major genres will show on the discover screen
+    stories: [Story]
+    color: String //color
+    icon: String //icon name from fontawesome,
+    imageUri: String
+    tileImageUri: String
+}
+
+type Publisher = {
+    id: ID //publishers are mostly internal. A publisher may have multiple authors/pen names
+    name: String
+    authors: [Author]
+    stories: [Story]
+    bio: String
+    profilePicUri: String
+    website: String
+    numPublished: Int
 }
 
 type PinnedStory = {
@@ -73,23 +91,4 @@ type HorizontalList = {
     stories: [Story],
 }
 
-type Author = {
-    id: '1',
-    name: '',
-    profilePicUri: '',
-    stories: [Story],
-    publisher: Publisher,
-}
-
-type Publisher = {
-    id: '1',
-    name: '',
-    authors: [Author],
-    stories: [Story],
-    bio: '',
-    profilePicUri: '',
-    website: '',
-    numPublished: 'Num',
-
-}
 

@@ -24,24 +24,25 @@
       "require_uppercase": true
     },
     "oauth": {
-  "identity_providers": [
-    "GOOGLE",
-    "SIGN_IN_WITH_APPLE"
-  ],
-  "domain": "runts-auth-staging.auth.us-east-2.amazoncognito.com",
-  "redirect_sign_in_uri": [
-    "runts://callback"
-  ],
-  "redirect_sign_out_uri": [
-    "runts://signout"
-  ],
-  "response_type": "code",
-  "scopes": [
-    "email",
-    "openid",
-    "profile"
-  ]
-},
+      "identity_providers": [
+        "GOOGLE"
+      ],
+      "redirect_sign_in_uri": [
+        "runts://callback"
+      ],
+      "redirect_sign_out_uri": [
+        "runts://signout"
+      ],
+      "response_type": "code",
+      "scopes": [
+        "phone",
+        "email",
+        "openid",
+        "profile",
+        "aws.cognito.signin.user.admin"
+      ],
+      "domain": "364c5a8537c7be8ba9e3.auth.us-east-2.amazoncognito.com"
+    },
     "unauthenticated_identities_enabled": true
   },
   "data": {
@@ -85,6 +86,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "birthdate": {
+              "name": "birthdate",
+              "isArray": false,
+              "type": "AWSDate",
+              "isRequired": false,
+              "attributes": []
+            },
             "isPublisher": {
               "name": "isPublisher",
               "isArray": false,
@@ -96,6 +104,13 @@
               "name": "plan",
               "isArray": false,
               "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "onboardingComplete": {
+              "name": "onboardingComplete",
+              "isArray": false,
+              "type": "Boolean",
               "isRequired": false,
               "attributes": []
             },
