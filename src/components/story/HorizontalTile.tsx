@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -16,13 +16,14 @@ import { RootStackParamList } from '../../types/types';
 
 import LoadingItem from '../common/LoadingItem';
 import { spacing } from '../../theme/spacing';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 220;
 
 const HorzStoryTile = ({
     title,
-    primaryTag,
+    primaryTagName,
     imageUri,
     id,
     numListens,
@@ -30,7 +31,12 @@ const HorzStoryTile = ({
 }: any) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const [imageU] = useState(imageUri);
+
+    // Resolve S3 path to signed URL if needed
+    const { data: resolvedImageUri } = useStoryImage(
+        imageUri?.startsWith('stories/') ? imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? imageUri;
 
     return (
         <TouchableOpacity
@@ -38,13 +44,12 @@ const HorzStoryTile = ({
             onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
             style={styles.wrapper}
         >
-            {imageU ? (
+            {displayImageUri ? (
                 <ImageBackground
-                    source={{ uri: imageU }}
+                    source={{ uri: displayImageUri }}
                     style={styles.card}
                     imageStyle={styles.cardImage}
                 >
-                    {/* Gradient — bottom two-thirds, strong enough for text legibility */}
                     <LinearGradient
                         colors={[
                             'transparent',
@@ -56,14 +61,13 @@ const HorzStoryTile = ({
                         pointerEvents="none"
                     />
 
-                    {/* Info sits at the bottom */}
                     <View style={styles.info}>
                         <Text style={styles.title} numberOfLines={3}>
                             {title}
                         </Text>
 
                         <View style={styles.meta}>
-                            <Text style={styles.tag}>{primaryTag}</Text>
+                            <Text style={styles.tag}>{primaryTagName}</Text>
                             <View style={styles.listens}>
                                 <FontAwesome5
                                     name="headphones"

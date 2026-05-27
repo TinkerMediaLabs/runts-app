@@ -29,6 +29,7 @@ import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import LoadingItem  from '../common/LoadingItem';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -48,7 +49,7 @@ const TIMING_CFG  = { duration: 200, easing: Easing.out(Easing.quad) };
 type ItemProps = {
     id: string;
     title: string;
-    primaryTag: string;
+    primaryTagName: string;
     summary: string;
     imageUri: string;
     audioUri: string;
@@ -58,7 +59,7 @@ type ItemProps = {
 };
 
 const CarouselItem = ({
-    id, title, primaryTag, summary,
+    id, title, primaryTagName, summary,
     imageUri, audioUri, author, duration, numListens,
 }: ItemProps) => {
 
@@ -66,6 +67,12 @@ const CarouselItem = ({
 
     const [isQ,   setIsQ]   = useState(false);
     const [isFav, setIsFav] = useState(false);
+
+    // Resolve S3 path to signed URL if needed
+    const { data: resolvedImageUri } = useStoryImage(
+        imageUri?.startsWith('stories/') ? imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? imageUri;
 
     const expandProgress = useSharedValue(0);
     const isExpanded     = useSharedValue(false);
@@ -81,7 +88,6 @@ const CarouselItem = ({
         opacity: interpolate(expandProgress.value, [0, 0.3], [0, 1]),
     }));
 
-    // Gradient grows taller as the card expands so dark coverage follows the text
     const gradientStyle = useAnimatedStyle(() => ({
         height: interpolate(expandProgress.value, [0, 1], [CARD_HEIGHT * 0.72, CARD_HEIGHT]),
     }));
@@ -92,13 +98,12 @@ const CarouselItem = ({
 
     return (
         <View style={styles.itemWrapper}>
-            {imageUri ? (
+            {displayImageUri ? (
                 <ImageBackground
-                    source={{ uri: imageUri }}
+                    source={{ uri: displayImageUri }}
                     style={styles.card}
                     imageStyle={styles.cardImage}
                 >
-                    {/* Dark gradient — height animates with expansion */}
                     <Animated.View
                         style={[styles.gradientContainer, gradientStyle]}
                         pointerEvents="none"
@@ -115,20 +120,17 @@ const CarouselItem = ({
                         />
                     </Animated.View>
 
-                    {/* Tap entire image area (above the info panel) to navigate */}
                     <TouchableOpacity
                         onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
                         style={styles.imageTap}
                         activeOpacity={1}
                     />
 
-                    {/* Info panel — tapping anywhere here toggles expansion */}
                     <TouchableOpacity
                         onPress={toggleExpand}
                         activeOpacity={0.9}
                         style={styles.infoPanel}
                     >
-                        {/* Title row */}
                         <View style={styles.titleRow}>
                             <Text style={styles.title} numberOfLines={2}>{title}</Text>
                             <Animated.View style={[styles.chevron, chevronStyle]}>
@@ -141,7 +143,6 @@ const CarouselItem = ({
                             </Animated.View>
                         </View>
 
-                        {/* Author */}
                         <View style={styles.metaRow}>
                             <FontAwesome5
                                 name="book-open"
@@ -152,9 +153,8 @@ const CarouselItem = ({
                             <Text style={styles.metaText}>{author}</Text>
                         </View>
 
-                        {/* Tag + listens */}
                         <View style={styles.metaRow}>
-                            <Text style={styles.tag}>{primaryTag}</Text>
+                            <Text style={styles.tag}>{primaryTagName}</Text>
                             <View style={styles.metaDot} />
                             <FontAwesome5
                                 name="headphones"
@@ -165,7 +165,6 @@ const CarouselItem = ({
                             <Text style={styles.metaText}>{numListens ?? 0}</Text>
                         </View>
 
-                        {/* Expanded content — clips in */}
                         <Animated.View style={[styles.expandClip, expandStyle]}>
                             <View style={styles.expandInner}>
                                 <Text style={styles.summary} numberOfLines={3}>
@@ -178,7 +177,7 @@ const CarouselItem = ({
                                         duration={duration}
                                         author={author}
                                         audioUri={audioUri}
-                                        imageUri={imageUri}
+                                        imageUri={displayImageUri}
                                     />
 
                                     <View style={styles.iconActions}>
@@ -235,19 +234,19 @@ const CarouselItem = ({
 // ForYouCarousel
 // ---------------------------------------------------------------------------
 
-const ForYouCarousel = ({ stories }: any) => {
+const ForYouCarousel = ({ stories, tagMap }: { stories: any[]; tagMap: Record<string, string> }) => {
 
     const renderItem = ({ item }: any) => (
         <CarouselItem
             id={item?.id}
             title={item?.title}
-            imageUri={item?.imageUri}
-            primaryTag={item?.primaryTag}
-            audioUri={item?.audioUri}
-            summary={item?.summary}
-            author={item?.author}
-            duration={item?.duration}
-            numListens={item?.numListens}
+            imageUri={item?.imageUri ?? ''}
+            primaryTagName={item?.primaryTagName ?? ''}
+            audioUri={item?.audioUri ?? ''}
+            summary={item?.summary ?? ''}
+            author={item?.authorId ?? ''}
+            duration={item?.duration ?? 0}
+            numListens={item?.numListens ?? 0}
         />
     );
 
@@ -302,13 +301,11 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
 
-    // Transparent touch target covering the image above the info panel
     gradientContainer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        // height is animated
     },
 
     imageTap: {
@@ -316,10 +313,9 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        bottom: 160, // approx collapsed info panel height
+        bottom: 160,
     },
 
-    // Info panel sits at the bottom of the card
     infoPanel: {
         paddingHorizontal: 14,
         paddingTop: 10,

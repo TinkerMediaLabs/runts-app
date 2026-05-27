@@ -1,16 +1,15 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { 
-    ScrollView, 
+import React, { useEffect, useState } from 'react';
+import {
+    ScrollView,
     TouchableWithoutFeedback,
     View,
     Text,
-    AppState,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
 
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
-import {LinearGradient} from 'expo-linear-gradient';
-import * as Linking from 'expo-linking'
+import { LinearGradient } from 'expo-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
 import useStyles from '../../theme/styles';
@@ -19,32 +18,25 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
-
 import { useApp } from '@/context/AppContext';
-// import Trending from '../components/lists/Trending';
-// import ShortSweet from '../components/lists/ShortSweet';
+
 import ForYouCarousel from '../../components/story/ForYouCarousel';
-import HorizontztalList from '../../components/story/HorizontalList';
+import HorizontalList from '../../components/story/HorizontalList';
 import ContinueListening from '../../components/story/ContinueListening';
-// import NewList from '../components/lists/NewList';
 
-import dummystories from '../../../dummydata/stories';
-import dummyProgressStory from '../../../dummydata/dummyProgressStory';
-import dummyHorizontalLists from '../../../dummydata/dummyHorizontalLists';
+import { useStories } from '../../hooks/queries/useStories';
+import { usePrimaryTags } from '../../hooks/queries/useTags';
 
+const HomeScreen = ({ navigation }: any) => {
 
-const HomeScreen = ({navigation} : any) => {
-
-    const { userId, isAuthenticated, logout } = useApp();
-
+    const { userId } = useApp();
     const styles = useStyles();
     const typo = useTypography();
 
-    //fetch the stories for a specific genre for promoted carousel      
-    const [stories, setStories] = useState(dummystories);
-    const [horizontalLists, setHorizontalLists] = useState(dummyHorizontalLists);
+    const { data: stories, isLoading: storiesLoading } = useStories();
+    const { data: tags, isLoading: tagsLoading } = usePrimaryTags();
 
-    const appState = useRef(AppState.currentState);
+    const isLoading = storiesLoading || tagsLoading;
 
     const welcomeText = [
         "Discover a new world",
@@ -57,100 +49,112 @@ const HomeScreen = ({navigation} : any) => {
         "Drift into a new tale",
         "Step beyond the page",
         "Step 1: Press play.",
-        "Leave here for a while"
-    ]
+        "Leave here for a while",
+    ];
 
-    const [text, setText] = useState('')
+    const [text, setText] = useState('');
 
     useEffect(() => {
+        const getRandomInt = (max: number) => Math.floor(Math.random() * max);
+        setText(welcomeText[getRandomInt(welcomeText.length)]);
+    }, []);
 
-        let txt = welcomeText[getRandomInt(welcomeText.length)]
+    // Build a tag lookup map: { [tagId]: tagName }
+    const tagMap = React.useMemo(() => {
+        if (!tags) return {};
+        return tags.reduce((acc: Record<string, string>, tag) => {
+            if (tag.id && tag.name) acc[tag.id] = tag.name;
+            return acc;
+        }, {});
+    }, [tags]);
 
-        function getRandomInt(max : any) {
-                return Math.floor(Math.random() * max);
-            }
-        setText(txt)
-    }, [])
+    // Enrich stories with resolved tag names
+    const enrichedStories = React.useMemo(() => {
+        if (!stories) return [];
+        return stories.map(story => ({
+            ...story,
+            primaryTagName: story.primaryTagId ? tagMap[story.primaryTagId] ?? '' : '',
+            secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
+        }));
+    }, [stories, tagMap]);
 
-    //set the in progress story
-    const [progressExists, setProgressExists] = useState(true)
+    // Get top 3 primary tags for horizontal lists
+    const topTags = React.useMemo(() => {
+        if (!tags) return [];
+        return tags.slice(0, 4);
+    }, [tags]);
 
     return (
-    <Screen>
-        <LinearGradient 
-            colors={['#13192Ca5', '#161b1b', '#000000']} 
-            style={{flex: 1, minHeight: Dimensions.get('window').height, }} 
-            start={{ x: 0, y: 0 }} 
-            end={{ x: 1, y: 1 }}
-        >
-            <ScrollView style={{ }} showsVerticalScrollIndicator={false} contentContainerStyle={{flexGrow: 1 }} > 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: getStatusBarHeight() + 20, marginBottom: 10, marginHorizontal: spacing.margin}}>
-                  <Text style={[{color: colors.text}, typo.h1]}>
-                      {text}
-                  </Text>
-
-                  <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')}>
-                      <View style={{ paddingLeft: 30, justifyContent: 'center'}}>
-                          <FontAwesome
-                              name='user'
-                              size={20}
-                              color='#fff'  
-                          />
-                      </View>
-                  </TouchableWithoutFeedback>
-                </View>
-
-                <View >
-                    <ForYouCarousel stories={stories} />
-                </View>
-
-                <View style={{paddingVertical: 20}}>
-                    {progressExists === true ? (
-                        <ContinueListening story={dummyProgressStory}/>
-                    ) : null}
-                </View>
-
-                <View>
-                     <View style={{marginLeft: spacing.margin, paddingVertical: spacing.margin}}>
-                        <Text style={typo.title}>
-                            {horizontalLists[0].title}
+        <Screen>
+            <LinearGradient
+                colors={['#13192Ca5', '#161b1b', '#000000']}
+                style={{ flex: 1, minHeight: Dimensions.get('window').height }}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            >
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                >
+                    {/* Header */}
+                    <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        marginTop: getStatusBarHeight() + 20,
+                        marginBottom: 10,
+                        marginHorizontal: spacing.margin,
+                    }}>
+                        <Text style={[{ color: colors.text }, typo.h1]}>
+                            {text}
                         </Text>
+                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')}>
+                            <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
+                                <FontAwesome name="user" size={20} color="#fff" />
+                            </View>
+                        </TouchableWithoutFeedback>
                     </View>
-                    <HorizontztalList stories={stories} tagId={horizontalLists[0]?.id} tagName={horizontalLists[0]?.title} />
-                </View> 
 
-                <View>
-                     <View style={{ marginLeft: spacing.margin, paddingVertical: spacing.margin}}>
-                        <Text style={typo.title}>
-                            {horizontalLists[1].title}
-                        </Text>
-                    </View>
-                    <HorizontztalList stories={stories} tagId={horizontalLists[1]?.id} tagName={horizontalLists[1]?.title} />
-                </View> 
+                    {isLoading ? (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
+                            <ActivityIndicator color="cyan" />
+                        </View>
+                    ) : (
+                        <>
+                            {/* Featured carousel */}
+                            <View>
+                                <ForYouCarousel
+                                    stories={enrichedStories}
+                                    tagMap={tagMap}
+                                />
+                            </View>
 
-                <View>
-                     <View style={{marginLeft: spacing.margin, paddingVertical: spacing.margin}}>
-                        <Text style={typo.title}>
-                            {horizontalLists[2].title}
-                        </Text>
-                    </View>
-                    <HorizontztalList stories={stories} tagId={horizontalLists[2]?.id} tagName={horizontalLists[2]?.title} />
-                </View> 
+                            {/* Horizontal lists by tag */}
+                            {topTags.map(tag => {
+                                const tagStories = enrichedStories.filter(
+                                    s => s.primaryTagId === tag.id
+                                );
+                                if (tagStories.length === 0) return null;
+                                return (
+                                    <View key={tag.id}>
+                                        <View style={{ marginLeft: spacing.margin, paddingVertical: spacing.margin }}>
+                                            <Text style={typo.title}>{tag.name}</Text>
+                                        </View>
+                                        <HorizontalList
+                                            stories={tagStories}
+                                            tagId={tag.id}
+                                            tagName={tag.name ?? ''}
+                                        />
+                                    </View>
+                                );
+                            })}
+                        </>
+                    )}
 
-                 <View>
-                     <View style={{marginLeft: spacing.margin, paddingVertical: spacing.margin}}>
-                        <Text style={typo.title}>
-                            {horizontalLists[3].title}
-                        </Text>
-                    </View>
-                    <HorizontztalList stories={stories} tagId={horizontalLists[3]?.id} tagName={horizontalLists[3]?.title} />
-                </View> 
-                
-                <View style={{height: 300}} />
-            </ScrollView>
-        </LinearGradient>
-    </Screen>
+                    <View style={{ height: 300 }} />
+                </ScrollView>
+            </LinearGradient>
+        </Screen>
     );
-}
+};
 
 export default HomeScreen;

@@ -69,7 +69,7 @@ const schema = a.schema({
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
-      allow.group('admins').to(['create', 'update', 'delete', 'read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
   // ── Author ────────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ const schema = a.schema({
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
-      allow.group('admins').to(['create', 'update', 'delete', 'read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
   // ── Story ─────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ const schema = a.schema({
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
-      allow.group('admins').to(['create', 'update', 'delete', 'read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
   // ── Tag ───────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ Tag: a
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
-      allow.group('admins').to(['create', 'update', 'delete', 'read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
   // ── StoryTag (join table for many-to-many) ────────────────────────────────
@@ -151,7 +151,7 @@ Tag: a
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
-      allow.group('admins').to(['create', 'update', 'delete', 'read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
 });

@@ -39,46 +39,56 @@ const tags = [
             imageUri: '',
             tileImageUri: 'dystopian',
     },
-//         {
-//             id: '5',
-//             name: 'Romance',
-//             isPrimary: true, //boolean to determine if this is the primary genre or not
-//             //stories: [Story],
-//             color: '#000', //color
-//             icon: '', //icon name from fontawesome,
-//             imageUri: '',
-//             tileImageUri: '../../../assets/images/genres/fantasyTileImage.png',
-//     },
-//         {
-//             id: '6',
-//             name: 'Scarey',
-//             isPrimary: true, //boolean to determine if this is the primary genre or not
-//             //stories: [Story],
-//             color: '#000', //color
-//             icon: '', //icon name from fontawesome,
-//             imageUri: '',
-//             tileImageUri: '../../../assets/images/genres/fantasyTileImage.png',
-//     },
-//         {
-//             id: '7',
-//             name: 'Historical Fiction',
-//             isPrimary: true, //boolean to determine if this is the primary genre or not
-//             //stories: [Story],
-//             color: '#000', //color
-//             icon: '', //icon name from fontawesome,
-//             imageUri: '',
-//             tileImageUri: '../../../assets/images/genres/fantasyTileImage.png',
-//     },
-//         {
-//             id: '8',
-//             name: 'Historical Nonfiction',
-//             isPrimary: true, //boolean to determine if this is the primary genre or not
-//             //stories: [Story],
-//             color: '#000', //color
-//             icon: '', //icon name from fontawesome,
-//             imageUri: '',
-//             tileImageUri: '../../../assets/images/genres/fantasyTileImage.png',
-//     },
+        {
+            id: '5',
+            name: 'Romance',
+            isPrimary: true, //boolean to determine if this is the primary genre or not
+            //stories: [Story],
+            color: '#000', //color
+            icon: '', //icon name from fontawesome,
+            imageUri: '',
+            tileImageUri: '',
+    },
+        {
+            id: '6',
+            name: 'Scarey',
+            isPrimary: true, //boolean to determine if this is the primary genre or not
+            //stories: [Story],
+            color: '#000', //color
+            icon: '', //icon name from fontawesome,
+            imageUri: '',
+            tileImageUri: '',
+    },
+        {
+            id: '7',
+            name: 'Historical',
+            isPrimary: true, //boolean to determine if this is the primary genre or not
+            //stories: [Story],
+            color: '#000', //color
+            icon: '', //icon name from fontawesome,
+            imageUri: '',
+            tileImageUri: '',
+    },
+        {
+            id: '8',
+            name: 'Nonfiction',
+            isPrimary: false, //boolean to determine if this is the primary genre or not
+            //stories: [Story],
+            color: '#000', //color
+            icon: '', //icon name from fontawesome,
+            imageUri: '',
+            tileImageUri: '',
+    },
+        {
+            id: '8',
+            name: 'Fiction',
+            isPrimary: false, //boolean to determine if this is the primary genre or not
+            //stories: [Story],
+            color: '#000', //color
+            icon: '', //icon name from fontawesome,
+            imageUri: '',
+            tileImageUri: '',
+    },
  ]
 
 export default tags;

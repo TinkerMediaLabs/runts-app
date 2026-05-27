@@ -15,7 +15,6 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import HorzStoryTile from './HorizontalTile';
 import { spacing } from '../../theme/spacing';
 
-// Card width must match HorizontalTile's CARD_WIDTH + marginLeft
 const CARD_WIDTH    = 200;
 const CARD_MARGIN   = spacing.margin;
 const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
@@ -56,18 +55,15 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
             id={item.id}
             title={item.title}
             imageUri={item.imageUri}
-            primaryTag={item.primaryTag}
-            secondaryTag={item.secondaryTag}
+            primaryTagName={item.primaryTagName}
+            secondaryTagName={item.secondaryTagName}
             audioUri={item.audioUri}
             summary={item.summary}
             description={item.description}
-            author={item.author}
             duration={item.duration}
             numListens={item.numListens}
             credit={item.credit}
-            publisher={item.publisher}
             nsfw={item.nsfw}
-            published={item.published}
         />
     );
 
@@ -80,7 +76,6 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 maxToRenderPerBatch={8}
-                // Snap the closest tile to the left edge
                 snapToInterval={SNAP_INTERVAL}
                 snapToAlignment="start"
                 decelerationRate="fast"

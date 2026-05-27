@@ -80,6 +80,32 @@ export async function confirmNewPassword(
   });
 }
 
+// Cache for story image URLs to avoid regenerating on every render
+const imageUrlCache: Record<string, { url: string; expiresAt: number }> = {};
+
+export async function getStoryImageUrl(path: string): Promise<string> {
+  if (!path) return '';
+  
+  // Return cached URL if still valid (expires in 6 days, refresh at 1 day remaining)
+  const cached = imageUrlCache[path];
+  if (cached && cached.expiresAt > Date.now() + 1000 * 60 * 60 * 24) {
+    return cached.url;
+  }
+
+  const { url } = await getUrl({
+    path,
+    options: { expiresIn: 3600 * 24 * 7 }, // 7 days
+  });
+
+  const urlString = url.toString();
+  imageUrlCache[path] = {
+    url: urlString,
+    expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7,
+  };
+
+  return urlString;
+}
+
 // ─── UPLOAD PROFILE PICTURE TO S3 ───────────────────────────────────────────
 export async function getProfilePicUrl(path: string): Promise<string> {
   const { url } = await getUrl({
