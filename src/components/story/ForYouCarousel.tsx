@@ -244,7 +244,7 @@ const ForYouCarousel = ({ stories, tagMap }: { stories: any[]; tagMap: Record<st
             primaryTagName={item?.primaryTagName ?? ''}
             audioUri={item?.audioUri ?? ''}
             summary={item?.summary ?? ''}
-            author={item?.authorId ?? ''}
+            author={item?.authorName ?? ''}
             duration={item?.duration ?? 0}
             numListens={item?.numListens ?? 0}
         />
@@ -363,10 +363,13 @@ const styles = StyleSheet.create({
 
     expandClip: {
         overflow: 'hidden',
+        justifyContent: 'flex-end',
     },
     expandInner: {
-        paddingTop: 8,
+        paddingVertical: 10,
         gap: 10,
+        height: '100%',
+        justifyContent: 'space-between'
     },
     summary: {
         fontSize: 13,

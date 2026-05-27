@@ -1,212 +1,263 @@
-//this is the template for a taghome screen, which is the screen that shows the stories for a specific tag.
-
-import React, {useState, useEffect, useRef} from 'react';
-import { 
-    View, 
-    StyleSheet, 
-    Text, 
-    TouchableWithoutFeedback, 
+import React, { useMemo } from 'react';
+import {
+    View,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
     ScrollView,
-    FlatList,
     Dimensions,
-    Animated
+    ActivityIndicator,
 } from 'react-native';
 
-import {useRoute} from '@react-navigation/native'
-
-import {LinearGradient} from 'expo-linear-gradient';
+import { useRoute } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { getStatusBarHeight } from 'react-native-status-bar-height';
 
-// import { genreTagsByGenreId,  } from '../src/graphql/queries';
-// import {graphqlOperation, API, Storage} from 'aws-amplify';
+import Screen from '@/components/common/Screen';
+import { spacing } from '../../theme/spacing';
+import useTypography from '../../theme/typography';
 
 import ForYouCarousel from '../../components/story/ForYouCarousel';
 import HorizontalList from '../../components/story/HorizontalList';
 
-import tags from '../../../dummydata/dummytags';
-import stories from '../../../dummydata/stories';
+import {
+    useStoriesByTagNew,
+    useStoriesByTagTrending,
+    useStoriesByTagShort,
+} from '../../hooks/queries/useStories';
+import { useTags } from '../../hooks/queries/useTags';
+import { useAuthors } from '../../hooks/queries/useAuthors';
 
-import useStyles from '../../theme/styles';
-import useTypography from '../../theme/typography';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 
-import Screen from '@/components/common/Screen';
+const GenreHome = ({ navigation }: any) => {
 
-import dummyHorizontalLists from '../../../dummydata/dummyHorizontalLists';
-import dummystories from '../../../dummydata/stories';
-import dummytags from '../../../dummydata/dummytags';
-
-import { useApp } from '@/context/AppContext';
-
-const GenreHome = ({id, name, navigation} : any) => {
-
-        const { userId, isAuthenticated, logout } = useApp();
-
-        const styles = useStyles();
-        const typo = useTypography();
-
-        const [dummyTags, setDummyTags] = useState(tags);
-        const [stories, setStories] = useState(dummystories);
-        const [horizontalLists, setHorizontalLists] = useState(dummyHorizontalLists);
-
-//route params from the StoriesScreen to specifiy the genre
     const route = useRoute();
+    const { id: tagId, name: tagName }: any = route.params;
+    const insets = useSafeAreaInsets();
+    const typo = useTypography();
 
+    // ── Real data ─────────────────────────────────────────────────────────────
+    const { data: newStories,      isLoading: newLoading }      = useStoriesByTagNew(tagId);
+    const { data: trendingStories, isLoading: trendingLoading } = useStoriesByTagTrending(tagId);
+    const { data: shortStories,    isLoading: shortLoading }    = useStoriesByTagShort(tagId);
+    const { data: tags }    = useTags();
+    const { data: authors } = useAuthors();
 
-//get 2 trending tags in the genre
-const [trendingTags, setTrendingTags] = useState([]);
+    const isLoading = newLoading || trendingLoading || shortLoading;
 
-    const animation = useRef(new Animated.Value(0)).current;
+    // Build tag lookup map
+    const tagMap = useMemo(() => {
+        if (!tags) return {};
+        return tags.reduce((acc: Record<string, string>, tag) => {
+            if (tag.id && tag.name) acc[tag.id] = tag.name;
+            return acc;
+        }, {});
+    }, [tags]);
 
-    const animatedOpacity = animation.interpolate({
-        inputRange: [0, 50],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-        });
+    // Build author lookup map
+    const authorMap = useMemo(() => {
+        if (!authors) return {};
+        return authors.reduce((acc: Record<string, string>, author) => {
+            if (author.id && author.name) acc[author.id] = author.name;
+            return acc;
+        }, {});
+    }, [authors]);
 
-    const animatedOpacitySlow = animation.interpolate({
-        inputRange: [0, 220],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-        });
+    // Enrich stories with resolved names
+    const enrich = (stories: any[]) =>
+        stories.map(s => ({
+            ...s,
+            primaryTagName:   tagMap[s.primaryTagId ?? ''] ?? '',
+            secondaryTagName: tagMap[s.secondaryTagId ?? ''] ?? '',
+            authorName:       authorMap[s.authorId ?? ''] ?? '',
+        }));
 
-    const animatedAppearOpacity = animation.interpolate({
-        inputRange: [0, 450],
-        outputRange: [0, 1],
-        extrapolate: 'clamp',
-        });
+    const enrichedNew      = useMemo(() => enrich(newStories ?? []),      [newStories, tagMap, authorMap]);
+    const enrichedTrending = useMemo(() => enrich(trendingStories ?? []), [trendingStories, tagMap, authorMap]);
+    const enrichedShort    = useMemo(() => enrich(shortStories ?? []),    [shortStories, tagMap, authorMap]);
 
-    const animatedHeaderHeight = animation.interpolate({
-        inputRange: [0, 350],
-        outputRange: [450, 80],
-        extrapolate: 'clamp',
-        });
-
-    const animatedColor = animation.interpolate({
-        inputRange: [250, 800],
-        outputRange: ['#000000', '#363636'],
-        extrapolate: 'clamp',
-        });
-
-
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <Screen>
-            <View style={styles.container}>
-                <LinearGradient
-                    colors={['#212121', '#000', '#000',]}
-                    style={{height: '100%'}}
-                    start={{ x: 1, y: 1 }}
-                    end={{ x: 0.5, y: 0.5 }}
-                >
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        
+            <StatusBar style="light" />
+            <LinearGradient
+                colors={['#212121', '#000', '#000']}
+                style={{ flex: 1 }}
+                start={{ x: 1, y: 1 }}
+                end={{ x: 0.5, y: 0.5 }}
+            >
+                {/* ── Sticky header ── */}
+                <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={styles.backBtn}
+                        activeOpacity={0.7}
+                    >
+                        <FontAwesome5
+                            name="chevron-left"
+                            size={18}
+                            color="#fff"
+                            iconStyle="solid"
+                        />
+                    </TouchableOpacity>
 
-                        <View style={{ marginTop: 100}}>
-                            <ForYouCarousel stories={stories}/>
-                        </View>
+                    <Text style={styles.headerTitle} numberOfLines={1}>
+                        {tagName}
+                    </Text>
 
-                        <View style={{marginTop: 20}}>
-                            
-                            {/* <View style={{}}>
-                                <FlatList 
-                                    data={trendingTags}
-                                    keyExtractor={item => item.id}
-                                    renderItem={renderGenreTag}
-                                    scrollEnabled={false}
-                                    numColumns={2}
-                                    contentContainerStyle={{width: Dimensions.get('window').width - 40, marginHorizontal: 20, }}
-                                    ListHeaderComponent={() => {
-                                        return (
-                                            <View style={{marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
-                                                <View style={{marginBottom: 0, flexDirection: 'row', alignItems: 'center'}}>
-                                                    <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 18, }}>
-                                                        Popular Tags in 
-                                                    </Text>
-                                                    <Text style={{ marginLeft: 6, color: '#fff', fontWeight: 'bold', fontSize: 18, textTransform: 'capitalize'}}>
-                                                        {dummyTags[Number(dummyTags)-1].name}
-                                                    </Text>
-                                                </View>
-                                                <FontAwesome5 
-                                                    name='chevron-right'
-                                                    color='#fff'
-                                                    size={17}
-                                                    style={{padding: 10, }}
-                                                    iconStyle="solid"
-                                                    //onPress={() => navigation.navigate('ViewGenreTags', {genreRoute: genreID, genreName: genreName})}
-                                                />
-                                            </View>
-                                        )
-                                    }}
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('BrowseByTitle')}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.browseText}>Browse</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* ── Content ── */}
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator color="cyan" size="large" />
+                    </View>
+                ) : (
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+                    >
+                        {/* ── Featured carousel — Brand New ── */}
+                        {enrichedNew.length > 0 && (
+                            <View style={{ marginTop: 20 }}>
+                                <ForYouCarousel
+                                    stories={enrichedNew}
+                                    tagMap={tagMap}
                                 />
-                            </View> */}
-                        </View>
-
-                        <View>
-                            <View style={{marginLeft: spacing.margin, paddingVertical: spacing.margin}}>
-                                <Text style={typo.title}>
-                                    {horizontalLists[0].title}
-                                </Text>
                             </View>
-                            <HorizontalList stories={stories}/>
-                        </View> 
+                        )}
 
-                        <View>
-                            <View style={{marginLeft: spacing.margin, paddingVertical: spacing.margin}}>
-                                <Text style={typo.title}>
-                                    {horizontalLists[2].title}
-                                </Text>
+                        {/* ── Trending ── */}
+                        {enrichedTrending.length > 0 && (
+                            <View style={{ marginTop: 20 }}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={typo.title}>Trending</Text>
+                                </View>
+                                <HorizontalList
+                                    stories={enrichedTrending}
+                                    tagId={tagId}
+                                    tagName={tagName}
+                                />
                             </View>
-                            <HorizontalList stories={stories}/>
-                        </View> 
+                        )}
 
-                        <View style={{height: 200}}/>
+                        {/* ── Brand New ── */}
+                        {enrichedNew.length > 0 && (
+                            <View style={{ marginTop: 20 }}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={typo.title}>Brand New</Text>
+                                </View>
+                                <HorizontalList
+                                    stories={enrichedNew}
+                                    tagId={tagId}
+                                    tagName={tagName}
+                                />
+                            </View>
+                        )}
 
-                        
+                        {/* ── Short & Sweet ── */}
+                        {enrichedShort.length > 0 && (
+                            <View style={{ marginTop: 20 }}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={typo.title}>Short & Sweet</Text>
+                                </View>
+                                <HorizontalList
+                                    stories={enrichedShort}
+                                    tagId={tagId}
+                                    tagName={tagName}
+                                />
+                            </View>
+                        )}
 
-                    </ScrollView>
-                    <View style={{position: 'absolute', paddingTop: getStatusBarHeight() + 20, paddingBottom: 10, alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row',  width: Dimensions.get('window').width, backgroundColor: '#000000CC'}}>
-                            <View style={{flexDirection: 'row', alignItems: 'center', height: getStatusBarHeight() + 10}}>
-                                <FontAwesome5 
-                                    name='chevron-left'
-                                    size={22}
-                                    color='#fff'
-                                    style={{padding: 30, margin: -30, paddingLeft: 50}}
-                                    onPress={() => navigation.goBack()}
+                        {/* Empty state */}
+                        {enrichedNew.length === 0 &&
+                         enrichedTrending.length === 0 &&
+                         enrichedShort.length === 0 && (
+                            <View style={styles.emptyContainer}>
+                                <FontAwesome5
+                                    name="book-open"
+                                    size={32}
+                                    color="rgba(255,255,255,0.2)"
                                     iconStyle="solid"
-                                /> 
-                                <Text style={{fontWeight: 'bold', marginLeft: 20, fontSize: 22, color: '#fff', textTransform: 'capitalize'}}>
-                                    {dummyTags[1].name}
-                                    {/* {dummyTags[Number(dummyTags.id)-1].name} */}
+                                />
+                                <Text style={styles.emptyText}>
+                                    No stories in {tagName} yet
                                 </Text>
                             </View>
-                            <View>
-                                <TouchableWithoutFeedback 
-                                    onPress={() => navigation.navigate('BrowseByTitle')}
-                                >
-                                    <Text style={{marginRight: 20, color: '#fff'}}>
-                                        Browse
-                                    </Text> 
-                                </TouchableWithoutFeedback>
-                                
-                            </View>
-                        </View>
-                        
-                </LinearGradient>
-            </View>
+                        )}
+
+                        <View style={{ height: 40 }} />
+                    </ScrollView>
+                )}
+            </LinearGradient>
         </Screen>
     );
-}
+};
 
-const styles = StyleSheet.create ({
-    container: {
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.margin,
+        paddingBottom: 14,
+        backgroundColor: '#000000CC',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#2a2a2a',
+    },
+    backBtn: {
+        padding: 8,
+        marginLeft: -8,
+        marginRight: 8,
+    },
+    headerTitle: {
         flex: 1,
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#fff',
+        textTransform: 'capitalize',
     },
-    gradient: {
-        height: 300
+
+    sectionHeader: {
+        marginLeft: spacing.margin,
+        paddingVertical: spacing.margin,
     },
+
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    emptyContainer: {
+        alignItems: 'center',
+        paddingTop: 80,
+        gap: 16,
+    },
+    emptyText: {
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.4)',
+    },
+    browseText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+},
 });
 
 export default GenreHome;

@@ -19,6 +19,7 @@ import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
 import { useApp } from '@/context/AppContext';
+import { useAuthors } from '../../hooks/queries/useAuthors';
 
 import ForYouCarousel from '../../components/story/ForYouCarousel';
 import HorizontalList from '../../components/story/HorizontalList';
@@ -32,6 +33,19 @@ const HomeScreen = ({ navigation }: any) => {
     const { userId } = useApp();
     const styles = useStyles();
     const typo = useTypography();
+
+    // Inside HomeScreen:
+    const { data: authors } = useAuthors();
+
+    // Build author lookup map
+    const authorMap = React.useMemo(() => {
+        if (!authors) return {};
+        return authors.reduce((acc: Record<string, string>, author) => {
+            if (author.id && author.name) acc[author.id] = author.name;
+            return acc;
+        }, {});
+    }, [authors]);
+
 
     const { data: stories, isLoading: storiesLoading } = useStories();
     const { data: tags, isLoading: tagsLoading } = usePrimaryTags();
@@ -68,15 +82,16 @@ const HomeScreen = ({ navigation }: any) => {
         }, {});
     }, [tags]);
 
-    // Enrich stories with resolved tag names
+// Add authorName to enriched stories
     const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
         return stories.map(story => ({
             ...story,
             primaryTagName: story.primaryTagId ? tagMap[story.primaryTagId] ?? '' : '',
             secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
+            authorName: story.authorId ? authorMap[story.authorId] ?? '' : '',
         }));
-    }, [stories, tagMap]);
+    }, [stories, tagMap, authorMap]);
 
     // Get top 3 primary tags for horizontal lists
     const topTags = React.useMemo(() => {

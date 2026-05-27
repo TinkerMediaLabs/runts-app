@@ -4,14 +4,15 @@ import type { Schema } from '../../../amplify/data/resource';
 
 const client = generateClient<Schema>();
 
-// ─── Fetch all live stories ───────────────────────────────────────────────
+// ─── All live stories sorted by newest ───────────────────────────────────────
 export function useStories() {
   return useQuery({
     queryKey: ['stories'],
     queryFn: async () => {
-      const { data, errors } = await client.models.Story.list({
-        filter: { live: { eq: true } },
-      });
+      const { data, errors } = await client.models.Story.listStoryByLiveAndPublishedAt(
+        { live: 'true' },
+        { sortDirection: 'DESC' }
+      );
       if (errors) throw new Error(errors[0].message);
       return data;
     },
@@ -19,7 +20,92 @@ export function useStories() {
   });
 }
 
-// ─── Fetch a single story by ID ───────────────────────────────────────────
+// ─── Stories by tag sorted by newest ─────────────────────────────────────────
+export function useStoriesByTagNew(tagId: string) {
+  return useQuery({
+    queryKey: ['stories', 'tag', 'new', tagId],
+    queryFn: async () => {
+      const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndPublishedAt(
+        { primaryTagId: tagId },
+        { sortDirection: 'DESC' }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return data ?? [];
+    },
+    enabled: !!tagId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Stories by tag sorted by listens (trending) ─────────────────────────────
+export function useStoriesByTagTrending(tagId: string) {
+  return useQuery({
+    queryKey: ['stories', 'tag', 'trending', tagId],
+    queryFn: async () => {
+      const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndNumListens(
+        { primaryTagId: tagId },
+        { sortDirection: 'DESC' }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return data ?? [];
+    },
+    enabled: !!tagId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Stories by tag sorted by duration (short & sweet) ───────────────────────
+export function useStoriesByTagShort(tagId: string, maxDuration: number = 1200) {
+  return useQuery({
+    queryKey: ['stories', 'tag', 'short', tagId],
+    queryFn: async () => {
+      const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndDuration(
+        { primaryTagId: tagId },
+        { sortDirection: 'ASC' }
+      );
+      if (errors) throw new Error(errors[0].message);
+      // Filter client-side for duration under threshold
+      return (data ?? []).filter(s => (s.duration ?? 0) <= maxDuration);
+    },
+    enabled: !!tagId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Trending globally ────────────────────────────────────────────────────────
+export function useTrendingStories() {
+  return useQuery({
+    queryKey: ['stories', 'trending'],
+    queryFn: async () => {
+      const { data, errors } = await client.models.Story.listStoryByLiveAndNumListens(
+        { live: 'true' },
+        { sortDirection: 'DESC' }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return data ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Stories by author ────────────────────────────────────────────────────────
+export function useStoriesByAuthor(authorId: string) {
+  return useQuery({
+    queryKey: ['stories', 'author', authorId],
+    queryFn: async () => {
+      const { data, errors } = await client.models.Story.listStoryByAuthorIdAndPublishedAt(
+        { authorId },
+        { sortDirection: 'DESC' }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return data ?? [];
+    },
+    enabled: !!authorId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Single story ─────────────────────────────────────────────────────────────
 export function useStory(id: string) {
   return useQuery({
     queryKey: ['story', id],
@@ -29,27 +115,6 @@ export function useStory(id: string) {
       return data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
-  });
-}
-
-// ─── Fetch stories by tag ─────────────────────────────────────────────────
-export function useStoriesByTag(tagId: string) {
-  return useQuery({
-    queryKey: ['stories', 'tag', tagId],
-    queryFn: async () => {
-      const { data, errors } = await client.models.Story.list({
-        filter: {
-          and: [
-            { live: { eq: true } },
-            { primaryTagId: { eq: tagId } },
-          ],
-        },
-      });
-      if (errors) throw new Error(errors[0].message);
-      return data;
-    },
-    enabled: !!tagId,
     staleTime: 1000 * 60 * 5,
   });
 }

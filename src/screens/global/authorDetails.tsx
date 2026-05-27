@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,9 +7,10 @@ import {
     FlatList,
     StyleSheet,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -27,11 +28,15 @@ import AntDesign    from '@react-native-vector-icons/ant-design';
 
 import StoryTile   from '../../components/story/StoryTile';
 import SocialBlock from '../../components/story/SocialBlock';
-import dummystories from '../../../dummydata/stories';
+
+import { useAuthor } from '../../hooks/queries/useAuthors';
+import { useStories } from '../../hooks/queries/useStories';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
+import { useTags } from '../../hooks/queries/useTags';
 
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
-const HEADER_H      = 260; // height before sticky bar kicks in
+const HEADER_H      = 260;
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 // ---------------------------------------------------------------------------
@@ -46,30 +51,65 @@ const StatPill = ({ icon, label }: { icon: any; label: string }) => (
 );
 
 // ---------------------------------------------------------------------------
+// Story tile wrapper — resolves S3 image per tile
+// ---------------------------------------------------------------------------
+
+const AuthorStoryTile = ({ item, tagMap, authorName }: { item: any; tagMap: Record<string, string>; authorName: string }) => {
+    const { data: resolvedImageUri } = useStoryImage(
+        item?.imageUri?.startsWith('stories/') ? item.imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? item?.imageUri ?? '';
+
+    return (
+        <StoryTile
+            title={item.title}
+            imageUri={displayImageUri}
+            primaryTag={tagMap[item.primaryTagId] ?? ''}
+            audioUri={item.audioUri}
+            summary={item.summary}
+            description={item.description}
+            author={authorName}
+            duration={item.duration}
+            id={item.id}
+            numListens={item.numListens}
+        />
+    );
+};
+
+// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
-const CreatorProfile = (id: any) => {
+const CreatorProfile = () => {
 
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
+    const route = useRoute();
+    const { id }: any = route.params;
 
     const [following, setFollowing] = useState(false);
-    const [stories] = useState(dummystories);
 
-    const [author] = useState({
-        name: 'John Doe',
-        profilePicUri: '',
-        bio: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        tikTok: 'www.example.com/johndoe',
-        website: 'www.example.com/johndoe',
-        instagram: 'www.example.com/johndoe',
-        reddit: 'www.example.com/johndoe',
-        deviantArt: 'www.example.com/johndoe',
-        facebook: 'www.example.com/johndoe',
-        youTube: 'www.example.com/johndoe',
-        email: 'johndoe@example.com',
-    });
+    // ── Real data ─────────────────────────────────────────────────────────────
+    const { data: author, isLoading: authorLoading } = useAuthor(id);
+    const { data: allStories, isLoading: storiesLoading } = useStories();
+    const { data: tags } = useTags();
+
+    // Filter stories by this author
+    const authorStories = useMemo(() => {
+        if (!allStories) return [];
+        return allStories.filter(s => s.authorId === id && s.live);
+    }, [allStories, id]);
+
+    // Build tag lookup map
+    const tagMap = useMemo(() => {
+        if (!tags) return {};
+        return tags.reduce((acc: Record<string, string>, tag) => {
+            if (tag.id && tag.name) acc[tag.id] = tag.name;
+            return acc;
+        }, {});
+    }, [tags]);
+
+    const isLoading = authorLoading || storiesLoading;
 
     // ── Scroll animation ──────────────────────────────────────────────────────
     const scrollY = useSharedValue(0);
@@ -78,7 +118,6 @@ const CreatorProfile = (id: any) => {
         onScroll: (e) => { scrollY.value = e.contentOffset.y; },
     });
 
-    // Top bar fades in background + title
     const topBarStyle = useAnimatedStyle(() => ({
         backgroundColor: interpolateColor(
             scrollY.value,
@@ -102,7 +141,6 @@ const CreatorProfile = (id: any) => {
         ),
     }));
 
-    // Header parallax + fade
     const headerStyle = useAnimatedStyle(() => ({
         opacity: interpolate(
             scrollY.value,
@@ -120,20 +158,18 @@ const CreatorProfile = (id: any) => {
         }],
     }));
 
+    // ── Loading ───────────────────────────────────────────────────────────────
+    if (isLoading) {
+        return (
+            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator color="cyan" size="large" />
+            </View>
+        );
+    }
+
     // ── Render ────────────────────────────────────────────────────────────────
     const renderItem = ({ item }: any) => (
-        <StoryTile
-            title={item.title}
-            imageUri={item.imageUri}
-            primaryTag={item.primaryTag}
-            audioUri={item.audioUri}
-            summary={item.summary}
-            description={item.description}
-            author={item.author}
-            duration={item.duration}
-            id={item.id}
-            numListens={item.numListens}
-        />
+        <AuthorStoryTile item={item} tagMap={tagMap} authorName={author?.name ?? ''} />
     );
 
     return (
@@ -150,7 +186,7 @@ const CreatorProfile = (id: any) => {
                 </TouchableOpacity>
 
                 <Animated.Text numberOfLines={1} style={[styles.topBarTitle, titleStyle]}>
-                    {author.name}
+                    {author?.name ?? ''}
                 </Animated.Text>
 
                 <TouchableOpacity
@@ -166,18 +202,24 @@ const CreatorProfile = (id: any) => {
 
             {/* ── Main list ── */}
             <AnimatedFlatList
-                data={stories}
+                data={authorStories}
                 renderItem={renderItem}
                 keyExtractor={(item: any) => item.id}
                 onScroll={scrollHandler}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+                ListEmptyComponent={
+                    <View style={{ alignItems: 'center', paddingTop: 40 }}>
+                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+                            No stories yet
+                        </Text>
+                    </View>
+                }
 
                 ListHeaderComponent={
                     <Animated.View style={[styles.header, headerStyle, { paddingTop: insets.top + 60 }]}>
 
-                        {/* Background gradient behind the header */}
                         <LinearGradient
                             colors={['#1a1a2e', '#12121a', '#111']}
                             start={{ x: 0, y: 0 }}
@@ -190,26 +232,25 @@ const CreatorProfile = (id: any) => {
                         <View style={styles.avatarWrapper}>
                             <Image
                                 source={
-                                    author.profilePicUri
+                                    author?.profilePicUri
                                         ? { uri: author.profilePicUri }
                                         : require('../../../assets/images/blankprofile.png')
                                 }
                                 style={styles.avatar}
                             />
-                            {/* Subtle cyan ring */}
                             <View style={styles.avatarRing} />
                         </View>
 
                         {/* Name */}
-                        <Text style={styles.name}>{author.name}</Text>
+                        <Text style={styles.name}>{author?.name ?? ''}</Text>
 
-                        {/* Stats row */}
+                        {/* Stats */}
                         <View style={styles.statsRow}>
-                            <StatPill icon="book-open" label={`${stories.length} Stories`} />
-                            <StatPill icon="headphones" label="2.4k Listens" />
+                            <StatPill icon="book-open" label={`${authorStories.length} ${authorStories.length === 1 ? 'Story' : 'Stories'}`} />
+                            <StatPill icon="headphones" label={`${authorStories.reduce((sum, s) => sum + (s.numListens ?? 0), 0)} Listens`} />
                         </View>
 
-                        {/* Follow button (large, in header) */}
+                        {/* Follow button */}
                         <TouchableOpacity
                             activeOpacity={0.85}
                             onPress={() => setFollowing(f => !f)}
@@ -221,21 +262,9 @@ const CreatorProfile = (id: any) => {
                         </TouchableOpacity>
 
                         {/* Bio */}
-                        <Text style={styles.bio}>{author.bio}</Text>
-
-                        {/* Socials */}
-                        <View style={styles.socialsWrapper}>
-                            <SocialBlock
-                                tikTok={author.tikTok}
-                                website={author.website}
-                                instagram={author.instagram}
-                                reddit={author.reddit}
-                                deviantArt={author.deviantArt}
-                                facebook={author.facebook}
-                                youTube={author.youTube}
-                                email={author.email}
-                            />
-                        </View>
+                        {author?.bio ? (
+                            <Text style={styles.bio}>{author.bio}</Text>
+                        ) : null}
 
                         {/* Stories label */}
                         <View style={styles.storiesLabel}>
@@ -264,7 +293,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#111',
     },
 
-    // ── Top bar ───────────────────────────────────────────────────────────────
     topBar: {
         position: 'absolute',
         top: 0,
@@ -307,7 +335,6 @@ const styles = StyleSheet.create({
         color: '#000',
     },
 
-    // ── Header ────────────────────────────────────────────────────────────────
     header: {
         alignItems: 'center',
         paddingHorizontal: 24,
@@ -315,7 +342,6 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
 
-    // Avatar
     avatarWrapper: {
         position: 'relative',
         marginBottom: 16,
@@ -338,7 +364,6 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(0,255,255,0.3)',
     },
 
-    // Name
     name: {
         fontSize: 26,
         fontWeight: '800',
@@ -347,7 +372,6 @@ const styles = StyleSheet.create({
         letterSpacing: 0.2,
     },
 
-    // Stats
     statsRow: {
         flexDirection: 'row',
         gap: 10,
@@ -369,7 +393,6 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.6)',
     },
 
-    // Follow button (large, in header)
     followBtnLarge: {
         borderWidth: 1,
         borderColor: 'cyan',
@@ -390,7 +413,6 @@ const styles = StyleSheet.create({
         color: 'cyan',
     },
 
-    // Bio
     bio: {
         color: 'rgba(255,255,255,0.65)',
         fontSize: 14,
@@ -399,12 +421,6 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
 
-    // Socials
-    socialsWrapper: {
-        marginBottom: 28,
-    },
-
-    // Stories label
     storiesLabel: {
         width: '100%',
         flexDirection: 'row',

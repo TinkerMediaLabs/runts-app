@@ -90,7 +90,7 @@ const schema = a.schema({
     ]),
 
   // ── Story ─────────────────────────────────────────────────────────────────
-  Story: a
+Story: a
     .model({
       id: a.id().required(),
       type: a.string(),
@@ -102,9 +102,10 @@ const schema = a.schema({
       imageUri: a.string(),
       duration: a.integer(),
       numListens: a.integer(),
-      nsfw: a.boolean(),
-      live: a.boolean(),
+      nsfw: a.string(),
+      live: a.string(),
       transcript: a.string(),
+      publishedAt: a.string(), // ISO datetime string for sorting by newest
       // Foreign keys
       authorId: a.string(),
       publisherId: a.string(),
@@ -114,11 +115,18 @@ const schema = a.schema({
       author: a.belongsTo('Author', 'authorId'),
       publisher: a.belongsTo('Publisher', 'publisherId'),
       tags: a.hasMany('StoryTag', 'storyId'),
-      // User connections
       pinnedBy: a.hasMany('UserPinnedStory', 'storyId'),
       finishedBy: a.hasMany('UserFinishedStory', 'storyId'),
       inProgressBy: a.hasMany('UserInProgressStory', 'storyId'),
     })
+    .secondaryIndexes(index => [
+      index('live').sortKeys(['publishedAt']).name('byLiveAndPublishedAt'),
+      index('live').sortKeys(['numListens']).name('byLiveAndListens'),
+      index('primaryTagId').sortKeys(['publishedAt']).name('byTagAndPublishedAt'),
+      index('primaryTagId').sortKeys(['numListens']).name('byTagAndListens'),
+      index('primaryTagId').sortKeys(['duration']).name('byTagAndDuration'),
+      index('authorId').sortKeys(['publishedAt']).name('byAuthorAndPublishedAt'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),

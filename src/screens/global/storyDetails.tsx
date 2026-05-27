@@ -11,6 +11,7 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
+    ActivityIndicator,
 } from 'react-native';
 
 import { useRoute } from '@react-navigation/native';
@@ -44,8 +45,13 @@ import PlayButtonV3  from '../../components/common/PlayButtonV3';
 import { spacing } from '../../theme/spacing';
 import { useApp }   from '@/context/AppContext';
 
-import dummystories from '../../../dummydata/stories';
-import dummytags    from '../../../dummydata/dummytags';
+import { useStory } from '../../hooks/queries/useStories';
+import { useAuthor } from '../../hooks/queries/useAuthors';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource';
+
+const client = generateClient<Schema>();
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -60,7 +66,6 @@ const HEADER_THRESHOLD_END   = HERO_HEIGHT - 60;
 // Sub-components
 // ---------------------------------------------------------------------------
 
-// Stat pill — listens, duration etc.
 const StatPill = ({ icon, value }: { icon: any; value: string }) => (
     <View style={styles.statPill}>
         <FontAwesome5 name={icon} size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
@@ -68,13 +73,10 @@ const StatPill = ({ icon, value }: { icon: any; value: string }) => (
     </View>
 );
 
-// Action icon button
 const ActionBtn = ({
-    onPress, active = false, activeColor = 'cyan', children,
+    onPress, children,
 }: {
     onPress: () => void;
-    active?: boolean;
-    activeColor?: string;
     children: React.ReactNode;
 }) => (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.actionBtn}>
@@ -82,14 +84,12 @@ const ActionBtn = ({
     </TouchableOpacity>
 );
 
-// Tag chip
 const TagChip = ({ name, onPress }: { name: string; onPress: () => void }) => (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.tagChip}>
         <Text style={styles.tagChipText}>#{name}</Text>
     </TouchableOpacity>
 );
 
-// Comment item
 const CommentItem = ({ content, createdAt, userName, rating }: any) => (
     <View style={styles.commentCard}>
         <View style={styles.commentHeader}>
@@ -126,12 +126,36 @@ const StoryScreen = ({ navigation }: any) => {
     const route      = useRoute();
     const { storyID }: any = route.params;
 
-    // ── Story data ────────────────────────────────────────────────────────────
-    const [Story, setStory] = useState<any>(null);
-    const [Tags,  setTags]  = useState(dummytags);
+    // ── Real data ─────────────────────────────────────────────────────────────
+    const { data: story, isLoading } = useStory(storyID);
+    const { data: author } = useAuthor(story?.authorId ?? '');
+    const { data: resolvedImageUri } = useStoryImage(
+        story?.imageUri?.startsWith('stories/') ? story.imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
+
+    // Fetch story tags
+    const [storyTags, setStoryTags] = useState<any[]>([]);
 
     useEffect(() => {
-        setStory(dummystories[Number(storyID) - 1]);
+        if (!storyID) return;
+        async function fetchTags() {
+            try {
+                const { data: storyTagLinks } = await client.models.StoryTag.list({
+                    filter: { storyId: { eq: storyID } },
+                });
+                if (!storyTagLinks?.length) return;
+
+                const tagIds = storyTagLinks.map(st => st.tagId);
+                const tagResults = await Promise.all(
+                    tagIds.map(id => client.models.Tag.get({ id }))
+                );
+                setStoryTags(tagResults.map(r => r.data).filter(Boolean));
+            } catch (e) {
+                console.log('Error fetching story tags:', e);
+            }
+        }
+        fetchTags();
     }, [storyID]);
 
     // ── Interaction state ─────────────────────────────────────────────────────
@@ -139,9 +163,9 @@ const StoryScreen = ({ navigation }: any) => {
     const [isFav, setIsFav] = useState(false);
 
     // ── Comment state ─────────────────────────────────────────────────────────
-    const [comment,      setComment]      = useState('');
-    const [commentList,  setCommentList]  = useState<any[]>([]);
-    const [seeSpoilers,  setSeeSpoilers]  = useState(false);
+    const [comment,     setComment]     = useState('');
+    const [commentList, setCommentList] = useState<any[]>([]);
+    const [seeSpoilers, setSeeSpoilers] = useState(false);
     const focus = useRef<TextInput>(null);
 
     // ── Scroll animation ──────────────────────────────────────────────────────
@@ -151,7 +175,6 @@ const StoryScreen = ({ navigation }: any) => {
         onScroll: (e) => { scrollY.value = e.contentOffset.y; },
     });
 
-    // Sticky header fades in as hero scrolls away
     const headerStyle = useAnimatedStyle(() => ({
         opacity: interpolate(
             scrollY.value,
@@ -175,7 +198,6 @@ const StoryScreen = ({ navigation }: any) => {
         ),
     }));
 
-    // Hero image parallax + fade
     const heroImageStyle = useAnimatedStyle(() => ({
         transform: [{
             translateY: interpolate(
@@ -193,12 +215,11 @@ const StoryScreen = ({ navigation }: any) => {
         ),
     }));
 
-    // Bounce-in on mount
-    const translateY = useSharedValue(40);
+    const translateY    = useSharedValue(40);
     const bounceOpacity = useSharedValue(0);
 
     useEffect(() => {
-        translateY.value = withSpring(0, { damping: 28, stiffness: 180 });
+        translateY.value    = withSpring(0, { damping: 28, stiffness: 180 });
         bounceOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
     }, []);
 
@@ -207,6 +228,15 @@ const StoryScreen = ({ navigation }: any) => {
         opacity: bounceOpacity.value,
     }));
 
+    // ── Loading state ─────────────────────────────────────────────────────────
+    if (isLoading) {
+        return (
+            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator color="cyan" size="large" />
+            </View>
+        );
+    }
+
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <View style={styles.root}>
@@ -214,12 +244,12 @@ const StoryScreen = ({ navigation }: any) => {
 
             {/* ── Hero image (parallax) ── */}
             <Animated.Image
-                source={{ uri: Story?.imageUri || '' }}
+                source={{ uri: displayImageUri }}
                 style={[styles.heroImage, heroImageStyle]}
                 resizeMode="cover"
             />
 
-            {/* Hero gradient — fades image into the content card */}
+            {/* Hero gradient */}
             <LinearGradient
                 colors={['transparent', 'rgba(0,0,0,0.5)', '#111']}
                 locations={[0.3, 0.65, 1]}
@@ -231,14 +261,14 @@ const StoryScreen = ({ navigation }: any) => {
             <Animated.View style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}>
                 <CloseButton navigation={navigation} />
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
-                    {Story?.title}
+                    {story?.title}
                 </Animated.Text>
                 <PlayButtonV3
-                    id={Story?.id}
-                    title={Story?.title}
-                    audioUri={Story?.audioUri}
-                    imageUri={Story?.imageUri}
-                    author={Story?.author}
+                    id={story?.id}
+                    title={story?.title}
+                    audioUri={story?.audioUri}
+                    imageUri={displayImageUri}
+                    author={author?.name ?? ''}
                 />
             </Animated.View>
 
@@ -249,36 +279,31 @@ const StoryScreen = ({ navigation }: any) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
-                {/* Spacer pushes content below hero */}
                 <View style={{ height: HERO_HEIGHT - 40 }} />
 
-                {/* ── Content card ── */}
                 <Animated.View style={[styles.contentCard, bounceStyle]}>
 
                     {/* Title + author */}
                     <View style={styles.titleSection}>
-                        <Text style={styles.title}>{Story?.title}</Text>
+                        <Text style={styles.title}>{story?.title}</Text>
 
                         <TouchableOpacity
                             activeOpacity={0.7}
-                            onPress={() => navigation.navigate('AuthorDetails', { id: Story?.authorID })}
+                            onPress={() => navigation.navigate('AuthorDetails', { id: story?.authorId })}
                             style={styles.authorRow}
                         >
                             <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
-                            <Text style={styles.author}>{Story?.author}</Text>
+                            <Text style={styles.author}>{author?.name ?? ''}</Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Stats row */}
                     <View style={styles.statsRow}>
-                        <StatPill icon="headphones" value={`${Story?.numListens ?? 0} listens`} />
-                        <StatPill icon="clock" value={TimeConversion(Story?.duration)} />
-                        {Story?.primaryTag ? (
-                            <StatPill icon="tag" value={Story.primaryTag} />
-                        ) : null}
+                        <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
+                        <StatPill icon="clock" value={TimeConversion(story?.duration)} />
                     </View>
 
-                    {/* ── Action icons ── */}
+                    {/* Action icons */}
                     <View style={styles.actionsRow}>
                         <View style={styles.actionsLeft}>
                             <ActionBtn onPress={() => setIsQ(q => !q)}>
@@ -303,36 +328,47 @@ const StoryScreen = ({ navigation }: any) => {
                             </ActionBtn>
                         </View>
 
-                        {/* Play button */}
                         <PlayButtonV4
-                            id={Story?.id}
-                            title={Story?.title}
-                            audioUri={Story?.audioUri}
-                            imageUri={Story?.imageUri}
-                            author={Story?.author}
+                            id={story?.id}
+                            title={story?.title}
+                            audioUri={story?.audioUri}
+                            imageUri={displayImageUri}
+                            author={author?.name ?? ''}
                         />
                     </View>
 
                     <View style={styles.separator} />
 
                     {/* Summary */}
-                    <Text style={styles.summary}>{Story?.summary}</Text>
+                    {story?.summary ? (
+                        <Text style={styles.summary}>{story.summary}</Text>
+                    ) : null}
 
                     {/* Description */}
-                    {Story?.description ? (
-                        <Text style={styles.description}>{Story.description}</Text>
+                    {story?.description ? (
+                        <Text style={styles.description}>{story.description}</Text>
+                    ) : null}
+
+                    {/* Credit */}
+                    {story?.credit ? (
+                        <Text style={[styles.description, { marginTop: 12, fontStyle: 'italic' }]}>
+                            {story.credit}
+                        </Text>
                     ) : null}
 
                     {/* Tags */}
-                    {Tags?.length > 0 && (
+                    {storyTags.length > 0 && (
                         <View style={styles.tagsSection}>
                             <Text style={styles.sectionLabel}>Tags</Text>
                             <View style={styles.tagsWrap}>
-                                {Tags.map((tag: any) => (
+                                {storyTags.map((tag: any) => (
                                     <TagChip
                                         key={tag.id}
                                         name={tag.name}
-                                        onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
+                                        onPress={() => navigation.navigate('TagHomeScreen', {
+                                            id: tag.id,
+                                            name: tag.name,
+                                        })}
                                     />
                                 ))}
                             </View>
@@ -341,10 +377,9 @@ const StoryScreen = ({ navigation }: any) => {
 
                     <View style={styles.separator} />
 
-                    {/* ── Discussion ── */}
+                    {/* Discussion */}
                     <Text style={styles.sectionLabel}>Discussion</Text>
 
-                    {/* Comment input */}
                     <KeyboardAvoidingView
                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     >
@@ -368,7 +403,6 @@ const StoryScreen = ({ navigation }: any) => {
                         </View>
                     </KeyboardAvoidingView>
 
-                    {/* Spoiler gate */}
                     {seeSpoilers ? (
                         <FlatList
                             data={commentList}
@@ -399,7 +433,7 @@ const StoryScreen = ({ navigation }: any) => {
                 </Animated.View>
             </Animated.ScrollView>
 
-            {/* Back button — always visible above everything */}
+            {/* Back button */}
             <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
                 <CloseButton navigation={navigation} />
             </View>
@@ -419,7 +453,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#111',
     },
 
-    // Hero
     heroImage: {
         position: 'absolute',
         top: 0,
@@ -435,7 +468,6 @@ const styles = StyleSheet.create({
         height: HERO_HEIGHT,
     },
 
-    // Sticky header
     stickyHeader: {
         position: 'absolute',
         top: 0,
@@ -455,14 +487,12 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
 
-    // Back button overlay
     backButtonAbsolute: {
         position: 'absolute',
         left: spacing.margin,
         zIndex: 20,
     },
 
-    // Content card
     contentCard: {
         backgroundColor: '#111',
         borderTopLeftRadius: 24,
@@ -472,7 +502,6 @@ const styles = StyleSheet.create({
         minHeight: height * 0.7,
     },
 
-    // Title section
     titleSection: {
         marginBottom: 12,
         gap: 8,
@@ -495,7 +524,6 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
 
-    // Stats
     statsRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -518,7 +546,6 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.6)',
     },
 
-    // Actions
     actionsRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -533,14 +560,12 @@ const styles = StyleSheet.create({
         padding: 4,
     },
 
-    // Separator
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: '#2a2a2a',
         marginVertical: 20,
     },
 
-    // Summary / description
     summary: {
         fontSize: 15,
         color: 'rgba(255,255,255,0.85)',
@@ -553,7 +578,6 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
 
-    // Tags
     tagsSection: {
         marginTop: 20,
     },
@@ -577,7 +601,6 @@ const styles = StyleSheet.create({
         textTransform: 'lowercase',
     },
 
-    // Section label
     sectionLabel: {
         fontSize: 13,
         fontWeight: '700',
@@ -587,7 +610,6 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
 
-    // Comment input
     commentInput: {
         backgroundColor: '#1c1c1c',
         borderRadius: 14,
@@ -615,7 +637,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
 
-    // Spoiler gate
     spoilerGate: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -637,7 +658,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
 
-    // Comment card
     commentCard: {
         backgroundColor: '#1c1c1c',
         borderRadius: 14,

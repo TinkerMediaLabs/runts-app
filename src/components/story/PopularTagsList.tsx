@@ -1,63 +1,48 @@
-import { 
-  Dimensions, 
-  TouchableOpacity, 
-  View, 
-  Text, 
-  FlatList,
-} 
-from 'react-native';
+import {
+    Dimensions,
+    TouchableOpacity,
+    View,
+    Text,
+    FlatList,
+} from 'react-native';
 
-import useStyles from '../../theme/styles';
 import useTypography from '../../theme/typography';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/types/types';
 
-const PopularTagsList = ({tags} : {tags: any[]}) => {
+const PopularTagsList = ({ tags }: { tags: any[] }) => {
 
-    const styles = useStyles();
     const typo = useTypography();
-
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-
-//tag item
-  const Tag = ({id, name}: any) => {
-    return (
-      <View style={{marginTop: 14}}>
-        <TouchableOpacity onPress={() => navigation.navigate('TagHomeScreen', {id: id, name: name})}>
-            <View style={{marginRight: 10}}>
-                <Text style={styles.tagtext}>
+    const Tag = ({ id, name }: any) => (
+        <View style={{ marginTop: 10, marginRight: 8 }}>
+            <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('TagHomeScreen', { id, name })}
+            >
+                <Text style={tagStyle}>
                     #{name}
                 </Text>
-            </View>
-        </TouchableOpacity>
-      </View>
-    )
-  }
+            </TouchableOpacity>
+        </View>
+    );
 
-  //render the tag item for flatlist
-  const renderTag = ({ item } : any) => (
-    <Tag 
-        id={item.id}
-        name={item.name}
-    />
-  );
+    const renderTag = ({ item }: any) => (
+        <Tag id={item.id} name={item.name} />
+    );
 
     return (
-       <View style={{ marginTop: 0}}>
-            <View style={{marginTop: 10}}>
-                <Text style={[typo.title, {marginBottom: 10}]}>
+        <View style={{ marginTop: 0 }}>
+            <View style={{ marginTop: 10 }}>
+                <Text style={[typo.title, { marginBottom: 6 }]}>
                     Popular Tags
                 </Text>
-                <View>
-                <FlatList 
+                <FlatList
                     data={tags}
                     renderItem={renderTag}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={item => item.id}
                     scrollEnabled={false}
                     maxToRenderPerBatch={15}
                     showsVerticalScrollIndicator={false}
@@ -67,13 +52,21 @@ const PopularTagsList = ({tags} : {tags: any[]}) => {
                         width: Dimensions.get('window').width - 30,
                     }}
                 />
-                </View>
             </View>
-            
-        </View>  
-    )
-}
+        </View>
+    );
+};
 
-
+const tagStyle = {
+    color: 'cyan',
+    fontSize: 14,
+    backgroundColor: '#0D2429',
+    borderColor: '#008080',
+    borderWidth: 0.5,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 14,
+    overflow: 'hidden' as const,
+};
 
 export default PopularTagsList;
