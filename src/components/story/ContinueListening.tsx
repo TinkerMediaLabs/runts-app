@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,6 +7,7 @@ import {
     Dimensions,
     TouchableOpacity,
     FlatList,
+    ActivityIndicator,
 } from 'react-native';
 
 import Animated, {
@@ -18,9 +19,16 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource';
 
 import useOnPlay from '@/components/functions/OnPlay';
 import { spacing } from '../../theme/spacing';
+import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
+import { useAuthors } from '../../hooks/queries/useAuthors';
+
+const client = generateClient<Schema>();
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -30,38 +38,47 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH    = width - spacing.margin * 2;
 const CARD_GAP      = spacing.margin;
 const SNAP_INTERVAL = CARD_WIDTH + CARD_GAP;
+const MAX_CARDS     = 4;
 
 // ---------------------------------------------------------------------------
-// Types
+// ProgressCard — fetches its own story data
 // ---------------------------------------------------------------------------
 
-type ProgressEntry = {
-    id: string;
-    playbackPosition: number;
-    story: {
-        id: string;
-        title: string;
-        audioUri: string;
-        imageUri: string;
-        author: string;
-        duration: number;
-        primaryTag: string;
-        summary: string;
-    };
-};
-
-// ---------------------------------------------------------------------------
-// ProgressCard
-// ---------------------------------------------------------------------------
-
-const ProgressCard = ({ entry }: { entry: ProgressEntry }) => {
-
+const ProgressCard = ({
+    inProgressRecord,
+    authorMap,
+}: {
+    inProgressRecord: any;
+    authorMap: Record<string, string>;
+}) => {
     const onPlay = useOnPlay();
+    const [story, setStory] = useState<any>(null);
 
-    const { story, playbackPosition } = entry;
-    const percent  = Math.min(100, Math.round((playbackPosition / story.duration) * 100));
-    const secsLeft = story.duration - playbackPosition;
-    const minsLeft = Math.max(0, Math.floor(secsLeft / 60));
+    useEffect(() => {
+        async function fetchStory() {
+            try {
+                const { data } = await client.models.Story.get({ id: inProgressRecord.storyId });
+                setStory(data);
+            } catch (e) {
+                console.log('Error fetching in-progress story:', e);
+            }
+        }
+        fetchStory();
+    }, [inProgressRecord.storyId]);
+
+    const { data: resolvedImageUri } = useStoryImage(
+        story?.imageUri?.startsWith('stories/') ? story.imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
+
+    if (!story) return null;
+
+    const progressSeconds = inProgressRecord.progressSeconds ?? 0;
+    const duration        = story.duration ?? 1;
+    const percent         = Math.min(100, Math.round((progressSeconds / duration) * 100));
+    const secsLeft        = Math.max(0, duration - progressSeconds);
+    const minsLeft        = Math.max(0, Math.floor(secsLeft / 60));
+    const authorName      = authorMap[story.authorId ?? ''] ?? '';
 
     // Animate progress bar on mount
     const barProgress = useSharedValue(0);
@@ -79,9 +96,9 @@ const ProgressCard = ({ entry }: { entry: ProgressEntry }) => {
     const handlePlay = () => onPlay({
         id: story.id,
         title: story.title,
-        url: story.audioUri,
-        artwork: story.imageUri,
-        artist: story.author,
+        url: story.audioUri ?? '',
+        artwork: displayImageUri,
+        artist: authorName,
     });
 
     return (
@@ -90,13 +107,9 @@ const ProgressCard = ({ entry }: { entry: ProgressEntry }) => {
             onPress={handlePlay}
             style={styles.card}
         >
-            {/* Artwork */}
-            <Image source={{ uri: story.imageUri }} style={styles.artwork} />
+            <Image source={{ uri: displayImageUri }} style={styles.artwork} />
 
-            {/* Info */}
             <View style={styles.info}>
-
-                {/* Top — title, author, time left */}
                 <View style={styles.infoTop}>
                     <Text style={styles.title} numberOfLines={2}>
                         {story.title}
@@ -110,7 +123,7 @@ const ProgressCard = ({ entry }: { entry: ProgressEntry }) => {
                             iconStyle="solid"
                         />
                         <Text style={styles.author} numberOfLines={1}>
-                            {story.author}
+                            {authorName}
                         </Text>
                     </View>
 
@@ -119,11 +132,9 @@ const ProgressCard = ({ entry }: { entry: ProgressEntry }) => {
                     </Text>
                 </View>
 
-                {/* Bottom — progress bar */}
                 <View style={styles.progressTrack}>
                     <Animated.View style={[styles.progressFill, barStyle]} />
                 </View>
-
             </View>
         </TouchableOpacity>
     );
@@ -133,18 +144,40 @@ const ProgressCard = ({ entry }: { entry: ProgressEntry }) => {
 // ContinueListening
 // ---------------------------------------------------------------------------
 
-const ContinueListening = ({ story }: { story: ProgressEntry[] }) => {
+const ContinueListening = () => {
 
-    if (!story?.length) return null;
+    const { data: inProgressStories, isLoading } = useInProgressStories();
+    const { data: authors } = useAuthors();
+
+    const authorMap = useMemo(() => {
+        if (!authors) return {};
+        return authors.reduce((acc: Record<string, string>, author) => {
+            if (author.id && author.name) acc[author.id] = author.name;
+            return acc;
+        }, {});
+    }, [authors]);
+
+    // Show only 4 most recent
+    const recentStories = useMemo(() => {
+        return (inProgressStories ?? []).slice(0, MAX_CARDS);
+    }, [inProgressStories]);
+
+    if (isLoading) return null;
+    if (!recentStories.length) return null;
 
     return (
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>Continue Listening</Text>
 
             <FlatList
-                data={story}
+                data={recentStories}
                 keyExtractor={item => item.id}
-                renderItem={({ item }) => <ProgressCard entry={item} />}
+                renderItem={({ item }) => (
+                    <ProgressCard
+                        inProgressRecord={item}
+                        authorMap={authorMap}
+                    />
+                )}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 snapToInterval={SNAP_INTERVAL}
@@ -162,7 +195,6 @@ const ContinueListening = ({ story }: { story: ProgressEntry[] }) => {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-
     container: {
         marginTop: 8,
         marginBottom: 8,
@@ -179,8 +211,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
         paddingBottom: 4,
     },
-
-    // Card
     card: {
         width: CARD_WIDTH,
         flexDirection: 'row',
@@ -224,8 +254,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: 'rgba(255,255,255,0.45)',
     },
-
-    // Progress bar
     progressTrack: {
         height: 2,
         backgroundColor: '#333',

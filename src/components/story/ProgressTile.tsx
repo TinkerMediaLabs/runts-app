@@ -1,59 +1,154 @@
-//tile component for the list that shows the progress of the story for the user
-
-import React, {useState, useEffect, useContext} from 'react';
-import { 
-    View, 
+import React, { useState, useEffect } from 'react';
+import {
+    View,
     Text,
     Dimensions,
+    TouchableOpacity,
+    StyleSheet,
 } from 'react-native';
 
-import Screen from '@/components/common/Screen';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    interpolate,
+    Easing,
+} from 'react-native-reanimated';
 
-import useStyles from '@/theme/styles';
-import useTypography from '@/theme/typography';
-import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/spacing';
-
-import { useApp } from '@/context/AppContext';
-import { usePlayer } from '@/context/PlayerContext';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource';
 
 import StoryTile from './StoryTile';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
+import { useDeleteInProgressStory } from '../../hooks/queries/useInProgressStories';
 
+const client = generateClient<Schema>();
+const { width } = Dimensions.get('window');
 
-const ProgressTile  = (item : any) => {
+const ProgressTile = ({
+    inProgressRecord,
+    tagMap,
+    authorMap,
+}: {
+    inProgressRecord: any;
+    tagMap: Record<string, string>;
+    authorMap: Record<string, string>;
+}) => {
+    const [story, setStory] = useState<any>(null);
+    const { mutate: deleteInProgress } = useDeleteInProgressStory();
 
-    const {  } = usePlayer();
+    useEffect(() => {
+        async function fetchStory() {
+            try {
+                const { data } = await client.models.Story.get({ id: inProgressRecord.storyId });
+                setStory(data);
+            } catch (e) {
+                console.log('Error fetching in-progress story:', e);
+            }
+        }
+        fetchStory();
+    }, [inProgressRecord.storyId]);
 
-    const styles = useStyles();
-    const typo = useTypography();
-    
-    const percent = 50; //dummy data for now, will be calculated based on the time listened and total time of the story
+    const { data: resolvedImageUri } = useStoryImage(
+        story?.imageUri?.startsWith('stories/') ? story.imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
+
+    if (!story) return null;
+
+    const progressSeconds = inProgressRecord.progressSeconds ?? 0;
+    const duration        = story.duration ?? 1;
+    const percent         = Math.min(100, Math.round((progressSeconds / duration) * 100));
+    const secsLeft        = Math.max(0, duration - progressSeconds);
+    const minsLeft        = Math.max(0, Math.floor(secsLeft / 60));
+
+    const barProgress = useSharedValue(0);
+    useEffect(() => {
+        barProgress.value = withTiming(percent / 100, {
+            duration: 600,
+            easing: Easing.out(Easing.quad),
+        });
+    }, [percent]);
+
+    const barStyle = useAnimatedStyle(() => ({
+        width: `${interpolate(barProgress.value, [0, 1], [0, 100])}%` as `${number}%`,
+    }));
 
     return (
-        <View style={styles.container}>
-            <StoryTile 
-                title={item.title}
-                imageUri={item.imageUri}
-                primaryTag={item.primaryTag}
-                audioUri={item.audioUri}
-                summary={item.summary}
-                author={item.author}
-                description={item.description}
-                duration={item.duration}
-                id={item.id}
-                numListens={item.numListens}
+        <View>
+            <StoryTile
+                title={story.title}
+                imageUri={displayImageUri}
+                primaryTag={tagMap[story.primaryTagId ?? ''] ?? ''}
+                audioUri={story.audioUri ?? ''}
+                summary={story.summary ?? ''}
+                author={authorMap[story.authorId ?? ''] ?? ''}
+                description={story.description ?? ''}
+                duration={story.duration ?? 0}
+                id={story.id}
+                numListens={story.numListens ?? 0}
             />
-            <View style={{width: Dimensions.get('window').width - 50, marginBottom: 20}}>
-                <View style={{width: `${percent}%` as `${number}%`, height: 1, backgroundColor: '#00ffff', marginLeft: 26, marginTop: -4, alignSelf: 'flex-start'}}/>
-                <View style={{marginHorizontal: 20, marginTop: 6, flexDirection: 'row', justifyContent: 'space-between'}}>
-                <Text style={{color: 'gray'}}>
-                    {Math.floor((item.duration/item.duration)*100) + '%'} Complete
-                </Text>
-                <Text style={{color: 'gray', marginRight: -50}}>
-                    {Math.floor(((item.duration-item.duration)/60)/1000)} minutes left
-                </Text>
+
+            {/* Progress bar + meta + delete */}
+            <View style={styles.progressContainer}>
+                <View style={styles.progressTrack}>
+                    <Animated.View style={[styles.progressFill, barStyle]} />
+                </View>
+
+                <View style={styles.metaRow}>
+                    <Text style={styles.metaText}>
+                        {percent}% · {minsLeft} min left
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => deleteInProgress(story.id)}
+                        activeOpacity={0.7}
+                        style={styles.deleteBtn}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <FontAwesome5
+                            name="times"
+                            size={12}
+                            color="rgba(255,255,255,0.4)"
+                            iconStyle="solid"
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
-            </View>
-        </View>        
+        </View>
     );
-}; export default ProgressTile;
+};
+
+const styles = StyleSheet.create({
+    progressContainer: {
+        marginHorizontal: 24,
+        marginTop: -8,
+        marginBottom: 12,
+    },
+    progressTrack: {
+        height: 2,
+        backgroundColor: '#2a2a2a',
+        borderRadius: 1,
+        overflow: 'hidden',
+        marginBottom: 6,
+    },
+    progressFill: {
+        height: '100%',
+        backgroundColor: 'cyan',
+        borderRadius: 1,
+    },
+    metaRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    metaText: {
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.4)',
+    },
+    deleteBtn: {
+        padding: 4,
+    },
+});
+
+export default ProgressTile;

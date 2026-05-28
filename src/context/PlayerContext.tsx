@@ -6,8 +6,11 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../amplify/data/resource';
 import { useQueryClient } from '@tanstack/react-query';
+import { upsertInProgressStory, getInProgressSeconds } from '@/hooks/queries/useInProgressStories';
 
 const client = generateClient<Schema>();
+
+const PROGRESS_INTERVAL_MS = 10000; // save progress every 10 seconds
 
 type Track = {
   id: string;
@@ -36,65 +39,106 @@ export const PlayerProvider = ({ children }: any) => {
   const { expand } = usePlayerUI();
   const queryClient = useQueryClient();
 
-  // Ref so the event listener always has the latest track without stale closure
-  const currentTrackRef = useRef<Track | null>(null);
+  const currentTrackRef  = useRef<Track | null>(null);
+  const isPlayingRef     = useRef(false);
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
-const playbackState = usePlaybackState();
-const prevPlaybackStateRef = useRef<PlaybackState | null>(null);
+  // ── Playback state listener for track completion ──────────────────────────
+  const playbackState = usePlaybackState();
+  const prevPlaybackStateRef = useRef<PlaybackState | null>(null);
 
-useEffect(() => {
+  useEffect(() => {
     const justEnded =
-        playbackState === PlaybackState.Ended &&
-        prevPlaybackStateRef.current !== PlaybackState.Ended;
+      playbackState === PlaybackState.Ended &&
+      prevPlaybackStateRef.current !== PlaybackState.Ended;
 
     if (justEnded) {
-        handleTrackEnd();
+      handleTrackEnd();
     }
 
     prevPlaybackStateRef.current = playbackState;
-}, [playbackState]);
+  }, [playbackState]);
 
-const handleTrackEnd = async () => {
+  const handleTrackEnd = async () => {
     const storyId = currentTrackRef.current?.id;
     if (!storyId) return;
 
+    stopProgressTracking();
+
     try {
-        const { userId } = await getCurrentUser();
+      const { userId } = await getCurrentUser();
 
-        const { data: existingFinished } = await client.models.UserFinishedStory.list({
-            filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
+      // 1. Add to finished stories
+      const { data: existingFinished } = await client.models.UserFinishedStory.list({
+        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
+      });
+
+      if (!existingFinished?.length) {
+        await client.models.UserFinishedStory.create({
+          userId,
+          storyId,
+          finishedAt: new Date().toISOString(),
         });
+      }
 
-        if (!existingFinished?.length) {
-            await client.models.UserFinishedStory.create({
-                userId,
-                storyId,
-                finishedAt: new Date().toISOString(),
-            });
-        }
+      // 2. Remove from pinned stories
+      const { data: pinned } = await client.models.UserPinnedStory.list({
+        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
+      });
+      if (pinned?.length) {
+        await client.models.UserPinnedStory.delete({ id: pinned[0].id });
+      }
 
-        const { data: pinned } = await client.models.UserPinnedStory.list({
-            filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
-        });
+      // 3. Remove from in-progress stories
+      const { data: inProgress } = await client.models.UserInProgressStory.list({
+        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
+      });
+      if (inProgress?.length) {
+        await client.models.UserInProgressStory.delete({ id: inProgress[0].id });
+      }
 
-        if (pinned?.length) {
-            await client.models.UserPinnedStory.delete({ id: pinned[0].id });
-        }
+      // 4. Invalidate caches
+      queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
+      queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
+      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+      queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
 
-        queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
-        queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-        queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
-        setState(prev => ({ ...prev, isPlaying: false }));
+      setState(prev => ({ ...prev, isPlaying: false }));
 
     } catch (err) {
-        console.error('Track completion error:', err);
+      console.error('Track completion error:', err);
     }
-};
+  };
+
+  // ── Progress tracking interval ────────────────────────────────────────────
+  const startProgressTracking = (storyId: string) => {
+    stopProgressTracking();
+    progressInterval.current = setInterval(async () => {
+      if (!isPlayingRef.current) return;
+      try {
+        const position = audioEngine.getCurrentPosition();
+        if (position > 0) {
+          await upsertInProgressStory(storyId, position);
+          queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
+        }
+      } catch (err) {
+        console.error('Progress save error:', err);
+      }
+    }, PROGRESS_INTERVAL_MS);
+  };
+
+  const stopProgressTracking = () => {
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+      progressInterval.current = null;
+    }
+  };
 
   // ── Play ──────────────────────────────────────────────────────────────────
   const playTrack = async (track: Track) => {
     try {
       currentTrackRef.current = track;
+      isPlayingRef.current = true;
 
       setState(prev => ({
         ...prev,
@@ -104,9 +148,19 @@ const handleTrackEnd = async () => {
 
       expand();
 
-      audioEngine.play(track).catch(err => {
-        console.error('Play error:', err);
-      });
+      // Check if there's saved progress to resume from
+      const savedSeconds = await getInProgressSeconds(track.id);
+
+      await audioEngine.play(track);
+
+      // Seek to saved position if resuming
+      if (savedSeconds > 0) {
+        setTimeout(() => {
+          audioEngine.seek(savedSeconds);
+        }, 500); // small delay to ensure track is loaded
+      }
+
+      startProgressTracking(track.id);
 
     } catch (err) {
       console.error('PLAY ERROR', err);
@@ -115,19 +169,42 @@ const handleTrackEnd = async () => {
 
   // ── Controls ──────────────────────────────────────────────────────────────
   const pause = async () => {
+    isPlayingRef.current = false;
     await audioEngine.pause();
     setState(prev => ({ ...prev, isPlaying: false }));
+
+    // Save progress immediately on pause
+    if (currentTrackRef.current) {
+      try {
+        const position = audioEngine.getCurrentPosition();
+        if (position > 0) {
+          await upsertInProgressStory(currentTrackRef.current.id, position);
+          queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
+        }
+      } catch (err) {
+        console.error('Pause progress save error:', err);
+      }
+    }
   };
 
   const resume = async () => {
+    isPlayingRef.current = true;
     await audioEngine.resume();
     setState(prev => ({ ...prev, isPlaying: true }));
+    if (currentTrackRef.current) {
+      startProgressTracking(currentTrackRef.current.id);
+    }
   };
 
   const setPlaybackRate = async (rate: number) => {
     await audioEngine.setRate(rate);
     setState(prev => ({ ...prev, playbackRate: rate }));
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => stopProgressTracking();
+  }, []);
 
   return (
     <PlayerContext.Provider

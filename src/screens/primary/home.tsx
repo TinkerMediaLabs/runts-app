@@ -34,10 +34,8 @@ const HomeScreen = ({ navigation }: any) => {
     const styles = useStyles();
     const typo = useTypography();
 
-    // Inside HomeScreen:
     const { data: authors } = useAuthors();
 
-    // Build author lookup map
     const authorMap = React.useMemo(() => {
         if (!authors) return {};
         return authors.reduce((acc: Record<string, string>, author) => {
@@ -45,7 +43,6 @@ const HomeScreen = ({ navigation }: any) => {
             return acc;
         }, {});
     }, [authors]);
-
 
     const { data: stories, isLoading: storiesLoading } = useStories();
     const { data: tags, isLoading: tagsLoading } = usePrimaryTags();
@@ -73,7 +70,6 @@ const HomeScreen = ({ navigation }: any) => {
         setText(welcomeText[getRandomInt(welcomeText.length)]);
     }, []);
 
-    // Build a tag lookup map: { [tagId]: tagName }
     const tagMap = React.useMemo(() => {
         if (!tags) return {};
         return tags.reduce((acc: Record<string, string>, tag) => {
@@ -82,7 +78,6 @@ const HomeScreen = ({ navigation }: any) => {
         }, {});
     }, [tags]);
 
-// Add authorName to enriched stories
     const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
         return stories.map(story => ({
@@ -93,7 +88,6 @@ const HomeScreen = ({ navigation }: any) => {
         }));
     }, [stories, tagMap, authorMap]);
 
-    // Get top 3 primary tags for horizontal lists
     const topTags = React.useMemo(() => {
         if (!tags) return [];
         return tags.slice(0, 4);
@@ -141,6 +135,11 @@ const HomeScreen = ({ navigation }: any) => {
                                     stories={enrichedStories}
                                     tagMap={tagMap}
                                 />
+                            </View>
+
+                            {/* Continue Listening — shows up to 4 most recent in-progress stories */}
+                            <View style={{ paddingVertical: 10 }}>
+                                <ContinueListening />
                             </View>
 
                             {/* Horizontal lists by tag */}

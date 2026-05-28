@@ -1,114 +1,113 @@
-import React, {useState, useEffect, useContext} from 'react';
-import { 
-    View, 
-    Text, 
-    FlatList, 
-    Dimensions, 
+import React, { useState, useMemo } from 'react';
+import {
+    View,
+    Text,
+    FlatList,
+    Dimensions,
     RefreshControl,
-    ActivityIndicator 
+    ActivityIndicator,
+    StyleSheet,
 } from 'react-native';
 
 import ProgressTile from './ProgressTile';
-
-import { useApp } from '@/context/AppContext';
-import { usePlayer } from '@/context/PlayerContext';
-
-import useStyles from '@/theme/styles';
-import useTypography from '@/theme/typography';
-import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/spacing';
-
-import stories from '../../../dummydata/stories';
+import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
+import { useTags } from '../../hooks/queries/useTags';
+import { useAuthors } from '../../hooks/queries/useAuthors';
 
 const StoryTileList = () => {
 
-    const {  } = usePlayer();
-
-    const styles = useStyles();
-    const typo = useTypography();
-
-    //const { refreshPins } = useContext(AppContext);
-
-    //state for the array of pinned stories for that user
-    const [pinnedStories, setPinnedStories] = useState<any[]>(stories)
-
-    //update trigger for fetching the pinned stories
-    const [didUpdate, setDidUpdate] = useState(false);
-
-    //refresh state of the flatlist
+    const { data: inProgressStories, isLoading, refetch } = useInProgressStories();
+    const { data: tags }    = useTags();
+    const { data: authors } = useAuthors();
     const [isFetching, setIsFetching] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
 
-    const onRefresh = () => {
+    const tagMap = useMemo(() => {
+        if (!tags) return {};
+        return tags.reduce((acc: Record<string, string>, tag) => {
+            if (tag.id && tag.name) acc[tag.id] = tag.name;
+            return acc;
+        }, {});
+    }, [tags]);
+
+    const authorMap = useMemo(() => {
+        if (!authors) return {};
+        return authors.reduce((acc: Record<string, string>, author) => {
+            if (author.id && author.name) acc[author.id] = author.name;
+            return acc;
+        }, {});
+    }, [authors]);
+
+    const onRefresh = async () => {
         setIsFetching(true);
-        setDidUpdate(!didUpdate)
-        setTimeout(() => {
-          setIsFetching(false);
-        }, 2000);
-      }
+        await refetch();
+        setIsFetching(false);
+    };
 
-      const renderItem = ({ item }: any) => {
-        
-        return (
-            <ProgressTile 
-                title={item.title}
-                imageUri={item.imageUri}
-                primaryTag={item.primaryTag}
-                audioUri={item.audioUri}
-                summary={item.summary}
-                author={item.author}
-                description={item.description}
-                duration={item.duration}
-                id={item.id}
-                numListens={item.numListens}
-            />
-      );}
+    const renderItem = ({ item }: any) => (
+        <ProgressTile
+            inProgressRecord={item}
+            tagMap={tagMap}
+            authorMap={authorMap}
+        />
+    );
 
     return (
-            <View style={{width: Dimensions.get('window').width}}>
-               
-                <FlatList 
-                    data={pinnedStories}
-                    renderItem={renderItem}
-                    keyExtractor={item => item.id}
-                    extraData={pinnedStories}
-                    maxToRenderPerBatch={100}
-                    initialNumToRender={100}
-                    refreshControl={
-                        <RefreshControl
+        <View style={{ width: Dimensions.get('window').width, flex: 1 }}>
+            <FlatList
+                data={inProgressStories ?? []}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
+                maxToRenderPerBatch={20}
+                initialNumToRender={20}
+                refreshControl={
+                    <RefreshControl
                         refreshing={isFetching}
                         onRefresh={onRefresh}
-                        />
-                    }
-                    showsVerticalScrollIndicator={false}    
-                    ListFooterComponent={ () => {
-                        return (
-                            <View style={{ height:  100}} />
-                    );}}
-                    ListEmptyComponent={ () => {
-                        return (
-                            <View style={{ alignItems: 'center'}}>
-                                {isLoading === true ? (
-                                <View style={{margin: 30}}>
-                                    <ActivityIndicator size='small' color='cyan' />
-                                </View>
-                                ) : (
-                                <View>
-                                    <Text style={{ color: 'white', margin: 20,}}>
-                                        There is nothing here yet.
-                                    </Text>
-
-                                    <Text style={{ textAlign: 'center', color: 'gray', margin: 20,}}>
-                                        (pull to refresh)
-                                    </Text>
-                                </View>
-                                )}
-                            </View>
-                    );}}
-                />
-            
-            </View>
+                        tintColor="cyan"
+                    />
+                }
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                ListFooterComponent={<View style={{ height: 100 }} />}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        {isLoading ? (
+                            <ActivityIndicator size="small" color="cyan" />
+                        ) : (
+                            <>
+                                <Text style={styles.emptyText}>
+                                    No stories in progress.
+                                </Text>
+                                <Text style={styles.emptyHint}>
+                                    Start listening to a story and it will appear here.
+                                </Text>
+                            </>
+                        )}
+                    </View>
+                }
+            />
+        </View>
     );
-}
+};
+
+const styles = StyleSheet.create({
+    emptyContainer: {
+        alignItems: 'center',
+        marginTop: 60,
+        paddingHorizontal: 40,
+        gap: 8,
+    },
+    emptyText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    emptyHint: {
+        color: '#ffffff50',
+        fontSize: 13,
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+});
 
 export default StoryTileList;
