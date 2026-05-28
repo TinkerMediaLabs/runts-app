@@ -55,14 +55,14 @@ const ProgressTile = ({
     );
     const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
 
-    if (!story) return null;
-
+    // Derived values — safe when story is null
     const progressSeconds = inProgressRecord.progressSeconds ?? 0;
-    const duration        = story.duration ?? 1;
+    const duration        = story?.duration ?? 1;
     const percent         = Math.min(100, Math.round((progressSeconds / duration) * 100));
     const secsLeft        = Math.max(0, duration - progressSeconds);
     const minsLeft        = Math.max(0, Math.floor(secsLeft / 60));
 
+    // ALL hooks above the early return
     const barProgress = useSharedValue(0);
     useEffect(() => {
         barProgress.value = withTiming(percent / 100, {
@@ -74,6 +74,9 @@ const ProgressTile = ({
     const barStyle = useAnimatedStyle(() => ({
         width: `${interpolate(barProgress.value, [0, 1], [0, 100])}%` as `${number}%`,
     }));
+
+    // Early return AFTER all hooks
+    if (!story) return null;
 
     return (
         <View>
@@ -90,7 +93,6 @@ const ProgressTile = ({
                 numListens={story.numListens ?? 0}
             />
 
-            {/* Progress bar + meta + delete */}
             <View style={styles.progressContainer}>
                 <View style={styles.progressTrack}>
                     <Animated.View style={[styles.progressFill, barStyle]} />

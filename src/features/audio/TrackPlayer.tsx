@@ -20,6 +20,7 @@ import Animated, {
   withTiming,
   Extrapolate,
   runOnJS,
+  useDerivedValue,
 } from 'react-native-reanimated';
 
 import { useProgress } from '@rntp/player';
@@ -46,12 +47,12 @@ import { audioEngine } from '@/features/audio/audioEngine';
 import ProgressBar from './ProgressBar';
 import PlayerControls from './PlayerControls';
 import OptionsModal from './OptionsModal';
-import BasicTagsList from '@/components/story/BasicTagsList'
+import BasicTagsList from '@/components/story/BasicTagsList';
 import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
-
-import dummytags from '../../../dummydata/dummytags'
+import { useStory } from '@/hooks/queries/useStories';
+import { useTags } from '@/hooks/queries/useTags';
 
 const MINI_PLAYER_HEIGHT = 70;
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
@@ -65,9 +66,13 @@ export default function TrackPlayerWidget({ expanded }: any) {
     '#000000',
   ]);
 
+
   const { expand, collapse } = usePlayerUI();
   const { state, pause, resume, setPlaybackRate } = usePlayer();
-  const progress = useProgress(1);
+
+  // useProgress with interval 0 returns shared values that update on the
+  // worklet thread — no JS re-renders, no duplicate key spam from the slider.
+  const progress = useProgress(0);
 
   const track = state.currentTrack;
   const [showOptions, setShowOptions] = useState(false);
@@ -80,14 +85,21 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const startY = useSharedValue(0);
   const scrollY = useSharedValue(0);
 
-  // scrollRef is used by simultaneousWithExternalGesture so RNGH knows
-  // which native scroll gesture to share touches with.
   const scrollRef = useRef<ScrollView>(null);
 
-  // -------------------------
-  // EXPAND / COLLAPSE (called from JS touch handlers — no isAnimating guard
-  // needed because TouchableOpacity debounces naturally)
-  // -------------------------
+  const { data: currentStory } = useStory(track?.id ?? null);
+    const { data: allTags } = useTags();
+
+  const storyTags = React.useMemo(() => {
+    if (!currentStory || !allTags) return [];
+    const tagIds = new Set([
+      currentStory.primaryTagId,
+      currentStory.secondaryTagId,
+    ].filter(Boolean));
+    return allTags.filter(t => tagIds.has(t.id));
+  }, [currentStory, allTags]);
+
+  // ── Expand / Collapse ─────────────────────────────────────────────────────
   const expandPlayer = () => {
     translateY.value = withSpring(0, { damping: 28, stiffness: 200, overshootClamping: true });
   };
@@ -100,36 +112,19 @@ export default function TrackPlayerWidget({ expanded }: any) {
     collapse();
   };
 
-  // Register with module-level ref so any component can collapse/expand
-  // the player without needing context or navigation prop.
-  // NOTE: Registration is triggered from onLayout (not a useEffect dependency
-  // on containerHeight.value) to avoid reading a shared value during render.
   const controlsRegistered = useRef(false);
   useEffect(() => {
     registerPlayerControls(collapsePlayer, expandPlayer);
     controlsRegistered.current = true;
   }, []);
 
-  // -------------------------
-  // GESTURE
-  //
-  // The pan gesture lives only on the heroHeader area — a strip at the top
-  // of the image. Because it has zero overlap with the ScrollView, there is
-  // no gesture conflict at all. Scroll works freely everywhere else.
-  //
-  // activeOffsetY([5, 9999]): only activates on a clear downward swipe so
-  // tapping the chevron / options buttons still fires normally.
-  // -------------------------
+  // ── Gesture ───────────────────────────────────────────────────────────────
   const didMovePlayer = useSharedValue(false);
 
   const panGesture = Gesture.Pan()
-    // No simultaneousWithExternalGesture needed — this gesture only lives on
-    // the heroHeader which doesn't overlap the ScrollView at all.
     .activeOffsetY([5, 9999])
     .onStart((e) => {
       'worklet';
-      // Compensate for translation already accumulated at activation time
-      // so the first onUpdate frame has no positional jump.
       startY.value = translateY.value - e.translationY;
       didMovePlayer.value = false;
     })
@@ -145,19 +140,15 @@ export default function TrackPlayerWidget({ expanded }: any) {
     .onEnd((e) => {
       'worklet';
       if (!didMovePlayer.value) return;
-
       const shouldExpand =
         e.velocityY < -500 || translateY.value < containerHeight.value * 0.4;
-
       translateY.value = withSpring(
         shouldExpand ? 0 : containerHeight.value - MINI_PLAYER_HEIGHT,
         { damping: 28, stiffness: 200, overshootClamping: true }
       );
     });
 
-  // -------------------------
-  // ANIMATION STYLES
-  // -------------------------
+  // ── Animation styles ──────────────────────────────────────────────────────
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
@@ -180,30 +171,24 @@ export default function TrackPlayerWidget({ expanded }: any) {
     ),
   }));
 
-  // -------------------------
-  // CONTROLS
-  // -------------------------
-  const [onToggle, setOnToggle] = useState(false)
+  // ── Controls ──────────────────────────────────────────────────────────────
+  const [onToggle, setOnToggle] = useState(false);
 
   const toggle = async () => {
+    setOnToggle(v => !v);
     if (state.isPlaying) {
-      setOnToggle(!onToggle)
       await audioEngine.pause();
       pause();
     } else {
-      setOnToggle(!onToggle)
       await audioEngine.resume();
       resume();
     }
   };
 
- 
-
   const heroControlsOpacity = useSharedValue(1);
 
   useEffect(() => {
     if (!track) return;
-
     if (state.isPlaying) {
       heroControlsOpacity.value = 1;
       setTimeout(() => {
@@ -218,9 +203,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
     opacity: heroControlsOpacity.value,
   }));
 
-  // -------------------------
-  // SCROLL PARALLAX
-  // -------------------------
+  // ── Scroll parallax ───────────────────────────────────────────────────────
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = Math.max(0, event.contentOffset.y);
@@ -248,13 +231,10 @@ export default function TrackPlayerWidget({ expanded }: any) {
     ],
   }));
 
-  // -------------------------
-  // ARTWORK COLORS
-  // -------------------------
+  // ── Artwork colors ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!track?.artwork) return;
     let isMounted = true;
-
     ImageColors.getColors(track.artwork, {
       fallback: '#000',
       cache: true,
@@ -262,27 +242,14 @@ export default function TrackPlayerWidget({ expanded }: any) {
     })
       .then((colors) => {
         if (!isMounted) return;
-        let primary = '#000';
-        switch (colors.platform) {
-          case 'android': primary = colors.dominant || '#000'; break;
-          case 'ios': primary = colors.background || colors.primary || '#000'; break;
-          case 'web': primary = colors.dominant || '#000'; break;
-        }
         setGradientColors(['transparent', 'transparent', '#000']);
       })
       .catch(() => setGradientColors(['transparent', '#000', '#000']));
-
     return () => { isMounted = false; };
   }, [track]);
 
   const hasTrack = !!track;
-
-  // Mini player sits flush on top of the tab bar.
-  // tabBarHeight from context is already the full tab bar height (it does NOT
-  // include insets.bottom — the tab bar itself sits above the system nav area).
-  // If there is no tab bar, fall back to insets.bottom so we clear the
-  // Android gesture navigation bar.
-  const miniPlayerBottom = tabBarHeight > 0 ? tabBarHeight - 10 : insets.bottom
+  const miniPlayerBottom = tabBarHeight > 0 ? tabBarHeight - 10 : insets.bottom;
 
   return (
     <View style={styles.root}>
@@ -294,8 +261,6 @@ export default function TrackPlayerWidget({ expanded }: any) {
           if (containerHeight.value === 0) {
             containerHeight.value = h;
             translateY.value = h - MINI_PLAYER_HEIGHT;
-            // Re-register now that containerHeight is set so collapsePlayer
-            // uses the real height. Safe here — layout callback is not render.
             registerPlayerControls(collapsePlayer, expandPlayer);
           }
         }}
@@ -303,177 +268,169 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
         {/* EXPANDED PLAYER */}
         {hasTrack && (
-            <Animated.View
-              style={[styles.expanded, expandedStyle, containerStyle]}
-              pointerEvents="auto"
+          <Animated.View
+            style={[styles.expanded, expandedStyle, containerStyle]}
+            pointerEvents="auto"
+          >
+
+            <AnimatedScrollView
+              ref={scrollRef}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={true}
+              bounces={true}
             >
 
-              <AnimatedScrollView
-                ref={scrollRef}
-                onScroll={onScroll}
-                scrollEventThrottle={16}
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={true}
-                bounces={true}
-              >
-
-                {/* Hero image stretches to the very top of the screen */}
-                <View style={styles.heroContainer}>
-
-                  <AnimatedImageBackground
-                    source={{ uri: track.artwork }}
-                    style={[styles.heroImage, heroImageStyle]}
-                    resizeMode="cover"
-                    fadeDuration={0}
-                  >
-                    {/* DARK OVERLAY */}
-                    <View style={styles.overlay} />
-
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      onPress={toggle}
-                      style={styles.heroTouch}
-                    >
-                      <Animated.View style={[heroControlsStyle]}>
-                        <FontAwesome5
-                          name={state.isPlaying ? 'pause' : 'play'}
-                          size={72}
-                          color="#fff"
-                          opacity={0.5}
-                        />
-                      </Animated.View>
-                    </TouchableOpacity>
-
-                    {/* HEADER — the more-vertical button is now owned by OptionsModal
-                        (it renders the button itself so it can animate the icon into X).
-                        Only the chevron and pan zone remain here. */}
-                    <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
-                      <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
-                        <Feather name="chevron-down" size={28} color="#fff" />
-                      </TouchableOpacity>
-                      <GestureDetector gesture={panGesture}>
-                        <View style={styles.heroPanZone} />
-                      </GestureDetector>
-                    </View>
-
-                    {/* GRADIENT FADE */}
-                    <LinearGradient
-                      colors={gradientColors}
-                      locations={[0, 0.6, 1]}
-                      style={styles.gradient}
-                    />
-
-                  </AnimatedImageBackground>
-
-                </View>
-
-                {/* INFO — wrapped in a gradient that fades from the image bottom
-                    colour into #000 so there's no hard edge when scrolling up */}
-                <LinearGradient
-                  colors={['rgba(0,0,0,0)', '#000', '#000']}
-                  locations={[0, 0.4, 1]}
-                  style={styles.contentGradient}
+              {/* Hero image */}
+              <View style={styles.heroContainer}>
+                <AnimatedImageBackground
+                  source={{ uri: track.artwork }}
+                  style={[styles.heroImage, heroImageStyle]}
+                  resizeMode="cover"
+                  fadeDuration={0}
                 >
+                  <View style={styles.overlay} />
+
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={toggle}
+                    style={styles.heroTouch}
+                  >
+                    <Animated.View style={[heroControlsStyle]}>
+                      <FontAwesome5
+                        name={state.isPlaying ? 'pause' : 'play'}
+                        size={72}
+                        color="#fff"
+                        opacity={0.5}
+                      />
+                    </Animated.View>
+                  </TouchableOpacity>
+
+                  {/* HEADER — chevron left, pan zone middle, options button right */}
+                  <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
+                    <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
+                      <Feather name="chevron-down" size={28} color="#fff" />
+                    </TouchableOpacity>
+                    <GestureDetector gesture={panGesture}>
+                      <View style={styles.heroPanZone} />
+                    </GestureDetector>
+                    {/* Options button — right side of header */}
+                    <TouchableOpacity
+                      style={styles.headerbutton}
+                      onPress={() => setShowOptions(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="more-vertical" size={24} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <LinearGradient
+                    colors={gradientColors}
+                    locations={[0, 0.6, 1]}
+                    style={styles.gradient}
+                  />
+
+                </AnimatedImageBackground>
+              </View>
+
+              {/* INFO */}
+              <LinearGradient
+                colors={['rgba(0,0,0,0)', '#000', '#000']}
+                locations={[0, 0.4, 1]}
+                style={styles.contentGradient}
+              >
                 <View style={styles.content}>
                   <View style={styles.info}>
                     <View style={styles.titlecontainer}>
                       <Text style={styles.bigTitle}>{track.title}</Text>
-
-                     
-                        <TouchableWithoutFeedback onPress={
-                          () => {navigate('AuthorDetails', {id: "1"}); collapsePlayer();}
-                        }>
-                          <Text style={styles.artist}>by {track.artist}</Text>
-                        </TouchableWithoutFeedback>
-                 
-                      
-                      
+                      <TouchableWithoutFeedback onPress={() => {
+                        navigate('AuthorDetails', { id: "1" });
+                        collapsePlayer();
+                      }}>
+                        <Text style={styles.artist}>by {track.artist}</Text>
+                      </TouchableWithoutFeedback>
                     </View>
 
-                    {/* ACTIONS */}
                     <View style={styles.actioncontainer}>
-
-                      <TouchableWithoutFeedback onPress={
-                        () => {navigate('TagHomeScreen', {id: "1"}); collapsePlayer();}
-                      }>
-                        <Text style={styles.tag}>
-                          Fan Fiction
-                        </Text>
+                      <TouchableWithoutFeedback onPress={() => {
+                        navigate('TagHomeScreen', { id: "1" });
+                        collapsePlayer();
+                      }}>
+                        <Text style={styles.tag}>Fan Fiction</Text>
                       </TouchableWithoutFeedback>
-                        
-                    
 
                       <View style={styles.actions}>
                         <View style={styles.actionbutton}>
                           <PinButton storyId={track.id} size={20} />
                         </View>
-                        
                         <View style={styles.actionbutton}>
                           <TouchableWithoutFeedback>
                             <FontAwesome5 name="share" size={22} color="#fff" />
                           </TouchableWithoutFeedback>
                         </View>
-
                       </View>
-
                     </View>
-
                   </View>
 
                   {/* PROGRESS */}
                   <ProgressBar progress={progress} />
 
                 </View>
-                </LinearGradient>
+              </LinearGradient>
 
-                <View style={styles.additionalcontent}>
-
-                  <View style={styles.controlbox}>
-                    <PlayerControls isPlaying={state.isPlaying} pause={pause} resume={resume} />
-                  </View>
-
-                  <View style={{ height: 80 }}/>
-                  
-                  <View style={styles.tagsbox}>
-                    <BasicTagsList tags={dummytags} />
-                  </View>
-                  
-                   
-
-                  <View style={styles.transcriptbox}>
-                    <Text style={styles.transcriptheader}>
-                      Transcript
-                    </Text>
-                    <Text style={styles.transcript}>
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                      this is some very long tst. gonna see how this looks and test the scroll stuff. 
-                    </Text>
-                  </View>
-                  
+              <View style={styles.additionalcontent}>
+                <View style={styles.controlbox}>
+                  <PlayerControls isPlaying={state.isPlaying} pause={pause} resume={resume} />
                 </View>
 
-                <View style={{height: 100}}/>
+                <View style={{ height: 80 }} />
 
-              </AnimatedScrollView>
+                <View style={styles.tagsbox}>
+                  <BasicTagsList tags={storyTags} />
+                </View>
 
-              <OptionsModal visible={showOptions} onOpen={() => setShowOptions(true)} onClose={() => setShowOptions(false)} insetsTop={insets.top} playbackRate={state.playbackRate} onRateChange={(rate: number) => { setPlaybackRate(rate); setShowOptions(false); }} />
+              </View>
 
-            </Animated.View>
+              <View style={styles.transcriptbox}>
+                <Text style={styles.transcriptheader}>Transcript</Text>
+                <Text style={styles.transcript}>
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                  this is some very long tst. gonna see how this looks and test the scroll stuff.
+                </Text>
+              </View>
 
+              <View style={{ height: 100 }} />
+
+            </AnimatedScrollView>
+
+            {/* Options modal — rendered outside scroll so it overlays everything */}
+            <OptionsModal
+              visible={showOptions}
+              onOpen={() => setShowOptions(true)}
+              onClose={() => setShowOptions(false)}
+              insetsTop={insets.top}
+              playbackRate={state.playbackRate}
+              onRateChange={(rate: number) => {
+                setPlaybackRate(rate);
+                setShowOptions(false);
+              }}
+            />
+
+          </Animated.View>
         )}
 
       </Animated.View>
 
-      {/* MINI PLAYER (fixed position) */}
+      {/* MINI PLAYER */}
       {hasTrack && (
         <Animated.View
           style={[
@@ -483,7 +440,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
           ]}
         >
           <TouchableWithoutFeedback onPress={expandPlayer}>
-            <View style={styles.miniInner} >
+            <View style={styles.miniInner}>
               <Image source={{ uri: track.artwork }} style={styles.miniImage} />
               <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={styles.title}>
@@ -500,7 +457,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   color="#fff"
                 />
               </TouchableOpacity>
-              </View>
+            </View>
           </TouchableWithoutFeedback>
         </Animated.View>
       )}
@@ -530,61 +487,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     pointerEvents: 'auto',
   },
-
   miniInner: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
   },
-
   miniImage: {
     width: 50,
     height: 50,
     borderRadius: 8,
     marginRight: 10,
   },
-
   expanded: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: getStatusBarHeight(),
   },
-
   artwork: {
     width: '100%',
     height: 320,
     borderRadius: 20,
     marginTop: 20,
   },
-
   info: {
     marginTop: 20,
   },
-
   bigTitle: {
     color: '#fff',
     fontSize: 24,
     fontWeight: '700',
   },
-
   artist: {
     color: '#aaa',
     marginTop: 4,
   },
-
   tags: {
     marginTop: 10,
   },
-
   tag: {
     color: 'cyan',
   },
-
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -595,17 +541,14 @@ const styles = StyleSheet.create({
     height: 460,
     overflow: 'hidden',
   },
-
   heroImage: {
     flex: 1,
-    justifyContent: 'flex-end', // gradient sits at bottom; header is absolute
+    justifyContent: 'flex-end',
   },
-
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
-
   heroHeader: {
     position: 'absolute',
     top: 0,
@@ -616,16 +559,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingHorizontal: 20,
   },
-  // Invisible strip between the two header buttons that catches pan gestures.
-  // Sits in the flex row so it stretches to fill all space between them.
   heroPanZone: {
     flex: 1,
     height: 60,
   },
   contentGradient: {
-    // Overlap the image by 80px so the gradient starts inside it,
-    // completely hiding the seam. paddingTop compensates so content
-    // position is unchanged.
     marginTop: -80,
     paddingTop: 80,
   },
@@ -653,7 +591,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   heroButton: {
     width: 90,
     height: 90,
@@ -674,7 +611,7 @@ const styles = StyleSheet.create({
   actioncontainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center', 
+    alignItems: 'center',
     marginTop: 20,
   },
   additionalcontent: {
@@ -685,7 +622,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
   },
-
   dragHandle: {
     width: 40,
     height: 4,
@@ -701,7 +637,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     padding: 20,
     marginHorizontal: 10,
-    borderRadius: 20
+    borderRadius: 20,
   },
   transcriptheader: {
     marginTop: 20,
@@ -710,19 +646,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     borderBottomWidth: 0.5,
-    borderColor: '#000'
+    borderColor: '#000',
   },
   transcript: {
     color: '#000',
     marginTop: 20,
-    fontSize: 24
+    fontSize: 24,
   },
   tagsbox: {
     backgroundColor: '#282828a5',
     marginVertical: 0,
     padding: 20,
     marginHorizontal: 10,
-    borderRadius: 20
+    borderRadius: 20,
   },
   tagsheader: {
     marginTop: 20,
@@ -731,6 +667,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     borderBottomWidth: 0.5,
-    borderColor: '#000'
+    borderColor: '#000',
   },
 });

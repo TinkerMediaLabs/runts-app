@@ -80,7 +80,7 @@ const tags = [
             tileImageUri: '',
     },
         {
-            id: '8',
+            id: '9',
             name: 'Fiction',
             isPrimary: false, //boolean to determine if this is the primary genre or not
             //stories: [Story],

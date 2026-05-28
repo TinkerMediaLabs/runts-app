@@ -10,7 +10,7 @@ import { upsertInProgressStory, getInProgressSeconds } from '@/hooks/queries/use
 
 const client = generateClient<Schema>();
 
-const PROGRESS_INTERVAL_MS = 10000; // save progress every 10 seconds
+const PROGRESS_INTERVAL_MS = 10000;
 
 type Track = {
   id: string;
@@ -24,6 +24,7 @@ type PlayerState = {
   currentTrack: Track | null;
   isPlaying: boolean;
   playbackRate: number;
+  playError: string | null;  // new
 };
 
 const PlayerContext = createContext<any>(null);
@@ -34,6 +35,7 @@ export const PlayerProvider = ({ children }: any) => {
     currentTrack: null,
     isPlaying: false,
     playbackRate: 1,
+    playError: null,  // new
   });
 
   const { expand } = usePlayerUI();
@@ -68,11 +70,9 @@ export const PlayerProvider = ({ children }: any) => {
     try {
       const { userId } = await getCurrentUser();
 
-      // 1. Add to finished stories
       const { data: existingFinished } = await client.models.UserFinishedStory.list({
         filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
       });
-
       if (!existingFinished?.length) {
         await client.models.UserFinishedStory.create({
           userId,
@@ -81,7 +81,6 @@ export const PlayerProvider = ({ children }: any) => {
         });
       }
 
-      // 2. Remove from pinned stories
       const { data: pinned } = await client.models.UserPinnedStory.list({
         filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
       });
@@ -89,7 +88,6 @@ export const PlayerProvider = ({ children }: any) => {
         await client.models.UserPinnedStory.delete({ id: pinned[0].id });
       }
 
-      // 3. Remove from in-progress stories
       const { data: inProgress } = await client.models.UserInProgressStory.list({
         filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
       });
@@ -97,7 +95,6 @@ export const PlayerProvider = ({ children }: any) => {
         await client.models.UserInProgressStory.delete({ id: inProgress[0].id });
       }
 
-      // 4. Invalidate caches
       queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
       queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
@@ -136,6 +133,9 @@ export const PlayerProvider = ({ children }: any) => {
 
   // ── Play ──────────────────────────────────────────────────────────────────
   const playTrack = async (track: Track) => {
+    // Clear any previous error when attempting a new play
+    setState(prev => ({ ...prev, playError: null }));
+
     try {
       currentTrackRef.current = track;
       isPlayingRef.current = true;
@@ -144,25 +144,34 @@ export const PlayerProvider = ({ children }: any) => {
         ...prev,
         currentTrack: track,
         isPlaying: true,
+        playError: null,
       }));
 
       expand();
 
-      // Check if there's saved progress to resume from
       const savedSeconds = await getInProgressSeconds(track.id);
 
-      await audioEngine.play(track);
+      await audioEngine.play(track); // throws on URL resolution or playback failure
 
-      // Seek to saved position if resuming
       if (savedSeconds > 0) {
         setTimeout(() => {
           audioEngine.seek(savedSeconds);
-        }, 500); // small delay to ensure track is loaded
+        }, 500);
       }
 
       startProgressTracking(track.id);
 
     } catch (err) {
+      // Roll back optimistic playing state and surface error
+      isPlayingRef.current = false;
+      currentTrackRef.current = null;
+      setState(prev => ({
+        ...prev,
+        isPlaying: false,
+        currentTrack: null,
+        playError: err instanceof Error ? err.message : 'Failed to load audio. Please try again.',
+      }));
+      stopProgressTracking();
       console.error('PLAY ERROR', err);
     }
   };
@@ -173,7 +182,6 @@ export const PlayerProvider = ({ children }: any) => {
     await audioEngine.pause();
     setState(prev => ({ ...prev, isPlaying: false }));
 
-    // Save progress immediately on pause
     if (currentTrackRef.current) {
       try {
         const position = audioEngine.getCurrentPosition();
@@ -201,7 +209,10 @@ export const PlayerProvider = ({ children }: any) => {
     setState(prev => ({ ...prev, playbackRate: rate }));
   };
 
-  // Cleanup on unmount
+  const clearPlayError = () => {
+    setState(prev => ({ ...prev, playError: null }));
+  };
+
   useEffect(() => {
     return () => stopProgressTracking();
   }, []);
@@ -214,6 +225,7 @@ export const PlayerProvider = ({ children }: any) => {
         pause,
         resume,
         setPlaybackRate,
+        clearPlayError,  // new
       }}
     >
       {children}

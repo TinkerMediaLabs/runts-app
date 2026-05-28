@@ -1,130 +1,125 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 
 import { Slider, SliderThemeType } from 'react-native-awesome-slider';
-import { useSharedValue, runOnJS, useDerivedValue } from 'react-native-reanimated';
+import {
+  useSharedValue,
+  runOnJS,
+  useDerivedValue,
+  useAnimatedReaction,
+} from 'react-native-reanimated';
 
 import { audioEngine } from './audioEngine';
 
+const SLIDER_UPDATE_MS = 500; // update slider at most every 500ms
+
 export default function ProgressBar({ progress }: any) {
 
-  const progressValue = useSharedValue(0);
+  // Throttled value fed to the Slider — only updates every SLIDER_UPDATE_MS.
+  // This breaks the rapid-fire re-render loop that causes the duplicate key bug
+  // in react-native-awesome-slider v2.9.0.
+  const sliderProgress = useSharedValue(0);
+  const lastUpdateTime = useSharedValue(0);
+
   const min = useSharedValue(0);
   const max = useSharedValue(1);
-
   const isSliding = useSharedValue(0);
-
   const [isSlidingState, setIsSlidingState] = useState(false);
 
-  const COLORS = {
-    backgroundColor: '#0A0A0A',
-    inputBackgroundColor: '#1f1f1f',
+  // Sync max from incoming progress on JS side (only changes when track changes)
+  useEffect(() => {
+    max.value = progress.duration || 1;
+  }, [progress.duration]);
 
-    borderColor: '#474747',
-    markColor: '#EAECEF',
+  // Throttled worklet reaction — runs on UI thread whenever progress.position changes.
+  // Only pushes a new value to sliderProgress if enough time has passed.
+  useAnimatedReaction(
+    () => progress.position,
+    (current) => {
+      'worklet';
+      const now = Date.now();
+      if (now - lastUpdateTime.value >= SLIDER_UPDATE_MS) {
+        lastUpdateTime.value = now;
+        if (!isSliding.value) {
+          sliderProgress.value = current;
+        }
+        // Also keep max in sync on worklet thread
+        if (progress.duration > 0) {
+          max.value = progress.duration;
+        }
+      }
+    }
+  );
 
-    bubbleBackgroundColor: '#E0E2E5',
-    bubbleTextColor: '#262C36',
-
-    textColor: '#EAECEF',
-    descriptionColor: '#E0E2E5',
-    cardStyle: {
-      borderRadius: 8,
-      padding: 12,
-      marginTop: 20,
-      borderWidth: 1,
-      borderColor: '#292929',
-      gap: 8,
-      backgroundColor: '#0a0a0a',
-    } satisfies ViewStyle,
-
-    optionStyle: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      height: 38,
-    } satisfies ViewStyle,
-    optionTextStyle: {
-      fontSize: 14,
-      fontWeight: '500',
-      color: '#EAECEF',
-    } satisfies TextStyle,
-    sliderTheme: {
-      maximumTrackTintColor: '#2a2a2a',
-      minimumTrackTintColor: '#00ffff',
-      bubbleBackgroundColor: '#000',
-      bubbleTextColor: '#fff',
-      cacheTrackTintColor: 'rgba(255,255,255,0.2)',
-    } satisfies SliderThemeType,
+  const format = (s: number) => {
+    'worklet';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec < 10 ? '0' : ''}${sec}`;
   };
 
+  const [displayPosition, setDisplayPosition] = useState('0:00');
+  const [displayDuration, setDisplayDuration] = useState('0:00');
 
-  useEffect(() => {
-    progressValue.value = progress.position;
-    max.value = progress.duration || 1;
-  }, [progress]);
+  // Drive the time labels from the throttled value so they match the slider
+  useDerivedValue(() => {
+    runOnJS(setDisplayPosition)(format(sliderProgress.value));
+    runOnJS(setDisplayDuration)(format(max.value));
+  });
 
- const format = (s: number) => {
-  'worklet'; // 🔥 THIS is the fix
-
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${sec < 10 ? '0' : ''}${sec}`;
-};
-  
   const [bubbleTime, setBubbleTime] = useState('0:00');
+  const bubbleValue = useSharedValue(0);
 
   useDerivedValue(() => {
-  const time = format(progressValue.value);
-  runOnJS(setBubbleTime)(time);
-});
-  
-
-  const thumbWidth = 10;
-  const bubbleWidth = 90;
+    runOnJS(setBubbleTime)(format(bubbleValue.value));
+  });
 
   return (
     <View style={styles.container}>
-
       <Slider
-        progress={progressValue}
+        progress={sliderProgress}
         minimumValue={min}
         maximumValue={max}
 
-        
-
         onSlidingStart={() => {
           isSliding.value = 1;
-          setIsSlidingState(true); // ✅ direct
+          setIsSlidingState(true);
         }}
 
         onValueChange={(value) => {
-          progressValue.value = value; // 🔥 live update
+          'worklet';
+          bubbleValue.value = value;
+          sliderProgress.value = value;
         }}
 
         onSlidingComplete={(value) => {
           isSliding.value = 0;
-          setIsSlidingState(false); // ✅ direct
+          setIsSlidingState(false);
           audioEngine.seek?.(value);
         }}
 
-        thumbWidth={thumbWidth}
+        thumbWidth={10}
         renderThumb={() => <View style={styles.customThumb} />}
-        renderBubble={() => {
-          return isSlidingState ? (
+        renderBubble={() =>
+          isSlidingState ? (
             <View style={styles.customBubble}>
               <Text>{bubbleTime}</Text>
             </View>
-          ) : null;
+          ) : null
+        }
+        theme={{
+          maximumTrackTintColor: '#2a2a2a',
+          minimumTrackTintColor: '#00ffff',
+          bubbleBackgroundColor: '#000',
+          bubbleTextColor: '#fff',
+          cacheTrackTintColor: 'rgba(255,255,255,0.2)',
         }}
-        theme={COLORS.sliderTheme}
       />
 
       <View style={styles.row}>
-        <Text style={styles.time}>{format(progress.position)}</Text>
-        <Text style={styles.time}>{format(progress.duration)}</Text>
+        <Text style={styles.time}>{displayPosition}</Text>
+        <Text style={styles.time}>{displayDuration}</Text>
       </View>
-
     </View>
   );
 }
@@ -142,11 +137,7 @@ const styles = StyleSheet.create({
   time: {
     color: '#aaa',
     fontSize: 24,
-    fontWeight: 'bold'
-  },
-  slider: {
-    marginBottom: 20,
-    marginTop: 12,
+    fontWeight: 'bold',
   },
   customThumb: {
     width: 14,
@@ -163,14 +154,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bubbleImg: {
-    width: 90,
-    borderRadius: 4,
-    height: 60,
-  },
-  bubbleText: {
-  color: '#fff',
-  fontSize: 12,
-  fontWeight: '600',
-},
 });

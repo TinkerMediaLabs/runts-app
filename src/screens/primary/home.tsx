@@ -80,12 +80,14 @@ const HomeScreen = ({ navigation }: any) => {
 
     const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
-        return stories.map(story => ({
-            ...story,
-            primaryTagName: story.primaryTagId ? tagMap[story.primaryTagId] ?? '' : '',
-            secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
-            authorName: story.authorId ? authorMap[story.authorId] ?? '' : '',
-        }));
+        return stories
+            .filter(story => !!story.id)  // guard against malformed records
+            .map(story => ({
+                ...story,
+                primaryTagName: story.primaryTagId ? tagMap[story.primaryTagId] ?? '' : '',
+                secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
+                authorName: story.authorId ? authorMap[story.authorId] ?? '' : '',
+            }));
     }, [stories, tagMap, authorMap]);
 
     const topTags = React.useMemo(() => {

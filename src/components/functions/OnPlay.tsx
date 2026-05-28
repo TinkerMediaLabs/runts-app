@@ -1,8 +1,21 @@
+import { useEffect } from 'react';
+import { Alert } from 'react-native';
 import { usePlayer } from '@/context/PlayerContext';
 
 const useOnPlay = () => {
 
-  const { playTrack } = usePlayer();
+  const { playTrack, state, clearPlayError } = usePlayer();
+
+  // Show an alert whenever playError is set, then clear it
+  useEffect(() => {
+    if (state.playError) {
+      Alert.alert(
+        'Playback Error',
+        'This story couldn not be loaded. Please check your connection and try again.',
+        [{ text: 'OK', onPress: clearPlayError }]
+      );
+    }
+  }, [state.playError]);
 
   const onPlay = async ({
     id,
@@ -11,19 +24,7 @@ const useOnPlay = () => {
     artwork,
     artist,
   }: any) => {
-
-    try {
-      await playTrack({
-        id,
-        title,
-        url,
-        artwork,
-        artist,
-      });
-
-    } catch (err) {
-      console.error('Error playing story:', err);
-    }
+    await playTrack({ id, title, url, artwork, artist });
   };
 
   return onPlay;
