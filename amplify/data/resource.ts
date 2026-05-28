@@ -22,14 +22,15 @@ const schema = a.schema({
 
   // ── UserPinnedStory (join table) ──────────────────────────────────────────
   UserPinnedStory: a
-    .model({
-      userId: a.string().required(),
-      storyId: a.string().required(),
-      pinnedAt: a.datetime(),
-      story: a.belongsTo('Story', 'storyId'),
-      user: a.belongsTo('User', 'userId'),
-    })
-    .authorization(allow => [allow.owner()]),
+      .model({
+        userId: a.string().required(),
+        storyId: a.string().required(),
+        pinnedAt: a.datetime(),
+        sortOrder: a.integer(),
+        story: a.belongsTo('Story', 'storyId'),
+        user: a.belongsTo('User', 'userId'),
+      })
+      .authorization(allow => [allow.owner()]),
 
   // ── UserFinishedStory (join table) ────────────────────────────────────────
   UserFinishedStory: a

@@ -41,6 +41,7 @@ import TimeConversion from '../../components/functions/TimeConversion';
 import CloseButton   from '../../components/common/CloseButton';
 import PlayButtonV4  from '../../components/common/PlayButtonV4';
 import PlayButtonV3  from '../../components/common/PlayButtonV3';
+import PinButton from '../../components/common/PinButton';
 
 import { spacing } from '../../theme/spacing';
 import { useApp }   from '@/context/AppContext';
@@ -159,7 +160,6 @@ const StoryScreen = ({ navigation }: any) => {
     }, [storyID]);
 
     // ── Interaction state ─────────────────────────────────────────────────────
-    const [isQ,   setIsQ]   = useState(false);
     const [isFav, setIsFav] = useState(false);
 
     // ── Comment state ─────────────────────────────────────────────────────────
@@ -306,13 +306,7 @@ const StoryScreen = ({ navigation }: any) => {
                     {/* Action icons */}
                     <View style={styles.actionsRow}>
                         <View style={styles.actionsLeft}>
-                            <ActionBtn onPress={() => setIsQ(q => !q)}>
-                                <AntDesign
-                                    name="pushpin"
-                                    size={22}
-                                    color={isQ ? 'cyan' : 'rgba(255,255,255,0.75)'}
-                                />
-                            </ActionBtn>
+                            <PinButton storyId={story?.id ?? ''} size={22} />
 
                             <ActionBtn onPress={() => setIsFav(f => !f)}>
                                 <FontAwesome5

@@ -47,6 +47,7 @@ import ProgressBar from './ProgressBar';
 import PlayerControls from './PlayerControls';
 import OptionsModal from './OptionsModal';
 import BasicTagsList from '@/components/story/BasicTagsList'
+import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
 
@@ -404,9 +405,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
                       <View style={styles.actions}>
                         <View style={styles.actionbutton}>
-                          <TouchableWithoutFeedback>
-                            <AntDesign name="pushpin" size={22} color="#fff" />
-                          </TouchableWithoutFeedback>
+                          <PinButton storyId={track.id} size={20} />
                         </View>
                         
                         <View style={styles.actionbutton}>

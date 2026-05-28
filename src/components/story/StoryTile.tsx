@@ -24,6 +24,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
+import PinButton from '../common/PinButton';
 
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
@@ -53,7 +54,6 @@ const StoryTile = ({
     const progress = useSharedValue(0);
     const expanded = useSharedValue(false);
 
-    const [isQ, setIsQ]   = React.useState(false);
     const [isFav, setIsFav] = React.useState(false);
 
     const toggle = () => {
@@ -63,7 +63,6 @@ const StoryTile = ({
         progress.value = withTiming(next ? 1 : 0, TIMING);
     };
 
-    const onQPress  = () => setIsQ(q => !q);
     const onFavPress = () => setIsFav(f => !f);
 
     // ── Animated styles ─────────────────────────────────────────────────────
@@ -163,13 +162,7 @@ const StoryTile = ({
                             {/* Actions */}
                             <View style={styles.actions}>
                                 <View style={styles.actionsLeft}>
-                                    <TouchableOpacity
-                                        onPress={onQPress}
-                                        style={styles.actionBtn}
-                                        activeOpacity={0.7}
-                                    >
-                                        <AntDesign name="pushpin" size={20} color={isQ ? 'cyan' : '#ffffff70'} />
-                                    </TouchableOpacity>
+                                    <PinButton storyId={id} size={20} />
 
                                     <TouchableOpacity
                                         onPress={onFavPress}

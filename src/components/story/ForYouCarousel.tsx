@@ -31,6 +31,8 @@ import PlayButtonV2 from '../common/PlayButtonV2';
 import LoadingItem  from '../common/LoadingItem';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
+import PinButton from '../common/PinButton';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -65,7 +67,6 @@ const CarouselItem = ({
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-    const [isQ,   setIsQ]   = useState(false);
     const [isFav, setIsFav] = useState(false);
 
     // Resolve S3 path to signed URL if needed
@@ -181,17 +182,7 @@ const CarouselItem = ({
                                     />
 
                                     <View style={styles.iconActions}>
-                                        <TouchableOpacity
-                                            onPress={() => setIsQ(q => !q)}
-                                            style={styles.iconBtn}
-                                            activeOpacity={0.7}
-                                        >
-                                            <AntDesign
-                                                name="pushpin"
-                                                size={20}
-                                                color={isQ ? 'cyan' : 'rgba(255,255,255,0.75)'}
-                                            />
-                                        </TouchableOpacity>
+                                        <PinButton storyId={id} size={20} />
 
                                         <TouchableOpacity
                                             onPress={() => setIsFav(f => !f)}
