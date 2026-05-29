@@ -1,3 +1,4 @@
+import { incrementListens } from '../functions/increment-listens/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -17,20 +18,26 @@ const schema = a.schema({
       pinnedStories: a.hasMany('UserPinnedStory', 'userId'),
       finishedStories: a.hasMany('UserFinishedStory', 'userId'),
       inProgressStories: a.hasMany('UserInProgressStory', 'userId'),
+      // New connections
+      ratings: a.hasMany('UserRating', 'userId'),
+      reactions: a.hasMany('UserReaction', 'userId'),
+      comments: a.hasMany('Comment', 'userId'),
+      favoritedStories: a.hasMany('UserFavoritedStory', 'userId'),
+      followedAuthors: a.hasMany('UserFollowedAuthor', 'userId'),
     })
     .authorization(allow => [allow.owner()]),
 
   // ── UserPinnedStory (join table) ──────────────────────────────────────────
   UserPinnedStory: a
-      .model({
-        userId: a.string().required(),
-        storyId: a.string().required(),
-        pinnedAt: a.datetime(),
-        sortOrder: a.integer(),
-        story: a.belongsTo('Story', 'storyId'),
-        user: a.belongsTo('User', 'userId'),
-      })
-      .authorization(allow => [allow.owner()]),
+    .model({
+      userId: a.string().required(),
+      storyId: a.string().required(),
+      pinnedAt: a.datetime(),
+      sortOrder: a.integer(),
+      story: a.belongsTo('Story', 'storyId'),
+      user: a.belongsTo('User', 'userId'),
+    })
+    .authorization(allow => [allow.owner()]),
 
   // ── UserFinishedStory (join table) ────────────────────────────────────────
   UserFinishedStory: a
@@ -55,6 +62,117 @@ const schema = a.schema({
     })
     .authorization(allow => [allow.owner()]),
 
+  // ── UserRating ────────────────────────────────────────────────────────────
+  // One record per user per story (upsert pattern). Lambda aggregates into
+  // Story.avgRating and Story.numRatings via DynamoDB stream.
+  // Ratings >= 8 trigger auto-add to UserFavoritedStory.
+  UserRating: a
+    .model({
+      userId: a.string().required(),
+      storyId: a.string().required(),
+      rating: a.integer().required(),    // 1–10
+      story: a.belongsTo('Story', 'storyId'),
+      user: a.belongsTo('User', 'userId'),
+    })
+    .secondaryIndexes(index => [
+      // Look up "has this user rated this story?" in O(1)
+      index('userId').sortKeys(['storyId']).name('byUserAndStory'),
+    ])
+    .authorization(allow => [
+      allow.owner(),
+      allow.authenticated().to(['read']),
+    ]),
+
+  // ── UserReaction ──────────────────────────────────────────────────────────
+  // One record per user per story (upsert pattern). Lambda aggregates into
+  // StoryReactionCount via DynamoDB stream. Handles MODIFY (reaction change)
+  // by decrementing old type and incrementing new type.
+  UserReaction: a
+    .model({
+      userId: a.string().required(),
+      storyId: a.string().required(),
+      // One of: shocked | frustrated | sad | reflective | touched | amused |
+      //         scared | bored | uninterested | thrilled | confused | tense
+      reaction: a.string().required(),
+      story: a.belongsTo('Story', 'storyId'),
+      user: a.belongsTo('User', 'userId'),
+    })
+    .secondaryIndexes(index => [
+      // Look up "has this user reacted to this story?" in O(1)
+      index('userId').sortKeys(['storyId']).name('byUserAndStory'),
+    ])
+    .authorization(allow => [
+      allow.owner(),
+      allow.authenticated().to(['read']),
+    ]),
+
+  // ── Comment ───────────────────────────────────────────────────────────────
+  // Users can add, edit, and delete their own comments.
+  // Lambda increments/decrements Story.numComments via DynamoDB stream.
+  // Max 500 chars enforced in UI.
+Comment: a
+  .model({
+    userId: a.string().required(),
+    storyId: a.string().required(),
+    content: a.string().required(),
+    createdAt: a.datetime(),
+    story: a.belongsTo('Story', 'storyId'),
+    user: a.belongsTo('User', 'userId'),
+  })
+  .secondaryIndexes(index => [
+    index('storyId').sortKeys(['createdAt']).name('byStoryAndCreatedAt'),
+  ])
+  .authorization(allow => [          // ← add this back
+    allow.owner(),
+    allow.authenticated().to(['read']),
+  ]),
+
+  // ── UserFavoritedStory ────────────────────────────────────────────────────
+  // Auto-populated by rating-aggregator Lambda when rating >= 8.
+  // Auto-removed when rating is updated to < 8.
+  // Powers the Favorites tab in playlist.tsx.
+  UserFavoritedStory: a
+    .model({
+      userId: a.string().required(),
+      storyId: a.string().required(),
+      favoritedAt: a.datetime(),
+      story: a.belongsTo('Story', 'storyId'),
+      user: a.belongsTo('User', 'userId'),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  // ── UserFollowedAuthor ────────────────────────────────────────────────────
+UserFollowedAuthor: a
+  .model({
+    userId: a.string().required(),
+    authorId: a.string().required(),
+    followedAt: a.datetime(),
+    user: a.belongsTo('User', 'userId'),   // ← add this
+  })
+  .secondaryIndexes(index => [
+    index('userId').sortKeys(['authorId']).name('byUserAndAuthor'),
+  ])
+  .authorization(allow => [allow.owner()]),
+
+  // ── StoryReactionCount ────────────────────────────────────────────────────
+  // One record per storyId + reactionType. Written exclusively by
+  // reaction-aggregator Lambda via DynamoDB SDK (atomic ADD). Read by app
+  // via AppSync to display top 4 reactions on story detail screen.
+  StoryReactionCount: a
+    .model({
+      storyId: a.string().required(),
+      reactionType: a.string().required(),
+      count: a.integer(),
+    })
+    .secondaryIndexes(index => [
+      // Fetch top 4 reactions for a story sorted by count DESC
+      index('storyId').sortKeys(['count']).name('byStoryAndCount'),
+    ])
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
   // ── Publisher ─────────────────────────────────────────────────────────────
   Publisher: a
     .model({
@@ -64,7 +182,6 @@ const schema = a.schema({
       profilePicUri: a.string(),
       website: a.string(),
       numPublished: a.integer(),
-      // Relations
       authors: a.hasMany('Author', 'publisherId'),
       stories: a.hasMany('Story', 'publisherId'),
     })
@@ -81,7 +198,6 @@ const schema = a.schema({
       profilePicUri: a.string(),
       bio: a.string(),
       publisherId: a.string(),
-      // Relations
       publisher: a.belongsTo('Publisher', 'publisherId'),
       stories: a.hasMany('Story', 'authorId'),
     })
@@ -91,7 +207,9 @@ const schema = a.schema({
     ]),
 
   // ── Story ─────────────────────────────────────────────────────────────────
-Story: a
+  // CHANGED: added avgRating, numRatings, numComments (all optional — safe
+  // to add to existing DynamoDB table, existing items unaffected).
+  Story: a
     .model({
       id: a.id().required(),
       type: a.string(),
@@ -106,7 +224,11 @@ Story: a
       nsfw: a.string(),
       live: a.string(),
       transcript: a.string(),
-      publishedAt: a.string(), // ISO datetime string for sorting by newest
+      publishedAt: a.string(),
+      // Aggregates — written by Lambdas, read by app
+      avgRating: a.float(),
+      numRatings: a.integer(),
+      numComments: a.integer(),
       // Foreign keys
       authorId: a.string(),
       publisherId: a.string(),
@@ -119,6 +241,11 @@ Story: a
       pinnedBy: a.hasMany('UserPinnedStory', 'storyId'),
       finishedBy: a.hasMany('UserFinishedStory', 'storyId'),
       inProgressBy: a.hasMany('UserInProgressStory', 'storyId'),
+      // New relations
+      ratings: a.hasMany('UserRating', 'storyId'),
+      reactions: a.hasMany('UserReaction', 'storyId'),
+      comments: a.hasMany('Comment', 'storyId'),
+      favoritedBy: a.hasMany('UserFavoritedStory', 'storyId'),
     })
     .secondaryIndexes(index => [
       index('live').sortKeys(['publishedAt']).name('byLiveAndPublishedAt'),
@@ -134,7 +261,7 @@ Story: a
     ]),
 
   // ── Tag ───────────────────────────────────────────────────────────────────
-Tag: a
+  Tag: a
     .model({
       id: a.id().required(),
       name: a.string().required(),
@@ -162,8 +289,16 @@ Tag: a
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
+  incrementListenCount: a
+    .mutation()
+    .arguments({ storyId: a.string().required() })
+    .returns(a.boolean())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(incrementListens)),
 
 });
+
+
 
 export type Schema = ClientSchema<typeof schema>;
 

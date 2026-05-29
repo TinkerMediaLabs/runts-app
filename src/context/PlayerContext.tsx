@@ -132,50 +132,56 @@ export const PlayerProvider = ({ children }: any) => {
   };
 
   // ── Play ──────────────────────────────────────────────────────────────────
-  const playTrack = async (track: Track) => {
-    // Clear any previous error when attempting a new play
-    setState(prev => ({ ...prev, playError: null }));
+const playTrack = async (track: Track) => {
+  setState(prev => ({ ...prev, playError: null }));
 
-    try {
-      currentTrackRef.current = track;
-      isPlayingRef.current = true;
+  try {
+    currentTrackRef.current = track;
+    isPlayingRef.current = true;
 
-      setState(prev => ({
-        ...prev,
-        currentTrack: track,
-        isPlaying: true,
-        playError: null,
-      }));
+    setState(prev => ({
+      ...prev,
+      currentTrack: track,
+      isPlaying: true,
+      playError: null,
+    }));
 
-      expand();
+    expand();
 
-      const savedSeconds = await getInProgressSeconds(track.id);
+    const savedSeconds = await getInProgressSeconds(track.id);
 
-      await audioEngine.play(track); // throws on URL resolution or playback failure
+    await audioEngine.play(track);
 
-      if (savedSeconds > 0) {
-        setTimeout(() => {
-          audioEngine.seek(savedSeconds);
-        }, 500);
+    if (savedSeconds > 0) {
+      setTimeout(() => {
+        audioEngine.seek(savedSeconds);
+      }, 500);
+    } else {
+      // Fresh play (not a resume) — increment listen count
+      queryClient.invalidateQueries({ queryKey: ['story', track.id] });
+      try {
+        await client.mutations.incrementListenCount({ storyId: track.id });
+      } catch (err) {
+        // Non-critical — don't fail playback if this errors
+        console.warn('incrementListenCount error:', err);
       }
-
-      startProgressTracking(track.id);
-
-    } catch (err) {
-      // Roll back optimistic playing state and surface error
-      isPlayingRef.current = false;
-      currentTrackRef.current = null;
-      setState(prev => ({
-        ...prev,
-        isPlaying: false,
-        currentTrack: null,
-        playError: err instanceof Error ? err.message : 'Failed to load audio. Please try again.',
-      }));
-      stopProgressTracking();
-      console.error('PLAY ERROR', err);
     }
-  };
 
+    startProgressTracking(track.id);
+
+  } catch (err) {
+    isPlayingRef.current = false;
+    currentTrackRef.current = null;
+    setState(prev => ({
+      ...prev,
+      isPlaying: false,
+      currentTrack: null,
+      playError: err instanceof Error ? err.message : 'Failed to load audio. Please try again.',
+    }));
+    stopProgressTracking();
+    console.error('PLAY ERROR', err);
+  }
+};
   // ── Controls ──────────────────────────────────────────────────────────────
   const pause = async () => {
     isPlayingRef.current = false;
