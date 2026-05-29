@@ -115,6 +115,7 @@ Comment: a
     userId: a.string().required(),
     storyId: a.string().required(),
     content: a.string().required(),
+    userName: a.string(),              // ← add this
     createdAt: a.datetime(),
     story: a.belongsTo('Story', 'storyId'),
     user: a.belongsTo('User', 'userId'),
@@ -122,7 +123,7 @@ Comment: a
   .secondaryIndexes(index => [
     index('storyId').sortKeys(['createdAt']).name('byStoryAndCreatedAt'),
   ])
-  .authorization(allow => [          // ← add this back
+  .authorization(allow => [
     allow.owner(),
     allow.authenticated().to(['read']),
   ]),
@@ -295,9 +296,7 @@ UserFollowedAuthor: a
     .returns(a.boolean())
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(incrementListens)),
-
 });
-
 
 
 export type Schema = ClientSchema<typeof schema>;

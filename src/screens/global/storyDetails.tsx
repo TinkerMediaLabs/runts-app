@@ -53,6 +53,14 @@ import type { Schema }   from '../../../amplify/data/resource';
 
 const client = generateClient<Schema>();
 
+import { Alert } from 'react-native';
+import {
+  useComments,
+  usePostComment,
+  useUpdateComment,
+  useDeleteComment,
+} from '../../hooks/queries/useComments';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -105,30 +113,56 @@ const TagChip = ({ name, onPress }: { name: string; onPress: () => void }) => (
     </TouchableOpacity>
 );
 
-const CommentItem = ({ content, createdAt, userName, rating }: any) => (
-    <View style={styles.commentCard}>
-        <View style={styles.commentHeader}>
+    const CommentItem = ({
+    item,
+    currentUserId,
+    onEdit,
+    onDelete,
+    }: {
+    item: any;
+    currentUserId: string | null;
+    onEdit: (item: any) => void;
+    onDelete: (id: string) => void;
+    }) => {
+    const isOwn = item.userId === currentUserId;
+
+    const handleLongPress = () => {
+        if (!isOwn) return;
+        Alert.alert('Comment', undefined, [
+        { text: 'Edit',   onPress: () => onEdit(item) },
+        { text: 'Delete', onPress: () => onDelete(item.id), style: 'destructive' },
+        { text: 'Cancel', style: 'cancel' },
+        ]);
+    };
+
+    return (
+        <TouchableOpacity
+        onLongPress={handleLongPress}
+        activeOpacity={isOwn ? 0.75 : 1}
+        delayLongPress={400}
+        >
+        <View style={styles.commentCard}>
+            <View style={styles.commentHeader}>
             <View style={styles.commentAvatar}>
                 <FontAwesome5 name="user" size={14} color="rgba(255,255,255,0.4)" iconStyle="solid" />
             </View>
-            <View>
-                <Text style={styles.commentUser}>{userName}</Text>
-                {createdAt ? (
-                    <Text style={styles.commentDate}>
-                        {formatRelative(parseISO(createdAt), new Date())}
-                    </Text>
+            <View style={{ flex: 1 }}>
+                <Text style={styles.commentUser}>{item.userName ?? 'Anonymous'}</Text>
+                {item.createdAt ? (
+                <Text style={styles.commentDate}>
+                    {formatRelative(parseISO(item.createdAt), new Date())}
+                </Text>
                 ) : null}
             </View>
-            {rating ? (
-                <View style={styles.commentRating}>
-                    <FontAwesome name="star" size={11} color="#C9A84C" />
-                    <Text style={styles.commentRatingText}>{rating}</Text>
-                </View>
-            ) : null}
+            {isOwn && (
+                <Text style={styles.ownBadge}>You</Text>
+            )}
+            </View>
+            <Text style={styles.commentContent}>{item.content}</Text>
         </View>
-        <Text style={styles.commentContent}>{content}</Text>
-    </View>
-);
+        </TouchableOpacity>
+    );
+    };
 
 // ---------------------------------------------------------------------------
 // Main screen
@@ -136,7 +170,7 @@ const CommentItem = ({ content, createdAt, userName, rating }: any) => (
 
 const StoryScreen = ({ navigation }: any) => {
 
-    const { userId } = useApp();
+    const { userId, profile } = useApp();
     const insets     = useSafeAreaInsets();
     const route      = useRoute();
     const { storyID }: any = route.params;
@@ -240,11 +274,44 @@ const StoryScreen = ({ navigation }: any) => {
         ? '#C9A84C'
         : 'rgba(255,255,255,0.3)';
 
-    // ── Comment state ─────────────────────────────────────────────────────────
-    const [comment,     setComment]     = useState('');
-    const [commentList, setCommentList] = useState<any[]>([]);
-    const [seeSpoilers, setSeeSpoilers] = useState(false);
-    const focus = useRef<TextInput>(null);
+  // ── Comment state ─────────────────────────────────────────────────────────
+const [comment,        setComment]        = useState('');
+const [seeSpoilers,    setSeeSpoilers]    = useState(false);
+const [editingComment, setEditingComment] = useState<{ id: string; content: string } | null>(null);
+const focus = useRef<TextInput>(null);
+
+const { data: comments, isLoading: commentsLoading } = useComments(storyID);
+const { mutate: postComment,   isPending: posting   } = usePostComment();
+const { mutate: updateComment, isPending: updating  } = useUpdateComment();
+const { mutate: deleteComment                        } = useDeleteComment();
+
+const handlePost = () => {
+  const trimmed = comment.trim();
+  if (!trimmed) return;
+  postComment(
+    { storyId: storyID, content: trimmed, userName: profile?.name ?? 'Anonymous' },
+    { onSuccess: () => setComment('') }
+  );
+};
+
+const handleEditSave = () => {
+  if (!editingComment) return;
+  updateComment(
+    { id: editingComment.id, content: editingComment.content, storyId: storyID },
+    { onSuccess: () => setEditingComment(null) }
+  );
+};
+
+const handleDelete = (id: string) => {
+  Alert.alert('Delete comment', 'Are you sure?', [
+    { text: 'Cancel', style: 'cancel' },
+    {
+      text: 'Delete',
+      style: 'destructive',
+      onPress: () => deleteComment({ id, storyId: storyID }),
+    },
+  ]);
+};
 
     // ── Scroll animation ──────────────────────────────────────────────────────
     const scrollY = useSharedValue(0);
@@ -474,61 +541,95 @@ const StoryScreen = ({ navigation }: any) => {
                     )}
 
                     <View style={styles.separator} />
+{/* ── Discussion ── */}
+<Text style={styles.sectionLabel}>
+  Discussion{story?.numComments ? ` · ${story.numComments}` : ''}
+</Text>
 
-                    {/* ── Discussion ── */}
-                    <Text style={styles.sectionLabel}>
-                        Discussion{story?.numComments ? ` · ${story.numComments}` : ''}
-                    </Text>
+{/* Edit mode — shown when editing an existing comment */}
+{editingComment ? (
+  <View style={styles.commentInput}>
+    <TextInput
+      style={styles.commentInputText}
+      value={editingComment.content}
+      onChangeText={text => setEditingComment(prev => prev ? { ...prev, content: text } : null)}
+      multiline
+      maxLength={500}
+      autoFocus
+    />
+    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
+      <TouchableOpacity onPress={() => setEditingComment(null)} style={[styles.postBtn, { backgroundColor: '#2a2a2a' }]}>
+        <Text style={[styles.postBtnText, { color: '#fff' }]}>Cancel</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleEditSave} style={styles.postBtn} disabled={updating}>
+        <Text style={styles.postBtnText}>{updating ? 'Saving…' : 'Save'}</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+) : (
+  <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <View style={styles.commentInput}>
+      <TextInput
+        ref={focus}
+        placeholder="Leave a comment…"
+        placeholderTextColor="rgba(255,255,255,0.3)"
+        style={styles.commentInputText}
+        maxLength={500}
+        multiline
+        numberOfLines={2}
+        onChangeText={setComment}
+        value={comment}
+      />
+      {comment.length > 0 && (
+        <TouchableOpacity
+          style={styles.postBtn}
+          activeOpacity={0.8}
+          onPress={handlePost}
+          disabled={posting}
+        >
+          <Text style={styles.postBtnText}>{posting ? 'Posting…' : 'Post'}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  </KeyboardAvoidingView>
+)}
 
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    >
-                        <View style={styles.commentInput}>
-                            <TextInput
-                                ref={focus}
-                                placeholder="Leave a comment…"
-                                placeholderTextColor="rgba(255,255,255,0.3)"
-                                style={styles.commentInputText}
-                                maxLength={500}
-                                multiline
-                                numberOfLines={2}
-                                onChangeText={setComment}
-                                value={comment}
-                            />
-                            {comment.length > 0 && (
-                                <TouchableOpacity style={styles.postBtn} activeOpacity={0.8}>
-                                    <Text style={styles.postBtnText}>Post</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    </KeyboardAvoidingView>
-
-                    {seeSpoilers ? (
-                        <FlatList
-                            data={commentList}
-                            renderItem={({ item }) => (
-                                <CommentItem
-                                    content={item.content}
-                                    createdAt={item.createdAt}
-                                    userName={item.user?.name}
-                                    rating={item.rating?.rating}
-                                />
-                            )}
-                            keyExtractor={item => item.id}
-                            scrollEnabled={false}
-                            ListFooterComponent={<View style={{ height: 40 }} />}
-                        />
-                    ) : (
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            onPress={() => setSeeSpoilers(true)}
-                            style={styles.spoilerGate}
-                        >
-                            <FontAwesome5 name="exclamation-triangle" size={16} color="#ff8888" iconStyle="solid" />
-                            <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
-                            <Text style={styles.spoilerSub}>Tap to view comments</Text>
-                        </TouchableOpacity>
-                    )}
+{/* Spoiler gate + comment list */}
+{seeSpoilers ? (
+  commentsLoading ? (
+    <ActivityIndicator color="cyan" style={{ marginTop: 20 }} />
+  ) : (
+    <FlatList
+      data={comments ?? []}
+      renderItem={({ item }) => (
+        <CommentItem
+          item={item}
+          currentUserId={userId}
+          onEdit={setEditingComment}
+          onDelete={handleDelete}
+        />
+      )}
+      keyExtractor={item => item.id}
+      scrollEnabled={false}
+      ListEmptyComponent={
+        <Text style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 20 }}>
+          No comments yet. Be the first!
+        </Text>
+      }
+      ListFooterComponent={<View style={{ height: 40 }} />}
+    />
+  )
+) : (
+  <TouchableOpacity
+    activeOpacity={0.8}
+    onPress={() => setSeeSpoilers(true)}
+    style={styles.spoilerGate}
+  >
+    <FontAwesome5 name="exclamation-triangle" size={16} color="#ff8888" iconStyle="solid" />
+    <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
+    <Text style={styles.spoilerSub}>Tap to view comments</Text>
+  </TouchableOpacity>
+)}
 
                 </Animated.View>
             </Animated.ScrollView>
@@ -848,6 +949,17 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'rgba(255,255,255,0.8)',
         lineHeight: 20,
+    },
+    ownBadge: {
+        fontSize: 11,
+        color: 'cyan',
+        fontWeight: '600',
+        backgroundColor: 'rgba(0,255,255,0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: 'rgba(0,255,255,0.3)',
     },
 });
 
