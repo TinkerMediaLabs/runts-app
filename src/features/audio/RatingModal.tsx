@@ -286,7 +286,7 @@ const handleSubmit = async () => {
               <Text style={styles.charCount}>{comment.length} / 500</Text>
             </View>
 
-            <View style={{ height: 20 }} />
+            <View style={{ height: 240 }} />
 
           </ScrollView>
 

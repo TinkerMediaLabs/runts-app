@@ -4,7 +4,6 @@ import {
     View,
     StyleSheet,
     Dimensions,
-    ImageBackground,
     ScrollView,
     TouchableOpacity,
     FlatList,
@@ -33,24 +32,24 @@ import Animated, {
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import FontAwesome  from '@react-native-vector-icons/fontawesome';
-import AntDesign    from '@react-native-vector-icons/ant-design';
 
 import { formatRelative, parseISO } from 'date-fns';
 import TimeConversion from '../../components/functions/TimeConversion';
 
-import CloseButton   from '../../components/common/CloseButton';
-import PlayButtonV4  from '../../components/common/PlayButtonV4';
-import PlayButtonV3  from '../../components/common/PlayButtonV3';
-import PinButton from '../../components/common/PinButton';
+import CloseButton  from '../../components/common/CloseButton';
+import PlayButtonV4 from '../../components/common/PlayButtonV4';
+import PlayButtonV3 from '../../components/common/PlayButtonV3';
+import PinButton    from '../../components/common/PinButton';
+import RatingModal  from '../../features/audio/RatingModal';
 
 import { spacing } from '../../theme/spacing';
-import { useApp }   from '@/context/AppContext';
+import { useApp }  from '@/context/AppContext';
 
-import { useStory } from '../../hooks/queries/useStories';
-import { useAuthor } from '../../hooks/queries/useAuthors';
+import { useStory }      from '../../hooks/queries/useStories';
+import { useAuthor }     from '../../hooks/queries/useAuthors';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { generateClient } from 'aws-amplify/data';
-import type { Schema } from '../../../amplify/data/resource';
+import type { Schema }   from '../../../amplify/data/resource';
 
 const client = generateClient<Schema>();
 
@@ -59,18 +58,33 @@ const client = generateClient<Schema>();
 // ---------------------------------------------------------------------------
 
 const { width, height } = Dimensions.get('window');
-const HERO_HEIGHT = 340;
+const HERO_HEIGHT            = 340;
 const HEADER_THRESHOLD_START = HERO_HEIGHT - 120;
 const HEADER_THRESHOLD_END   = HERO_HEIGHT - 60;
+
+const REACTION_EMOJIS: Record<string, string> = {
+    shocked:      '😱',
+    frustrated:   '😤',
+    sad:          '😢',
+    reflective:   '🤔',
+    touched:      '🥹',
+    amused:       '😂',
+    scared:       '😨',
+    bored:        '😴',
+    uninterested: '😑',
+    thrilled:     '🤩',
+    confused:     '😕',
+    tense:        '😰',
+};
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const StatPill = ({ icon, value }: { icon: any; value: string }) => (
+const StatPill = ({ icon, value, color }: { icon: any; value: string; color?: string }) => (
     <View style={styles.statPill}>
-        <FontAwesome5 name={icon} size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
-        <Text style={styles.statText}>{value}</Text>
+        <FontAwesome5 name={icon} size={12} color={color ?? 'rgba(255,255,255,0.6)'} iconStyle="solid" />
+        <Text style={[styles.statText, color ? { color } : null]}>{value}</Text>
     </View>
 );
 
@@ -135,7 +149,7 @@ const StoryScreen = ({ navigation }: any) => {
     );
     const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
 
-    // Fetch story tags
+    // ── Story tags ────────────────────────────────────────────────────────────
     const [storyTags, setStoryTags] = useState<any[]>([]);
 
     useEffect(() => {
@@ -146,10 +160,8 @@ const StoryScreen = ({ navigation }: any) => {
                     filter: { storyId: { eq: storyID } },
                 });
                 if (!storyTagLinks?.length) return;
-
-                const tagIds = storyTagLinks.map(st => st.tagId);
                 const tagResults = await Promise.all(
-                    tagIds.map(id => client.models.Tag.get({ id }))
+                    storyTagLinks.map(st => client.models.Tag.get({ id: st.tagId }))
                 );
                 setStoryTags(tagResults.map(r => r.data).filter(Boolean));
             } catch (e) {
@@ -159,8 +171,74 @@ const StoryScreen = ({ navigation }: any) => {
         fetchTags();
     }, [storyID]);
 
-    // ── Interaction state ─────────────────────────────────────────────────────
-    const [isFav, setIsFav] = useState(false);
+    // ── User state — finished, rating, reactions ──────────────────────────────
+    const [hasFinished,  setHasFinished]  = useState(false);
+    const [userRating,   setUserRating]   = useState<any>(null);
+    const [topReactions, setTopReactions] = useState<any[]>([]);
+    const [showRatingModal, setShowRatingModal] = useState(false);
+
+    useEffect(() => {
+        if (!storyID || !userId) return;
+        async function fetchUserData() {
+            try {
+                const [finishedRes, ratingRes, reactionsRes] = await Promise.all([
+                    client.models.UserFinishedStory.list({
+                        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyID } }] },
+                    }),
+                    client.models.UserRating.list({
+                        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyID } }] },
+                    }),
+                    client.models.StoryReactionCount.list({
+                        filter: { storyId: { eq: storyID } },
+                    }),
+                ]);
+
+                setHasFinished(!!finishedRes.data?.length);
+                setUserRating(ratingRes.data?.[0] ?? null);
+
+                const sorted = (reactionsRes.data ?? [])
+                    .filter(r => (r.count ?? 0) > 0)
+                    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+                    .slice(0, 4);
+                setTopReactions(sorted);
+            } catch (e) {
+                console.log('Error fetching user data:', e);
+            }
+        }
+        fetchUserData();
+    }, [storyID, userId]);
+
+    // Re-fetch user rating after modal closes so star updates immediately
+    const handleRatingModalClose = async () => {
+        setShowRatingModal(false);
+        try {
+            const { data: ratings } = await client.models.UserRating.list({
+                filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyID } }] },
+            });
+            setUserRating(ratings?.[0] ?? null);
+
+            const { data: reactions } = await client.models.StoryReactionCount.list({
+                filter: { storyId: { eq: storyID } },
+            });
+            const sorted = (reactions ?? [])
+                .filter(r => (r.count ?? 0) > 0)
+                .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+                .slice(0, 4);
+            setTopReactions(sorted);
+        } catch (e) {
+            console.log('Error refreshing rating:', e);
+        }
+    };
+
+    // Star appearance:
+    // - Not finished → dim outlined star (not tappable)
+    // - Finished, no rating → gold outlined star
+    // - Finished + rated → gold solid star
+    const starIcon  = userRating ? 'star' : 'star';
+    const starStyle = userRating ? 'solid' : 'regular';
+    const starColor = hasFinished
+        ? '#C9A84C'
+        : 'rgba(255,255,255,0.3)';
 
     // ── Comment state ─────────────────────────────────────────────────────────
     const [comment,     setComment]     = useState('');
@@ -300,7 +378,14 @@ const StoryScreen = ({ navigation }: any) => {
                     {/* Stats row */}
                     <View style={styles.statsRow}>
                         <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
-                        <StatPill icon="clock" value={TimeConversion(story?.duration)} />
+                        <StatPill icon="clock"      value={TimeConversion(story?.duration)} />
+                        {story?.avgRating != null && (
+                            <StatPill
+                                icon="star"
+                                value={`${story.avgRating.toFixed(1)} (${story.numRatings ?? 0})`}
+                                color="#C9A84C"
+                            />
+                        )}
                     </View>
 
                     {/* Action icons */}
@@ -308,12 +393,14 @@ const StoryScreen = ({ navigation }: any) => {
                         <View style={styles.actionsLeft}>
                             <PinButton storyId={story?.id ?? ''} size={22} />
 
-                            <ActionBtn onPress={() => setIsFav(f => !f)}>
-                                <FontAwesome5
-                                    name="star"
+                            {/* Star — gold outlined if finished+unrated, solid if rated, dim if not finished */}
+                            <ActionBtn onPress={() => {
+                                if (hasFinished) setShowRatingModal(true);
+                            }}>
+                                <FontAwesome
+                                    name={starStyle === 'solid' ? 'star' : 'star-o'}
                                     size={21}
-                                    color={isFav ? '#C9A84C' : 'rgba(255,255,255,0.75)'}
-                                    iconStyle={isFav ? 'solid' : 'regular'}
+                                    color={starColor}
                                 />
                             </ActionBtn>
 
@@ -369,10 +456,29 @@ const StoryScreen = ({ navigation }: any) => {
                         </View>
                     )}
 
+                    {/* ── Reaction aggregate ── */}
+                    {topReactions.length > 0 && (
+                        <View style={styles.reactionsSection}>
+                            <Text style={styles.sectionLabel}>Reactions</Text>
+                            <View style={styles.reactionsRow}>
+                                {topReactions.map(r => (
+                                    <View key={r.reactionType} style={styles.reactionPill}>
+                                        <Text style={styles.reactionEmoji}>
+                                            {REACTION_EMOJIS[r.reactionType] ?? '❓'}
+                                        </Text>
+                                        <Text style={styles.reactionCount}>{r.count}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
                     <View style={styles.separator} />
 
-                    {/* Discussion */}
-                    <Text style={styles.sectionLabel}>Discussion</Text>
+                    {/* ── Discussion ── */}
+                    <Text style={styles.sectionLabel}>
+                        Discussion{story?.numComments ? ` · ${story.numComments}` : ''}
+                    </Text>
 
                     <KeyboardAvoidingView
                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -383,7 +489,7 @@ const StoryScreen = ({ navigation }: any) => {
                                 placeholder="Leave a comment…"
                                 placeholderTextColor="rgba(255,255,255,0.3)"
                                 style={styles.commentInputText}
-                                maxLength={250}
+                                maxLength={500}
                                 multiline
                                 numberOfLines={2}
                                 onChangeText={setComment}
@@ -431,6 +537,15 @@ const StoryScreen = ({ navigation }: any) => {
             <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
                 <CloseButton navigation={navigation} />
             </View>
+
+            {/* Rating modal — re-rate from story detail */}
+            <RatingModal
+                visible={showRatingModal}
+                storyId={storyID}
+                storyTitle={story?.title ?? ''}
+                artwork={displayImageUri}
+                onClose={handleRatingModalClose}
+            />
 
         </View>
     );
@@ -593,6 +708,36 @@ const styles = StyleSheet.create({
         color: 'cyan',
         fontSize: 13,
         textTransform: 'lowercase',
+    },
+
+    // ── Reactions ─────────────────────────────────────────────────────────────
+    reactionsSection: {
+        marginTop: 20,
+    },
+    reactionsRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 10,
+        flexWrap: 'wrap',
+    },
+    reactionPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#1e1e1e',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+        borderWidth: 1,
+        borderColor: '#2a2a2a',
+    },
+    reactionEmoji: {
+        fontSize: 18,
+    },
+    reactionCount: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.6)',
+        fontWeight: '600',
     },
 
     sectionLabel: {
