@@ -7,14 +7,18 @@ const STORY_TABLE = process.env.STORY_TABLE_NAME!;
 
 export const handler = async (event: DynamoDBStreamEvent) => {
   for (const record of event.Records) {
-    await processRecord(record);
+    try {
+      await processRecord(record);
+    } catch (err) {
+      console.error('comment-counter error:', JSON.stringify(err));
+    }
   }
 };
 
 async function processRecord(record: DynamoDBRecord) {
   const eventName = record.eventName;
+  console.log('eventName:', eventName);
 
-  // MODIFY = edit, count unchanged. Only INSERT and REMOVE affect count.
   if (eventName !== 'INSERT' && eventName !== 'REMOVE') return;
 
   const image = eventName === 'INSERT'
@@ -22,6 +26,7 @@ async function processRecord(record: DynamoDBRecord) {
     : unmarshall(record.dynamodb?.OldImage as any);
 
   const delta = eventName === 'INSERT' ? 1 : -1;
+  console.log(`storyId=${image.storyId} delta=${delta}`);
 
   await dynamo.send(new UpdateItemCommand({
     TableName: STORY_TABLE,

@@ -25,6 +25,7 @@ type PlayerState = {
   isPlaying: boolean;
   playbackRate: number;
   playError: string | null;  // new
+  pendingRatingStoryId: string | null;
 };
 
 const PlayerContext = createContext<any>(null);
@@ -36,6 +37,7 @@ export const PlayerProvider = ({ children }: any) => {
     isPlaying: false,
     playbackRate: 1,
     playError: null,  // new
+    pendingRatingStoryId: null,
   });
 
   const { expand } = usePlayerUI();
@@ -79,6 +81,8 @@ export const PlayerProvider = ({ children }: any) => {
           storyId,
           finishedAt: new Date().toISOString(),
         });
+        // First completion — trigger rating modal
+        setState(prev => ({ ...prev, pendingRatingStoryId: storyId }));
       }
 
       const { data: pinned } = await client.models.UserPinnedStory.list({
@@ -210,6 +214,10 @@ const playTrack = async (track: Track) => {
     }
   };
 
+  const clearPendingRating = () => {
+    setState(prev => ({ ...prev, pendingRatingStoryId: null }));
+  };
+
   const setPlaybackRate = async (rate: number) => {
     await audioEngine.setRate(rate);
     setState(prev => ({ ...prev, playbackRate: rate }));
@@ -232,6 +240,7 @@ const playTrack = async (track: Track) => {
         resume,
         setPlaybackRate,
         clearPlayError,  // new
+        clearPendingRating,  // ← add
       }}
     >
       {children}

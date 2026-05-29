@@ -54,6 +54,8 @@ import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
 import { useTags } from '@/hooks/queries/useTags';
 
+import RatingModal from './RatingModal';
+
 const MINI_PLAYER_HEIGHT = 70;
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 const AnimatedImageBackground = createAnimatedComponent(ImageBackground);
@@ -68,8 +70,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
 
   const { expand, collapse } = usePlayerUI();
-  const { state, pause, resume, setPlaybackRate } = usePlayer();
-
+  const { state, pause, resume, setPlaybackRate, clearPendingRating } = usePlayer();
   // useProgress with interval 0 returns shared values that update on the
   // worklet thread — no JS re-renders, no duplicate key spam from the slider.
   const progress = useProgress(0);
@@ -423,6 +424,15 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 setPlaybackRate(rate);
                 setShowOptions(false);
               }}
+            />
+
+            {/* Rating modal — appears on first story completion */}
+            <RatingModal
+              visible={!!state.pendingRatingStoryId}
+              storyId={state.pendingRatingStoryId ?? ''}
+              storyTitle={track?.title ?? ''}
+              artwork={track?.artwork}
+              onClose={clearPendingRating}
             />
 
           </Animated.View>
