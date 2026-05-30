@@ -23,11 +23,15 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useQueryClient } from '@tanstack/react-query';
+
+import { usePlayerUI } from '@/context/PlayerUIContext';
+import { useApp } from '@/context/AppContext';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -78,12 +82,19 @@ export default function RatingModal({
 }: RatingModalProps) {
   const queryClient = useQueryClient();
 
+  const { tabBarHeight } = usePlayerUI();
+  const MINI_PLAYER_HEIGHT = 70;
+  const footerBottomPadding = tabBarHeight + MINI_PLAYER_HEIGHT + 8;
+
+  const { profile } = useApp();
+
   const [selectedRating,   setSelectedRating]   = useState<number | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [comment,          setComment]           = useState('');
   const [isSubmitting,     setIsSubmitting]      = useState(false);
   const [existingRatingId,   setExistingRatingId]   = useState<string | null>(null);
   const [existingReactionId, setExistingReactionId] = useState<string | null>(null);
+  const [postAnonymously, setPostAnonymously] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
   const commentInputRef = useRef<TextInput>(null);
@@ -111,6 +122,7 @@ export default function RatingModal({
       setComment('');
       setExistingRatingId(null);
       setExistingReactionId(null);
+      setPostAnonymously(false);
     }
   }, [visible]);
 
@@ -172,7 +184,12 @@ const handleSubmit = async () => {
     // Comment — always new
     if (comment.trim()) {
       ops.push(
-        client.models.Comment.create({ userId, storyId, content: comment.trim() })
+        client.models.Comment.create({
+          userId,
+          storyId,
+          content: comment.trim(),
+          userName: postAnonymously ? 'Anonymous' : (profile?.name ?? 'Anonymous'),
+        })
       );
     }
 
@@ -284,6 +301,18 @@ const handleSubmit = async () => {
               }}
             />
               <Text style={styles.charCount}>{comment.length} / 500</Text>
+              <TouchableOpacity
+                onPress={() => setPostAnonymously(v => !v)}
+                activeOpacity={0.7}
+                style={styles.anonRow}
+              >
+                <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
+                  {postAnonymously && (
+                    <FontAwesome5 name="check" size={9} color="#000" iconStyle="solid" />
+                  )}
+                </View>
+                <Text style={styles.anonLabel}>Post anonymously</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={{ height: 240 }} />
@@ -291,7 +320,7 @@ const handleSubmit = async () => {
           </ScrollView>
 
           {/* ── Footer ── */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: footerBottomPadding }]}>
             <TouchableOpacity onPress={onClose} style={styles.skipBtn} activeOpacity={0.7}>
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
@@ -466,7 +495,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingBottom: 36,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#2a2a2a',
   },
@@ -492,4 +520,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000',
   },
+  anonRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  marginTop: 10,
+},
+anonCheckbox: {
+  width: 18,
+  height: 18,
+  borderRadius: 4,
+  borderWidth: 1.5,
+  borderColor: 'rgba(255,255,255,0.25)',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+anonCheckboxActive: {
+  backgroundColor: 'cyan',
+  borderColor: 'cyan',
+},
+anonLabel: {
+  fontSize: 13,
+  color: 'rgba(255,255,255,0.4)',
+},
 });

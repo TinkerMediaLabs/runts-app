@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -19,13 +19,22 @@ import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
 import { spacing } from '../../theme/spacing';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  getFavoriteThreshold,
+  saveFavoriteThreshold,
+  DEFAULT_THRESHOLD,
+  FAVORITE_THRESHOLD_KEY,
+} from '../../hooks/queries/useFavoritedStories';
+import { useQueryClient } from '@tanstack/react-query';
+
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type SheetType = 'playbackSpeed' | 'audioQuality' | null;
+type SheetType = 'playbackSpeed' | 'audioQuality' | 'favoriteThreshold' | null;
 
 type PlaybackSpeed = 0.75 | 1 | 1.25 | 1.5 | 2;
 type AudioQuality  = 'Low' | 'Standard' | 'High';
@@ -206,6 +215,21 @@ const AppSettings = ({ navigation }: any) => {
     const PLAYBACK_SPEEDS: PlaybackSpeed[] = [0.75, 1, 1.25, 1.5, 2];
     const AUDIO_QUALITIES: AudioQuality[]  = ['Low', 'Standard', 'High'];
 
+    const queryClient = useQueryClient();
+    const [favoriteThreshold, setFavoriteThreshold] = useState(DEFAULT_THRESHOLD);
+
+    useEffect(() => {
+        getFavoriteThreshold().then(setFavoriteThreshold);
+        }, []);
+
+        const handleThresholdChange = async (value: number) => {
+            setFavoriteThreshold(value);
+        await saveFavoriteThreshold(value);
+        // Invalidate so FavoritesList refetches with new threshold
+        queryClient.invalidateQueries({ queryKey: ['favoritedStories'] });
+        close();
+    };
+
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <Screen>
@@ -221,6 +245,16 @@ const AppSettings = ({ navigation }: any) => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
+
+                    {/* ── Library ── */}
+                    <Section title="Library">
+                    <SelectRow
+                        icon="star"
+                        label="Favorites Threshold"
+                        value={`${favoriteThreshold}★ and above`}
+                        onPress={() => open('favoriteThreshold')}
+                    />
+                    </Section>
 
                     {/* ── Content ── */}
                     <Section title="Content">
@@ -372,6 +406,25 @@ const AppSettings = ({ navigation }: any) => {
                         onPress={() => { setAudioQuality(q); close(); }}
                     />
                 ))}
+            </Sheet>
+
+            {/* ── Favorite threshold sheet ── */}
+            <Sheet
+            visible={activeSheet === 'favoriteThreshold'}
+            onClose={close}
+            title="Favorites Threshold"
+            >
+            <Text style={styles.sheetNote}>
+                Stories you rate at or above this threshold are automatically added to your Favorites.
+            </Text>
+            {[7, 8, 9, 10].map(value => (
+                <OptionPill
+                key={value}
+                label={`${value} stars and above`}
+                active={favoriteThreshold === value}
+                onPress={() => handleThresholdChange(value)}
+                />
+            ))}
             </Sheet>
 
         </Screen>

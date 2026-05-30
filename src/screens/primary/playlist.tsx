@@ -17,6 +17,8 @@ import StoryTileList from '../../components/story/StoryTileList';
 import { spacing } from '../../theme/spacing';
 import { useApp } from '@/context/AppContext';
 
+import FavoritesList from '../../components/story/FavoritesList';
+
 const { width } = Dimensions.get('window');
 
 type TabId = 'pinned' | 'favorites' | 'bookmarked';
@@ -76,21 +78,24 @@ const PlaylistScreen = () => {
                         <Text style={styles.headerTitle}>My Library</Text>
 
                         {/* Reorder toggle — only shown on list tabs */}
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => setReorderEnabled(!reorderEnabled)}
-                            style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}
-                        >
-                            <FontAwesome5
+                        {/* Reorder toggle — only shown on pinned tab */}
+                            {activeTab === 'pinned' && (
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                onPress={() => setReorderEnabled(!reorderEnabled)}
+                                style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}
+                            >
+                                <FontAwesome5
                                 name="sort"
                                 size={14}
                                 color={reorderEnabled ? '#000' : '#ffffffa5'}
                                 iconStyle="solid"
-                            />
-                            <Text style={[styles.reorderLabel, reorderEnabled && styles.reorderLabelActive]}>
+                                />
+                                <Text style={[styles.reorderLabel, reorderEnabled && styles.reorderLabelActive]}>
                                 {reorderEnabled ? 'Done' : 'Reorder'}
-                            </Text>
-                        </TouchableOpacity>
+                                </Text>
+                            </TouchableOpacity>
+                            )}
                     </View>
 
                     {/* ── Tab bar ── */}
@@ -121,7 +126,7 @@ const PlaylistScreen = () => {
                 </View>
 
                 {/* Reorder hint */}
-                {reorderEnabled && (
+                {activeTab === 'pinned' && reorderEnabled && (
                     <View style={styles.reorderHint}>
                         <FontAwesome5 name="grip-lines" size={11} color="#ffffff50" iconStyle="solid" />
                         <Text style={styles.reorderHintText}>Hold and drag items to reorder</Text>
@@ -136,11 +141,7 @@ const PlaylistScreen = () => {
                     )}
 
                     {activeTab === 'favorites' && (
-                        <EmptyState
-                            icon="heart"
-                            title="No favourites yet"
-                            subtitle="Stories you favourite will appear here."
-                        />
+                        <FavoritesList tabBarHeight={tabBarHeight} />
                     )}
 
                     {activeTab === 'bookmarked' && (

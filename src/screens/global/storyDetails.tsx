@@ -217,10 +217,10 @@ const StoryScreen = ({ navigation }: any) => {
             try {
                 const [finishedRes, ratingRes, reactionsRes] = await Promise.all([
                     client.models.UserFinishedStory.list({
-                        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyID } }] },
+                        filter: { and: [{ userId: { eq: userId ?? undefined} }, { storyId: { eq: storyID } }] },
                     }),
                     client.models.UserRating.list({
-                        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyID } }] },
+                        filter: { and: [{ userId: { eq: userId ?? undefined} }, { storyId: { eq: storyID } }] },
                     }),
                     client.models.StoryReactionCount.list({
                         filter: { storyId: { eq: storyID } },
@@ -247,7 +247,7 @@ const StoryScreen = ({ navigation }: any) => {
         setShowRatingModal(false);
         try {
             const { data: ratings } = await client.models.UserRating.list({
-                filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyID } }] },
+                filter: { and: [{ userId: { eq: userId ?? undefined} }, { storyId: { eq: storyID } }] },
             });
             setUserRating(ratings?.[0] ?? null);
 
@@ -278,6 +278,7 @@ const StoryScreen = ({ navigation }: any) => {
 const [comment,        setComment]        = useState('');
 const [seeSpoilers,    setSeeSpoilers]    = useState(false);
 const [editingComment, setEditingComment] = useState<{ id: string; content: string } | null>(null);
+const [postAnonymously, setPostAnonymously] = useState(false);
 const focus = useRef<TextInput>(null);
 
 const { data: comments, isLoading: commentsLoading } = useComments(storyID);
@@ -289,7 +290,11 @@ const handlePost = () => {
   const trimmed = comment.trim();
   if (!trimmed) return;
   postComment(
-    { storyId: storyID, content: trimmed, userName: profile?.name ?? 'Anonymous' },
+    {
+      storyId: storyID,
+      content: trimmed,
+      userName: postAnonymously ? 'Anonymous' : (profile?.name ?? 'Anonymous'),
+    },
     { onSuccess: () => setComment('') }
   );
 };
@@ -580,6 +585,19 @@ const handleDelete = (id: string) => {
         onChangeText={setComment}
         value={comment}
       />
+      {/* Anonymous toggle */}
+        <TouchableOpacity
+            onPress={() => setPostAnonymously(v => !v)}
+            activeOpacity={0.7}
+            style={styles.anonRow}
+            >
+            <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
+                {postAnonymously && (
+                <FontAwesome5 name="check" size={9} color="#000" iconStyle="solid" />
+                )}
+            </View>
+            <Text style={styles.anonLabel}>Post anonymously</Text>
+        </TouchableOpacity>
       {comment.length > 0 && (
         <TouchableOpacity
           style={styles.postBtn}
@@ -960,6 +978,29 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 0.5,
         borderColor: 'rgba(0,255,255,0.3)',
+    },
+        anonRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 10,
+    },
+        anonCheckbox: {
+        width: 18,
+        height: 18,
+        borderRadius: 4,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.25)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+        anonCheckboxActive: {
+        backgroundColor: 'cyan',
+        borderColor: 'cyan',
+    },
+        anonLabel: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.4)',
     },
 });
 
