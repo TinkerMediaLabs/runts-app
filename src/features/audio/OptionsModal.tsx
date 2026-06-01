@@ -42,13 +42,26 @@ interface OptionsModalProps {
   insetsTop: number;
   playbackRate: number;
   onRateChange: (rate: number) => void;
+  onDismiss: () => void;
+  sleepMinutesLeft: number | null;
+  onSleepTimer: (minutes: number | null) => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function OptionsModal({ visible, onOpen, onClose, insetsTop, playbackRate, onRateChange }: OptionsModalProps) {
+export default function OptionsModal({ 
+  visible, 
+  onOpen, 
+  onClose, 
+  insetsTop, 
+  playbackRate, 
+  onRateChange, 
+  onDismiss,
+  sleepMinutesLeft,
+  onSleepTimer 
+}: OptionsModalProps) {
 
   const progress = useSharedValue(0); // 0 = closed, 1 = open
   const [isMounted, setIsMounted] = React.useState(false);
@@ -154,6 +167,49 @@ export default function OptionsModal({ visible, onOpen, onClose, insetsTop, play
               </React.Fragment>
             );
           })}
+
+          {/* Sleep timer section */}
+          <View style={[styles.divider, { marginHorizontal: 0, marginVertical: 8 }]} />
+          <Text style={styles.sectionTitle}>Sleep Timer</Text>
+
+          {[
+            { label: 'Off',    minutes: null },
+            { label: '15 min', minutes: 15  },
+            { label: '30 min', minutes: 30  },
+            { label: '45 min', minutes: 45  },
+            { label: '60 min', minutes: 60  },
+          ].map(({ label, minutes }, index) => {
+            const isActive = minutes === null
+              ? sleepMinutesLeft === null
+              : sleepMinutesLeft !== null && minutes >= sleepMinutesLeft; // active if this was the set value
+            return (
+              <React.Fragment key={label}>
+                {index > 0 && <View style={styles.divider} />}
+                <TouchableOpacity
+                  style={styles.option}
+                  activeOpacity={0.6}
+                  onPress={() => { onSleepTimer(minutes); onClose(); }}
+                >
+                  <Text style={[styles.optionLabel, isActive && styles.optionLabelActive]}>
+                    {label}
+                  </Text>
+                  {isActive && <Feather name="check" size={16} color="cyan" />}
+                </TouchableOpacity>
+              </React.Fragment>
+            );
+          })}
+
+          {/* Dismiss player */}
+          <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.option}
+              activeOpacity={0.6}
+              onPress={onDismiss}
+            >
+              <Text style={[styles.optionLabel, { color: '#ff6b6b' }]}>Close Player</Text>
+              <Feather name="x-circle" size={16} color="#ff6b6b" />
+            </TouchableOpacity>
+
         </Animated.View>
       )}
 
@@ -213,16 +269,6 @@ const styles = StyleSheet.create({
     elevation: 20,
   },
 
-  sectionTitle: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -245,6 +291,16 @@ const styles = StyleSheet.create({
   optionLabelActive: {
     color: 'cyan',
     fontWeight: '600',
+  },
+  sectionTitle: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    paddingHorizontal: 20,
+    marginBottom: 8,
+    marginTop: 4,
   },
 
 });

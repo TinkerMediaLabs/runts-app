@@ -7,6 +7,8 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../amplify/data/resource';
 import { useQueryClient } from '@tanstack/react-query';
 import { upsertInProgressStory, getInProgressSeconds } from '@/hooks/queries/useInProgressStories';
+import { Hub } from 'aws-amplify/utils';
+import { getDefaultPlaybackSpeed } from '@/lib/audioSettings';
 
 const client = generateClient<Schema>();
 
@@ -39,6 +41,10 @@ export const PlayerProvider = ({ children }: any) => {
     playError: null,  // new
     pendingRatingStoryId: null,
   });
+
+  const sleepTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sleepIntervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [sleepMinutesLeft, setSleepMinutesLeft] = useState<number | null>(null);
 
   const { expand } = usePlayerUI();
   const queryClient = useQueryClient();
@@ -157,16 +163,21 @@ const playTrack = async (track: Track) => {
     await audioEngine.play(track);
 
     if (savedSeconds > 0) {
+      // Resume — seek to saved position
       setTimeout(() => {
         audioEngine.seek(savedSeconds);
       }, 500);
     } else {
-      // Fresh play (not a resume) — increment listen count
+      // Fresh play — apply default speed and increment listen count
+      const defaultSpeed = await getDefaultPlaybackSpeed();
+      if (defaultSpeed !== 1) {
+        await audioEngine.setRate(defaultSpeed);
+        setState(prev => ({ ...prev, playbackRate: defaultSpeed }));
+      }
       queryClient.invalidateQueries({ queryKey: ['story', track.id] });
       try {
         await client.mutations.incrementListenCount({ storyId: track.id });
       } catch (err) {
-        // Non-critical — don't fail playback if this errors
         console.warn('incrementListenCount error:', err);
       }
     }
@@ -186,6 +197,7 @@ const playTrack = async (track: Track) => {
     console.error('PLAY ERROR', err);
   }
 };
+
   // ── Controls ──────────────────────────────────────────────────────────────
   const pause = async () => {
     isPlayingRef.current = false;
@@ -227,8 +239,64 @@ const playTrack = async (track: Track) => {
     setState(prev => ({ ...prev, playError: null }));
   };
 
+  const clearTrack = async () => {
+    setSleepTimer(null);
+    stopProgressTracking();
+    isPlayingRef.current = false;
+    currentTrackRef.current = null;
+    await audioEngine.stop();
+    setState({
+      currentTrack: null,
+      isPlaying: false,
+      playbackRate: 1,
+      playError: null,
+      pendingRatingStoryId: null,
+    });
+  };
+
+  const setSleepTimer = async (minutes: number | null) => {
+    // Clear any existing timer
+    if (sleepTimerRef.current)    clearTimeout(sleepTimerRef.current);
+    if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+    sleepTimerRef.current    = null;
+    sleepIntervalRef.current = null;
+    setSleepMinutesLeft(null);
+
+    if (!minutes) return;
+
+    setSleepMinutesLeft(minutes);
+
+    // Countdown — updates every minute
+    sleepIntervalRef.current = setInterval(() => {
+      setSleepMinutesLeft(prev => {
+        if (prev === null || prev <= 1) {
+          if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 60 * 1000);
+
+    // Pause when timer expires
+    sleepTimerRef.current = setTimeout(async () => {
+      if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+      setSleepMinutesLeft(null);
+      isPlayingRef.current = false;
+      await audioEngine.pause();
+      setState(prev => ({ ...prev, isPlaying: false }));
+    }, minutes * 60 * 1000);
+  };
+
   useEffect(() => {
-    return () => stopProgressTracking();
+    const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signedOut') clearTrack();
+    });
+    return () => {
+      stopProgressTracking();
+      if (sleepTimerRef.current)    clearTimeout(sleepTimerRef.current);
+      if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+      unsubscribe();
+    };
   }, []);
 
   return (
@@ -239,8 +307,11 @@ const playTrack = async (track: Track) => {
         pause,
         resume,
         setPlaybackRate,
-        clearPlayError,  // new
-        clearPendingRating,  // ← add
+        clearPlayError,
+        clearPendingRating,
+        clearTrack,
+        sleepMinutesLeft,
+        setSleepTimer,
       }}
     >
       {children}

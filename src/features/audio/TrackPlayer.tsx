@@ -70,7 +70,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
 
   const { expand, collapse } = usePlayerUI();
-  const { state, pause, resume, setPlaybackRate, clearPendingRating } = usePlayer();
+  const { state, pause, resume, setPlaybackRate, clearPendingRating, clearTrack, sleepMinutesLeft, setSleepTimer } = usePlayer();
   // useProgress with interval 0 returns shared values that update on the
   // worklet thread — no JS re-renders, no duplicate key spam from the slider.
   const progress = useProgress(0);
@@ -316,6 +316,31 @@ export default function TrackPlayerWidget({ expanded }: any) {
                     <GestureDetector gesture={panGesture}>
                       <View style={styles.heroPanZone} />
                     </GestureDetector>
+
+                    <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
+                      <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
+                        <Feather name="chevron-down" size={28} color="#fff" />
+                      </TouchableOpacity>
+                      <GestureDetector gesture={panGesture}>
+                        <View style={styles.heroPanZone} />
+                      </GestureDetector>
+
+                      {/* Sleep timer pill — only shown when active */}
+                      {sleepMinutesLeft !== null && (
+                        <View style={styles.sleepPill}>
+                          <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
+                        </View>
+                      )}
+
+                      <TouchableOpacity
+                        style={styles.headerbutton}
+                        onPress={() => setShowOptions(true)}
+                        activeOpacity={0.7}
+                      >
+                        <Feather name="more-vertical" size={24} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+
                     {/* Options button — right side of header */}
                     <TouchableOpacity
                       style={styles.headerbutton}
@@ -422,6 +447,12 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 setPlaybackRate(rate);
                 setShowOptions(false);
               }}
+              onDismiss={() => {
+                setShowOptions(false);
+                clearTrack();
+              }}
+              sleepMinutesLeft={sleepMinutesLeft}
+              onSleepTimer={(minutes) => setSleepTimer(minutes)}
             />
 
             {/* Rating modal — appears on first story completion */}
@@ -678,5 +709,18 @@ transcript: {
   color: 'rgba(255,255,255,0.75)',
   fontSize: 24,
   lineHeight: 40,
+},
+sleepPill: {
+  backgroundColor: 'rgba(0,0,0,0.45)',
+  borderRadius: 12,
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+  borderWidth: 0.5,
+  borderColor: 'rgba(255,255,255,0.2)',
+},
+sleepPillText: {
+  fontSize: 12,
+  color: '#fff',
+  fontWeight: '600',
 },
 });

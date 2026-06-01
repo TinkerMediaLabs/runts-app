@@ -20,12 +20,19 @@ import Screen from '../../components/common/Screen';
 import { spacing } from '../../theme/spacing';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {
   getFavoriteThreshold,
   saveFavoriteThreshold,
   DEFAULT_THRESHOLD,
   FAVORITE_THRESHOLD_KEY,
 } from '../../hooks/queries/useFavoritedStories';
+
+import {
+  getDefaultPlaybackSpeed,
+  saveDefaultPlaybackSpeed,
+} from '../../lib/audioSettings';
+
 import { useQueryClient } from '@tanstack/react-query';
 
 const { width } = Dimensions.get('window');
@@ -34,7 +41,7 @@ const { width } = Dimensions.get('window');
 // Types
 // ---------------------------------------------------------------------------
 
-type SheetType = 'playbackSpeed' | 'audioQuality' | 'favoriteThreshold' | null;
+type SheetType = 'playbackSpeed' | 'favoriteThreshold' | null;
 
 type PlaybackSpeed = 0.75 | 1 | 1.25 | 1.5 | 2;
 type AudioQuality  = 'Low' | 'Standard' | 'High';
@@ -220,6 +227,7 @@ const AppSettings = ({ navigation }: any) => {
 
     useEffect(() => {
         getFavoriteThreshold().then(setFavoriteThreshold);
+        getDefaultPlaybackSpeed().then(v => setPlaybackSpeed(v as PlaybackSpeed));
         }, []);
 
         const handleThresholdChange = async (value: number) => {
@@ -283,7 +291,7 @@ const AppSettings = ({ navigation }: any) => {
                             value={`${playbackSpeed}x`}
                             onPress={() => open('playbackSpeed')}
                         />
-                        <RowDivider />
+                        {/* <RowDivider /> */}
                         {/* <ToggleRow
                             icon="forward"
                             label="Skip Silence"
@@ -292,24 +300,24 @@ const AppSettings = ({ navigation }: any) => {
                             onChange={setSkipSilence}
                         />
                         <RowDivider /> */}
-                        <ToggleRow
+                        {/* <ToggleRow
                             icon="moon"
                             label="Sleep Timer"
                             description="Stop playback after a set time"
                             value={sleepTimer}
                             onChange={setSleepTimer}
-                        />
+                        /> */}
                     </Section>
 
                     {/* ── Audio ── */}
                     <Section title="Audio">
-                        <SelectRow
+                        {/* <SelectRow
                             icon="sliders-h"
                             label="Streaming Quality"
                             value={audioQuality}
                             onPress={() => open('audioQuality')}
                         />
-                        <RowDivider />
+                        <RowDivider /> */}
                         <ToggleRow
                             icon="volume-up"
                             label="Volume Boost"
@@ -384,13 +392,17 @@ const AppSettings = ({ navigation }: any) => {
                         key={speed}
                         label={`${speed}x`}
                         active={playbackSpeed === speed}
-                        onPress={() => { setPlaybackSpeed(speed); close(); }}
+                        onPress={() => {
+                        setPlaybackSpeed(speed);
+                        saveDefaultPlaybackSpeed(speed);
+                        close();
+                        }}
                     />
                 ))}
             </Sheet>
 
             {/* ── Audio quality sheet ── */}
-            <Sheet
+            {/* <Sheet
                 visible={activeSheet === 'audioQuality'}
                 onClose={close}
                 title="Streaming Quality"
@@ -406,7 +418,7 @@ const AppSettings = ({ navigation }: any) => {
                         onPress={() => { setAudioQuality(q); close(); }}
                     />
                 ))}
-            </Sheet>
+            </Sheet> */}
 
             {/* ── Favorite threshold sheet ── */}
             <Sheet
