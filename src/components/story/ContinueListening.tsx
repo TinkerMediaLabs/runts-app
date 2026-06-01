@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -8,6 +8,8 @@ import {
     TouchableOpacity,
     FlatList,
     ActivityIndicator,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
 } from 'react-native';
 
 import Animated, {
@@ -71,7 +73,7 @@ const ProgressCard = ({
     );
     const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
 
-    // Derived values — safe to compute as undefined when story is null
+    // Derived values — safe to compute when story is null
     const progressSeconds = inProgressRecord.progressSeconds ?? 0;
     const duration        = story?.duration ?? 1;
     const percent         = Math.min(100, Math.round((progressSeconds / duration) * 100));
@@ -79,7 +81,7 @@ const ProgressCard = ({
     const minsLeft        = Math.max(0, Math.floor(secsLeft / 60));
     const authorName      = authorMap[story?.authorId ?? ''] ?? '';
 
-    // ALL hooks must be above the early return
+    // All hooks above early return
     const barProgress = useSharedValue(0);
     useEffect(() => {
         barProgress.value = withTiming(percent / 100, {
@@ -141,6 +143,7 @@ const ProgressCard = ({
         </TouchableOpacity>
     );
 };
+
 // ---------------------------------------------------------------------------
 // ContinueListening
 // ---------------------------------------------------------------------------
@@ -149,6 +152,7 @@ const ContinueListening = () => {
 
     const { data: inProgressStories, isLoading } = useInProgressStories();
     const { data: authors } = useAuthors();
+    const [activeIndex, setActiveIndex] = useState(0);
 
     const authorMap = useMemo(() => {
         if (!authors) return {};
@@ -158,10 +162,15 @@ const ContinueListening = () => {
         }, {});
     }, [authors]);
 
-    // Show only 4 most recent
     const recentStories = useMemo(() => {
         return (inProgressStories ?? []).slice(0, MAX_CARDS);
     }, [inProgressStories]);
+
+    const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const offset = e.nativeEvent.contentOffset.x;
+        const index  = Math.round(offset / SNAP_INTERVAL);
+        setActiveIndex(Math.min(index, recentStories.length - 1));
+    };
 
     if (isLoading) return null;
     if (!recentStories.length) return null;
@@ -186,7 +195,24 @@ const ContinueListening = () => {
                 decelerationRate="fast"
                 contentContainerStyle={styles.listContent}
                 ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
             />
+
+            {/* Pagination dots — only shown when there are multiple cards */}
+            {recentStories.length > 1 && (
+                <View style={styles.dotsRow}>
+                    {recentStories.map((_, i) => (
+                        <View
+                            key={i}
+                            style={[
+                                styles.dot,
+                                i === activeIndex && styles.dotActive,
+                            ]}
+                        />
+                    ))}
+                </View>
+            )}
         </View>
     );
 };
@@ -265,6 +291,24 @@ const styles = StyleSheet.create({
         height: '100%',
         backgroundColor: 'cyan',
         borderRadius: 1,
+    },
+    dotsRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 5,
+        marginTop: 10,
+    },
+    dot: {
+        width: 5,
+        height: 5,
+        borderRadius: 3,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    dotActive: {
+        width: 16,
+        borderRadius: 3,
+        backgroundColor: 'cyan',
     },
 });
 

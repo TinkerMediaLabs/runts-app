@@ -345,21 +345,28 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   <View style={styles.info}>
                     <View style={styles.titlecontainer}>
                       <Text style={styles.bigTitle}>{track.title}</Text>
-                      <TouchableWithoutFeedback onPress={() => {
-                        navigate('AuthorDetails', { id: "1" });
+                    <TouchableWithoutFeedback onPress={() => {
+                      if (currentStory?.authorId) {
+                        navigate('AuthorDetails', { id: currentStory.authorId });
                         collapsePlayer();
-                      }}>
-                        <Text style={styles.artist}>by {track.artist}</Text>
-                      </TouchableWithoutFeedback>
+                      }
+                    }}>
+                      <Text style={styles.artist}>by {track.artist}</Text>
+                    </TouchableWithoutFeedback>
                     </View>
 
                     <View style={styles.actioncontainer}>
-                      <TouchableWithoutFeedback onPress={() => {
-                        navigate('TagHomeScreen', { id: "1" });
+                     <TouchableWithoutFeedback onPress={() => {
+                      if (currentStory?.primaryTagId) {
+                        navigate('TagHomeScreen', {
+                          id: currentStory.primaryTagId,
+                          name: storyTags[0]?.name ?? '',
+                        });
                         collapsePlayer();
-                      }}>
-                        <Text style={styles.tag}>Fan Fiction</Text>
-                      </TouchableWithoutFeedback>
+                      }
+                    }}>
+                      <Text style={styles.tag}>{storyTags[0]?.name ?? ''}</Text>
+                    </TouchableWithoutFeedback>
 
                       <View style={styles.actions}>
                         <View style={styles.actionbutton}>
@@ -393,21 +400,12 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
               </View>
 
+            {currentStory?.transcript ? (
               <View style={styles.transcriptbox}>
                 <Text style={styles.transcriptheader}>Transcript</Text>
-                <Text style={styles.transcript}>
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                  this is some very long tst. gonna see how this looks and test the scroll stuff.
-                </Text>
+                <Text style={styles.transcript}>{currentStory.transcript}</Text>
               </View>
+            ) : null}
 
               <View style={{ height: 100 }} />
 
@@ -626,7 +624,7 @@ const styles = StyleSheet.create({
   },
   additionalcontent: {
     marginTop: 40,
-    padding: 20,
+    padding: 0,
   },
   dragHandleContainer: {
     alignItems: 'center',
@@ -642,27 +640,6 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
   },
-  transcriptbox: {
-    backgroundColor: '#b3ac45a5',
-    marginVertical: 20,
-    padding: 20,
-    marginHorizontal: 10,
-    borderRadius: 20,
-  },
-  transcriptheader: {
-    marginTop: 20,
-    paddingBottom: 20,
-    color: '#000',
-    fontSize: 24,
-    fontWeight: 'bold',
-    borderBottomWidth: 0.5,
-    borderColor: '#000',
-  },
-  transcript: {
-    color: '#000',
-    marginTop: 20,
-    fontSize: 24,
-  },
   tagsbox: {
     backgroundColor: '#282828a5',
     marginVertical: 0,
@@ -676,7 +653,30 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 24,
     fontWeight: 'bold',
-    borderBottomWidth: 0.5,
-    borderColor: '#000',
+    //borderBottomWidth: 0.5,
+    //borderColor: '#000',
   },
+  transcriptbox: {
+  marginVertical: 20,
+  padding: 20,
+  marginHorizontal: 10,
+  borderRadius: 20,
+  backgroundColor: '#1a1a1a',
+  borderWidth: 1,
+  borderColor: '#2a2a2a',
+},
+transcriptheader: {
+  paddingBottom: 16,
+  color: '#fff',
+  fontSize: 20,
+  fontWeight: '700',
+  borderBottomWidth: StyleSheet.hairlineWidth,
+  borderColor: '#2a2a2a',
+  marginBottom: 16,
+},
+transcript: {
+  color: 'rgba(255,255,255,0.75)',
+  fontSize: 24,
+  lineHeight: 40,
+},
 });

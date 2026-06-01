@@ -16,9 +16,9 @@ const BasicTagsList = ({ tags }: any) => {
                 marginTop: 20,
                 paddingBottom: 20,
                 color: '#fff',
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: 'bold',
-                borderBottomWidth: 1,
+                //borderBottomWidth: 1,
                 borderColor: '#5f5f5f',
             }}>
                 Tags
