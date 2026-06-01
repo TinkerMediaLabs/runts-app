@@ -143,17 +143,18 @@ Comment: a
     .authorization(allow => [allow.owner()]),
 
   // ── UserFollowedAuthor ────────────────────────────────────────────────────
-UserFollowedAuthor: a
-  .model({
-    userId: a.string().required(),
-    authorId: a.string().required(),
-    followedAt: a.datetime(),
-    user: a.belongsTo('User', 'userId'),   // ← add this
-  })
-  .secondaryIndexes(index => [
-    index('userId').sortKeys(['authorId']).name('byUserAndAuthor'),
-  ])
-  .authorization(allow => [allow.owner()]),
+  UserFollowedAuthor: a
+    .model({
+      userId: a.string().required(),
+      authorId: a.string().required(),
+      followedAt: a.datetime(),
+      user: a.belongsTo('User', 'userId'),
+    })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['authorId']).name('byUserAndAuthor'),
+      index('userId').sortKeys(['followedAt']).name('byUserAndFollowedAt'),  // ← add
+    ])
+    .authorization(allow => [allow.owner()]),
 
   // ── StoryReactionCount ────────────────────────────────────────────────────
   // One record per storyId + reactionType. Written exclusively by
@@ -199,6 +200,7 @@ UserFollowedAuthor: a
       profilePicUri: a.string(),
       bio: a.string(),
       publisherId: a.string(),
+      primaryGenres: a.string().array(),   // ← add this — array of tag IDs
       publisher: a.belongsTo('Publisher', 'publisherId'),
       stories: a.hasMany('Story', 'authorId'),
     })

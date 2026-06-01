@@ -24,6 +24,8 @@ import { spacing } from '../../theme/spacing';
 import { useApp } from '@/context/AppContext';
 import { uploadProfilePicture } from '../../services/auth';
 
+import { useFollowingCount } from '../../hooks/queries/useAuthorFollowing';
+
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -74,6 +76,8 @@ const ProfileScreen = ({ navigation }: any) => {
 
     const { userId, profile, updateProfilePic } = useApp();
     const insets = useSafeAreaInsets();
+
+    const { data: followingCount = 0 } = useFollowingCount();
 
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -287,7 +291,7 @@ const ProfileScreen = ({ navigation }: any) => {
                                 activeOpacity={0.7}
                                 onPress={() => navigation.navigate('AuthorFollowing')}
                             >
-                                <Text style={styles.statValue}>0</Text>
+                                <Text style={styles.statValue}>{followingCount}</Text>
                                 <Text style={styles.statLabel}>Following</Text>
                             </TouchableOpacity>
 

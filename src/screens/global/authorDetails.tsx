@@ -34,6 +34,12 @@ import { useStories } from '../../hooks/queries/useStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useTags } from '../../hooks/queries/useTags';
 
+import {
+  useIsFollowing,
+  useFollowAuthor,
+  useUnfollowAuthor,
+} from '../../hooks/queries/useAuthorFollowing';
+
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
 const HEADER_H      = 260;
@@ -87,7 +93,20 @@ const CreatorProfile = () => {
     const route = useRoute();
     const { id }: any = route.params;
 
-    const [following, setFollowing] = useState(false);
+    const { data: followData, isLoading: followLoading } = useIsFollowing(id);
+    const isFollowing = followData?.isFollowing ?? false;
+    const followRecordId = followData?.recordId ?? null;
+
+    const { mutate: followAuthor,   isPending: following   } = useFollowAuthor();
+    const { mutate: unfollowAuthor, isPending: unfollowing } = useUnfollowAuthor();
+
+    const handleToggleFollow = () => {
+    if (isFollowing && followRecordId) {
+        unfollowAuthor({ recordId: followRecordId, authorId: id });
+    } else {
+        followAuthor(id);
+    }
+    };
 
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: author, isLoading: authorLoading } = useAuthor(id);
@@ -189,13 +208,14 @@ const CreatorProfile = () => {
                     {author?.name ?? ''}
                 </Animated.Text>
 
-                <TouchableOpacity
+               <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => setFollowing(f => !f)}
-                    style={[styles.followBtn, following && styles.followBtnActive]}
-                >
-                    <Text style={[styles.followBtnText, following && styles.followBtnTextActive]}>
-                        {following ? 'Following' : 'Follow'}
+                    onPress={handleToggleFollow}
+                    disabled={following || unfollowing || followLoading}
+                    style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                    >
+                    <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+                        {isFollowing ? 'Following' : 'Follow'}
                     </Text>
                 </TouchableOpacity>
             </Animated.View>
@@ -251,15 +271,16 @@ const CreatorProfile = () => {
                         </View>
 
                         {/* Follow button */}
-                        <TouchableOpacity
-                            activeOpacity={0.85}
-                            onPress={() => setFollowing(f => !f)}
-                            style={[styles.followBtnLarge, following && styles.followBtnLargeActive]}
-                        >
-                            <Text style={[styles.followBtnLargeText, following && styles.followBtnLargeTextActive]}>
-                                {following ? '✓  Following' : 'Follow'}
+                        {/* <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={handleToggleFollow}
+                            disabled={following || unfollowing || followLoading}
+                            style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                            >
+                            <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+                                {isFollowing ? 'Following' : 'Follow'}
                             </Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
 
                         {/* Bio */}
                         {author?.bio ? (

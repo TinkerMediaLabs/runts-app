@@ -284,14 +284,14 @@ const AppSettings = ({ navigation }: any) => {
                             onPress={() => open('playbackSpeed')}
                         />
                         <RowDivider />
-                        <ToggleRow
+                        {/* <ToggleRow
                             icon="forward"
                             label="Skip Silence"
                             description="Automatically skip quiet gaps"
                             value={skipSilence}
                             onChange={setSkipSilence}
                         />
-                        <RowDivider />
+                        <RowDivider /> */}
                         <ToggleRow
                             icon="moon"
                             label="Sleep Timer"
@@ -318,17 +318,17 @@ const AppSettings = ({ navigation }: any) => {
                             onChange={setBoostVolume}
                         />
                         <RowDivider />
-                        <ToggleRow
+                        {/* <ToggleRow
                             icon="wifi"
                             label="Download on Wi-Fi Only"
                             description="Prevent downloads on mobile data"
                             value={downloadOnWifi}
                             onChange={setDownloadOnWifi}
-                        />
+                        /> */}
                     </Section>
 
                     {/* ── Notifications ── */}
-                    <Section title="Notifications">
+                    {/* <Section title="Notifications">
                         <ToggleRow
                             icon="bell"
                             label="New Releases"
@@ -352,10 +352,10 @@ const AppSettings = ({ navigation }: any) => {
                             value={activityAlerts}
                             onChange={setActivityAlerts}
                         />
-                    </Section>
+                    </Section> */}
 
                     {/* ── Accessibility ── */}
-                    <Section title="Accessibility">
+                    {/* <Section title="Accessibility">
                         <ToggleRow
                             icon="adjust"
                             label="Reduce Motion"
@@ -363,7 +363,7 @@ const AppSettings = ({ navigation }: any) => {
                             value={reducedMotion}
                             onChange={setReducedMotion}
                         />
-                    </Section>
+                    </Section> */}
 
                     <Text style={styles.version}>Version 1.0.0</Text>
 
