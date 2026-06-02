@@ -15,3 +15,18 @@ export async function getDefaultPlaybackSpeed(): Promise<number> {
 export async function saveDefaultPlaybackSpeed(speed: number): Promise<void> {
   await AsyncStorage.setItem(DEFAULT_SPEED_KEY, speed.toString());
 }
+
+export const AUTOPLAY_KEY = '@runts/autoplay_playlist';
+
+export async function getAutoplayEnabled(): Promise<boolean> {
+  try {
+    const stored = await AsyncStorage.getItem(AUTOPLAY_KEY);
+    return stored === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function saveAutoplayEnabled(enabled: boolean): Promise<void> {
+  await AsyncStorage.setItem(AUTOPLAY_KEY, enabled.toString());
+}

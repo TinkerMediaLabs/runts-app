@@ -24,6 +24,8 @@ const schema = a.schema({
       comments: a.hasMany('Comment', 'userId'),
       favoritedStories: a.hasMany('UserFavoritedStory', 'userId'),
       followedAuthors: a.hasMany('UserFollowedAuthor', 'userId'),
+      totalListenSeconds: a.integer(),
+      totalStoriesFinished: a.integer(), 
     })
     .authorization(allow => [allow.owner()]),
 

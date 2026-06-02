@@ -70,8 +70,20 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
 
   const { expand, collapse } = usePlayerUI();
-  const { state, pause, resume, setPlaybackRate, clearPendingRating, clearTrack, sleepMinutesLeft, setSleepTimer } = usePlayer();
-  // useProgress with interval 0 returns shared values that update on the
+
+  const { 
+    state, 
+    pause, 
+    resume, 
+    setPlaybackRate, 
+    clearPendingRating, 
+    clearTrack, 
+    sleepMinutesLeft, 
+    setSleepTimer, 
+    hasNextTrack, 
+    playNext 
+  } = usePlayer();  // useProgress with interval 0 returns shared values that update on the
+
   // worklet thread — no JS re-renders, no duplicate key spam from the slider.
   const progress = useProgress(0);
 
@@ -414,7 +426,13 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
               <View style={styles.additionalcontent}>
                 <View style={styles.controlbox}>
-                  <PlayerControls isPlaying={state.isPlaying} pause={pause} resume={resume} />
+                  <PlayerControls
+                    isPlaying={state.isPlaying}
+                    pause={pause}
+                    resume={resume}
+                    hasNext={hasNextTrack}
+                    onNext={playNext}
+                  />
                 </View>
 
                 <View style={{ height: 80 }} />

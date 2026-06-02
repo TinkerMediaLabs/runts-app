@@ -23,6 +23,8 @@ type UserProfile = {
   plan?: string | null;
   birthdate?: string | null;
   onboardingComplete?: boolean | null;
+  totalListenSeconds?: number | null; 
+  totalStoriesFinished?: number | null;   
 };
 
 type AppContextType = {
@@ -35,6 +37,7 @@ type AppContextType = {
   refreshAuth: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfilePic: (uri: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -74,6 +77,8 @@ const refreshAuth = async () => {
             plan: dbUser?.plan,
             birthdate: dbUser?.birthdate,
             onboardingComplete: dbUser?.onboardingComplete,
+            totalListenSeconds:   dbUser?.totalListenSeconds,
+            totalStoriesFinished: dbUser?.totalStoriesFinished,
         });
     } catch (err) {
         setUserId(null);
@@ -99,6 +104,21 @@ const refreshAuth = async () => {
       throw err;
     }
   };
+
+  const refreshProfile = async () => {
+  if (!userId) return;
+  try {
+    const { data: dbUser } = await client.models.User.get({ id: userId });
+    if (!dbUser) return;
+    setProfile(prev => prev ? {
+      ...prev,
+      totalListenSeconds:   dbUser.totalListenSeconds,
+      totalStoriesFinished: dbUser.totalStoriesFinished,
+    } : prev);
+  } catch (err) {
+    console.error('refreshProfile error:', err);
+  }
+};
 
   useEffect(() => {
     refreshAuth();
@@ -145,6 +165,7 @@ const refreshAuth = async () => {
         refreshAuth,
         logout,
         updateProfilePic,
+        refreshProfile,
       }}
     >
       {children}

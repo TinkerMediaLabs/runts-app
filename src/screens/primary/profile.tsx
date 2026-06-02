@@ -68,6 +68,15 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
     </TouchableOpacity>
 );
 
+    function formatListenTime(seconds: number): string {
+    if (seconds < 60)    return '0m';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60)    return `${minutes}m`;
+    const hours = seconds / 3600;
+    const rounded = Math.round(hours * 10) / 10;
+    return rounded % 1 === 0 ? `${rounded}h` : `${rounded}h`;
+    }
+
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -298,14 +307,18 @@ const ProfileScreen = ({ navigation }: any) => {
                             <View style={styles.statSeparator} />
 
                             <View style={styles.statItem}>
-                                <Text style={styles.statValue}>0</Text>
+                                <Text style={styles.statValue}>
+                                    {profile?.totalStoriesFinished ?? 0}
+                                </Text>
                                 <Text style={styles.statLabel}>Stories</Text>
                             </View>
 
                             <View style={styles.statSeparator} />
 
                             <View style={styles.statItem}>
-                                <Text style={styles.statValue}>0h</Text>
+                                <Text style={styles.statValue}>
+                                    {formatListenTime(profile?.totalListenSeconds ?? 0)}
+                                </Text>
                                 <Text style={styles.statLabel}>Listened</Text>
                             </View>
                         </View>

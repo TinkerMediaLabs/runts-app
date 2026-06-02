@@ -29,8 +29,10 @@ import {
 } from '../../hooks/queries/useFavoritedStories';
 
 import {
-  getDefaultPlaybackSpeed,
-  saveDefaultPlaybackSpeed,
+getDefaultPlaybackSpeed,
+saveDefaultPlaybackSpeed,
+getAutoplayEnabled,
+saveAutoplayEnabled,
 } from '../../lib/audioSettings';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -192,6 +194,7 @@ const OptionPill = ({
 
 const AppSettings = ({ navigation }: any) => {
 
+
     // ── Sheet state ───────────────────────────────────────────────────────────
     const [activeSheet, setActiveSheet] = useState<SheetType>(null);
     const open  = (sheet: SheetType) => setActiveSheet(sheet);
@@ -199,7 +202,7 @@ const AppSettings = ({ navigation }: any) => {
 
     // ── Content settings ──────────────────────────────────────────────────────
     const [nsfwEnabled, setNsfwEnabled]     = useState(false);
-    const [autoPlay, setAutoPlay]           = useState(true);
+    const [autoPlay, setAutoPlay]           = useState(false);
     const [downloadOnWifi, setDownloadOnWifi] = useState(true);
 
     // ── Playback settings ─────────────────────────────────────────────────────
@@ -227,8 +230,11 @@ const AppSettings = ({ navigation }: any) => {
 
     useEffect(() => {
         getFavoriteThreshold().then(setFavoriteThreshold);
+
         getDefaultPlaybackSpeed().then(v => setPlaybackSpeed(v as PlaybackSpeed));
         }, []);
+
+        getAutoplayEnabled().then(setAutoPlay);
 
         const handleThresholdChange = async (value: number) => {
             setFavoriteThreshold(value);
@@ -236,6 +242,11 @@ const AppSettings = ({ navigation }: any) => {
         // Invalidate so FavoritesList refetches with new threshold
         queryClient.invalidateQueries({ queryKey: ['favoritedStories'] });
         close();
+    };
+
+    const handleAutoPlayChange = async (value: boolean) => {
+        setAutoPlay(value);
+        await saveAutoplayEnabled(value);
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -273,13 +284,13 @@ const AppSettings = ({ navigation }: any) => {
                             value={nsfwEnabled}
                             onChange={setNsfwEnabled}
                         />
-                        <RowDivider />
+                       <RowDivider />
                         <ToggleRow
                             icon="play-circle"
-                            label="Auto-Play"
-                            description="Continue playing after a story ends"
+                            label="Autoplay Playlist"
+                            description="Automatically play the next pinned story when one finishes"
                             value={autoPlay}
-                            onChange={setAutoPlay}
+                            onChange={handleAutoPlayChange}
                         />
                     </Section>
 

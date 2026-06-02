@@ -51,6 +51,20 @@ export default function ProgressBar({ progress }: any) {
     }
   );
 
+  useAnimatedReaction(
+    () => progress.duration,
+    (current, previous) => {
+      'worklet';
+      if (current === 0 && previous !== null && previous > 0) {
+        sliderProgress.value = 0;
+        lastUpdateTime.value = 0;
+      }
+      if (current > 0) {
+        max.value = current;
+      }
+    }
+  );
+
   const format = (s: number) => {
     'worklet';
     const m = Math.floor(s / 60);
@@ -63,8 +77,10 @@ export default function ProgressBar({ progress }: any) {
 
   // Drive the time labels from the throttled value so they match the slider
   useDerivedValue(() => {
-    runOnJS(setDisplayPosition)(format(sliderProgress.value));
-    runOnJS(setDisplayDuration)(format(max.value));
+    const pos = max.value > 0 ? sliderProgress.value : 0;
+    const dur = max.value > 0 ? max.value : 0;
+    runOnJS(setDisplayPosition)(format(pos));
+    runOnJS(setDisplayDuration)(format(dur));
   });
 
   const [bubbleTime, setBubbleTime] = useState('0:00');

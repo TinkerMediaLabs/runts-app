@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Linking,
     StyleSheet,
+    Image
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +17,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Screen from '@/components/common/Screen';
 import MenuHeader from '../../components/common/MenuHeader';
 import { spacing } from '../../theme/spacing';
+
+import Constants from 'expo-constants';
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -66,7 +69,7 @@ const InfoRow = ({ icon, label, value }: { icon: any; label: string; value: stri
 // Screen
 // ---------------------------------------------------------------------------
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0'
 
 const AboutScreen = ({ navigation }: any) => {
 
@@ -91,22 +94,29 @@ const AboutScreen = ({ navigation }: any) => {
                     {/* ── App identity ── */}
                     <View style={styles.hero}>
                         <View style={styles.heroIcon}>
-                            <FontAwesome5 name="headphones" size={32} color="cyan" iconStyle="solid" />
+                            <Image
+                                source={require('../../../assets/images/icon72w.png')}
+                                style={{
+                                    width: 100,
+                                    height: 100,
+                                    resizeMode: 'contain',
+                                }}
+                            />
                         </View>
-                        <Text style={styles.heroTitle}>Twisp</Text>
-                        <Text style={styles.heroSubtitle}>Audio stories for everyone</Text>
-                        <View style={styles.versionBadge}>
+                        <Text style={styles.heroTitle}>Runts</Text>
+                        <Text style={styles.heroSubtitle}>Stories for everyone</Text>
+                        {/* <View style={styles.versionBadge}>
                             <Text style={styles.versionBadgeText}>v{APP_VERSION}</Text>
-                        </View>
+                        </View> */}
                     </View>
 
                     {/* ── App info ── */}
                     <Section title="App Info">
                         <InfoRow icon="code-branch" label="Version"     value={APP_VERSION} />
                         <RowDivider />
-                        <InfoRow icon="mobile-alt"  label="Platform"    value="iOS & Android" />
-                        <RowDivider />
-                        <InfoRow icon="building"    label="Developer"   value="Martian Spider Media" />
+                        {/* <InfoRow icon="mobile-alt"  label="Platform"    value="iOS & Android" />
+                        <RowDivider /> */}
+                        {/* <InfoRow icon="building"    label="Developer"   value="Martian Spider Media" /> */}
                     </Section>
 
                     {/* ── Legal ── */}
@@ -114,34 +124,34 @@ const AboutScreen = ({ navigation }: any) => {
                         <LinkRow
                             icon="file-contract"
                             label="Terms and Conditions"
-                            onPress={() => Linking.openURL('http://www.twisp.us/terms')}
+                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts/terms')}
                         />
                         <RowDivider />
                         <LinkRow
                             icon="shield-alt"
                             label="Privacy Policy"
-                            onPress={() => Linking.openURL('http://www.twisp.us/privacy')}
+                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts/privacy-policy')}
                         />
                     </Section>
 
                     {/* ── Support ── */}
                     <Section title="Support">
-                        <LinkRow
+                        {/* <LinkRow
                             icon="question-circle"
                             label="FAQ"
-                            onPress={() => Linking.openURL('http://www.twisp.us/faq')}
+                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts/faq')}
                         />
-                        <RowDivider />
+                        <RowDivider /> */}
                         <LinkRow
                             icon="envelope"
                             label="Contact Us"
-                            onPress={() => Linking.openURL('mailto:admin@martianspidermedia.com')}
+                            onPress={() => Linking.openURL('mailto:admin@tinkermedia.net')}
                         />
                         <RowDivider />
                         <LinkRow
                             icon="bug"
                             label="Report a Bug"
-                            onPress={() => Linking.openURL('mailto:admin@martianspidermedia.com?subject=Bug%20Report')}
+                            onPress={() => Linking.openURL('mailto:admin@tinkermedia.net?subject=Bug%20Report')}
                         />
                     </Section>
 
@@ -150,18 +160,18 @@ const AboutScreen = ({ navigation }: any) => {
                         <LinkRow
                             icon="globe"
                             label="Website"
-                            onPress={() => Linking.openURL('http://www.twisp.us')}
+                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts')}
                         />
                         <RowDivider />
-                        <LinkRow
+                        {/* <LinkRow
                             icon="instagram"
                             label="Instagram"
                             onPress={() => Linking.openURL('https://instagram.com/twispapp')}
-                        />
+                        /> */}
                     </Section>
 
                     <Text style={styles.footer}>
-                        © {new Date().getFullYear()} Martian Spider Media.{'\n'}All rights reserved.
+                        © {new Date().getFullYear()} Tinker Media LLC{'\n'}All rights reserved.
                     </Text>
 
                 </ScrollView>
@@ -187,12 +197,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     heroIcon: {
-        width: 72,
-        height: 72,
-        borderRadius: 20,
-        backgroundColor: 'rgba(0,255,255,0.08)',
-        borderWidth: 1,
-        borderColor: 'rgba(0,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
