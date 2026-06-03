@@ -179,6 +179,12 @@ const handleTrackEnd = async () => {
     }, PROGRESS_INTERVAL_MS);
   };
 
+  const playTrackAt = async (track: Track, seekSeconds: number) => {
+    await playTrack(track);
+    // Seek at 700ms — after the normal in-progress seek at 500ms, overriding it
+    setTimeout(() => audioEngine.seek(seekSeconds), 700);
+  };
+
   const stopProgressTracking = () => {
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
@@ -208,10 +214,15 @@ const playTrack = async (track: Track) => {
     await audioEngine.play(track);
 
     // Load playlist and find current position
-    const playlist = await loadPlaylist();
-    const index = playlist.findIndex((s: any) => s.id === track.id);
-    playlistIndexRef.current = index;
-    setHasNextTrack(index >= 0 && index < playlist.length - 1);
+// Load playlist and find current position
+const playlist = await loadPlaylist();
+console.log('playTrack: playlist.length =', playlist.length);
+console.log('playTrack: track.id =', track.id);
+console.log('playTrack: playlist IDs =', playlist.map((s: any) => s.id));
+const index = playlist.findIndex((s: any) => s.id === track.id);
+console.log('playTrack: index =', index);
+playlistIndexRef.current = index;
+setHasNextTrack(index >= 0 && index < playlist.length - 1);
 
     if (savedSeconds > 0) {
       // Resume — seek to saved position
@@ -420,6 +431,7 @@ const playTrack = async (track: Track) => {
         setSleepTimer,
         hasNextTrack,
         playNext,
+        playTrackAt,
       }}
     >
       {children}

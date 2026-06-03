@@ -18,6 +18,7 @@ import { spacing } from '../../theme/spacing';
 import { useApp } from '@/context/AppContext';
 
 import FavoritesList from '../../components/story/FavoritesList';
+import BookmarkList from '../../components/story/BookmarkList';
 
 const { width } = Dimensions.get('window');
 
@@ -145,11 +146,7 @@ const PlaylistScreen = () => {
                     )}
 
                     {activeTab === 'bookmarked' && (
-                        <EmptyState
-                            icon="bookmark"
-                            title="No bookmarks yet"
-                            subtitle="Bookmark a story to save your place and return later."
-                        />
+                        <BookmarkList tabBarHeight={tabBarHeight} />
                     )}
 
                 </View>

@@ -26,6 +26,7 @@ const schema = a.schema({
       followedAuthors: a.hasMany('UserFollowedAuthor', 'userId'),
       totalListenSeconds: a.integer(),
       totalStoriesFinished: a.integer(), 
+      bookmarks: a.hasMany('UserBookmark', 'userId'),
     })
     .authorization(allow => [allow.owner()]),
 
@@ -251,6 +252,7 @@ Comment: a
       reactions: a.hasMany('UserReaction', 'storyId'),
       comments: a.hasMany('Comment', 'storyId'),
       favoritedBy: a.hasMany('UserFavoritedStory', 'storyId'),
+      bookmarks: a.hasMany('UserBookmark', 'storyId'),
     })
     .secondaryIndexes(index => [
       index('live').sortKeys(['publishedAt']).name('byLiveAndPublishedAt'),
@@ -281,6 +283,22 @@ Comment: a
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
+
+    // ── UserBookmark ──────────────────────────────────────────────────────────
+  UserBookmark: a
+    .model({
+      userId:          a.string().required(),
+      storyId:         a.string().required(),
+      positionSeconds: a.integer().required(),
+      name:            a.string(),
+      createdAt:       a.datetime(),
+      story: a.belongsTo('Story', 'storyId'),
+      user:  a.belongsTo('User',  'userId'),
+    })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['createdAt']).name('byUserAndCreatedAt'),
+    ])
+    .authorization(allow => [allow.owner()]),
 
   // ── StoryTag (join table for many-to-many) ────────────────────────────────
   StoryTag: a

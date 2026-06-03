@@ -55,6 +55,8 @@ import { useStory } from '@/hooks/queries/useStories';
 import { useTags } from '@/hooks/queries/useTags';
 
 import RatingModal from './RatingModal';
+import BookmarkModal    from './BookmarkModal';
+import { useCreateBookmark } from '../../hooks/queries/useBookmarks';
 
 const MINI_PLAYER_HEIGHT = 70;
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
@@ -89,6 +91,16 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const track = state.currentTrack;
   const [showOptions, setShowOptions] = useState(false);
+
+  const [showBookmarkModal,  setShowBookmarkModal]  = useState(false);
+  const [bookmarkPosition,   setBookmarkPosition]   = useState(0);
+  const { mutateAsync: createBookmark } = useCreateBookmark();
+
+  const handleBookmarkPress = () => {
+    const pos = audioEngine.getCurrentPosition();
+    setBookmarkPosition(Math.max(0, pos - 8));
+    setShowBookmarkModal(true);
+  };
 
   const insets = useSafeAreaInsets();
   const { tabBarHeight } = usePlayerUI();
@@ -329,10 +341,12 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       <View style={styles.heroPanZone} />
                     </GestureDetector>
 
+                    {/* HEADER — chevron left, pan zone middle, sleep pill + options right */}
                     <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
                       <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
                         <Feather name="chevron-down" size={28} color="#fff" />
                       </TouchableOpacity>
+
                       <GestureDetector gesture={panGesture}>
                         <View style={styles.heroPanZone} />
                       </GestureDetector>
@@ -414,6 +428,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
                             <FontAwesome5 name="share" size={22} color="#fff" />
                           </TouchableWithoutFeedback>
                         </View>
+                        <View style={styles.actionbutton}>
+                          <TouchableOpacity onPress={handleBookmarkPress} activeOpacity={0.7}>
+                            <FontAwesome5 name={'bookmark' as any} size={20} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -471,6 +490,20 @@ export default function TrackPlayerWidget({ expanded }: any) {
               }}
               sleepMinutesLeft={sleepMinutesLeft}
               onSleepTimer={(minutes) => setSleepTimer(minutes)}
+            />
+
+            <BookmarkModal
+              visible={showBookmarkModal}
+              positionSeconds={bookmarkPosition}
+              onClose={() => setShowBookmarkModal(false)}
+              onConfirm={async (name) => {
+                if (!track) return;
+                await createBookmark({
+                  storyId:         track.id,
+                  positionSeconds: bookmarkPosition,
+                  name,
+                });
+              }}
             />
 
             {/* Rating modal — appears on first story completion */}
