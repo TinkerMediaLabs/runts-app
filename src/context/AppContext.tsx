@@ -12,6 +12,8 @@ import type { Schema } from '../../amplify/data/resource';
 import { getOrCreateUser } from '../services/auth';
 import { queryClient } from '../lib/queryClient';
 import { getProfilePicUrl } from '../services/auth';
+import { syncDownloads } from '../hooks/queries/useDownloads';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const client = generateClient<Schema>();
 
@@ -139,6 +141,12 @@ const refreshAuth = async () => {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+  if (isAuthenticated) {
+    syncDownloads().catch(e => console.warn('Sync downloads error:', e));
+  }
+}, [isAuthenticated]);
 
   const logout = async () => {
     try {

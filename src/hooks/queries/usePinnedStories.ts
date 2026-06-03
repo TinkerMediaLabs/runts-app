@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { getOfflineEnabled } from '../../lib/offlineStorage';
+import { downloadStory, deleteDownload } from './useDownloads';
 
 const client = generateClient<Schema>();
 
@@ -15,7 +17,6 @@ export function usePinnedStories() {
         filter: { userId: { eq: userId } },
       });
       if (errors) throw new Error(errors[0].message);
-      // Sort by sortOrder ascending
       return [...(data ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     },
     staleTime: 1000 * 60 * 5,
@@ -46,7 +47,6 @@ export function usePinStory() {
     mutationFn: async (storyId: string) => {
       const { userId } = await getCurrentUser();
 
-      // Get current pinned count for sort order
       const { data: existing } = await client.models.UserPinnedStory.list({
         filter: { userId: { eq: userId } },
       });
@@ -55,15 +55,29 @@ export function usePinStory() {
       const { data, errors } = await client.models.UserPinnedStory.create({
         userId,
         storyId,
-        pinnedAt: new Date().toISOString(),
+        pinnedAt:  new Date().toISOString(),
         sortOrder,
       });
       if (errors) throw new Error(errors[0].message);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
       queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+
+      // Trigger download in background — non-blocking
+      getOfflineEnabled().then(enabled => {
+        if (!enabled) return;
+        client.models.Story.get({ id: storyId }).then(({ data: story }) => {
+          if (story?.audioUri) {
+            downloadStory({
+              id:       story.id,
+              audioUri: story.audioUri,
+              title:    story.title,
+            }).catch(err => console.warn('Pin download error:', err));
+          }
+        });
+      });
     },
   });
 }
@@ -76,11 +90,10 @@ export function useUnpinStory() {
     mutationFn: async (storyId: string) => {
       const { userId } = await getCurrentUser();
 
-      // Find the pinned record
       const { data: existing } = await client.models.UserPinnedStory.list({
         filter: {
           and: [
-            { userId: { eq: userId } },
+            { userId:  { eq: userId  } },
             { storyId: { eq: storyId } },
           ],
         },
@@ -88,20 +101,24 @@ export function useUnpinStory() {
 
       if (!existing?.length) return;
 
-      const record = existing[0];
       const { errors } = await client.models.UserPinnedStory.delete({
-        id: record.id,
+        id: existing[0].id,
       });
       if (errors) throw new Error(errors[0].message);
     },
-    onSuccess: () => {
+    onSuccess: (_, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
       queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+
+      // Delete local download in background — non-blocking
+      deleteDownload(storyId).catch(err =>
+        console.warn('Unpin delete download error:', err)
+      );
     },
   });
 }
 
-// ─── Toggle pin (pin if not pinned, unpin if pinned) ──────────────────────
+// ─── Toggle pin ───────────────────────────────────────────────────────────
 export function useTogglePin() {
   const pinStory   = usePinStory();
   const unpinStory = useUnpinStory();

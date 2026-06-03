@@ -37,6 +37,15 @@ saveAutoplayEnabled,
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import { useDownloads } from '../../hooks/queries/useDownloads';
+import {
+  getOfflineEnabled,
+  saveOfflineEnabled,
+  formatBytes,
+  STORAGE_LIMIT_BYTES,
+} from '../../lib/offlineStorage';
+import { syncDownloads, clearAllDownloads } from '../../hooks/queries/useDownloads';
+
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -228,13 +237,17 @@ const AppSettings = ({ navigation }: any) => {
     const queryClient = useQueryClient();
     const [favoriteThreshold, setFavoriteThreshold] = useState(DEFAULT_THRESHOLD);
 
+    const [offlineEnabled, setOfflineEnabled] = useState(true);
+    const { totalSize, refresh: refreshDownloads } = useDownloads();
+
     useEffect(() => {
         getFavoriteThreshold().then(setFavoriteThreshold);
-
         getDefaultPlaybackSpeed().then(v => setPlaybackSpeed(v as PlaybackSpeed));
-        }, []);
-
+        getOfflineEnabled().then(setOfflineEnabled);
         getAutoplayEnabled().then(setAutoPlay);
+    }, []);
+
+        
 
         const handleThresholdChange = async (value: number) => {
             setFavoriteThreshold(value);
@@ -247,6 +260,17 @@ const AppSettings = ({ navigation }: any) => {
     const handleAutoPlayChange = async (value: boolean) => {
         setAutoPlay(value);
         await saveAutoplayEnabled(value);
+    };
+
+    const handleOfflineToggle = async (value: boolean) => {
+        setOfflineEnabled(value);
+        await saveOfflineEnabled(value);
+        if (!value) {
+            await clearAllDownloads();
+            await refreshDownloads();
+        } else {
+            syncDownloads().catch(() => {});
+        }
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -270,9 +294,31 @@ const AppSettings = ({ navigation }: any) => {
                     <SelectRow
                         icon="star"
                         label="Favorites Threshold"
-                        value={`${favoriteThreshold}★ and above`}
+                        value={`${favoriteThreshold}★`}
                         onPress={() => open('favoriteThreshold')}
                     />
+                    </Section>
+
+                    <Section title="Downloads">
+                        <ToggleRow
+                            icon="download"
+                            label="Offline Listening"
+                            description="Automatically download pinned stories for offline playback"
+                            value={offlineEnabled}
+                            onChange={handleOfflineToggle}
+                        />
+                        <RowDivider />
+                       <View style={styles.row}>
+                            <View style={styles.rowLeft}>
+                                <View style={styles.rowIcon}>
+                                    <FontAwesome5 name="hdd" size={14} color="#ffffffa5" iconStyle="solid" />
+                                </View>
+                                <Text style={styles.rowLabel}>Storage Used</Text>
+                            </View>
+                            <Text style={styles.rowValue}>
+                                {formatBytes(totalSize)} of {formatBytes(STORAGE_LIMIT_BYTES)}
+                            </Text>
+                        </View>
                     </Section>
 
                     {/* ── Content ── */}
