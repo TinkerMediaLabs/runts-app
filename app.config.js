@@ -29,10 +29,27 @@ export default ({ config }) => ({
   ios: {
     ...config.ios,
     bundleIdentifier: env.iosBundleId,
+    // Universal Links — iOS intercepts tinkermedia.net/runts/* before opening browser
+    associatedDomains: ["applinks:tinkermedia.net"],
   },
   android: {
     ...config.android,
     package: env.androidPackage,
+    // App Links — Android intercepts tinkermedia.net/runts/* before opening browser
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        data: [
+          {
+            scheme: "https",
+            host: "tinkermedia.net",
+            pathPrefix: "/runts",
+          },
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
   },
   extra: {
     eas: {
