@@ -15,7 +15,7 @@ function handleUrl(url: string | null | undefined) {
   if (storyMatch?.[1]) {
     // Small delay on cold start to ensure navigator is mounted
     setTimeout(() => {
-      navigate('StoryDetails', { id: storyMatch[1] });
+      navigate('StoryScreen', { storyID: storyMatch[1] });
     }, 300);
   }
 }
