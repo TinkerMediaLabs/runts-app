@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
         paddingBottom: 14,
         backgroundColor: '#000000CC',
-        borderBottomWidth: StyleSheet.hairlineWidth,
+        //borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: '#2a2a2a',
     },
     backBtn: {
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         flex: 1,
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: '700',
         color: '#fff',
         textTransform: 'capitalize',

@@ -30,12 +30,11 @@ export default ({ config }) => ({
     ...config.ios,
     bundleIdentifier: env.iosBundleId,
     // Universal Links — iOS intercepts tinkermedia.net/runts/* before opening browser
-    associatedDomains: ["applinks:tinkermedia.net"],
+    associatedDomains: ["applinks:tinkermedia.net", "applinks:www.tinkermedia.net"],
   },
   android: {
     ...config.android,
     package: env.androidPackage,
-    // App Links — Android intercepts tinkermedia.net/runts/* before opening browser
     intentFilters: [
       {
         action: "VIEW",
@@ -43,7 +42,7 @@ export default ({ config }) => ({
         data: [
           {
             scheme: "https",
-            host: "tinkermedia.net",
+            host: "www.tinkermedia.net",  // ← was tinkermedia.net
             pathPrefix: "/runts",
           },
         ],

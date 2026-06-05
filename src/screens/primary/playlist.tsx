@@ -14,11 +14,15 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTileList from '../../components/story/StoryTileList';
-import { spacing } from '../../theme/spacing';
 import { useApp } from '@/context/AppContext';
 
 import FavoritesList from '../../components/story/FavoritesList';
 import BookmarkList from '../../components/story/BookmarkList';
+
+import useStyles from '../../theme/styles';
+import useTypography from '../../theme/typography';
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +32,7 @@ type Tab   = { id: TabId; label: string };
 const TABS: Tab[] = [
     { id: 'pinned',      label: 'Pinned'      },
     { id: 'favorites',   label: 'Favorites'   },
-    { id: 'bookmarked',  label: 'Bookmarked'  },
+    { id: 'bookmarked',  label: 'Bookmarks'  },
 ];
 
 const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subtitle: string }) => (
@@ -67,7 +71,7 @@ const PlaylistScreen = () => {
     return (
         <View style={{ flex: 1, backgroundColor: '#000' }}>
             <LinearGradient
-                colors={['#13192c', '#161616', '#000']}
+                colors={['#0a0a14', '#12121a', '#000']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -170,8 +174,8 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     headerTitle: {
-        fontSize: 28,
-        fontWeight: '800',
+        fontSize: 24,
+        fontWeight: '600',
         color: '#fff',
         letterSpacing: 0.3,
     },

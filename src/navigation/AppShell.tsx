@@ -4,7 +4,11 @@ import TrackPlayerWidget from '@/features/audio/TrackPlayer';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
 
+import { useDeepLink } from '@/hooks/useDeepLink';
+
 export default function AppShell({ children }: any) {
+
+  useDeepLink();
 
   const { expanded } = usePlayerUI();
 

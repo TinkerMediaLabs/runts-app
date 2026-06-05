@@ -30,7 +30,7 @@ const PinButton = ({
     <TouchableOpacity
       onPress={() => toggle(storyId, isPinned)}
       activeOpacity={0.7}
-      style={{ padding: 4 }}
+      style={{ padding: 0 }}
     >
       <AntDesign
         name="pushpin"

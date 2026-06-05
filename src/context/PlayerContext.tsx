@@ -216,11 +216,7 @@ const playTrack = async (track: Track) => {
     // Load playlist and find current position
 // Load playlist and find current position
 const playlist = await loadPlaylist();
-console.log('playTrack: playlist.length =', playlist.length);
-console.log('playTrack: track.id =', track.id);
-console.log('playTrack: playlist IDs =', playlist.map((s: any) => s.id));
 const index = playlist.findIndex((s: any) => s.id === track.id);
-console.log('playTrack: index =', index);
 playlistIndexRef.current = index;
 setHasNextTrack(index >= 0 && index < playlist.length - 1);
 

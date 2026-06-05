@@ -11,6 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
+    Share
 } from 'react-native';
 
 import { useRoute } from '@react-navigation/native';
@@ -50,6 +51,8 @@ import { useAuthor }     from '../../hooks/queries/useAuthors';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema }   from '../../../amplify/data/resource';
+
+
 
 const client = generateClient<Schema>();
 
@@ -186,6 +189,7 @@ const StoryScreen = ({ navigation }: any) => {
     // ── Story tags ────────────────────────────────────────────────────────────
     const [storyTags, setStoryTags] = useState<any[]>([]);
 
+
     useEffect(() => {
         if (!storyID) return;
         async function fetchTags() {
@@ -273,6 +277,14 @@ const StoryScreen = ({ navigation }: any) => {
     const starColor = hasFinished
         ? '#C9A84C'
         : 'rgba(255,255,255,0.3)';
+
+    const handleShare = async () => {
+        await Share.share({
+            message: `Check out "${story?.title}" on Runts: https://tinkermedia.net/runts/story/${story?.id}`,
+            url: `https://tinkermedia.net/runts/story/${story?.id}`, // iOS only
+            title: story?.title ?? 'Runts',
+        });
+    };
 
   // ── Comment state ─────────────────────────────────────────────────────────
 const [comment,        setComment]        = useState('');
@@ -476,9 +488,9 @@ const handleDelete = (id: string) => {
                                 />
                             </ActionBtn>
 
-                            <ActionBtn onPress={() => {}}>
-                                <FontAwesome name="share" size={21} color="rgba(255,255,255,0.75)" />
-                            </ActionBtn>
+                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7}>
+                                <FontAwesome name="share" size={22} color="#fff" />
+                            </TouchableOpacity>
                         </View>
 
                         <PlayButtonV4

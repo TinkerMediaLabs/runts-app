@@ -10,6 +10,7 @@ import {
     StyleSheet,
     Dimensions,
     Linking,
+    Image
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -52,7 +53,7 @@ const PLANS: Plan[] = [
         id: 'annual',
         period: 'Annually',
         periodShort: '1 YEAR',
-        price: '$49.99',
+        price: '$50',
         perMonth: '$4.16 / mo',
         badge: 'SAVE 17%',
     },
@@ -60,8 +61,8 @@ const PLANS: Plan[] = [
         id: 'monthly',
         period: 'Monthly',
         periodShort: '1 MONTH',
-        price: '$4.99',
-        perMonth: '$4.99 / mo',
+        price: '$5',
+        perMonth: 'monthly',
     },
 ];
 
@@ -188,12 +189,12 @@ const PremiumScreen = () => {
 
                     {/* ── Hero ── */}
                     <View style={styles.hero}>
-                        <View style={styles.heroIcon}>
-                            <FontAwesome5 name="crown" size={28} color="cyan" iconStyle="solid" />
-                        </View>
+        
+                            <Image style={{height: 60, width: 60, margin: 20}} source={require('../../../assets/images/icon72w.png')}/>
+
                         <Text style={styles.heroTitle}>Go Premium</Text>
                         <Text style={styles.heroSubtitle}>
-                            Unlock the full Twisp experience — unlimited stories, exclusive content, and more.
+                            Unlock the full experience — more stories, exclusive content, and more.
                         </Text>
                     </View>
 
@@ -240,11 +241,11 @@ const PremiumScreen = () => {
 
                     {/* ── Legal ── */}
                     <View style={styles.legalRow}>
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.twisp.us/terms')}>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.tinkermedia.net/terms')}>
                             <Text style={styles.legalLink}>Terms</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.twisp.us/privacy')}>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.tinkermedia.net/privacy-policy')}>
                             <Text style={styles.legalLink}>Privacy Policy</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>

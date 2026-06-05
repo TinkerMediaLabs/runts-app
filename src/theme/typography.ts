@@ -82,10 +82,10 @@ return StyleSheet.create ({
         fontWeight: 'bold',
         color: '#fff',
       },
-      infotext: {
-        fontSize: 14,
-        color: '#ffffffa5',
-      },
+      // infotext: {
+      //   fontSize: 14,
+      //   color: '#ffffffa5',
+      // },
     paragraph: {
       fontSize: 14,
       color: '#fff',

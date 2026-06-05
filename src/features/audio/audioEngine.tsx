@@ -54,7 +54,6 @@ async function resolveAudioUrl(url: string): Promise<string> {
       if (localPath) {
         const info = await FileSystem.getInfoAsync(localPath);
         if (info.exists) {
-          console.log('audioEngine: offline fallback to local file', localPath);
           return localPath;
         }
       }
