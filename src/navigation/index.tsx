@@ -15,7 +15,7 @@ import AboutScreen from '../screens/settings/about';
 import AccountScreen from '../screens/settings/account';
 import TagHomeScreen from '../screens/discover/tagHome';
 import AuthorDetailsScreen from '../screens/global/authorDetails';
-import BrowseByTitleScreen from '../screens/discover/brosweByTitle';
+import BrowseByTitleScreen from '../screens/discover/browswByTitle';
 import AuthorFollowingScreen from '../screens/global/authorFollowing';
 import InProgressScreen from '@/screens/settings/inProgress';
 import HistoryScreen from '@/screens/settings/history';

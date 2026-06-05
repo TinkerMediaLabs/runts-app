@@ -7,6 +7,9 @@ import {
     ActivityIndicator,
     StyleSheet,
     Dimensions,
+    LayoutAnimation,
+    UIManager,
+    Platform,
 } from 'react-native';
 
 import Animated, {
@@ -30,13 +33,29 @@ import { useTags }       from '../../hooks/queries/useTags';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 // ---------------------------------------------------------------------------
+// Enable LayoutAnimation on Android
+// ---------------------------------------------------------------------------
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SCRUNCH_THRESHOLD = SCREEN_HEIGHT * 0.5;
+const SCRUNCH_THRESHOLD = SCREEN_HEIGHT * 0.7;
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<any>);
+
+// Smooth, non-bouncy layout animation config
+const LAYOUT_ANIM = {
+    duration: 220,
+    create:   { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    update:   { type: LayoutAnimation.Types.easeInEaseOut },
+    delete:   { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+};
 
 // ---------------------------------------------------------------------------
 // Per-tile wrapper — resolves S3 image without blocking the list
@@ -83,17 +102,31 @@ const BrowseByTitle = ({ navigation }: any) => {
     const flatListRef = useRef<FlatList>(null);
 
     // ── Scroll-driven compact state ───────────────────────────────────────────
-    const scrollY = useSharedValue(0);
+    // isCompactShared tracks the current compact value on the UI thread so we
+    // only call runOnJS (and trigger a render + LayoutAnimation) when it changes.
+    const scrollY         = useSharedValue(0);
+    const isCompactShared = useSharedValue(false);
+    const cooldown        = useSharedValue(false);
     const [compact, setCompact] = useState(false);
 
-    const updateCompact = useCallback((value: boolean) => {
-        setCompact(prev => (prev === value ? prev : value));
+    const applyCompact = useCallback((value: boolean) => {
+        LayoutAnimation.configureNext(LAYOUT_ANIM);
+        setCompact(value);
+        // Hold cooldown until layout animation finishes + small buffer
+        setTimeout(() => { cooldown.value = false; }, 350);
     }, []);
 
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (event) => {
-            scrollY.value = event.contentOffset.y;
-            runOnJS(updateCompact)(event.contentOffset.y >= SCRUNCH_THRESHOLD);
+            if (cooldown.value) return;
+            const y    = event.contentOffset.y;
+            scrollY.value = y;
+            const next = y >= SCRUNCH_THRESHOLD;
+            if (next !== isCompactShared.value) {
+                isCompactShared.value = next;
+                cooldown.value        = true;
+                runOnJS(applyCompact)(next);
+            }
         },
     });
 
@@ -151,7 +184,6 @@ const BrowseByTitle = ({ navigation }: any) => {
     const handleLetterSelect = (letter: string, index: number) => {
         setSelectedLetter(letter);
         setSelectedIndex(index);
-        // Scroll back to top — also reverses the compact state naturally
         flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
     };
 
