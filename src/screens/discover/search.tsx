@@ -55,6 +55,8 @@ import { spacing } from '@/theme/spacing';
 
 const { width } = Dimensions.get('window');
 
+import { useApp } from '@/context/AppContext';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -279,6 +281,8 @@ const SearchScreen = ({ navigation }: any) => {
 
   const insets = useSafeAreaInsets();
 
+  const { eroticEnabled } = useApp();
+
   // ── Input & debounce ─────────────────────────────────────────────────────
   const [inputValue,     setInputValue]     = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -423,10 +427,16 @@ const SearchScreen = ({ navigation }: any) => {
     enabled: activeTab === 'tags',
   });
 
-  const storyItems = useMemo(
-    () => storyData?.pages.flatMap(p => p.items) ?? [],
-    [storyData]
-  );
+  const storyItems = useMemo(() => {
+    const all = storyData?.pages.flatMap(p => p.items) ?? [];
+    // Filter erotic stories from search results when erotic is disabled
+    if (eroticEnabled) return all;
+    return all.filter((s: any) => s.isErotic !== 'true');
+}, [storyData, eroticEnabled]);
+
+  const filteredTagResults = useMemo(() => {
+      return (tagResults ?? []).filter((t: any) => !t.isErotic);
+  }, [tagResults]);
 
   // ── Render helpers ────────────────────────────────────────────────────────
   const renderStory = useCallback(({ item }: any) => (
@@ -558,14 +568,14 @@ const SearchScreen = ({ navigation }: any) => {
                 active={selectedTagId === null}
                 onPress={() => setSelectedTagId(null)}
               />
-              {(primaryTags ?? []).map(tag => (
+              {(primaryTags ?? []).filter(tag => !tag.isErotic).map(tag => (
                 <FilterChip
-                  key={tag.id}
-                  label={tag.name ?? ''}
-                  active={selectedTagId === tag.id}
-                  onPress={() => setSelectedTagId(
-                    selectedTagId === tag.id ? null : tag.id
-                  )}
+                    key={tag.id}
+                    label={tag.name ?? ''}
+                    active={selectedTagId === tag.id}
+                    onPress={() => setSelectedTagId(
+                        selectedTagId === tag.id ? null : tag.id
+                    )}
                 />
               ))}
             </ScrollView>
@@ -651,7 +661,7 @@ const SearchScreen = ({ navigation }: any) => {
               </View>
             ) : (
               <AnimatedFlatList
-                data={tagResults ?? []}
+                data={filteredTagResults}
                 renderItem={renderTag}
                 keyExtractor={(item: any) => item.id}
                 showsVerticalScrollIndicator={false}

@@ -2,54 +2,61 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
+import { useApp } from '@/context/AppContext';
 
 const client = generateClient<Schema>();
 const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
 // Paginated bookmark list — most recent first via byUserAndCreatedAt GSI
-//
-// NOTE: If the GSI method throws, verify the exact name with:
-//   console.log(Object.keys(client.models.UserBookmark))
+// Filters erotic stories when eroticEnabled is false.
+// queryKey includes eroticEnabled so cache invalidates when setting changes.
 // ---------------------------------------------------------------------------
 
 export function useBookmarks() {
-  return useInfiniteQuery({
-    queryKey: ['bookmarks'],
-    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
-      const { userId } = await getCurrentUser();
+    const { eroticEnabled } = useApp();
 
-      const { data, nextToken } = await (client.models.UserBookmark as any)
-        .listUserBookmarkByUserIdAndCreatedAt(
-          { userId },
-          {
-            sortDirection: 'DESC',
-            limit:         PAGE_SIZE,
-            nextToken:     pageParam,
-          }
-        );
+    return useInfiniteQuery({
+        queryKey: ['bookmarks', eroticEnabled],
+        queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+            const { userId } = await getCurrentUser();
 
-      if (!data?.length) return { items: [], nextToken: null };
+            const { data, nextToken } = await (client.models.UserBookmark as any)
+                .listUserBookmarkByUserIdAndCreatedAt(
+                    { userId },
+                    {
+                        sortDirection: 'DESC',
+                        limit:         PAGE_SIZE,
+                        nextToken:     pageParam,
+                    }
+                );
 
-      // Fetch story data for this page in parallel
-      const storyResults = await Promise.all(
-        data.map((b: any) => client.models.Story.get({ id: b.storyId }))
-      );
+            if (!data?.length) return { items: [], nextToken: null };
 
-      return {
-        items: data
-          .map((bookmark: any, i: number) => ({
-            bookmark,
-            story: storyResults[i]?.data ?? null,
-          }))
-          .filter((item: any) => item.story !== null),
-        nextToken: nextToken ?? null,
-      };
-    },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
-    staleTime: 1000 * 60,
-  });
+            // Fetch story data for this page in parallel
+            const storyResults = await Promise.all(
+                data.map((b: any) => client.models.Story.get({ id: b.storyId }))
+            );
+
+            return {
+                items: data
+                    .map((bookmark: any, i: number) => ({
+                        bookmark,
+                        story: storyResults[i]?.data ?? null,
+                    }))
+                    .filter((item: any) => {
+                        if (item.story === null) return false;
+                        // Hide erotic bookmarks when erotic content is disabled
+                        if (!eroticEnabled && item.story.isErotic === 'true') return false;
+                        return true;
+                    }),
+                nextToken: nextToken ?? null,
+            };
+        },
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
+        staleTime: 1000 * 60,
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -57,30 +64,30 @@ export function useBookmarks() {
 // ---------------------------------------------------------------------------
 
 export function useCreateBookmark() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      storyId,
-      positionSeconds,
-      name,
-    }: {
-      storyId:         string;
-      positionSeconds: number;
-      name:            string;
-    }) => {
-      const { userId } = await getCurrentUser();
-      return client.models.UserBookmark.create({
-        userId,
-        storyId,
-        positionSeconds,
-        name: name.trim() || 'My Bookmark',
-        createdAt: new Date().toISOString(),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            storyId,
+            positionSeconds,
+            name,
+        }: {
+            storyId:         string;
+            positionSeconds: number;
+            name:            string;
+        }) => {
+            const { userId } = await getCurrentUser();
+            return client.models.UserBookmark.create({
+                userId,
+                storyId,
+                positionSeconds,
+                name:      name.trim() || 'My Bookmark',
+                createdAt: new Date().toISOString(),
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+        },
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -88,13 +95,13 @@ export function useCreateBookmark() {
 // ---------------------------------------------------------------------------
 
 export function useDeleteBookmark() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (bookmarkId: string) => {
-      return client.models.UserBookmark.delete({ id: bookmarkId });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (bookmarkId: string) => {
+            return client.models.UserBookmark.delete({ id: bookmarkId });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+        },
+    });
 }

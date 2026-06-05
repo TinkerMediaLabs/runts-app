@@ -21,6 +21,8 @@ export type RootStackParamList = {
     SearchScreen: undefined;
     Waiting: undefined;
     WelcomePref: undefined;
+    EroticHome: undefined;
+    ContentBlocked: undefined;
   };
   
   export type BottomTabParamList = {

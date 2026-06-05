@@ -40,6 +40,8 @@ import {
   useUnfollowAuthor,
 } from '../../hooks/queries/useAuthorFollowing';
 
+import { useApp } from '@/context/AppContext';
+
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
 const HEADER_H      = 260;
@@ -93,6 +95,8 @@ const CreatorProfile = () => {
     const route = useRoute();
     const { id }: any = route.params;
 
+    const { eroticEnabled } = useApp();
+
     const { data: followData, isLoading: followLoading } = useIsFollowing(id);
     const isFollowing = followData?.isFollowing ?? false;
     const followRecordId = followData?.recordId ?? null;
@@ -116,8 +120,12 @@ const CreatorProfile = () => {
     // Filter stories by this author
     const authorStories = useMemo(() => {
         if (!allStories) return [];
-        return allStories.filter(s => s.authorId === id && s.live);
-    }, [allStories, id]);
+        return allStories.filter(s =>
+            s.authorId === id &&
+            s.live &&
+            (eroticEnabled || s.isErotic !== 'true')
+        );
+    }, [allStories, id, eroticEnabled]);
 
     // Build tag lookup map
     const tagMap = useMemo(() => {

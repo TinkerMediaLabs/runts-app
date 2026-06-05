@@ -30,6 +30,8 @@ import ConfirmEmailScreen from '../screens/auth/confirmEmail';
 import WelcomePreferencesScreen from '../screens/auth/welcomePreferences';
 import Welcome from '../screens/auth/welcome';
 import WaitingScreen from '../screens/auth/waiting';
+import EroticHomeScreen from '../screens/erotic/EroticHomeScreen';
+import ContentBlocked from '../screens/erotic/ContentBlocked';
 
 export default function Navigation({ }: { colorScheme: ColorSchemeName }) {
   return (
@@ -86,6 +88,8 @@ function RootNavigator() {
         <Stack.Screen name="AppSettingsScreen" component={AppSettings} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AuthorFollowing" component={AuthorFollowingScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="EroticHome"      component={EroticHomeScreen} />
+        <Stack.Screen name="ContentBlocked"  component={ContentBlocked}   />
       </Stack.Navigator>
     );
   }

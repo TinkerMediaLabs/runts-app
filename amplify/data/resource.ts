@@ -229,6 +229,7 @@ Comment: a
       numListens: a.integer(),
       nsfw: a.string(),
       live: a.string(),
+      isErotic: a.string().default('false'),
       transcript: a.string(),
       publishedAt: a.string(),
       // Aggregates — written by Lambdas, read by app
@@ -277,6 +278,7 @@ Comment: a
       icon: a.string(),
       imageUri: a.string(),
       tileImageUri: a.string(),
+      isErotic: a.boolean().default(false),
       stories: a.hasMany('StoryTag', 'tagId'),
     })
     .authorization(allow => [
