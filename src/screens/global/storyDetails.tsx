@@ -483,7 +483,7 @@ const handleDelete = (id: string) => {
                             }}>
                                 <FontAwesome
                                     name={starStyle === 'solid' ? 'star' : 'star-o'}
-                                    size={21}
+                                    size={22}
                                     color={starColor}
                                 />
                             </ActionBtn>
@@ -795,6 +795,7 @@ const styles = StyleSheet.create({
     actionsLeft: {
         flexDirection: 'row',
         gap: 24,
+        alignItems: 'center',
     },
     actionBtn: {
         padding: 4,

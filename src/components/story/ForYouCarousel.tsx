@@ -191,7 +191,7 @@ const CarouselItem = ({
                                         >
                                             <FontAwesome5
                                                 name="star"
-                                                size={19}
+                                                size={20}
                                                 color={isFav ? '#C9A84C' : 'rgba(255,255,255,0.75)'}
                                                 iconStyle={isFav ? 'solid' : 'regular'}
                                             />
@@ -203,7 +203,7 @@ const CarouselItem = ({
                                         >
                                             <FontAwesome
                                                 name="share"
-                                                size={19}
+                                                size={20}
                                                 color="rgba(255,255,255,0.75)"
                                             />
                                         </TouchableOpacity>
@@ -375,6 +375,7 @@ const styles = StyleSheet.create({
     iconActions: {
         flexDirection: 'row',
         gap: 18,
+        alignItems: 'center',
     },
     iconBtn: {
         padding: 4,

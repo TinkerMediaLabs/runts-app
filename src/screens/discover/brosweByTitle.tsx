@@ -1,119 +1,170 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useCallback } from 'react';
 import {
     View,
     Text,
     FlatList,
     RefreshControl,
-    TouchableOpacity,
     ActivityIndicator,
     StyleSheet,
     Dimensions,
 } from 'react-native';
 
+import Animated, {
+    useSharedValue,
+    useAnimatedScrollHandler,
+    runOnJS,
+} from 'react-native-reanimated';
+
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
-import useStyles from '@/theme/styles';
 import { spacing } from '@/theme/spacing';
-import { useApp } from '@/context/AppContext';
 
-import Screen from '@/components/common/Screen';
-import MenuHeader from '@/components/common/MenuHeader';
-import StoryTile from '../../components/story/StoryTile';
-import LetterBrowser, { LengthFilter, ALPHABET } from '../../components/story/LetterBrowser';
+import Screen        from '@/components/common/Screen';
+import MenuHeader    from '@/components/common/MenuHeader';
+import StoryTile     from '../../components/story/StoryTile';
+import LetterBrowser, { LengthFilter } from '../../components/story/LetterBrowser';
 
-const { width } = Dimensions.get('window');
-
-// ---------------------------------------------------------------------------
-// Mock data — replace with your API
-// ---------------------------------------------------------------------------
-
-const ALL_STORIES = [
-    { id: '1', title: 'Ashes of Avalon',  imageUri: '', primaryTag: 'Fantasy',   audioUri: '', summary: 'A knight searches for a forgotten kingdom.',          author: 'Sarah Vale',    time: 1200000, numListens: 1023 },
-    { id: '2', title: 'Broken Signals',   imageUri: '', primaryTag: 'Cyberpunk', audioUri: '', summary: 'A rogue AI begins speaking through radio towers.',    author: 'Marcus Reed',   time: 2400000, numListens: 842  },
-    { id: '3', title: 'Crimson Hollow',   imageUri: '', primaryTag: 'Horror',    audioUri: '', summary: 'A town disappears every midnight.',                   author: 'Emily Frost',   time: 600000,  numListens: 1500 },
-    { id: '4', title: 'Dreamwalker',      imageUri: '', primaryTag: 'Fantasy',   audioUri: '', summary: 'A traveler enters the dreams of strangers.',          author: 'John Ray',      time: 3600000, numListens: 620  },
-];
+import { useStories }    from '../../hooks/queries/useStories';
+import { useAuthors }    from '../../hooks/queries/useAuthors';
+import { useTags }       from '../../hooks/queries/useTags';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 // ---------------------------------------------------------------------------
-// Component
+// Constants
 // ---------------------------------------------------------------------------
 
-const BrowseByTitle = ({ name, id, navigation }: any) => {
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SCRUNCH_THRESHOLD = SCREEN_HEIGHT * 0.5;
 
-    const { userId } = useApp();
-    const appStyles = useStyles();
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<any>);
+
+// ---------------------------------------------------------------------------
+// Per-tile wrapper — resolves S3 image without blocking the list
+// ---------------------------------------------------------------------------
+
+const BrowseStoryItem = React.memo(({
+    item,
+    authorMap,
+    tagMap,
+}: {
+    item:      any;
+    authorMap: Record<string, string>;
+    tagMap:    Record<string, string>;
+}) => {
+    const { data: resolvedImageUri } = useStoryImage(
+        item?.imageUri?.startsWith('stories/') ? item.imageUri : null
+    );
+    const displayImageUri = resolvedImageUri ?? item?.imageUri ?? '';
+
+    return (
+        <View style={{ marginBottom: spacing.margin }}>
+            <StoryTile
+                id={item.id}
+                title={item.title}
+                imageUri={displayImageUri}
+                primaryTag={tagMap[item.primaryTagId ?? ''] ?? ''}
+                audioUri={item.audioUri ?? ''}
+                summary={item.summary ?? ''}
+                description={item.description ?? ''}
+                author={authorMap[item.authorId ?? ''] ?? ''}
+                duration={item.duration ?? 0}
+                numListens={item.numListens ?? 0}
+            />
+        </View>
+    );
+});
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
+
+const BrowseByTitle = ({ navigation }: any) => {
 
     const flatListRef = useRef<FlatList>(null);
 
-    // ── Letter / filter state (owned here, passed down to LetterBrowser) ──────
-    const [selectedLetter, setSelectedLetter]           = useState('a');
-    const [selectedIndex, setSelectedIndex]             = useState(0);
-    const [lengthFilter, setLengthFilter]               = useState<LengthFilter>('Any Length');
-    const [startingTime, setStartingTime]               = useState(0);
-    const [endingTime, setEndingTime]                   = useState(5400000);
-    const [lengthModalVisible, setLengthModalVisible]   = useState(false);
+    // ── Scroll-driven compact state ───────────────────────────────────────────
+    const scrollY = useSharedValue(0);
+    const [compact, setCompact] = useState(false);
 
-    // ── List state ────────────────────────────────────────────────────────────
-    const [genreStories, setGenreStories]   = useState<any[]>([]);
-    const [isFetching, setIsFetching]       = useState(false);
-    const [isLoading, setIsLoading]         = useState(false);
+    const updateCompact = useCallback((value: boolean) => {
+        setCompact(prev => (prev === value ? prev : value));
+    }, []);
 
-    // ── Handlers passed to LetterBrowser ─────────────────────────────────────
+    const scrollHandler = useAnimatedScrollHandler({
+        onScroll: (event) => {
+            scrollY.value = event.contentOffset.y;
+            runOnJS(updateCompact)(event.contentOffset.y >= SCRUNCH_THRESHOLD);
+        },
+    });
+
+    // ── Letter / filter state ─────────────────────────────────────────────────
+    const [selectedLetter,     setSelectedLetter]     = useState('a');
+    const [selectedIndex,      setSelectedIndex]      = useState(0);
+    const [lengthFilter,       setLengthFilter]       = useState<LengthFilter>('Any Length');
+    const [startingTime,       setStartingTime]       = useState(0);
+    const [endingTime,         setEndingTime]         = useState(5400000);
+    const [lengthModalVisible, setLengthModalVisible] = useState(false);
+
+    // ── Real data ─────────────────────────────────────────────────────────────
+    const {
+        data:        allStories,
+        isLoading:   storiesLoading,
+        isRefetching,
+        refetch,
+    } = useStories();
+
+    const { data: authors } = useAuthors();
+    const { data: tags }    = useTags();
+
+    const authorMap = useMemo(() => {
+        if (!authors) return {};
+        return authors.reduce((acc: Record<string, string>, a) => {
+            if (a.id && a.name) acc[a.id] = a.name;
+            return acc;
+        }, {});
+    }, [authors]);
+
+    const tagMap = useMemo(() => {
+        if (!tags) return {};
+        return tags.reduce((acc: Record<string, string>, t) => {
+            if (t.id && t.name) acc[t.id] = t.name;
+            return acc;
+        }, {});
+    }, [tags]);
+
+    // ── Filter stories by letter + duration ───────────────────────────────────
+    // LetterBrowser expresses duration in milliseconds; Story.duration is in
+    // seconds — multiply by 1000 before comparing.
+    const filteredStories = useMemo(() => {
+        if (!allStories) return [];
+        return allStories.filter(story => {
+            if (story.live !== 'true') return false;
+            if (!story.title?.toLowerCase().startsWith(selectedLetter)) return false;
+            const durationMs = (story.duration ?? 0) * 1000;
+            if (durationMs < startingTime) return false;
+            if (durationMs > endingTime)   return false;
+            return true;
+        });
+    }, [allStories, selectedLetter, startingTime, endingTime]);
+
+    // ── Handlers ──────────────────────────────────────────────────────────────
     const handleLetterSelect = (letter: string, index: number) => {
         setSelectedLetter(letter);
         setSelectedIndex(index);
-        // Scroll the story list back to the top on letter change
+        // Scroll back to top — also reverses the compact state naturally
         flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
     };
 
-    const handleLengthFilterChange = (label: LengthFilter, start: number, end: number) => {
+    const handleLengthFilterChange = (
+        label: LengthFilter,
+        start: number,
+        end:   number
+    ) => {
         setLengthFilter(label);
         setStartingTime(start);
         setEndingTime(end);
         setLengthModalVisible(false);
     };
-
-    // ── Filter stories whenever letter or time range changes ─────────────────
-    useEffect(() => {
-        setIsLoading(true);
-
-        const filtered = ALL_STORIES.filter((story) =>
-            story.title.toLowerCase().startsWith(selectedLetter) &&
-            story.time >= startingTime &&
-            story.time <= endingTime
-        );
-
-        // Simulate async — replace this block with your real API call
-        const t = setTimeout(() => {
-            setGenreStories(filtered);
-            setIsLoading(false);
-        }, 300);
-
-        return () => clearTimeout(t);
-    }, [selectedLetter, startingTime, endingTime]);
-
-    // ── Pull-to-refresh ───────────────────────────────────────────────────────
-    const onRefresh = () => {
-        setIsFetching(true);
-        setTimeout(() => setIsFetching(false), 800);
-    };
-
-    // ── Render story row ──────────────────────────────────────────────────────
-    const renderItem = ({ item }: any) => (
-        <View style={{ marginBottom: spacing.margin }}>
-            <StoryTile
-                title={item.title}
-                imageUri={item.imageUri}
-                primaryTag={item.primaryTag}
-                audioUri={item.audioUri}
-                summary={item.summary}
-                author={item.author}
-                time={item.time}
-                id={item.id}
-                numListens={item.numListens}
-            />
-        </View>
-    );
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
@@ -122,7 +173,6 @@ const BrowseByTitle = ({ name, id, navigation }: any) => {
 
                 <MenuHeader title="Browse by Title" navigation={navigation} />
 
-                {/* LetterBrowser is fully controlled — all state lives here */}
                 <View style={{ marginBottom: spacing.margin }}>
                     <LetterBrowser
                         selectedLetter={selectedLetter}
@@ -133,41 +183,52 @@ const BrowseByTitle = ({ name, id, navigation }: any) => {
                         lengthModalVisible={lengthModalVisible}
                         onLengthModalOpen={() => setLengthModalVisible(true)}
                         onLengthModalClose={() => setLengthModalVisible(false)}
+                        compact={compact}
                     />
                 </View>
 
-                <FlatList
+                <AnimatedFlatList
                     ref={flatListRef}
-                    data={genreStories}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
+                    data={filteredStories}
+                    renderItem={({ item }: any) => (
+                        <BrowseStoryItem
+                            item={item}
+                            authorMap={authorMap}
+                            tagMap={tagMap}
+                        />
+                    )}
+                    keyExtractor={(item: any) => item.id}
                     showsVerticalScrollIndicator={false}
                     maxToRenderPerBatch={10}
                     initialNumToRender={10}
+                    onScroll={scrollHandler}
+                    scrollEventThrottle={16}
                     contentContainerStyle={{
                         paddingHorizontal: spacing.margin,
-                        paddingBottom: 200,
+                        paddingBottom:     200,
                     }}
                     refreshControl={
                         <RefreshControl
-                            refreshing={isFetching}
-                            onRefresh={onRefresh}
+                            refreshing={isRefetching}
+                            onRefresh={refetch}
                             tintColor="cyan"
                         />
                     }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            {isLoading ? (
+                            {storiesLoading ? (
                                 <ActivityIndicator size="small" color="cyan" />
                             ) : (
                                 <>
                                     <FontAwesome5
-                                        name="book-open"
+                                        name={'book-open' as any}
                                         size={40}
                                         color="#ffffff40"
                                         iconStyle="solid"
                                     />
-                                    <Text style={styles.emptyText}>No stories found.</Text>
+                                    <Text style={styles.emptyText}>
+                                        No stories found for "{selectedLetter.toUpperCase()}"
+                                    </Text>
                                 </>
                             )}
                         </View>
@@ -183,12 +244,12 @@ const BrowseByTitle = ({ name, id, navigation }: any) => {
 const styles = StyleSheet.create({
     emptyContainer: {
         alignItems: 'center',
-        marginTop: 80,
+        marginTop:  80,
     },
     emptyText: {
-        color: '#ffffffa5',
+        color:     '#ffffffa5',
         marginTop: 16,
-        fontSize: 16,
+        fontSize:  16,
     },
 });
 

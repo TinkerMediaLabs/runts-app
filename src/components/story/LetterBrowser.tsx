@@ -18,14 +18,15 @@ import {
 export type LengthFilter = 'Any Length' | '< 10 min' | '10 - 30 min' | '30 - 60 min' | '60+ min';
 
 export type LetterBrowserProps = {
-    selectedLetter: string;
-    selectedIndex: number;
-    onLetterSelect: (letter: string, index: number) => void;
-    lengthFilter: LengthFilter;
+    selectedLetter:       string;
+    selectedIndex:        number;
+    onLetterSelect:       (letter: string, index: number) => void;
+    lengthFilter:         LengthFilter;
     onLengthFilterChange: (label: LengthFilter, start: number, end: number) => void;
-    lengthModalVisible: boolean;
-    onLengthModalOpen: () => void;
-    onLengthModalClose: () => void;
+    lengthModalVisible:   boolean;
+    onLengthModalOpen:    () => void;
+    onLengthModalClose:   () => void;
+    compact?:             boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -45,21 +46,21 @@ export const LENGTH_OPTIONS: { label: LengthFilter; start: number; end: number }
     { label: '60+ min',     start: 3600000, end: 5400000 },
 ];
 
-const CELL_WIDTH     = 44;
-const ROW_HEIGHT     = 56;
-const SELECTED_SIZE  = 24;
+const CELL_WIDTH      = 44;
+const ROW_HEIGHT      = 56;
+const SELECTED_SIZE   = 24;
 const UNSELECTED_SIZE = 14;
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
-// LetterItem
+// LetterItem — unchanged from original
 // ---------------------------------------------------------------------------
 
 type LetterItemProps = {
-    letter: string;
-    index: number;
+    letter:        string;
+    index:         number;
     selectedIndex: number;
-    onPress: () => void;
+    onPress:       () => void;
 };
 
 const LetterItem = React.memo(({ letter, index, selectedIndex, onPress }: LetterItemProps) => {
@@ -67,37 +68,32 @@ const LetterItem = React.memo(({ letter, index, selectedIndex, onPress }: Letter
 
     useEffect(() => {
         const distance = Math.abs(index - selectedIndex);
-        const target = distance === 0 ? 1 : distance === 1 ? 0.5 : 0;
+        const target   = distance === 0 ? 1 : distance === 1 ? 0.5 : 0;
         Animated.spring(anim, {
-            toValue: target,
-            damping: 16,
-            stiffness: 200,
+            toValue:         target,
+            damping:         16,
+            stiffness:       200,
             useNativeDriver: false,
         }).start();
     }, [selectedIndex]);
 
     const fontSize = anim.interpolate({
-        inputRange: [0, 1],
+        inputRange:  [0, 1],
         outputRange: [UNSELECTED_SIZE, SELECTED_SIZE],
     });
 
     const color = anim.interpolate({
-        inputRange: [0, 1],
+        inputRange:  [0, 1],
         outputRange: ['rgba(255,255,255,0.3)', 'cyan'],
     });
 
     return (
         <TouchableWithoutFeedback onPress={onPress}>
-            {/*
-              Each cell has the same fixed height as the row (ROW_HEIGHT).
-              justifyContent:'flex-end' pins the text to the bottom edge.
-              The selected letter is larger so it grows upward — bottom never moves.
-            */}
             <View style={styles.letterCell}>
                 <Animated.Text style={{
                     fontSize,
                     color,
-                    fontWeight: index === selectedIndex ? '700' : '400',
+                    fontWeight:    index === selectedIndex ? '700' : '400',
                     textTransform: 'uppercase',
                 }}>
                     {letter}
@@ -109,7 +105,7 @@ const LetterItem = React.memo(({ letter, index, selectedIndex, onPress }: Letter
 });
 
 // ---------------------------------------------------------------------------
-// LetterBrowser — purely controlled, no internal state
+// LetterBrowser
 // ---------------------------------------------------------------------------
 
 const LetterBrowser = ({
@@ -121,15 +117,48 @@ const LetterBrowser = ({
     lengthModalVisible,
     onLengthModalOpen,
     onLengthModalClose,
+    compact = false,
 }: LetterBrowserProps) => {
 
     const scrollRef = useRef<ScrollView>(null);
 
-    // Snap the selected letter to the horizontal centre of the screen
+    // compactAnim drives both the alphabet row hide and the chip margin reduction
+    const compactAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.spring(compactAnim, {
+            toValue:         compact ? 1 : 0,
+            damping:         22,
+            stiffness:       280,
+            useNativeDriver: false,
+        }).start();
+    }, [compact]);
+
+    // Alphabet row: full height → 0, opacity 1 → 0
+    const alphabetHeight = compactAnim.interpolate({
+        inputRange:  [0, 1],
+        outputRange: [ROW_HEIGHT, 0],
+    });
+    const alphabetOpacity = compactAnim.interpolate({
+        inputRange:  [0, 0.4],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
+    });
+
+    // Chip margins: relax when compact to reclaim the space the row freed up
+    const chipsMarginTop = compactAnim.interpolate({
+        inputRange:  [0, 1],
+        outputRange: [20, 6],
+    });
+    const chipsMarginBottom = compactAnim.interpolate({
+        inputRange:  [0, 1],
+        outputRange: [10, 4],
+    });
+
     const handleLetterPress = useCallback((letter: string, index: number) => {
         onLetterSelect(letter, index);
         const cellCentre = 20 + index * CELL_WIDTH + CELL_WIDTH / 2;
-        const targetX = cellCentre - width / 2;
+        const targetX    = cellCentre - width / 2;
         scrollRef.current?.scrollTo({ x: Math.max(0, targetX), animated: true });
     }, [onLetterSelect]);
 
@@ -169,59 +198,68 @@ const LetterBrowser = ({
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {/* ── Alphabet row ── */}
-            <ScrollView
-                ref={scrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.alphabetRow}
-                contentContainerStyle={styles.alphabetContent}
-            >
-                {ALPHABET.map(({ index, letter }) => (
-                    <LetterItem
-                        key={letter}
-                        letter={letter}
-                        index={index}
-                        selectedIndex={selectedIndex}
-                        onPress={() => handleLetterPress(letter, index)}
-                    />
-                ))}
-            </ScrollView>
-
-            {/* ── Filter chips ── */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsContent}
-                style={styles.chipsScroll}
-            >
-                <TouchableOpacity
-                    activeOpacity={0.75}
-                    onPress={onLengthModalOpen}
-                    style={[styles.chip, lengthFilter !== 'Any Length' && styles.chipActive]}
+            {/* ── Alphabet row — hides on scroll ── */}
+            <Animated.View style={{
+                height:   alphabetHeight,
+                opacity:  alphabetOpacity,
+                overflow: 'hidden',
+            }}>
+                <ScrollView
+                    ref={scrollRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ height: ROW_HEIGHT }}
+                    contentContainerStyle={styles.alphabetContent}
                 >
-                    <Text style={[styles.chipText, lengthFilter !== 'Any Length' && styles.chipTextActive]}>
-                        {lengthFilter}
-                    </Text>
-                    {lengthFilter !== 'Any Length' && (
-                        <TouchableOpacity
-                            onPress={() => onLengthFilterChange('Any Length', 0, 5400000)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                            <Text style={styles.chipX}>  ×</Text>
-                        </TouchableOpacity>
-                    )}
-                </TouchableOpacity>
+                    {ALPHABET.map(({ index, letter }) => (
+                        <LetterItem
+                            key={letter}
+                            letter={letter}
+                            index={index}
+                            selectedIndex={selectedIndex}
+                            onPress={() => handleLetterPress(letter, index)}
+                        />
+                    ))}
+                </ScrollView>
+            </Animated.View>
 
-                {/* Placeholders — wire up the same way when ready */}
-                <TouchableOpacity activeOpacity={0.75} style={styles.chip}>
-                    <Text style={styles.chipText}>Any Popularity</Text>
-                </TouchableOpacity>
+            {/* ── Filter chips — padding reduces on scroll ── */}
+            <Animated.View style={{
+                marginTop:    chipsMarginTop,
+                marginBottom: chipsMarginBottom,
+            }}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipsContent}
+                >
+                    <TouchableOpacity
+                        activeOpacity={0.75}
+                        onPress={onLengthModalOpen}
+                        style={[styles.chip, lengthFilter !== 'Any Length' && styles.chipActive]}
+                    >
+                        <Text style={[styles.chipText, lengthFilter !== 'Any Length' && styles.chipTextActive]}>
+                            {lengthFilter}
+                        </Text>
+                        {lengthFilter !== 'Any Length' && (
+                            <TouchableOpacity
+                                onPress={() => onLengthFilterChange('Any Length', 0, 5400000)}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Text style={styles.chipX}>  ×</Text>
+                            </TouchableOpacity>
+                        )}
+                    </TouchableOpacity>
 
-                <TouchableOpacity activeOpacity={0.75} style={styles.chip}>
-                    <Text style={styles.chipText}>Any Date</Text>
-                </TouchableOpacity>
-            </ScrollView>
+                    <TouchableOpacity activeOpacity={0.75} style={styles.chip}>
+                        <Text style={styles.chipText}>Any Popularity</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity activeOpacity={0.75} style={styles.chip}>
+                        <Text style={styles.chipText}>Any Date</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+            </Animated.View>
 
         </View>
     );
@@ -233,108 +271,101 @@ const LetterBrowser = ({
 
 const styles = StyleSheet.create({
 
-    alphabetRow: {
-        height: ROW_HEIGHT,
-    },
     alphabetContent: {
         paddingHorizontal: 20,
-        paddingRight: 40,
+        paddingRight:      40,
     },
     letterCell: {
-        width: CELL_WIDTH,
-        height: ROW_HEIGHT,         // same as row — text pinned to bottom
-        justifyContent: 'flex-end', // grows upward when font increases
-        alignItems: 'center',
-        paddingBottom: 6,
+        width:          CELL_WIDTH,
+        height:         ROW_HEIGHT,
+        justifyContent: 'flex-end',
+        alignItems:     'center',
+        paddingBottom:  6,
     },
     dot: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
+        width:           4,
+        height:          4,
+        borderRadius:    2,
         backgroundColor: 'cyan',
-        marginTop: 4,
+        marginTop:       4,
     },
 
-    chipsScroll: {
-        marginBottom: 10,
-        marginTop: 20
-    },
     chipsContent: {
         paddingHorizontal: 20,
-        paddingRight: 40,
-        alignItems: 'center',
+        paddingRight:      40,
+        alignItems:        'center',
     },
     chip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 5,
+        flexDirection:     'row',
+        alignItems:        'center',
+        paddingVertical:   5,
         paddingHorizontal: 12,
-        marginHorizontal: 4,
-        borderRadius: 20,
-        backgroundColor: '#2a2a2a',
-        borderWidth: 1,
-        borderColor: '#444',
+        marginHorizontal:  4,
+        borderRadius:      20,
+        backgroundColor:   '#2a2a2a',
+        borderWidth:       1,
+        borderColor:       '#444',
     },
     chipActive: {
         backgroundColor: 'rgba(0,255,255,0.12)',
-        borderColor: 'cyan',
+        borderColor:     'cyan',
     },
     chipText: {
-        color: '#aaa',
+        color:    '#aaa',
         fontSize: 13,
     },
     chipTextActive: {
         color: 'cyan',
     },
     chipX: {
-        color: 'cyan',
+        color:    'cyan',
         fontSize: 15,
     },
 
     modalBackdrop: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        flex:            1,
+        justifyContent:  'center',
+        alignItems:      'center',
         backgroundColor: 'rgba(0,0,0,0.75)',
     },
     modalCard: {
-        borderRadius: 20,
-        backgroundColor: '#111',
-        paddingVertical: 28,
+        borderRadius:      20,
+        backgroundColor:   '#111',
+        paddingVertical:   28,
         paddingHorizontal: 20,
-        width: width * 0.8,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#2a2a2a',
+        width:             width * 0.8,
+        alignItems:        'center',
+        borderWidth:       1,
+        borderColor:       '#2a2a2a',
     },
     modalTitle: {
-        fontWeight: '700',
-        fontSize: 18,
-        color: '#fff',
-        marginBottom: 20,
+        fontWeight:    '700',
+        fontSize:      18,
+        color:         '#fff',
+        marginBottom:  20,
         letterSpacing: 0.5,
     },
     modalOption: {
-        marginVertical: 5,
-        alignItems: 'center',
-        borderRadius: 12,
+        marginVertical:  5,
+        alignItems:      'center',
+        borderRadius:    12,
         backgroundColor: '#1e1e1e',
-        width: width * 0.65,
+        width:           width * 0.65,
         paddingVertical: 13,
-        borderWidth: 1,
-        borderColor: '#333',
+        borderWidth:     1,
+        borderColor:     '#333',
     },
     modalOptionActive: {
         backgroundColor: 'rgba(0,255,255,0.12)',
-        borderColor: 'cyan',
+        borderColor:     'cyan',
     },
     modalOptionText: {
         fontWeight: '500',
-        fontSize: 16,
-        color: '#ccc',
+        fontSize:   16,
+        color:      '#ccc',
     },
     modalOptionTextActive: {
-        color: 'cyan',
+        color:      'cyan',
         fontWeight: '700',
     },
 });
