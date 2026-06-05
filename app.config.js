@@ -50,11 +50,15 @@ export default ({ config }) => ({
       },
     ],
   },
+  plugins: [
+    "@sentry/react-native/expo"
+  ],
   extra: {
     eas: {
       projectId: "e36ad826-5ed4-43b4-a440-e0b4590e6c63",
     },
     APP_ENV,
+    sentryDsn: process.env.SENTRY_DSN,
     rudderWriteKey: process.env.EXPO_PUBLIC_RUDDER_WRITE_KEY,
     rudderDataPlane: process.env.EXPO_PUBLIC_RUDDER_DATA_PLANE,
   },

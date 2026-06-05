@@ -1,11 +1,11 @@
-import {
-    useEffect,
-    useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
+
 import AppShell from './src/navigation/AppShell';
 import { PlayerUIProvider } from '@/context/PlayerUIContext';
 import { AppProvider } from './src/context/AppContext';
@@ -15,33 +15,56 @@ import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
 import { configureAmplify } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './src/lib/queryClient';
 
-// Must be called first to complete OAuth session on redirect back to app
+// ---------------------------------------------------------------------------
+// Sentry — initialise before anything else renders
+// ---------------------------------------------------------------------------
+
+Sentry.init({
+    dsn: Constants.expoConfig?.extra?.sentryDsn,
+    environment: Constants.expoConfig?.extra?.APP_ENV ?? 'development',
+
+    // Only send events in non-development environments.
+    // Set to true (or remove this line) once you want dev errors reported too.
+    enabled: Constants.expoConfig?.extra?.APP_ENV !== 'development',
+
+    // Capture 100% of transactions for performance monitoring.
+    // Lower this (e.g. 0.2) in production once you have volume.
+    tracesSampleRate: 1.0,
+});
+
+
+// ---------------------------------------------------------------------------
+// Amplify + OAuth
+// ---------------------------------------------------------------------------
+
 WebBrowser.maybeCompleteAuthSession();
-
-// Configure Amplify before anything renders
 configureAmplify();
-
 SplashScreen.preventAutoHideAsync();
 
+// ---------------------------------------------------------------------------
+// App
+// ---------------------------------------------------------------------------
 
-export default function App() {
+function App() {
     const resourcesLoaded = useCachedResources();
     const [appReady, setAppReady] = useState(false);
 
     useEffect(() => {
+
         let mounted = true;
 
         async function bootstrap() {
             try {
                 await TrackPlayer.setupPlayer({
-                    contentType: 'music',
+                    contentType:              'music',
                     handleAudioBecomingNoisy: true,
-                    android: { wakeMode: 'network' },
+                    android:                  { wakeMode: 'network' },
                 });
             } catch (error) {
+                Sentry.captureException(error);
                 console.error('APP BOOTSTRAP ERROR', error);
             } finally {
                 if (!mounted) return;
@@ -52,9 +75,7 @@ export default function App() {
 
         bootstrap();
 
-        return () => {
-            mounted = false;
-        };
+        return () => { mounted = false; };
     }, []);
 
     if (!resourcesLoaded || !appReady) {
@@ -83,3 +104,6 @@ export default function App() {
         </QueryClientProvider>
     );
 }
+
+// Wrap with Sentry to capture unhandled errors and attach to the component tree
+export default Sentry.wrap(App);
