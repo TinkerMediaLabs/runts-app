@@ -53,7 +53,7 @@ const UNSELECTED_SIZE = 14;
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
-// LetterItem — unchanged from original
+// LetterItem — completely unchanged from original
 // ---------------------------------------------------------------------------
 
 type LetterItemProps = {
@@ -122,39 +122,6 @@ const LetterBrowser = ({
 
     const scrollRef = useRef<ScrollView>(null);
 
-    // compactAnim drives both the alphabet row hide and the chip margin reduction
-    const compactAnim = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        Animated.spring(compactAnim, {
-            toValue:         compact ? 1 : 0,
-            damping:         22,
-            stiffness:       280,
-            useNativeDriver: false,
-        }).start();
-    }, [compact]);
-
-    // Alphabet row: full height → 0, opacity 1 → 0
-    const alphabetHeight = compactAnim.interpolate({
-        inputRange:  [0, 1],
-        outputRange: [ROW_HEIGHT, 0],
-    });
-    const alphabetOpacity = compactAnim.interpolate({
-        inputRange:  [0, 0.4],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-    });
-
-    // Chip margins: relax when compact to reclaim the space the row freed up
-    const chipsMarginTop = compactAnim.interpolate({
-        inputRange:  [0, 1],
-        outputRange: [20, 6],
-    });
-    const chipsMarginBottom = compactAnim.interpolate({
-        inputRange:  [0, 1],
-        outputRange: [10, 4],
-    });
-
     const handleLetterPress = useCallback((letter: string, index: number) => {
         onLetterSelect(letter, index);
         const cellCentre = 20 + index * CELL_WIDTH + CELL_WIDTH / 2;
@@ -198,35 +165,33 @@ const LetterBrowser = ({
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {/* ── Alphabet row — hides on scroll ── */}
-            <Animated.View style={{
-                height:   alphabetHeight,
-                opacity:  alphabetOpacity,
-                overflow: 'hidden',
-            }}>
-                <ScrollView
-                    ref={scrollRef}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={{ height: ROW_HEIGHT }}
-                    contentContainerStyle={styles.alphabetContent}
-                >
-                    {ALPHABET.map(({ index, letter }) => (
-                        <LetterItem
-                            key={letter}
-                            letter={letter}
-                            index={index}
-                            selectedIndex={selectedIndex}
-                            onPress={() => handleLetterPress(letter, index)}
-                        />
-                    ))}
-                </ScrollView>
-            </Animated.View>
+            {/* ── Alphabet row — conditionally rendered, LayoutAnimation handles transition ── */}
+            {!compact && (
+                <View style={{ height: ROW_HEIGHT }}>
+                    <ScrollView
+                        ref={scrollRef}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={{ height: ROW_HEIGHT }}
+                        contentContainerStyle={styles.alphabetContent}
+                    >
+                        {ALPHABET.map(({ index, letter }) => (
+                            <LetterItem
+                                key={letter}
+                                letter={letter}
+                                index={index}
+                                selectedIndex={selectedIndex}
+                                onPress={() => handleLetterPress(letter, index)}
+                            />
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
 
-            {/* ── Filter chips — padding reduces on scroll ── */}
-            <Animated.View style={{
-                marginTop:    chipsMarginTop,
-                marginBottom: chipsMarginBottom,
+            {/* ── Filter chips — margins tighten in compact mode ── */}
+            <View style={{
+                marginTop:    compact ? 6  : 20,
+                marginBottom: compact ? 4  : 10,
             }}>
                 <ScrollView
                     horizontal
@@ -259,7 +224,7 @@ const LetterBrowser = ({
                         <Text style={styles.chipText}>Any Date</Text>
                     </TouchableOpacity>
                 </ScrollView>
-            </Animated.View>
+            </View>
 
         </View>
     );
