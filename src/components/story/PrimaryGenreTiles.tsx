@@ -81,7 +81,7 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
 // List
 // ---------------------------------------------------------------------------
 
-const GenreTilesList = ({ primaryTags, navigation }: any) => {
+const GenreTilesList = ({ primaryTags, navigation, eroticEnabled }: any) => {
 
     const typo = useTypography();
 
@@ -111,7 +111,41 @@ const GenreTilesList = ({ primaryTags, navigation }: any) => {
                         </Text>
                     </View>
                 )}
-                ListFooterComponent={<View style={{ height: 20 }} />}
+                ListFooterComponent={() => {
+                    const typo = useTypography();
+
+                    return (
+                            <View>
+                                {eroticEnabled && (
+                                    <TouchableOpacity
+                                        activeOpacity={0.85}
+                                        onPress={() => navigation.navigate('EroticHome')}
+                                        style={styles_local.tileWrapper}
+                                    >
+                                            <ImageBackground
+                                                source={require('../../../assets/images/genres/eroticTile.jpg')}
+                                                style={styles_local.tileImage}
+                                                imageStyle={{ borderRadius: 15 }}
+                                            >
+                                                <LinearGradient
+                                                    colors={['#000000a5', '#000000a5', 'transparent']}
+                                                    locations={[0.0, 0.33, 1.0]}
+                                                    start={{ x: 0, y: 1 }}
+                                                    end={{ x: 0, y: 0 }}
+                                                    style={styles_local.tileGradient}
+                                                >
+                                                    <Text style={[typo.genreTile, { marginBottom: 10 }]}>
+                                                        Erotica
+                                                    </Text>
+                                                </LinearGradient>
+                                            </ImageBackground>
+                                    
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                    
+                    )}
+                }  
             />
         </View>
     );

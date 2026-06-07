@@ -236,7 +236,7 @@ const BrowseByTitle = ({ navigation }: any) => {
                     onScroll={scrollHandler}
                     scrollEventThrottle={16}
                     contentContainerStyle={{
-                        paddingHorizontal: spacing.margin,
+                        paddingHorizontal: 0,
                         paddingBottom:     200,
                     }}
                     refreshControl={

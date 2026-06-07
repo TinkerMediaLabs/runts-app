@@ -81,18 +81,18 @@ const HomeScreen = ({ navigation }: any) => {
     const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
         return stories
-            .filter(story => !!story.id)  // guard against malformed records
+            .filter(story => !!story.id && story.isErotic !== 'true')  // ← add erotic filter
             .map(story => ({
                 ...story,
-                primaryTagName: story.primaryTagId ? tagMap[story.primaryTagId] ?? '' : '',
+                primaryTagName:   story.primaryTagId   ? tagMap[story.primaryTagId]   ?? '' : '',
                 secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
-                authorName: story.authorId ? authorMap[story.authorId] ?? '' : '',
+                authorName:       story.authorId       ? authorMap[story.authorId]    ?? '' : '',
             }));
     }, [stories, tagMap, authorMap]);
 
     const topTags = React.useMemo(() => {
         if (!tags) return [];
-        return tags.slice(0, 4);
+        return tags.filter(t => !t.isErotic).slice(0, 4);  // ← add erotic filter
     }, [tags]);
 
     return (

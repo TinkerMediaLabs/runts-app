@@ -416,7 +416,9 @@ export default function TrackPlayerWidget({ expanded }: any) {
                         collapsePlayer();
                       }
                     }}>
-                      <Text style={styles.tag}>{storyTags[0]?.name ?? ''}</Text>
+                      <Text style={[styles.tag, storyTags[0]?.isErotic && { color: '#ff7c2a' }]}>
+                        {storyTags[0]?.name ?? ''}
+                    </Text>
                     </TouchableWithoutFeedback>
 
                       <View style={styles.actions}>
@@ -438,7 +440,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   </View>
 
                   {/* PROGRESS */}
-                  <ProgressBar progress={progress} />
+                  <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'}/>
 
                 </View>
               </LinearGradient>

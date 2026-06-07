@@ -13,7 +13,7 @@ import { audioEngine } from './audioEngine';
 
 const SLIDER_UPDATE_MS = 500; // update slider at most every 500ms
 
-export default function ProgressBar({ progress }: any) {
+export default function ProgressBar({ progress, isErotic = false }: any) {
 
   // Throttled value fed to the Slider — only updates every SLIDER_UPDATE_MS.
   // This breaks the rapid-fire re-render loop that causes the duplicate key bug
@@ -115,7 +115,13 @@ export default function ProgressBar({ progress }: any) {
         }}
 
         thumbWidth={10}
-        renderThumb={() => <View style={styles.customThumb} />}
+        renderThumb={() => <View style={{    
+          width:           14,
+          height:          14,
+          borderRadius:    20,
+          overflow:        'hidden',
+          backgroundColor: isErotic ? '#ff7c2a' : 'cyan',  // ← orange or cyan
+        }} />}
         renderBubble={() =>
           isSlidingState ? (
             <View style={styles.customBubble}>
@@ -123,13 +129,13 @@ export default function ProgressBar({ progress }: any) {
             </View>
           ) : null
         }
-        theme={{
+       theme={{
           maximumTrackTintColor: '#2a2a2a',
-          minimumTrackTintColor: '#00ffff',
+          minimumTrackTintColor: isErotic ? '#ff7c2a' : '#00ffff',  // ← orange or cyan
           bubbleBackgroundColor: '#000',
-          bubbleTextColor: '#fff',
-          cacheTrackTintColor: 'rgba(255,255,255,0.2)',
-        }}
+          bubbleTextColor:       '#fff',
+          cacheTrackTintColor:   'rgba(255,255,255,0.2)',
+      }}
       />
 
       <View style={styles.row}>

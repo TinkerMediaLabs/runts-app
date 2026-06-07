@@ -26,45 +26,7 @@ import { useApp }                  from '@/context/AppContext';
 
 const { width } = Dimensions.get('window');
 
-// ---------------------------------------------------------------------------
-// Hardcoded Erotica tile — always last, only shown when eroticEnabled
-// Styled to match PrimaryGenreTilesList tiles but with an orange palette.
-// ---------------------------------------------------------------------------
 
-const EroticaTile = ({ navigation }: { navigation: any }) => (
-    <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate('EroticHome')}
-        style={styles.eroticaTile}
-    >
-        <LinearGradient
-            colors={['#2a1200', '#1a0a00']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.eroticaTileContent}>
-            <View style={styles.eroticaIconWrapper}>
-                <FontAwesome5
-                    name={'fire' as any}
-                    size={20}
-                    color="#ff7c2a"
-                    iconStyle="solid"
-                />
-            </View>
-            <View style={{ flex: 1 }}>
-                <Text style={styles.eroticaTitle}>Erotica</Text>
-                <Text style={styles.eroticaSubtitle}>Adult short stories</Text>
-            </View>
-            <FontAwesome5
-                name={'chevron-right' as any}
-                size={13}
-                color="rgba(255,124,42,0.5)"
-                iconStyle="solid"
-            />
-        </View>
-    </TouchableOpacity>
-);
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -142,14 +104,8 @@ const BrowseScreen = ({ navigation }: any) => {
                                         <PrimaryGenreTilesList
                                             primaryTags={filteredPrimaryTags}
                                             navigation={navigation}
+                                            eroticEnabled={eroticEnabled}
                                         />
-                                    </View>
-                                )}
-
-                                {/* Erotica tile — always last, hidden when erotic disabled */}
-                                {eroticEnabled && (
-                                    <View style={{ marginHorizontal: spacing.margin }}>
-                                        <EroticaTile navigation={navigation} />
                                     </View>
                                 )}
                             </>

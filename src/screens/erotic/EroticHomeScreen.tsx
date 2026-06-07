@@ -19,7 +19,7 @@ import AntDesign    from '@react-native-vector-icons/ant-design';
 import StoryTile              from '@/components/story/StoryTile';
 import EroticContinueListening from '@/components/erotic/EroticContinueListening';
 
-import { useStories }    from '@/hooks/queries/useStories';
+import { useEroticStories } from '@/hooks/queries/useEroticStories';
 import { useTags }       from '@/hooks/queries/useTags';
 import { useAuthors }    from '@/hooks/queries/useAuthors';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
@@ -45,7 +45,7 @@ const EroticGenreTile = ({ tag, navigation }: { tag: any; navigation: any }) => 
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
         />
-        <Text style={styles.genreTileName} numberOfLines={2}>{tag.name}</Text>
+        <Text style={styles.genreTileName} numberOfLines={1}>#{tag.name}</Text>
     </TouchableOpacity>
 );
 
@@ -90,20 +90,9 @@ const EroticHomeScreen = () => {
     const insets     = useSafeAreaInsets();
 
     // ── Data ──────────────────────────────────────────────────────────────────
-    const { data: allStories, isLoading: storiesLoading } = useStories();
+    const { data: eroticStories, isLoading: storiesLoading } = useEroticStories();
     const { data: allTags }   = useTags();
     const { data: authors }   = useAuthors();
-
-    // All erotic stories sorted by newest
-    const eroticStories = useMemo(() => {
-        if (!allStories) return [];
-        return allStories
-            .filter(s => s.isErotic === 'true' && s.live === 'true')
-            .sort((a, b) =>
-                new Date(b.publishedAt ?? 0).getTime() -
-                new Date(a.publishedAt ?? 0).getTime()
-            );
-    }, [allStories]);
 
     // Erotic sub-genre tags only
     const eroticTags = useMemo(
@@ -133,7 +122,7 @@ const EroticHomeScreen = () => {
 
             {/* Background gradient */}
             <LinearGradient
-                colors={['#1a0800', '#0d0400', '#000']}
+                colors={['#0d0400', '#000', '#000']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -146,17 +135,10 @@ const EroticHomeScreen = () => {
                     style={styles.backButton}
                     activeOpacity={0.7}
                 >
-                    <AntDesign name="close" size={20} color={EROTIC_ORANGE} />
+                    <AntDesign name="left" size={20} color='#fff' />
                 </TouchableOpacity>
 
                 <View style={styles.headerTitleRow}>
-                    <FontAwesome5
-                        name={'fire' as any}
-                        size={16}
-                        color={EROTIC_ORANGE}
-                        iconStyle="solid"
-                        style={{ marginRight: 8 }}
-                    />
                     <Text style={styles.headerTitle}>Erotica</Text>
                 </View>
 
@@ -252,8 +234,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingBottom:  16,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: 'rgba(255,124,42,0.15)',
     },
     backButton: {
         width:          36,
@@ -268,7 +248,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize:   20,
         fontWeight: '800',
-        color:      EROTIC_ORANGE,
+        color:      '#fff',
         letterSpacing: 0.3,
     },
 
@@ -283,7 +263,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize:      13,
         fontWeight:    '700',
-        color:         'rgba(255,124,42,0.7)',
+        color:         '#fff',
         textTransform: 'uppercase',
         letterSpacing: 0.8,
         marginBottom:  12,
@@ -294,18 +274,20 @@ const styles = StyleSheet.create({
         paddingRight: 20,
     },
     genreTile: {
-        width:           GENRE_TILE_W,
-        height:          GENRE_TILE_H,
-        borderRadius:    12,
+        //width:           GENRE_TILE_W,
+        //height:          GENRE_TILE_H,
+        borderRadius:    20,
         overflow:        'hidden',
         borderWidth:     1,
         borderColor:     'rgba(255,124,42,0.2)',
         justifyContent:  'center',
-        paddingHorizontal: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+
     },
     genreTileName: {
         fontSize:   13,
-        fontWeight: '700',
+        fontWeight: '400',
         color:      EROTIC_ORANGE,
         lineHeight: 18,
     },

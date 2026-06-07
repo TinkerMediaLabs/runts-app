@@ -92,29 +92,43 @@ const REACTION_EMOJIS: Record<string, string> = {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const StatPill = ({ icon, value, color }: { icon: any; value: string; color?: string }) => (
-    <View style={styles.statPill}>
-        <FontAwesome5 name={icon} size={12} color={color ?? 'rgba(255,255,255,0.6)'} iconStyle="solid" />
-        <Text style={[styles.statText, color ? { color } : null]}>{value}</Text>
-    </View>
-);
+    const StatPill = ({ icon, value, color }: { icon: any; value: string; color?: string }) => (
+        <View style={styles.statPill}>
+            <FontAwesome5 name={icon} size={12} color={color ?? 'rgba(255,255,255,0.6)'} iconStyle="solid" />
+            <Text style={[styles.statText, color ? { color } : null]}>{value}</Text>
+        </View>
+    );
 
-const ActionBtn = ({
-    onPress, children,
-}: {
-    onPress: () => void;
-    children: React.ReactNode;
-}) => (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.actionBtn}>
-        {children}
-    </TouchableOpacity>
-);
+    const ActionBtn = ({
+        onPress, children,
+    }: {
+        onPress: () => void;
+        children: React.ReactNode;
+    }) => (
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.actionBtn}>
+            {children}
+        </TouchableOpacity>
+    );
 
-const TagChip = ({ name, onPress }: { name: string; onPress: () => void }) => (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.tagChip}>
-        <Text style={styles.tagChipText}>#{name}</Text>
-    </TouchableOpacity>
-);
+    const TagChip = ({
+        name,
+        onPress,
+        isErotic = false,
+    }: {
+        name:      string;
+        onPress:   () => void;
+        isErotic?: boolean;
+    }) => (
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.7}
+            style={[styles.tagChip, isErotic && styles.tagChipErotic]}
+        >
+            <Text style={[styles.tagChipText, isErotic && styles.tagChipTextErotic]}>
+                #{name}
+            </Text>
+        </TouchableOpacity>
+    );
 
     const CommentItem = ({
     item,
@@ -197,17 +211,29 @@ const StoryScreen = ({ navigation }: any) => {
                 const { data: storyTagLinks } = await client.models.StoryTag.list({
                     filter: { storyId: { eq: storyID } },
                 });
-                if (!storyTagLinks?.length) return;
-                const tagResults = await Promise.all(
-                    storyTagLinks.map(st => client.models.Tag.get({ id: st.tagId }))
-                );
-                setStoryTags(tagResults.map(r => r.data).filter(Boolean));
+
+                if (storyTagLinks?.length) {
+                    // StoryTag records exist — use them
+                    const tagResults = await Promise.all(
+                        storyTagLinks.map(st => client.models.Tag.get({ id: st.tagId }))
+                    );
+                    setStoryTags(tagResults.map(r => r.data).filter(Boolean));
+                    return;
+                }
+
+                // No StoryTag records — fall back to primaryTagId on the story itself
+                if (story?.primaryTagId) {
+                    const { data: primaryTag } = await client.models.Tag.get({
+                        id: story.primaryTagId,
+                    });
+                    if (primaryTag) setStoryTags([primaryTag]);
+                }
             } catch (e) {
                 console.log('Error fetching story tags:', e);
             }
         }
         fetchTags();
-    }, [storyID]);
+    }, [storyID, story?.primaryTagId]); // add story?.primaryTagId so it re-runs when story loads
 
     // ── User state — finished, rating, reactions ──────────────────────────────
     const [hasFinished,  setHasFinished]  = useState(false);
@@ -530,8 +556,9 @@ const handleDelete = (id: string) => {
                                     <TagChip
                                         key={tag.id}
                                         name={tag.name}
+                                        isErotic={tag.isErotic === true}
                                         onPress={() => navigation.navigate('TagHomeScreen', {
-                                            id: tag.id,
+                                            id:   tag.id,
                                             name: tag.name,
                                         })}
                                     />
@@ -1014,6 +1041,13 @@ const styles = StyleSheet.create({
         anonLabel: {
         fontSize: 13,
         color: 'rgba(255,255,255,0.4)',
+    },
+    tagChipErotic: {
+        backgroundColor: 'rgba(255,124,42,0.12)',
+        borderColor:     'rgba(255,124,42,0.5)',
+    },
+    tagChipTextErotic: {
+        color: '#ff7c2a',
     },
 });
 

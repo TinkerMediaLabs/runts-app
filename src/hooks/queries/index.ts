@@ -16,3 +16,4 @@ export {
   upsertInProgressStory,
   getInProgressSeconds,
 } from './useInProgressStories';
+export { useEroticStories } from './useEroticStories';

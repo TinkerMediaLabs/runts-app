@@ -78,7 +78,7 @@ const EroticContinueTile = ({ storyId, progressSeconds }: {
         >
             {/* Cover image */}
             <Image
-                source={imageUri ? { uri: imageUri } : require('../../../../assets/images/blankprofile.png')}
+                source={imageUri ? { uri: imageUri } : require('../../../assets/images/blankprofile.png')}
                 style={styles.tileImage}
             />
 

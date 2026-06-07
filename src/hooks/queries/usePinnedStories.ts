@@ -4,23 +4,43 @@ import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { getOfflineEnabled } from '../../lib/offlineStorage';
 import { downloadStory, deleteDownload } from './useDownloads';
+import { useApp } from '@/context/AppContext';
 
 const client = generateClient<Schema>();
 
 // ─── Fetch all pinned stories for current user ────────────────────────────
 export function usePinnedStories() {
-  return useQuery({
-    queryKey: ['pinnedStories'],
-    queryFn: async () => {
-      const { userId } = await getCurrentUser();
-      const { data, errors } = await client.models.UserPinnedStory.list({
-        filter: { userId: { eq: userId } },
-      });
-      if (errors) throw new Error(errors[0].message);
-      return [...(data ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    },
-    staleTime: 1000 * 60 * 5,
-  });
+    const { eroticEnabled, eroticInPlaylist } = useApp();
+
+    return useQuery({
+        queryKey: ['pinnedStories', eroticEnabled, eroticInPlaylist],
+        queryFn: async () => {
+            const { userId } = await getCurrentUser();
+            const { data, errors } = await client.models.UserPinnedStory.list({
+                filter: { userId: { eq: userId } },
+            });
+            if (errors) throw new Error(errors[0].message);
+
+            const sorted = [...(data ?? [])].sort(
+                (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+            );
+
+            // Fetch story data to check isErotic — needed for filtering
+            const storyResults = await Promise.all(
+                sorted.map(r => client.models.Story.get({ id: r.storyId }))
+            );
+
+            // Show erotic pinned stories only when both eroticEnabled AND eroticInPlaylist
+            return sorted.filter((_, i) => {
+                const story = storyResults[i]?.data;
+                if (story?.isErotic !== 'true') return true;  // non-erotic always shown
+                if (!eroticEnabled)    return false;           // erotic disabled
+                if (!eroticInPlaylist) return false;           // erotic excluded from playlist
+                return true;
+            });
+        },
+        staleTime: 1000 * 60 * 5,
+    });
 }
 
 // ─── Fetch just the pinned story IDs for fast lookup ─────────────────────
