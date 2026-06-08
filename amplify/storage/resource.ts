@@ -8,7 +8,10 @@ export const storage = defineStorage({
       allow.authenticated.to(['read']),
     ],
     'stories/*': [
-      allow.authenticated.to(['read']),
+      allow.authenticated.to(['read', 'write', 'delete']),
+    ],
+    'authors/*': [
+      allow.authenticated.to(['read', 'write', 'delete']),
     ],
   }),
 });
