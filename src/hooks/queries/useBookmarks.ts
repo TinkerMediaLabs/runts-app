@@ -3,6 +3,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
+import { Analytics } from '@/lib/analytics';
 
 const client = generateClient<Schema>();
 const PAGE_SIZE = 20;
@@ -86,6 +87,10 @@ export function useCreateBookmark() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+            Analytics.storyBookmarked({          // ← add
+                storyId:         variables.storyId,
+                positionSeconds: variables.positionSeconds,
+            });
         },
     });
 }

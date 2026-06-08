@@ -23,6 +23,8 @@ import {
     getEroticPin,
 } from '../lib/eroticSettings';
 
+import { Analytics } from '../lib/analytics';
+
 const client = generateClient<Schema>();
 
 // ---------------------------------------------------------------------------
@@ -153,6 +155,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 totalListenSeconds:   dbUser?.totalListenSeconds,
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
+            Analytics.identify(user.userId, dbUser?.name ?? undefined);
         } catch {
             setUserId(null);
             setIsAuthenticated(false);
@@ -193,6 +196,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         try {
             await signOut();
             queryClient.clear();
+            Analytics.reset();
             setUserId(null);
             setIsAuthenticated(false);
             setIsNewUser(false);
@@ -217,9 +221,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setEroticPinEnabledState(false);
             setEroticInPlaylistState(false);
             setEroticUnlockedThisSession(false);
+            Analytics.eroticDisabled();
         } else {
             await saveEroticEnabled(true);
             setEroticEnabledState(true);
+            Analytics.eroticEnabled(); 
         }
     };
 

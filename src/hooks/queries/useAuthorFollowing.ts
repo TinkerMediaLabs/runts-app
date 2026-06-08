@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
+import { Analytics } from '@/lib/analytics';
 
 const client = generateClient<Schema>();
 const PAGE_SIZE = 20;
@@ -53,6 +54,7 @@ export function useFollowAuthor() {
       queryClient.invalidateQueries({ queryKey: ['isFollowing', authorId] });
       queryClient.invalidateQueries({ queryKey: ['followingCount'] });
       queryClient.invalidateQueries({ queryKey: ['followedAuthors'] });
+      Analytics.authorFollowed(authorId); 
     },
   });
 }
@@ -68,6 +70,7 @@ export function useUnfollowAuthor() {
       queryClient.invalidateQueries({ queryKey: ['isFollowing', authorId] });
       queryClient.invalidateQueries({ queryKey: ['followingCount'] });
       queryClient.invalidateQueries({ queryKey: ['followedAuthors'] });
+      Analytics.authorUnfollowed(authorId);
     },
   });
 }

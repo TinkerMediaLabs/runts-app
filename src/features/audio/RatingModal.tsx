@@ -33,6 +33,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePlayerUI } from '@/context/PlayerUIContext';
 import { useApp } from '@/context/AppContext';
 
+import { Analytics } from '@/lib/analytics';
+
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 
@@ -194,6 +196,17 @@ const handleSubmit = async () => {
     }
 
     await Promise.all(ops);
+
+    // Track analytics events
+    if (selectedRating !== null) {
+        Analytics.storyRated({ storyId, title: storyTitle, rating: selectedRating });
+    }
+    if (selectedReaction !== null) {
+        Analytics.storyReacted({ storyId, title: storyTitle, reaction: selectedReaction });
+    }
+    if (comment.trim()) {
+        Analytics.storyCommented({ storyId, title: storyTitle });
+    }
 
     queryClient.invalidateQueries({ queryKey: ['story', storyId] });
     queryClient.invalidateQueries({ queryKey: ['stories'] });

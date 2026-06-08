@@ -17,6 +17,7 @@ import { configureAmplify } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './src/lib/queryClient';
+import { Analytics } from '@/lib/analytics';
 
 // ---------------------------------------------------------------------------
 // Sentry — initialise before anything else renders
@@ -63,6 +64,7 @@ function App() {
                     handleAudioBecomingNoisy: true,
                     android:                  { wakeMode: 'network' },
                 });
+                await Analytics.init();
             } catch (error) {
                 Sentry.captureException(error);
                 console.error('APP BOOTSTRAP ERROR', error);

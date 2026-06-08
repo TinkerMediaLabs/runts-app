@@ -5,6 +5,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import { getOfflineEnabled } from '../../lib/offlineStorage';
 import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
+import { Analytics } from '@/lib/analytics';
 
 const client = generateClient<Schema>();
 
@@ -84,6 +85,7 @@ export function usePinStory() {
     onSuccess: (_, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
       queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+      Analytics.storyPinned({ storyId });
 
       // Trigger download in background — non-blocking
       getOfflineEnabled().then(enabled => {
@@ -129,6 +131,7 @@ export function useUnpinStory() {
     onSuccess: (_, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
       queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+      Analytics.storyUnpinned({ storyId });
 
       // Delete local download in background — non-blocking
       deleteDownload(storyId).catch(err =>

@@ -11,6 +11,8 @@ import { Hub } from 'aws-amplify/utils';
 import { getDefaultPlaybackSpeed, getAutoplayEnabled } from '@/lib/audioSettings';
 import { useApp } from '@/context/AppContext';
 
+import { Analytics } from '@/lib/analytics';
+
 const client = generateClient<Schema>();
 
 const PROGRESS_INTERVAL_MS = 10000;
@@ -86,6 +88,12 @@ export const PlayerProvider = ({ children }: any) => {
         if (!storyId) return;
 
         stopProgressTracking();
+
+        Analytics.storyCompleted({
+            storyId,
+            title: currentTrackRef.current?.title ?? '',
+            author: currentTrackRef.current?.artist,
+        });
 
         try {
             const { userId } = await getCurrentUser();
@@ -234,6 +242,11 @@ export const PlayerProvider = ({ children }: any) => {
                 queryClient.invalidateQueries({ queryKey: ['story', track.id] });
                 try {
                     await client.mutations.incrementListenCount({ storyId: track.id });
+                    Analytics.storyPlayStarted({           // ← add
+                        storyId: track.id,
+                        title:   track.title,
+                        author:  track.artist,
+                    });
                 } catch (err) {
                     console.warn('incrementListenCount error:', err);
                 }
