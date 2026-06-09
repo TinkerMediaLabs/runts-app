@@ -15,6 +15,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import useStyles from '../../theme/styles';
 import useTypography from '../../theme/typography';
 
+import { Analytics } from '@/lib/analytics';
+
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -44,7 +46,10 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
     return (
         <TouchableOpacity
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('TagHomeScreen', { id, name })}
+            onPress={() => {
+                Analytics.genreTapped(id, name);
+                navigation.navigate('TagHomeScreen', { id, name });
+            }}
             style={styles_local.tileWrapper}
         >
             {bgSource ? (

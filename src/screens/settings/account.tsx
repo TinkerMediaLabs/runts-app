@@ -316,7 +316,6 @@ const AccountScreen = ({ navigation }: any) => {
                     const parts = iss.split('/');
                     const poolId = parts[parts.length - 1];
                     setUserPoolId(poolId ?? null);
-                    console.log('parsed userPoolId:', poolId);
                 }
 
                 if (identities && Array.isArray(identities) && identities.length > 0) {

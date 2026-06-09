@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -89,6 +89,7 @@ const ProfileScreen = ({ navigation }: any) => {
     const { data: followingCount = 0 } = useFollowingCount();
 
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -223,6 +224,10 @@ const ProfileScreen = ({ navigation }: any) => {
         },
     ];
 
+    useEffect(() => {
+        setImageError(false);
+    }, [profile?.profilePicUri]);
+
     return (
         <Screen>
             <StatusBar style="light" />
@@ -272,10 +277,11 @@ const ProfileScreen = ({ navigation }: any) => {
                             ) : (
                                 <Image
                                     source={
-                                        profile?.profilePicUri
+                                        profile?.profilePicUri && !imageError
                                             ? { uri: profile.profilePicUri }
                                             : require('../../../assets/images/blankprofile.png')
                                     }
+                                    onError={() => setImageError(true)}
                                     style={[styles.avatar, { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2 }]}
                                 />
                             )}

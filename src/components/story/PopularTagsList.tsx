@@ -35,25 +35,21 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
 
     return (
         <View style={{ marginTop: 0 }}>
-            <View style={{ marginTop: 10 }}>
-                <Text style={[typo.title, { marginBottom: 6 }]}>
-                    Popular Tags
-                </Text>
-                <FlatList
-                    data={tags}
-                    renderItem={renderTag}
-                    keyExtractor={item => item.id}
-                    scrollEnabled={false}
-                    maxToRenderPerBatch={15}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                        flexDirection: 'row',
-                        flexWrap: 'wrap',
-                        width: Dimensions.get('window').width - 30,
-                    }}
-                />
+        <View style={{ marginTop: 10 }}>
+            <Text style={[typo.title, { marginBottom: 6 }]}>
+                Popular Tags
+            </Text>
+            <View style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                width: Dimensions.get('window').width - 30,
+            }}>
+                {tags.map(item => (
+                    <Tag key={item.id} id={item.id} name={item.name} />
+                ))}
             </View>
         </View>
+    </View>
     );
 };
 

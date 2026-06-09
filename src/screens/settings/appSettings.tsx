@@ -519,7 +519,7 @@ const AppSettings = ({ navigation }: any) => {
                     </Section>
 
                     {/* ── Audio ── */}
-                    <Section title="Audio">
+                    {/* <Section title="Audio">
                         <ToggleRow
                             icon="volume-up"
                             label="Volume Boost"
@@ -527,7 +527,7 @@ const AppSettings = ({ navigation }: any) => {
                             value={boostVolume}
                             onChange={setBoostVolume}
                         />
-                    </Section>
+                    </Section> */}
 
                     <Text style={styles.version}>Version 1.0.0</Text>
 

@@ -52,6 +52,8 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema }   from '../../../amplify/data/resource';
 
+import { Analytics } from '@/lib/analytics';
+
 
 
 const client = generateClient<Schema>();
@@ -310,6 +312,7 @@ const StoryScreen = ({ navigation }: any) => {
             url: `https://tinkermedia.net/runts/story/${story?.id}`, // iOS only
             title: story?.title ?? 'Runts',
         });
+        Analytics.storyShared({ storyId: story?.id ?? '', title: story?.title ?? '' });
     };
 
   // ── Comment state ─────────────────────────────────────────────────────────

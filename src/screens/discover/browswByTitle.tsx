@@ -36,9 +36,9 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 // Enable LayoutAnimation on Android
 // ---------------------------------------------------------------------------
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+// if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+//     UIManager.setLayoutAnimationEnabledExperimental(true);
+// }
 
 // ---------------------------------------------------------------------------
 // Constants

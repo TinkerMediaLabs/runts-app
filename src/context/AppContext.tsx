@@ -169,8 +169,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const updateProfilePic = async (uri: string) => {
         if (!userId) return;
         try {
+            // Store the S3 path in DynamoDB
             await client.models.User.update({ id: userId, profilePicUri: uri });
-            setProfile(prev => prev ? { ...prev, profilePicUri: uri } : prev);
+
+            // Resolve to a signed URL for immediate display in this session
+            let displayUri = uri;
+            if (uri.startsWith('profile-pictures/')) {
+                try {
+                    displayUri = await getProfilePicUrl(uri);
+                } catch { /* fall back to path */ }
+            }
+            setProfile(prev => prev ? { ...prev, profilePicUri: displayUri } : prev);
         } catch (err) {
             console.error('Error updating profile pic:', err);
             throw err;

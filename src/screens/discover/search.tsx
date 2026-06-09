@@ -51,6 +51,8 @@ import {
   type DurationFilter,
 } from '../../hooks/queries/useSearch';
 
+import { Analytics } from '@/lib/analytics';
+
 import { spacing } from '@/theme/spacing';
 
 const { width } = Dimensions.get('window');
@@ -291,6 +293,13 @@ const SearchScreen = ({ navigation }: any) => {
     const t = setTimeout(() => setDebouncedQuery(inputValue.trim()), DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [inputValue]);
+
+  useEffect(() => {
+      if (debouncedQuery.length > 0) {
+          const tab = activeTab === 'tags' ? 'genres' : activeTab;
+          Analytics.searchPerformed(debouncedQuery, tab);
+      }
+  }, [debouncedQuery]);
 
   const inputRef = useRef<any>(null);
   useEffect(() => {

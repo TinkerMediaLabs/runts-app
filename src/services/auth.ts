@@ -121,26 +121,19 @@ export async function uploadProfilePicture(
   mimeType: string = 'image/jpeg'
 ): Promise<string> {
   const response = await fetch(imageUri);
-  const blob = await response.blob();
+  const blob     = await response.blob();
 
-  // Get the Identity Pool identity ID (not the User Pool sub)
-  const session = await fetchAuthSession();
+  const session    = await fetchAuthSession();
   const identityId = session.identityId;
+  const s3Path     = `profile-pictures/${identityId}/avatar.jpg`;
 
   await uploadData({
-    path: `profile-pictures/${identityId}/avatar.jpg`,
-    data: blob,
-    options: {
-      contentType: mimeType,
-    },
+    path:    s3Path,
+    data:    blob,
+    options: { contentType: mimeType },
   }).result;
 
-  const { url } = await getUrl({
-    path: `profile-pictures/${identityId}/avatar.jpg`,
-    options: { expiresIn: 3600 * 24 * 7 },
-  });
-
-  return url.toString();
+  return s3Path; // ← return path, not signed URL
 }
 
 // ─── GET OR CREATE USER IN DYNAMODB ─────────────────────
