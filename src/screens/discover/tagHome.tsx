@@ -5,7 +5,6 @@ import {
     Text,
     TouchableOpacity,
     ScrollView,
-    Dimensions,
     ActivityIndicator,
 } from 'react-native';
 
@@ -13,7 +12,6 @@ import { useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Screen from '@/components/common/Screen';
@@ -27,8 +25,9 @@ import {
     useStoriesByTagNew,
     useStoriesByTagTrending,
     useStoriesByTagShort,
+    useStoriesByStoryTag,
 } from '../../hooks/queries/useStories';
-import { useTags } from '../../hooks/queries/useTags';
+import { useTags }    from '../../hooks/queries/useTags';
 import { useAuthors } from '../../hooks/queries/useAuthors';
 
 // ---------------------------------------------------------------------------
@@ -37,21 +36,22 @@ import { useAuthors } from '../../hooks/queries/useAuthors';
 
 const GenreHome = ({ navigation }: any) => {
 
-    const route = useRoute();
+    const route  = useRoute();
     const { id: tagId, name: tagName }: any = route.params;
     const insets = useSafeAreaInsets();
-    const typo = useTypography();
+    const typo   = useTypography();
 
-    // ── Real data ─────────────────────────────────────────────────────────────
+    // ── Primary-tag queries (by primaryTagId GSI) ─────────────────────────────
     const { data: newStories,      isLoading: newLoading }      = useStoriesByTagNew(tagId);
     const { data: trendingStories, isLoading: trendingLoading } = useStoriesByTagTrending(tagId);
     const { data: shortStories,    isLoading: shortLoading }    = useStoriesByTagShort(tagId);
+
     const { data: tags }    = useTags();
     const { data: authors } = useAuthors();
 
     const isLoading = newLoading || trendingLoading || shortLoading;
 
-    // Build tag lookup map
+    // ── Lookup maps ───────────────────────────────────────────────────────────
     const tagMap = useMemo(() => {
         if (!tags) return {};
         return tags.reduce((acc: Record<string, string>, tag) => {
@@ -60,7 +60,6 @@ const GenreHome = ({ navigation }: any) => {
         }, {});
     }, [tags]);
 
-    // Build author lookup map
     const authorMap = useMemo(() => {
         if (!authors) return {};
         return authors.reduce((acc: Record<string, string>, author) => {
@@ -69,18 +68,40 @@ const GenreHome = ({ navigation }: any) => {
         }, {});
     }, [authors]);
 
-    // Enrich stories with resolved names
     const enrich = (stories: any[]) =>
         stories.map(s => ({
             ...s,
-            primaryTagName:   tagMap[s.primaryTagId ?? ''] ?? '',
+            primaryTagName:   tagMap[s.primaryTagId   ?? ''] ?? '',
             secondaryTagName: tagMap[s.secondaryTagId ?? ''] ?? '',
-            authorName:       authorMap[s.authorId ?? ''] ?? '',
+            authorName:       authorMap[s.authorId    ?? ''] ?? '',
         }));
 
-    const enrichedNew      = useMemo(() => enrich(newStories ?? []),      [newStories, tagMap, authorMap]);
+    const enrichedNew      = useMemo(() => enrich(newStories      ?? []), [newStories,      tagMap, authorMap]);
     const enrichedTrending = useMemo(() => enrich(trendingStories ?? []), [trendingStories, tagMap, authorMap]);
-    const enrichedShort    = useMemo(() => enrich(shortStories ?? []),    [shortStories, tagMap, authorMap]);
+    const enrichedShort    = useMemo(() => enrich(shortStories    ?? []), [shortStories,    tagMap, authorMap]);
+
+    // ── Fallback: StoryTag join query for minor tags ───────────────────────────
+    // Only runs when primary GSI queries come back empty — covers tags that are
+    // used as secondary/additional tags via the StoryTag join table.
+    const primaryEmpty =
+        !isLoading &&
+        enrichedNew.length      === 0 &&
+        enrichedTrending.length === 0 &&
+        enrichedShort.length    === 0;
+
+    const { data: taggedStories, isLoading: taggedLoading } =
+        useStoriesByStoryTag(primaryEmpty ? tagId : '');
+
+    const enrichedTagged = useMemo(
+        () => enrich(taggedStories ?? []),
+        [taggedStories, tagMap, authorMap]
+    );
+
+    const totalLoading = isLoading || (primaryEmpty && taggedLoading);
+    const totalEmpty   =
+        primaryEmpty &&
+        !taggedLoading &&
+        enrichedTagged.length === 0;
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
@@ -92,7 +113,7 @@ const GenreHome = ({ navigation }: any) => {
                 start={{ x: 1, y: 1 }}
                 end={{ x: 0.5, y: 0.5 }}
             >
-                {/* ── Sticky header ── */}
+                {/* Header */}
                 <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
@@ -119,8 +140,8 @@ const GenreHome = ({ navigation }: any) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* ── Content ── */}
-                {isLoading ? (
+                {/* Content */}
+                {totalLoading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator color="cyan" size="large" />
                     </View>
@@ -129,7 +150,7 @@ const GenreHome = ({ navigation }: any) => {
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
                     >
-                        {/* ── Featured carousel — Brand New ── */}
+                        {/* Featured carousel */}
                         {enrichedNew.length > 0 && (
                             <View style={{ marginTop: 20 }}>
                                 <ForYouCarousel
@@ -139,7 +160,7 @@ const GenreHome = ({ navigation }: any) => {
                             </View>
                         )}
 
-                        {/* ── Trending ── */}
+                        {/* Trending */}
                         {enrichedTrending.length > 0 && (
                             <View style={{ marginTop: 20 }}>
                                 <View style={styles.sectionHeader}>
@@ -153,7 +174,7 @@ const GenreHome = ({ navigation }: any) => {
                             </View>
                         )}
 
-                        {/* ── Brand New ── */}
+                        {/* Brand New */}
                         {enrichedNew.length > 0 && (
                             <View style={{ marginTop: 20 }}>
                                 <View style={styles.sectionHeader}>
@@ -167,7 +188,7 @@ const GenreHome = ({ navigation }: any) => {
                             </View>
                         )}
 
-                        {/* ── Short & Sweet ── */}
+                        {/* Short & Sweet */}
                         {enrichedShort.length > 0 && (
                             <View style={{ marginTop: 20 }}>
                                 <View style={styles.sectionHeader}>
@@ -181,10 +202,22 @@ const GenreHome = ({ navigation }: any) => {
                             </View>
                         )}
 
+                        {/* Minor tag fallback — StoryTag join lookup */}
+                        {primaryEmpty && enrichedTagged.length > 0 && (
+                            <View style={{ marginTop: 20 }}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={typo.title}>Stories</Text>
+                                </View>
+                                <HorizontalList
+                                    stories={enrichedTagged}
+                                    tagId={tagId}
+                                    tagName={tagName}
+                                />
+                            </View>
+                        )}
+
                         {/* Empty state */}
-                        {enrichedNew.length === 0 &&
-                         enrichedTrending.length === 0 &&
-                         enrichedShort.length === 0 && (
+                        {totalEmpty && (
                             <View style={styles.emptyContainer}>
                                 <FontAwesome5
                                     name="book-open"
@@ -211,53 +244,48 @@ const GenreHome = ({ navigation }: any) => {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection:     'row',
+        alignItems:        'center',
         paddingHorizontal: spacing.margin,
-        paddingBottom: 14,
-        backgroundColor: '#000000CC',
-        //borderBottomWidth: StyleSheet.hairlineWidth,
+        paddingBottom:     14,
+        backgroundColor:   '#000000CC',
         borderBottomColor: '#2a2a2a',
     },
     backBtn: {
-        padding: 8,
-        marginLeft: -8,
+        padding:     8,
+        marginLeft:  -8,
         marginRight: 8,
     },
     headerTitle: {
-        flex: 1,
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#fff',
+        flex:          1,
+        fontSize:      24,
+        fontWeight:    '700',
+        color:         '#fff',
         textTransform: 'capitalize',
     },
-
     sectionHeader: {
-        marginLeft: spacing.margin,
+        marginLeft:    spacing.margin,
         paddingVertical: spacing.margin,
     },
-
     loadingContainer: {
-        flex: 1,
+        flex:           1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems:     'center',
     },
-
     emptyContainer: {
-        alignItems: 'center',
-        paddingTop: 80,
-        gap: 16,
+        alignItems:   'center',
+        paddingTop:   80,
+        gap:          16,
     },
     emptyText: {
         fontSize: 15,
-        color: 'rgba(255,255,255,0.4)',
+        color:    'rgba(255,255,255,0.4)',
     },
     browseText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-},
+        color:    'rgba(255,255,255,0.6)',
+        fontSize: 14,
+    },
 });
 
 export default GenreHome;

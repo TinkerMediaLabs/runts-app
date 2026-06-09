@@ -54,6 +54,33 @@ export function useStoriesByTagTrending(tagId: string) {
   });
 }
 
+export function useStoriesByStoryTag(tagId: string) {
+    return useQuery({
+        queryKey: ['stories', 'storyTag', tagId],
+        queryFn: async () => {
+            const { data: links } = await client.models.StoryTag.list({
+                filter: { tagId: { eq: tagId } },
+            });
+            if (!links?.length) return [];
+
+            const results = await Promise.all(
+                links.map((st: any) => client.models.Story.get({ id: st.storyId }))
+            );
+
+            return results
+                .map(r => r.data)
+                .filter(Boolean)
+                .filter((s: any) => s.live === 'true')
+                .sort((a: any, b: any) =>
+                    new Date(b.publishedAt ?? 0).getTime() -
+                    new Date(a.publishedAt ?? 0).getTime()
+                );
+        },
+        enabled: !!tagId,
+        staleTime: 1000 * 60 * 5,
+    });
+}
+
 // ─── Stories by tag sorted by duration (short & sweet) ───────────────────────
 export function useStoriesByTagShort(tagId: string, maxDuration: number = 1200) {
   return useQuery({
