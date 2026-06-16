@@ -17,6 +17,8 @@ import useTypography from '../../theme/typography';
 
 import { Analytics } from '@/lib/analytics';
 
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
+
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -35,13 +37,19 @@ const localAssets: Record<string, any> = {
 // ---------------------------------------------------------------------------
 
 const Item = ({ name, id, tileImageUri, navigation }: any) => {
-
     const typo = useTypography();
     const styles = useStyles();
 
     const bgSource = tileImageUri && localAssets[tileImageUri]
         ? localAssets[tileImageUri]
         : null;
+
+    // Resolve S3 path when no local asset matches
+    const { data: resolvedUri } = useStoryImage(
+        !bgSource && tileImageUri ? tileImageUri : null
+    );
+    const remoteSource = resolvedUri ? { uri: resolvedUri } : null;
+    const imageSource  = bgSource ?? remoteSource;
 
     return (
         <TouchableOpacity
@@ -52,9 +60,9 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
             }}
             style={styles_local.tileWrapper}
         >
-            {bgSource ? (
+            {imageSource ? (
                 <ImageBackground
-                    source={bgSource}
+                    source={imageSource}
                     style={styles_local.tileImage}
                     imageStyle={{ borderRadius: 15 }}
                 >

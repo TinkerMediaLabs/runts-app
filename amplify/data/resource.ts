@@ -232,6 +232,7 @@ Comment: a
       isErotic: a.string().default('false'),
       transcript: a.string(),
       publishedAt: a.string(),
+      publishedYear: a.integer(), 
       // Aggregates — written by Lambdas, read by app
       avgRating: a.float(),
       numRatings: a.integer(),
