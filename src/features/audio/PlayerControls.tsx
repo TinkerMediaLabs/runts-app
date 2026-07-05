@@ -18,21 +18,24 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
   return (
     <View style={styles.container}>
 
+      {/* Play/pause — always centered */}
       <TouchableOpacity onPress={toggle} style={styles.play}>
         <Feather
           name={isPlaying ? 'pause' : 'play'}
           size={36}
-          color="#fff"
+          color="#ffff"
         />
       </TouchableOpacity>
 
-      {/* Next — only shown when there is a next track */}
-      {hasNext ? (
-        <TouchableOpacity onPress={onNext} activeOpacity={0.7}>
+      {/* Next — absolutely positioned right, only shown when available */}
+      {hasNext && (
+        <TouchableOpacity
+          onPress={onNext}
+          activeOpacity={0.7}
+          style={styles.next}
+        >
           <Feather name="skip-forward" size={28} color="#fff" />
         </TouchableOpacity>
-      ) : (
-        <View style={{ width: 28 }} />
       )}
 
     </View>
@@ -41,14 +44,16 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 0,
-    gap: 30,
+    alignItems:     'center',
+    marginTop:      0,
   },
   play: {
     paddingHorizontal: 20,
-    borderRadius: 40,
+    borderRadius:      40,
+  },
+  next: {
+    position: 'absolute',
+    right:    0,
   },
 });
