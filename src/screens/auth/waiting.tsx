@@ -109,7 +109,7 @@ const Waiting = () => {
                         />
 
                         <Animated.Image
-                            source={require('../../../assets/images/adaptive-icon.png')}
+                            source={require('../../../assets/images/adaptive-icon-L.png')}
                             style={{
                                 width: 180,
                                 height: 180,

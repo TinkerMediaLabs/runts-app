@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     },
     expandedImage: {
         width: '100%',
-        height: 160,
+        height: 200,
         borderRadius: 10,
     },
     summary: {
