@@ -1,16 +1,17 @@
 // Premium tab — shown to non-subscribed users.
 // Shows plan options and calls to action to subscribe.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    Dimensions,
     Linking,
-    Image
+    Image,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,23 +21,17 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 import { spacing } from '../../theme/spacing';
 import { useApp } from '@/context/AppContext';
-
-const { width } = Dimensions.get('window');
+import {
+    PurchasesService,
+    type PurchasesOffering,
+    type PurchasesPackage,
+} from '@/lib/purchases';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 type PlanId = 'annual' | 'monthly';
-
-type Plan = {
-    id: PlanId;
-    period: string;
-    periodShort: string;
-    price: string;
-    perMonth: string;
-    badge?: string;
-};
 
 type Feature = {
     icon: any;
@@ -45,26 +40,8 @@ type Feature = {
 };
 
 // ---------------------------------------------------------------------------
-// Constants — swap prices with live RevenueCat/Purchases values
+// Feature list
 // ---------------------------------------------------------------------------
-
-const PLANS: Plan[] = [
-    {
-        id: 'annual',
-        period: 'Annually',
-        periodShort: '1 YEAR',
-        price: '$50',
-        perMonth: '$4.16 / mo',
-        badge: 'SAVE 17%',
-    },
-    {
-        id: 'monthly',
-        period: 'Monthly',
-        periodShort: '1 MONTH',
-        price: '$5',
-        perMonth: 'monthly',
-    },
-];
 
 const FEATURES: Feature[] = [
     {
@@ -99,51 +76,62 @@ const FEATURES: Feature[] = [
 // ---------------------------------------------------------------------------
 
 const PlanCard = ({
-    plan,
+    pkg,
     selected,
     onPress,
+    isAnnual,
 }: {
-    plan: Plan;
+    pkg:      PurchasesPackage;
     selected: boolean;
-    onPress: () => void;
-}) => (
-    <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={onPress}
-        style={[styles.planCard, selected && styles.planCardSelected]}
-    >
-        {plan.badge && (
-            <View style={styles.planBadge}>
-                <Text style={styles.planBadgeText}>{plan.badge}</Text>
-            </View>
-        )}
+    onPress:  () => void;
+    isAnnual: boolean;
+}) => {
+    const product    = pkg.product;
+    const price      = product.priceString;
+    const perMonth   = isAnnual
+        ? `${(product.price / 12).toLocaleString('en-US', { style: 'currency', currency: product.currencyCode })} / mo`
+        : 'billed monthly';
+    const periodShort = isAnnual ? '1 YEAR' : '1 MONTH';
 
-        <Text style={[styles.planPeriodShort, selected && styles.planTextSelected]}>
-            {plan.periodShort}
-        </Text>
+    return (
+        <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onPress}
+            style={[styles.planCard, selected && styles.planCardSelected]}
+        >
+            {isAnnual && (
+                <View style={styles.planBadge}>
+                    <Text style={styles.planBadgeText}>BEST VALUE</Text>
+                </View>
+            )}
 
-        <Text style={[styles.planPrice, selected && styles.planTextSelected]}>
-            {plan.price}
-        </Text>
+            <Text style={[styles.planPeriodShort, selected && styles.planTextSelected]}>
+                {periodShort}
+            </Text>
 
-        <Text style={[styles.planPerMonth, selected && styles.planPerMonthSelected]}>
-            {plan.perMonth}
-        </Text>
+            <Text style={[styles.planPrice, selected && styles.planTextSelected]}>
+                {price}
+            </Text>
 
-        {selected && (
-            <View style={styles.planCheck}>
-                <FontAwesome5 name="check" size={10} color="#000" iconStyle="solid" />
-            </View>
-        )}
-    </TouchableOpacity>
-);
+            <Text style={[styles.planPerMonth, selected && styles.planPerMonthSelected]}>
+                {perMonth}
+            </Text>
+
+            {selected && (
+                <View style={styles.planCheck}>
+                    <FontAwesome5 name="check" size={10} color="#000" iconStyle="solid" />
+                </View>
+            )}
+        </TouchableOpacity>
+    );
+};
 
 const FeatureRow = ({ icon, title, description }: Feature) => (
     <View style={styles.featureRow}>
         <View style={styles.featureIcon}>
             <FontAwesome5 name={icon} size={15} color="cyan" iconStyle="solid" />
         </View>
-        <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+        <View style={{ flex: 1 }}>
             <Text style={styles.featureTitle}>{title}</Text>
             <Text style={styles.featureDescription}>{description}</Text>
         </View>
@@ -157,18 +145,57 @@ const FeatureRow = ({ icon, title, description }: Feature) => (
 const PremiumScreen = () => {
 
     const { userId } = useApp();
-    const insets = useSafeAreaInsets();
+    const insets       = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
 
-    const [selectedPlan, setSelectedPlan] = useState<PlanId>('annual');
-    const [isLoading, setIsLoading] = useState(false);
+    const [offering,      setOffering]      = useState<PurchasesOffering | null>(null);
+    const [selectedPlan,  setSelectedPlan]  = useState<PlanId>('annual');
+    const [isLoading,     setIsLoading]     = useState(false);
+    const [offeringsLoading, setOfferingsLoading] = useState(true);
+
+    // Load offerings from RevenueCat
+    useEffect(() => {
+        PurchasesService.getOfferings().then(o => {
+            setOffering(o);
+            setOfferingsLoading(false);
+        });
+    }, []);
+
+    // Find the selected package from the offering
+    const annualPkg  = offering?.availablePackages.find(p => p.packageType === 'ANNUAL')  ?? null;
+    const monthlyPkg = offering?.availablePackages.find(p => p.packageType === 'MONTHLY') ?? null;
+    const selectedPkg: PurchasesPackage | null =
+        selectedPlan === 'annual' ? annualPkg : monthlyPkg;
 
     const handleSubscribe = async () => {
-        if (!selectedPlan) return;
+        if (!selectedPkg) return;
         setIsLoading(true);
-        // TODO: const offering = await Purchases.getOfferings();
-        // TODO: await Purchases.purchasePackage(selectedPackage);
-        setIsLoading(false);
+        try {
+            const success = await PurchasesService.purchase(selectedPkg);
+            if (success) {
+                Alert.alert('Welcome to Premium!', 'Your subscription is now active.');
+            }
+        } catch (err: any) {
+            Alert.alert('Purchase failed', err?.message ?? 'Something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleRestore = async () => {
+        setIsLoading(true);
+        try {
+            const success = await PurchasesService.restorePurchases();
+            if (success) {
+                Alert.alert('Restored!', 'Your premium subscription has been restored.');
+            } else {
+                Alert.alert('No purchases found', 'We could not find an active subscription to restore.');
+            }
+        } catch {
+            Alert.alert('Restore failed', 'Something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -186,12 +213,12 @@ const PremiumScreen = () => {
                         { paddingTop: insets.top + 20, paddingBottom: tabBarHeight + 20 },
                     ]}
                 >
-
                     {/* ── Hero ── */}
                     <View style={styles.hero}>
-        
-                            <Image style={{height: 60, width: 60, margin: 20}} source={require('../../../assets/images/icon72w.png')}/>
-
+                        <Image
+                            style={{ height: 60, width: 60, margin: 20 }}
+                            source={require('../../../assets/images/icon72w.png')}
+                        />
                         <Text style={styles.heroTitle}>Go Premium</Text>
                         <Text style={styles.heroSubtitle}>
                             Unlock the full experience — more stories, exclusive content, and more.
@@ -199,27 +226,46 @@ const PremiumScreen = () => {
                     </View>
 
                     {/* ── Plan picker ── */}
-                    <View style={styles.planRow}>
-                        {PLANS.map((plan) => (
-                            <PlanCard
-                                key={plan.id}
-                                plan={plan}
-                                selected={selectedPlan === plan.id}
-                                onPress={() => setSelectedPlan(plan.id)}
-                            />
-                        ))}
-                    </View>
+                    {offeringsLoading ? (
+                        <View style={styles.offeringsLoader}>
+                            <ActivityIndicator color="cyan" />
+                        </View>
+                    ) : (
+                        <View style={styles.planRow}>
+                            {annualPkg && (
+                                <PlanCard
+                                    pkg={annualPkg}
+                                    selected={selectedPlan === 'annual'}
+                                    onPress={() => setSelectedPlan('annual')}
+                                    isAnnual
+                                />
+                            )}
+                            {monthlyPkg && (
+                                <PlanCard
+                                    pkg={monthlyPkg}
+                                    selected={selectedPlan === 'monthly'}
+                                    onPress={() => setSelectedPlan('monthly')}
+                                    isAnnual={false}
+                                />
+                            )}
+                        </View>
+                    )}
 
                     {/* ── CTA ── */}
                     <TouchableOpacity
                         activeOpacity={0.85}
                         onPress={handleSubscribe}
-                        disabled={isLoading}
-                        style={[styles.ctaButton, isLoading && { opacity: 0.6 }]}
+                        disabled={isLoading || offeringsLoading || !selectedPkg}
+                        style={[
+                            styles.ctaButton,
+                            (isLoading || offeringsLoading || !selectedPkg) && { opacity: 0.5 },
+                        ]}
                     >
-                        <Text style={styles.ctaText}>
-                            {isLoading ? 'Processing…' : 'Start Premium'}
-                        </Text>
+                        {isLoading ? (
+                            <ActivityIndicator color="#000" />
+                        ) : (
+                            <Text style={styles.ctaText}>Start Premium</Text>
+                        )}
                     </TouchableOpacity>
 
                     <Text style={styles.renewalNote}>
@@ -249,7 +295,7 @@ const PremiumScreen = () => {
                             <Text style={styles.legalLink}>Privacy Policy</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>
-                        <TouchableOpacity onPress={() => {/* TODO: restore purchases */}}>
+                        <TouchableOpacity onPress={handleRestore} disabled={isLoading}>
                             <Text style={styles.legalLink}>Restore Purchase</Text>
                         </TouchableOpacity>
                     </View>
@@ -270,21 +316,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin * 2,
     },
 
-    // ── Hero ──────────────────────────────────────────────────────────────────
     hero: {
         alignItems: 'center',
         marginBottom: 32,
-    },
-    heroIcon: {
-        width: 68,
-        height: 68,
-        borderRadius: 20,
-        backgroundColor: 'rgba(0,255,255,0.08)',
-        borderWidth: 1,
-        borderColor: 'rgba(0,255,255,0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
     },
     heroTitle: {
         fontSize: 28,
@@ -301,7 +335,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
 
-    // ── Plans ─────────────────────────────────────────────────────────────────
+    offeringsLoader: {
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+
     planRow: {
         flexDirection: 'row',
         gap: 12,
@@ -371,13 +411,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    // ── CTA ───────────────────────────────────────────────────────────────────
     ctaButton: {
         backgroundColor: 'cyan',
         borderRadius: 14,
         paddingVertical: 16,
         alignItems: 'center',
         marginBottom: 14,
+        minHeight: 52,
+        justifyContent: 'center',
     },
     ctaText: {
         fontSize: 17,
@@ -394,7 +435,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
 
-    // ── Features ──────────────────────────────────────────────────────────────
     featuresSection: {
         marginBottom: 32,
     },
@@ -448,7 +488,6 @@ const styles = StyleSheet.create({
         marginLeft: 62,
     },
 
-    // ── Legal ─────────────────────────────────────────────────────────────────
     legalRow: {
         flexDirection: 'row',
         justifyContent: 'center',

@@ -76,5 +76,7 @@ export default ({ config }) => ({
     sentryDsn:       process.env.SENTRY_DSN,
     rudderWriteKey:  process.env.EXPO_PUBLIC_RUDDER_WRITE_KEY,
     rudderDataPlane: process.env.EXPO_PUBLIC_RUDDER_DATA_PLANE,
+    rcIosKey:        process.env.EXPO_PUBLIC_RC_IOS_KEY,      
+    rcAndroidKey:    process.env.EXPO_PUBLIC_RC_ANDROID_KEY, 
   },
 });

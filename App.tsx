@@ -18,6 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './src/lib/queryClient';
 import { Analytics } from '@/lib/analytics';
+import { PurchasesService } from '@/lib/purchases';
 
 // ---------------------------------------------------------------------------
 // Sentry — initialise before anything else renders
@@ -59,12 +60,13 @@ function App() {
 
         async function bootstrap() {
             try {
+                await Analytics.init();
+                await PurchasesService.init();
                 await TrackPlayer.setupPlayer({
                     contentType:              'music',
                     handleAudioBecomingNoisy: true,
                     android:                  { wakeMode: 'network' },
                 });
-                await Analytics.init();
             } catch (error) {
                 Sentry.captureException(error);
                 console.error('APP BOOTSTRAP ERROR', error);

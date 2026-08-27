@@ -24,6 +24,7 @@ import {
 } from '../lib/eroticSettings';
 
 import { Analytics } from '../lib/analytics';
+import { PurchasesService } from '../lib/purchases';
 
 const client = generateClient<Schema>();
 
@@ -49,6 +50,7 @@ type AppContextType = {
     isAuthenticated: boolean;
     isLoading: boolean;
     isNewUser: boolean;
+    isPremium: boolean;
     profile: UserProfile | null;
     setProfile: (profile: UserProfile | null) => void;
     refreshAuth: () => Promise<void>;
@@ -99,6 +101,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading,       setIsLoading]       = useState(true);
     const [isNewUser,       setIsNewUser]       = useState(false);
     const [profile,         setProfile]         = useState<UserProfile | null>(null);
+    const [isPremium, setIsPremium] = useState(false);
 
     // ── Erotic state ──────────────────────────────────────────────────────────
     const [isUnderAge,                setIsUnderAge]                = useState(false);
@@ -156,6 +159,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
             Analytics.identify(user.userId, dbUser?.name ?? undefined);
+            await PurchasesService.identify(user.userId);
+            const premiumStatus = await PurchasesService.isPremium();
+            setIsPremium(premiumStatus);
         } catch {
             setUserId(null);
             setIsAuthenticated(false);
@@ -206,6 +212,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             await signOut();
             queryClient.clear();
             Analytics.reset();
+            await PurchasesService.reset();
             setUserId(null);
             setIsAuthenticated(false);
             setIsNewUser(false);
@@ -304,6 +311,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 isAuthenticated,
                 isLoading,
                 isNewUser,
+                isPremium,
                 profile,
                 setProfile,
                 refreshAuth,
