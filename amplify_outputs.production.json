@@ -1,5 +1,106 @@
 {
-  "version": "1.4",
-  "auth": {},
-  "data": {}
+  "auth": {
+    "user_pool_id": "us-east-2_e80g9sT7D",
+    "aws_region": "us-east-2",
+    "user_pool_client_id": "6to285rs2qf4f3g7r94b12nhr3",
+    "identity_pool_id": "us-east-2:e8fd3b41-19f9-495b-9e07-868d71932c55",
+    "mfa_methods": [],
+    "standard_required_attributes": [
+      "email"
+    ],
+    "username_attributes": [
+      "email"
+    ],
+    "user_verification_types": [
+      "email"
+    ],
+    "groups": [],
+    "mfa_configuration": "NONE",
+    "password_policy": {
+      "min_length": 8,
+      "require_lowercase": true,
+      "require_numbers": true,
+      "require_symbols": true,
+      "require_uppercase": true
+    },
+    "oauth": {
+      "identity_providers": [
+        "GOOGLE"
+      ],
+      "redirect_sign_in_uri": [
+        "runts://callback"
+      ],
+      "redirect_sign_out_uri": [
+        "runts://signout"
+      ],
+      "response_type": "code",
+      "scopes": [
+        "phone",
+        "email",
+        "openid",
+        "profile",
+        "aws.cognito.signin.user.admin"
+      ],
+      "domain": "0edbf83c6a43a2a8bb65.auth.us-east-2.amazoncognito.com"
+    },
+    "unauthenticated_identities_enabled": true
+  },
+  "data": {
+    "url": "https://hwdbf6ue3vh6xmw6cmbffm7j7y.appsync-api.us-east-2.amazonaws.com/graphql",
+    "aws_region": "us-east-2",
+    "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
+    "authorization_types": [
+      "AWS_IAM"
+    ],
+    "model_introspection": {
+      "version": 1,
+      "models": {},
+      "enums": {},
+      "nonModels": {}
+    }
+  },
+  "storage": {
+    "aws_region": "us-east-2",
+    "bucket_name": "amplify-di214r77g48tp-pro-runtsstoragebucketf8df8e-dwm5plyozk1b",
+    "buckets": [
+      {
+        "name": "runtsStorage",
+        "bucket_name": "amplify-di214r77g48tp-pro-runtsstoragebucketf8df8e-dwm5plyozk1b",
+        "aws_region": "us-east-2",
+        "paths": {
+          "profile-pictures/${cognito-identity.amazonaws.com:sub}/*": {
+            "entityidentity": [
+              "get",
+              "list",
+              "write",
+              "delete"
+            ]
+          },
+          "profile-pictures/*": {
+            "authenticated": [
+              "get",
+              "list"
+            ]
+          },
+          "stories/*": {
+            "authenticated": [
+              "get",
+              "list",
+              "write",
+              "delete"
+            ]
+          },
+          "authors/*": {
+            "authenticated": [
+              "get",
+              "list",
+              "write",
+              "delete"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "version": "1.4"
 }
