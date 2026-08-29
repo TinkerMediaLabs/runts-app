@@ -5,7 +5,7 @@ const { S3Client, CopyObjectCommand, HeadObjectCommand } = require('@aws-sdk/cli
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 const REGION        = 'us-east-2';
-const STAGING_ID    = 'nflzecthnfb2noim4kgzmddjre';
+const STAGING_ID    = '5ojmsd7i5nbq5foh2wefkdhj3e';
 const PROD_ID       = 'nzvkuznrzjfc5kud3vfik5j7ey';
 const STAGING_BUCKET = 'amplify-runts-staging-san-runtsstoragebucketf8df8e-ixeas7ief3e3';
 const PROD_BUCKET    = 'amplify-di214r77g48tp-pro-runtsstoragebucketf8df8e-dwm5plyozk1b';
