@@ -15,15 +15,26 @@ import { uploadData, getUrl } from 'aws-amplify/storage';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 
-const client = generateClient<Schema>();
 
 // ─── GOOGLE SIGN IN ──────────────────────────────────────────────────────────
 export async function signInWithGoogle() {
+  try {
+    await getCurrentUser();
+    await signOut();
+  } catch {
+    // No existing session
+  }
   await signInWithRedirect({ provider: 'Google' });
 }
 
 // ─── APPLE SIGN IN ───────────────────────────────────────────────────────────
 export async function signInWithApple() {
+  try {
+    await getCurrentUser();
+    await signOut();
+  } catch {
+    // No existing session
+  }
   await signInWithRedirect({ provider: 'Apple' });
 }
 
@@ -138,6 +149,8 @@ export async function uploadProfilePicture(
 
 // ─── GET OR CREATE USER IN DYNAMODB ─────────────────────
 export async function getOrCreateUser() {
+
+  const client = generateClient<Schema>();
   const { userId } = await getCurrentUser();
 
   const { data: existing } = await client.models.User.get({ id: userId });
