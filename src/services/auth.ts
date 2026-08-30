@@ -19,11 +19,23 @@ const client = generateClient<Schema>();
 
 // ─── GOOGLE SIGN IN ──────────────────────────────────────────────────────────
 export async function signInWithGoogle() {
+  try {
+    await getCurrentUser();
+    await signOut();
+  } catch {
+    // No existing session
+  }
   await signInWithRedirect({ provider: 'Google' });
 }
 
 // ─── APPLE SIGN IN ───────────────────────────────────────────────────────────
 export async function signInWithApple() {
+  try {
+    await getCurrentUser();
+    await signOut();
+  } catch {
+    // No existing session
+  }
   await signInWithRedirect({ provider: 'Apple' });
 }
 
