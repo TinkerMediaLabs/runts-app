@@ -125,7 +125,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         try {
             await new Promise(resolve => setTimeout(resolve, 100));
             const user   = await getCurrentUser();
-            const dbUser = await getOrCreateUser();
+            const dbUser = await getOrCreateUser() as any;
             const isNew  = !dbUser?.onboardingComplete && !dbUser?.birthdate;
 
             let profilePicUri = dbUser?.profilePicUri ?? null;
@@ -162,7 +162,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             await PurchasesService.identify(user.userId);
             const premiumStatus = await PurchasesService.isPremium();
             setIsPremium(premiumStatus);
-        } catch {
+        } catch (err) {
             setUserId(null);
             setIsAuthenticated(false);
             setIsNewUser(false);
@@ -195,7 +195,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const refreshProfile = async () => {
         if (!userId) return;
         try {
-            const { data: dbUser } = await client.models.User.get({ id: userId });
+            const { data: dbUser } = await client.models.User.get({ id: userId }) as any;
             if (!dbUser) return;
             setProfile(prev => prev ? {
                 ...prev,

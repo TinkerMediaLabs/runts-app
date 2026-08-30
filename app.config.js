@@ -6,18 +6,21 @@ const envConfig = {
     androidPackage: 'com.runtsapp.myapp.dev',
     iosBundleId:    'com.runtsapp.myapp.dev',
     icon:           './assets/images/icon.png',
+    scheme:         'runts-dev',
   },
   staging: {
     name:           'Runts-Stg',
     androidPackage: 'com.runtsapp.myapp.staging',
     iosBundleId:    'com.runtsapp.myapp.staging',
     icon:           './assets/images/icon.png',
+    scheme:         'runts-staging',
   },
   production: {
     name:           'Runts',
     androidPackage: 'com.runtsapp.myapp',
     iosBundleId:    'com.runtsapp.myapp',
     icon:           './assets/images/icon.png',
+    scheme:         'runts',
   },
 };
 
@@ -26,6 +29,7 @@ const env = envConfig[APP_ENV] ?? envConfig.development;
 export default ({ config }) => ({
   ...config,
   name: env.name,
+  scheme: env.scheme,
   newArchEnabled: true,
 
    splash: {
