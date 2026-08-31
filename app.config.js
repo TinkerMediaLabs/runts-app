@@ -73,9 +73,21 @@ plugins: [
     [
         'expo-build-properties',
         {
-            ios: {
-                deploymentTarget: '16.0',
-            },
+            ios: { deploymentTarget: '16.0' },
+        },
+    ],
+    [
+        'expo-notifications',
+        {
+            icon: './assets/images/icon72w.png',
+            color: '#000000',
+        },
+    ],
+    [
+        'react-native-google-mobile-ads',
+        {
+            androidAppId: process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
+            iosAppId:     process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID,
         },
     ],
 ],
@@ -90,5 +102,9 @@ plugins: [
     rudderDataPlane: process.env.EXPO_PUBLIC_RUDDER_DATA_PLANE,
     rcIosKey:        process.env.EXPO_PUBLIC_RC_IOS_KEY,      
     rcAndroidKey:    process.env.EXPO_PUBLIC_RC_ANDROID_KEY, 
+    admobAndroidAppId:      process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
+    admobIosAppId:          process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID,
+    admobAndroidInterstitial: process.env.EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL,
+    admobIosInterstitial:   process.env.EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL,  
   },
 });
