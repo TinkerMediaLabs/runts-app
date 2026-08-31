@@ -67,10 +67,18 @@ export default ({ config }) => ({
   },
 
   // Spread plugins from app.json first, then add build-time plugins
-  plugins: [
+plugins: [
     ...(config.plugins ?? []),
     '@sentry/react-native/expo',
-  ],
+    [
+        'expo-build-properties',
+        {
+            ios: {
+                deploymentTarget: '16.0',
+            },
+        },
+    ],
+],
 
   extra: {
     eas: {

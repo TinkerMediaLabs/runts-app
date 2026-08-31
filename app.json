@@ -20,9 +20,9 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
-      "expo-web-browser",
-      "expo-image-picker"
+  "expo-font",
+  "expo-web-browser",
+  "expo-image-picker",
     ],
     "owner": "tinkermedia",
     "runtimeVersion": {
