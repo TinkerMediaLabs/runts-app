@@ -30,7 +30,7 @@ export default ({ config }) => ({
   ...config,
   name: env.name,
   scheme: env.scheme,
-  newArchEnabled: true,
+  newArchEnabled: false,
 
    splash: {
     image: './assets/images/splash.png',
@@ -74,9 +74,6 @@ plugins: [
         'expo-build-properties',
         {
             ios: { deploymentTarget: '16.0' },
-            android: {
-              kotlinVersion: '2.1.0',
-          },
         },
     ],
     [
