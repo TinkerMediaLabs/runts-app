@@ -10,6 +10,7 @@ import { upsertInProgressStory, getInProgressSeconds } from '@/hooks/queries/use
 import { Hub } from 'aws-amplify/utils';
 import { getDefaultPlaybackSpeed, getAutoplayEnabled } from '@/lib/audioSettings';
 import { useApp } from '@/context/AppContext';
+import { Ads } from '@/lib/ads';
 
 import { Analytics } from '@/lib/analytics';
 
@@ -45,12 +46,15 @@ export const PlayerProvider = ({ children }: any) => {
         pendingRatingStoryId: null,
     });
 
-    const { refreshProfile, eroticEnabled, eroticInPlaylist } = useApp();
+    const { refreshProfile, eroticEnabled, eroticInPlaylist, isPremium } = useApp();
 
     // Refs keep loadPlaylist free from stale closure issues — it's called from
     // handleTrackEnd which lives inside a useEffect
     const eroticEnabledRef    = useRef(eroticEnabled);
     const eroticInPlaylistRef = useRef(eroticInPlaylist);
+    const isPremiumRef         = useRef(isPremium);
+    const lastPlayedStoryIdRef = useRef<string | null>(null);
+    useEffect(() => { isPremiumRef.current = isPremium; }, [isPremium]);
     useEffect(() => { eroticEnabledRef.current    = eroticEnabled;    }, [eroticEnabled]);
     useEffect(() => { eroticInPlaylistRef.current = eroticInPlaylist; }, [eroticInPlaylist]);
 
@@ -224,6 +228,14 @@ export const PlayerProvider = ({ children }: any) => {
 
             const savedSeconds = await getInProgressSeconds(track.id);
 
+            // ── Pre-roll ad for new stories (not resume, not premium) ─────────────
+            const isNewStory = track.id !== lastPlayedStoryIdRef.current;
+            if (isNewStory && savedSeconds === 0 && !isPremiumRef.current) {
+                await Ads.showPreRoll();
+            }
+            lastPlayedStoryIdRef.current = track.id;
+            // ─────────────────────────────────────────────────────────────────────
+
             await audioEngine.play(track);
 
             const playlist = await loadPlaylist();
@@ -313,6 +325,7 @@ export const PlayerProvider = ({ children }: any) => {
         stopProgressTracking();
         isPlayingRef.current    = false;
         currentTrackRef.current = null;
+        lastPlayedStoryIdRef.current = null;
         playlistRef.current     = [];
         playlistIndexRef.current = -1;
         setHasNextTrack(false);
