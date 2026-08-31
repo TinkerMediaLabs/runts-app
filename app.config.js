@@ -75,7 +75,7 @@ plugins: [
         {
             ios: { deploymentTarget: '16.0' },
             android: {
-              kotlinVersion: '1.9.24',
+              kotlinVersion: '2.1.0',
           },
         },
     ],
