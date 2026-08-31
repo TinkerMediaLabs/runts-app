@@ -74,6 +74,9 @@ plugins: [
         'expo-build-properties',
         {
             ios: { deploymentTarget: '16.0' },
+            android: {
+              kotlinVersion: '1.9.24',
+          },
         },
     ],
     [
