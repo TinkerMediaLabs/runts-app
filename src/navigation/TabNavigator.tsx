@@ -16,6 +16,8 @@ import DiscoverScreen from '@/screens/primary/discover';
 import PlaylistScreen from '@/screens/primary/playlist';
 import PremiumScreen from '@/screens/primary/premium';
 
+import { useApp } from '@/context/AppContext';
+
 import { 
         BottomTabParamList, 
         TabOneParamList, 
@@ -34,6 +36,8 @@ export default function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
 
   const { setTabBarHeight } = usePlayerUI();
+
+  const { isPremium } = useApp();
 
   useEffect(() => {
     const height = 60 + insets.bottom;
@@ -84,14 +88,14 @@ export default function BottomTabNavigator() {
           headerShown: false,
         }}
       />
-        <BottomTab.Screen
-          name="Premium"
-          component={PremiumNavigator}
+        {!isPremium && (                          
+        <BottomTab.Screen name="Premium" component={PremiumNavigator}
           options={{
             tabBarIcon: ({ color }) => <Ionicons name='star' size={25} style={{ marginBottom: -4 }} color={color} />,
             headerShown: false,
           }}
         />
+      )}
       
     </BottomTab.Navigator>
   );

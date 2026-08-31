@@ -16,37 +16,31 @@ import { useApp } from '@/context/AppContext';
 import useOnPlay from '@/components/functions/OnPlay';
 
 
-const PlayButtonV3 = ({style, id, title, audioUri, imageUri, author} :any) => {
-
+const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isLocked = false, onLocked }: any) => {
     const onPlay = useOnPlay();
 
+    const handlePress = () => {
+        if (isLocked) { onLocked?.(); return; }
+        onPlay({ id, title, url: audioUri, artwork: imageUri, artist: author });
+    };
+
     return (
-        <TouchableOpacity onPress={() => {onPlay({
-            id: id,
-            title: title,
-            url: audioUri,
-            artwork: imageUri,
-            artist: author,
-        })}}>
-            <Animated.View 
-                style={[
-                    style,
-                    {
-                        height: 30,
-                        width: 30,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: colors.primary,
-                        borderRadius: 15,
-                        margin: 12,
-                    }
-                ]}
-            >
-                <FontAwesome5 
-                    name='play'
-                    size={14}
-                    color='#171717'
-                    style={{marginLeft: 2}}
+        <TouchableOpacity onPress={handlePress}>
+            <Animated.View style={[
+                style,
+                {
+                    height: 30, width: 30,
+                    alignItems: 'center', justifyContent: 'center',
+                    backgroundColor: isLocked ? '#2a2a2a' : colors.primary,
+                    borderRadius: 15,
+                    margin: 12,
+                }
+            ]}>
+                <FontAwesome5
+                    name={isLocked ? 'lock' : 'play'}
+                    size={isLocked ? 12 : 14}
+                    color={isLocked ? '#ffffff50' : '#171717'}
+                    style={isLocked ? {} : { marginLeft: 2 }}
                     iconStyle="solid"
                 />
             </Animated.View>

@@ -19,6 +19,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useIsLocked }   from '../../hooks/useIsLocked';
+import PaywallModal      from '../../components/common/PaywallModal';
+
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -190,6 +193,7 @@ const REACTION_EMOJIS: Record<string, string> = {
 const StoryScreen = ({ navigation }: any) => {
 
     const { userId, profile } = useApp();
+
     const insets     = useSafeAreaInsets();
     const route      = useRoute();
     const { storyID }: any = route.params;
@@ -204,6 +208,10 @@ const StoryScreen = ({ navigation }: any) => {
 
     // ── Story tags ────────────────────────────────────────────────────────────
     const [storyTags, setStoryTags] = useState<any[]>([]);
+
+     const primaryTag = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? storyTags[0] ?? null;
+     const isLocked   = useIsLocked(story, primaryTag);
+    const [showPaywall, setShowPaywall] = useState(false);
 
 
     useEffect(() => {
@@ -454,12 +462,14 @@ const handleDelete = (id: string) => {
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}
                 </Animated.Text>
-                <PlayButtonV3
+               <PlayButtonV3
                     id={story?.id}
                     title={story?.title}
                     audioUri={story?.audioUri}
                     imageUri={displayImageUri}
                     author={author?.name ?? ''}
+                    isLocked={isLocked}
+                    onLocked={() => setShowPaywall(true)}
                 />
             </Animated.View>
 
@@ -522,12 +532,14 @@ const handleDelete = (id: string) => {
                             </TouchableOpacity>
                         </View>
 
-                        <PlayButtonV4
+                       <PlayButtonV4
                             id={story?.id}
                             title={story?.title}
                             audioUri={story?.audioUri}
                             imageUri={displayImageUri}
                             author={author?.name ?? ''}
+                            isLocked={isLocked}
+                            onLocked={() => setShowPaywall(true)}
                         />
                     </View>
 
@@ -706,6 +718,12 @@ const handleDelete = (id: string) => {
                 storyTitle={story?.title ?? ''}
                 artwork={displayImageUri}
                 onClose={handleRatingModalClose}
+            />
+
+            <PaywallModal
+                visible={showPaywall}
+                onClose={() => setShowPaywall(false)}
+                storyTitle={story?.title}
             />
 
         </View>
