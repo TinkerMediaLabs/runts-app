@@ -23,6 +23,44 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:804752987452:android:a4b5b77d53e54fef7bba39",
+        "android_client_info": {
+          "package_name": "com.runtsapp.myapp.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0b3-NO2auey673d1WYrw4sm0EtnK4zw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:804752987452:android:6847973d1f2fbc387bba39",
+        "android_client_info": {
+          "package_name": "com.runtsapp.myapp.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0b3-NO2auey673d1WYrw4sm0EtnK4zw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
