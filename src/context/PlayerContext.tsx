@@ -10,7 +10,6 @@ import { upsertInProgressStory, getInProgressSeconds } from '@/hooks/queries/use
 import { Hub } from 'aws-amplify/utils';
 import { getDefaultPlaybackSpeed, getAutoplayEnabled } from '@/lib/audioSettings';
 import { useApp } from '@/context/AppContext';
-import { Ads } from '@/lib/ads';
 
 import { Analytics } from '@/lib/analytics';
 
@@ -230,9 +229,9 @@ export const PlayerProvider = ({ children }: any) => {
 
             // ── Pre-roll ad for new stories (not resume, not premium) ─────────────
             const isNewStory = track.id !== lastPlayedStoryIdRef.current;
-            if (isNewStory && savedSeconds === 0 && !isPremiumRef.current) {
-                await Ads.showPreRoll();
-            }
+            // if (isNewStory && savedSeconds === 0 && !isPremiumRef.current) {
+            //     await Ads.showPreRoll();
+            // }
             lastPlayedStoryIdRef.current = track.id;
             // ─────────────────────────────────────────────────────────────────────
 

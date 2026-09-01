@@ -30,7 +30,7 @@ export default ({ config }) => ({
   ...config,
   name: env.name,
   scheme: env.scheme,
-  newArchEnabled: false,
+  newArchEnabled: true,
 
    splash: {
     image: './assets/images/splash.png',
@@ -84,11 +84,6 @@ plugins: [
         },
     ],
     [
-        'react-native-google-mobile-ads',
-        {
-            androidAppId: process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
-            iosAppId:     process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID,
-        },
     ],
 ],
 
@@ -101,10 +96,6 @@ plugins: [
     rudderWriteKey:  process.env.EXPO_PUBLIC_RUDDER_WRITE_KEY,
     rudderDataPlane: process.env.EXPO_PUBLIC_RUDDER_DATA_PLANE,
     rcIosKey:        process.env.EXPO_PUBLIC_RC_IOS_KEY,      
-    rcAndroidKey:    process.env.EXPO_PUBLIC_RC_ANDROID_KEY, 
-    admobAndroidAppId:      process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
-    admobIosAppId:          process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID,
-    admobAndroidInterstitial: process.env.EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL,
-    admobIosInterstitial:   process.env.EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL,  
+    rcAndroidKey:    process.env.EXPO_PUBLIC_RC_ANDROID_KEY,  
   },
 });

@@ -19,7 +19,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './src/lib/queryClient';
 import { Analytics } from '@/lib/analytics';
 import { PurchasesService } from '@/lib/purchases';
-import { Ads } from '@/lib/ads';
 
 // ---------------------------------------------------------------------------
 // Sentry — initialise before anything else renders
@@ -63,7 +62,6 @@ function App() {
             try {
                 await Analytics.init();
                 await PurchasesService.init();
-                await Ads.init();  // ← add
                 await TrackPlayer.setupPlayer({
                     contentType:              'music',
                     handleAudioBecomingNoisy: true,
