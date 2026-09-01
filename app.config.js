@@ -41,7 +41,7 @@ export default ({ config }) => ({
   ios: {
     ...config.ios,
     bundleIdentifier: env.iosBundleId,
-    googleServicesFile: './google-services.json',
+    googleServicesFile: './GoogleService-Info.plist', 
     // Universal Links — iOS intercepts tinkermedia.net/runts/* before opening browser
     associatedDomains: ['applinks:tinkermedia.net', 'applinks:www.tinkermedia.net'], 
   },
@@ -49,7 +49,7 @@ export default ({ config }) => ({
   android: {
     ...config.android,
     package: env.androidPackage,
-    googleServicesFile: './GoogleService-Info.plist',
+    googleServicesFile: './google-services.json', 
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     intentFilters: [
