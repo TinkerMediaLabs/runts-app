@@ -46,7 +46,7 @@
     "unauthenticated_identities_enabled": true
   },
   "data": {
-    "url": "https://hwdbf6ue3vh6xmw6cmbffm7j7y.appsync-api.us-east-2.amazonaws.com/graphql",
+    "url": "https://nzvkuznrzjfc5kud3vfik5j7ey.appsync-api.us-east-2.amazonaws.com/graphql",
     "aws_region": "us-east-2",
     "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
     "authorization_types": [
