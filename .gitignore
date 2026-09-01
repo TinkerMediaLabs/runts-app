@@ -46,3 +46,5 @@ amplify_outputs.json
 amplify_outputs.dev.json
 amplifyconfiguration*
 scripts/publish-lambda/node_modules
+google-services.json
+GoogleService-Info.plist
