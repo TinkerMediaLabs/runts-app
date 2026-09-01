@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "804752987452",
+    "project_id": "runts-e3029",
+    "storage_bucket": "runts-e3029.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:804752987452:android:8fe359b9810df95b7bba39",
+        "android_client_info": {
+          "package_name": "com.runtsapp.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0b3-NO2auey673d1WYrw4sm0EtnK4zw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
