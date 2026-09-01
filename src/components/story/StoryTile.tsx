@@ -30,7 +30,7 @@ import PinButton from '../common/PinButton';
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 
 // Expanded content height — fixed so we can animate it cleanly
-const EXPANDED_HEIGHT = 288;
+//const EXPANDED_HEIGHT = 288;
 
 const StoryTile = ({
     title,
@@ -46,6 +46,8 @@ const StoryTile = ({
     reorderEnabled = false,
     drag,
     isActive,
+    isLocked = false, 
+    isPremium = false,
 }: any) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -55,6 +57,7 @@ const StoryTile = ({
     const expanded = useSharedValue(false);
 
     const [isFav, setIsFav] = React.useState(false);
+    const [expandedHeight, setExpandedHeight] = React.useState(300);
 
     const toggle = () => {
         if (reorderEnabled) return;
@@ -81,7 +84,7 @@ const StoryTile = ({
 
     // Expanded section clips in from height 0
     const expandedStyle = useAnimatedStyle(() => ({
-        height:  interpolate(progress.value, [0, 1], [0, EXPANDED_HEIGHT]),
+        height:  interpolate(progress.value, [0, 1], [0, expandedHeight]),
         opacity: interpolate(progress.value, [0, 0.3], [0, 1]),
     }));
 
@@ -141,7 +144,10 @@ const StoryTile = ({
 
                     {/* ── Expanded section — clips in from height 0 ── */}
                     <Animated.View style={[styles.expandedClip, expandedStyle]}>
-                        <View style={styles.expandedInner}>
+                        <View 
+                            style={styles.expandedInner}
+                            onLayout={e => setExpandedHeight(e.nativeEvent.layout.height)}
+                        >
 
                             {/* Full artwork → story screen */}
                             <TouchableWithoutFeedback
@@ -181,14 +187,14 @@ const StoryTile = ({
                                         <FontAwesome name="share" size={19} color="#ffffff70" />
                                     </TouchableOpacity>
                                 </View>
-
-                                <PlayButtonV2
-                                    duration={duration}
-                                    id={id}
-                                    author={author}
-                                    imageUri={imageUri}
-                                    audioUri={audioUri}
-                                />
+                                    <PlayButtonV2
+                                        duration={duration}
+                                        id={id}
+                                        author={author}
+                                        imageUri={imageUri}
+                                        audioUri={audioUri}
+                                        isPremium={isPremium}
+                                    />
                             </View>
 
                         </View>
@@ -282,11 +288,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     expandedInner: {
-        //borderTopWidth: 1,
-        borderTopColor: '#2a2a2a',
+       borderTopColor: '#2a2a2a',
         paddingTop: 6,
         paddingHorizontal: 12,
-        paddingBottom: 0,
+        paddingBottom: 16,  // ← change from 0
         gap: 10,
     },
     expandedImage: {

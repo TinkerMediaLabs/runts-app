@@ -462,17 +462,20 @@ const handleDelete = (id: string) => {
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}
                 </Animated.Text>
-               <PlayButtonV3
-                    id={story?.id}
-                    title={story?.title}
-                    audioUri={story?.audioUri}
-                    imageUri={displayImageUri}
-                    author={author?.name ?? ''}
-                    isLocked={isLocked}
-                    onLocked={() => setShowPaywall(true)}
-                />
+                {/* Keep space even when locked so layout stays balanced */}
+                {!isLocked ? (
+                    <PlayButtonV3
+                        id={story?.id}
+                        title={story?.title}
+                        audioUri={story?.audioUri}
+                        imageUri={displayImageUri}
+                        author={author?.name ?? ''}
+                        isPremium={story?.isPremium}
+                    />
+                ) : (
+                    <View style={{ width: 30, height: 30, margin: 12 }} />
+                )}
             </Animated.View>
-
             {/* ── Scrollable content ── */}
             <Animated.ScrollView
                 onScroll={scrollHandler}
@@ -540,6 +543,7 @@ const handleDelete = (id: string) => {
                             author={author?.name ?? ''}
                             isLocked={isLocked}
                             onLocked={() => setShowPaywall(true)}
+                            isPremium={story?.isPremium}
                         />
                     </View>
 
