@@ -46,7 +46,7 @@
     "unauthenticated_identities_enabled": true
   },
   "data": {
-    "url": "https://nflzecthnfb2noim4kgzmddjre.appsync-api.us-east-2.amazonaws.com/graphql",
+    "url": "https://5ojmsd7i5nbq5foh2wefkdhj3e.appsync-api.us-east-2.amazonaws.com/graphql",
     "aws_region": "us-east-2",
     "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
     "authorization_types": [
@@ -1699,6 +1699,20 @@
               "isRequired": false,
               "attributes": []
             },
+            "licenseType": {
+              "name": "licenseType",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "isPremium": {
+              "name": "isPremium",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
             "title": {
               "name": "title",
               "isArray": false,
@@ -2176,6 +2190,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "isPremiumGenre": {
+              "name": "isPremiumGenre",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
             "color": {
               "name": "color",
               "isArray": false,
@@ -2394,6 +2415,86 @@
                   "createdAt"
                 ]
               }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "provider": "userPools",
+                    "ownerField": "owner",
+                    "allow": "owner",
+                    "identityClaim": "cognito:username",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "UserDevice": {
+          "name": "UserDevice",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "userId": {
+              "name": "userId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "pushToken": {
+              "name": "pushToken",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "platform": {
+              "name": "platform",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "UserDevices",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
             },
             {
               "type": "auth",

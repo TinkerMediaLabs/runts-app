@@ -41,13 +41,15 @@ export default ({ config }) => ({
   ios: {
     ...config.ios,
     bundleIdentifier: env.iosBundleId,
+    googleServicesFile: './GoogleService-Info.plist', 
     // Universal Links — iOS intercepts tinkermedia.net/runts/* before opening browser
-    associatedDomains: ['applinks:tinkermedia.net', 'applinks:www.tinkermedia.net'],
+    associatedDomains: ['applinks:tinkermedia.net', 'applinks:www.tinkermedia.net'], 
   },
 
   android: {
     ...config.android,
     package: env.androidPackage,
+    googleServicesFile: './google-services.json', 
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     intentFilters: [
@@ -57,7 +59,7 @@ export default ({ config }) => ({
         data: [
           {
             scheme:     'https',
-            host:       'www.tinkermedia.net',
+            host: 'www.tinkermedia.net',
             pathPrefix: '/runts',
           },
         ],
@@ -67,10 +69,23 @@ export default ({ config }) => ({
   },
 
   // Spread plugins from app.json first, then add build-time plugins
-  plugins: [
+plugins: [
     ...(config.plugins ?? []),
     '@sentry/react-native/expo',
-  ],
+    [
+        'expo-build-properties',
+        {
+            ios: { deploymentTarget: '16.0' },
+        },
+    ],
+    [
+        'expo-notifications',
+        {
+            icon: './assets/images/icon72w.png',
+            color: '#000000',
+        },
+    ],
+],
 
   extra: {
     eas: {
@@ -81,6 +96,6 @@ export default ({ config }) => ({
     rudderWriteKey:  process.env.EXPO_PUBLIC_RUDDER_WRITE_KEY,
     rudderDataPlane: process.env.EXPO_PUBLIC_RUDDER_DATA_PLANE,
     rcIosKey:        process.env.EXPO_PUBLIC_RC_IOS_KEY,      
-    rcAndroidKey:    process.env.EXPO_PUBLIC_RC_ANDROID_KEY, 
+    rcAndroidKey:    process.env.EXPO_PUBLIC_RC_ANDROID_KEY,  
   },
 });

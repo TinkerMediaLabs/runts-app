@@ -13,6 +13,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     Image,
+    Linking
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -289,7 +290,7 @@ const InfoBanner = ({ message }: { message: string }) => (
 
 const AccountScreen = ({ navigation }: any) => {
 
-    const { userId, logout, profile, setProfile } = useApp();
+    const { userId, logout, profile, setProfile, isPremium } = useApp();
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
@@ -615,8 +616,19 @@ const AccountScreen = ({ navigation }: any) => {
                         <SettingRow
                             icon="crown"
                             label="Plan"
-                            value={profile?.plan ?? 'Free'}
-                            onPress={() => {/* TODO: navigate to upgrade */}}
+                            value={isPremium ? 'Premium' : 'Free'}
+                            badge={isPremium ? 'Active' : undefined}
+                            onPress={() => {
+                                if (isPremium) {
+                                    // Open OS subscription management
+                                    const url = Platform.OS === 'ios'
+                                        ? 'https://apps.apple.com/account/subscriptions'
+                                        : 'https://play.google.com/store/account/subscriptions';
+                                    Linking.openURL(url);
+                                } else {
+                                    navigation.navigate('Premium' as any);
+                                }
+                            }}
                         />
                         <RowDivider />
                         <SettingRow

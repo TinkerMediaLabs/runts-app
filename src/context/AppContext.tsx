@@ -25,6 +25,7 @@ import {
 
 import { Analytics } from '../lib/analytics';
 import { PurchasesService } from '../lib/purchases';
+import { Notifications } from '../lib/notifications';
 
 const client = generateClient<Schema>();
 
@@ -160,6 +161,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             });
             Analytics.identify(user.userId, dbUser?.name ?? undefined);
             await PurchasesService.identify(user.userId);
+            Notifications.registerToken(user.userId);
             const premiumStatus = await PurchasesService.isPremium();
             setIsPremium(premiumStatus);
         } catch (err) {

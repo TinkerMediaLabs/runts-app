@@ -83,6 +83,7 @@ const PinnedStoryTile = ({
             reorderEnabled={reorderEnabled}
             drag={reorderEnabled ? drag : undefined}
             isActive={isActive}
+            isPremium={story.isPremium}
         />
     );
 };

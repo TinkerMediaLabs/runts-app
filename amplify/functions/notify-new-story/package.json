@@ -1,0 +1,10 @@
+{
+  "name": "notify-new-story",
+  "version": "1.0.0",
+  "description": "Sends push notifications when a story goes live",
+  "main": "handler.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/util-dynamodb": "^3.0.0"
+  }
+}

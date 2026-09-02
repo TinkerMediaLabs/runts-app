@@ -46,8 +46,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your@apple.id",
-        "ascAppId": "your_app_store_connect_app_id",
+        "appleId": "admin@tinkermedia.net",
+        "ascAppId": "6805619881",
         "appleTeamId": "R9B6UZYCN9"
       },
       "android": {

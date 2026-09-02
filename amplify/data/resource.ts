@@ -219,6 +219,8 @@ Comment: a
     .model({
       id: a.id().required(),
       type: a.string(),
+      licenseType: a.string(),    // 'public_domain' | 'runts_exclusive' | 'licensed' | 'other'
+      isPremium:   a.boolean().default(false),
       title: a.string().required(),
       audioUri: a.string(),
       summary: a.string(),
@@ -275,6 +277,7 @@ Comment: a
       id: a.id().required(),
       name: a.string().required(),
       isPrimary: a.boolean(),
+      isPremiumGenre: a.boolean().default(false),
       color: a.string(),
       icon: a.string(),
       imageUri: a.string(),
@@ -303,6 +306,18 @@ Comment: a
     ])
     .authorization(allow => [allow.owner()]),
 
+
+  // ── User Device ────────────────────────────────
+  UserDevice: a.model({
+    userId:    a.string().required(),
+    pushToken: a.string().required(),
+    platform:  a.string().required(),  // 'ios' | 'android'
+    updatedAt: a.datetime(),
+  })
+  .authorization(allow => [
+      allow.owner(),
+  ]),
+
   // ── StoryTag (join table for many-to-many) ────────────────────────────────
   StoryTag: a
     .model({
@@ -322,6 +337,8 @@ Comment: a
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(incrementListens)),
 });
+
+
 
 
 export type Schema = ClientSchema<typeof schema>;

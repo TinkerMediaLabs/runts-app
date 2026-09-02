@@ -27,6 +27,10 @@ import {
     type PurchasesPackage,
 } from '@/lib/purchases';
 
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../types/types';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -144,6 +148,8 @@ const FeatureRow = ({ icon, title, description }: Feature) => (
 
 const PremiumScreen = () => {
 
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
     const { userId } = useApp();
     const insets       = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
@@ -173,7 +179,13 @@ const PremiumScreen = () => {
         try {
             const success = await PurchasesService.purchase(selectedPkg);
             if (success) {
-                Alert.alert('Welcome to Premium!', 'Your subscription is now active.');
+                Alert.alert('Welcome to Premium!', 'Your subscription is now active.', [
+                    { text: 'OK', onPress: () => navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Root' }],
+                    })}
+                ]);
+                
             }
         } catch (err: any) {
             Alert.alert('Purchase failed', err?.message ?? 'Something went wrong. Please try again.');
@@ -187,7 +199,12 @@ const PremiumScreen = () => {
         try {
             const success = await PurchasesService.restorePurchases();
             if (success) {
-                Alert.alert('Restored!', 'Your premium subscription has been restored.');
+                Alert.alert('Restored!', 'Your premium subscription has been restored.', [
+                    { text: 'OK', onPress: () => navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Root' }],
+                    }) }
+                ]);
             } else {
                 Alert.alert('No purchases found', 'We could not find an active subscription to restore.');
             }

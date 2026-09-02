@@ -31,6 +31,8 @@ import LoadingItem  from '../common/LoadingItem';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import PinButton from '../common/PinButton';
 
+import { useApp } from '@/context/AppContext';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -76,12 +78,14 @@ type ItemProps = {
     numListens:     number;
     avgRating?:     number | null;
     numRatings?:    number | null;
+    isPremium?:     boolean;
 };
 
 const CarouselItem = ({
     id, title, primaryTagName, summary,
     imageUri, audioUri, author, duration,
     numListens, avgRating, numRatings,
+    isPremium,
 }: ItemProps) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -90,6 +94,9 @@ const CarouselItem = ({
         imageUri?.startsWith('stories/') ? imageUri : null
     );
     const displayImageUri = resolvedImageUri ?? imageUri;
+
+    const { isPremium: userIsPremium } = useApp();
+    const isLocked = (isPremium === true) && !userIsPremium;
 
     const expandProgress = useSharedValue(0);
     const isExpanded     = useSharedValue(false);
@@ -225,22 +232,21 @@ const CarouselItem = ({
                                 <Text style={styles.summary} numberOfLines={3}>
                                     {summary}
                                 </Text>
-                                <View style={styles.actions}>
-                                    <PlayButtonV2
-                                        id={id}
-                                        duration={duration}
-                                        author={author}
-                                        audioUri={audioUri}
-                                        imageUri={displayImageUri}
-                                    />
+                                <View style={[styles.actions, isLocked && { justifyContent: 'flex-end' }]}>
+                                    {!isLocked && (
+                                        <PlayButtonV2
+                                            id={id}
+                                            duration={duration}
+                                            author={author}
+                                            audioUri={audioUri}
+                                            imageUri={displayImageUri}
+                                            isPremium={isPremium}
+                                        />
+                                    )}
                                     <View style={styles.iconActions}>
                                         <PinButton storyId={id} size={20} />
                                         <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
-                                            <FontAwesome
-                                                name="share"
-                                                size={18}
-                                                color="rgba(255,255,255,0.7)"
-                                            />
+                                            <FontAwesome name="share" size={18} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -278,6 +284,7 @@ const ForYouCarousel = ({ stories, tagMap }: {
             numListens={item?.numListens ?? 0}
             avgRating={item?.avgRating}
             numRatings={item?.numRatings}
+            isPremium={item?.isPremium === true}
         />
     );
 
