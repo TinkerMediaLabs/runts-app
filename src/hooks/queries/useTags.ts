@@ -21,12 +21,18 @@ export function usePrimaryTags() {
   return useQuery({
     queryKey: ['tags', 'primary'],
     queryFn: async () => {
-      const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Tag.list({
-        filter: { isPrimary: { eq: true } },
-      });
-      if (errors) throw new Error(errors[0].message);
-      return data;
+      try {
+        const client = generateClient<Schema>();
+        const { data, errors } = await client.models.Tag.list({
+          filter: { isPrimary: { eq: true } },
+        });
+        console.log('[usePrimaryTags] data count:', data?.length, 'errors:', JSON.stringify(errors));
+        if (errors) throw new Error(errors[0].message);
+        return data;
+      } catch (e: any) {
+        console.error('[usePrimaryTags] caught:', e?.message);
+        throw e;
+      }
     },
     staleTime: 1000 * 60 * 30,
   });

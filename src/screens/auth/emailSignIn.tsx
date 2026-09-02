@@ -38,15 +38,16 @@ const EmailSignIn = ({ navigation }: any) => {
         btnScale.value = withSequence(withTiming(0.96, { duration: 100 }), withSpring(1));
         try {
             await loginUser(email.replace(/ /g, ''), password);
-        } catch (err: any) {
+       } catch (err: any) {
+            console.log('Sign in error name:', err?.name, 'message:', err?.message);
             if (err?.name === 'UserNotConfirmedException') {
                 navigation.navigate('ConfirmEmail', { email: email.replace(/ /g, '') });
             } else {
                 setError(err?.message || 'Error signing in. Please try again.');
             }
         }
-        setLoading(false);
-    };
+                setLoading(false);
+            };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

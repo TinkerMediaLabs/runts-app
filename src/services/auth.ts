@@ -59,13 +59,24 @@ export async function resendCode(email: string) {
 
 // ─── SIGN IN ────────────────────────────────────────────
 export async function loginUser(email: string, password: string) {
-  try {
-    await getCurrentUser();
-    await signOut();
-  } catch {
-    // No existing session, proceed normally
-  }
-  return signIn({ username: email, password });
+    try {
+        await getCurrentUser();
+        await signOut();
+    } catch {
+        // No existing session
+    }
+    
+    const result = await signIn({ username: email, password });
+    console.log('[loginUser] nextStep:', result.nextStep?.signInStep, 'isSignedIn:', result.isSignedIn);
+    
+    // Only throw if sign-in failed AND next step is CONFIRM_SIGN_UP
+    if (!result.isSignedIn && result.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
+        const error = new Error('User is not confirmed.');
+        (error as any).name = 'UserNotConfirmedException';
+        throw error;
+    }
+    
+    return result;
 }
 
 // ─── SIGN OUT ───────────────────────────────────────────
