@@ -49,7 +49,11 @@ import { useApp } from '../../context/AppContext';
 import PINEntryModal from '../../components/settings/PINEntryModal';
 import PINSetupModal from '../../components/settings/PINSetupModal';
 
+import { Notifications } from '../../lib/notifications';
+
 const { width } = Dimensions.get('window');
+
+const NOTIF_AUTHOR_KEY = '@runts/notificationsAuthorsEnabled';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -395,6 +399,8 @@ const AppSettings = ({ navigation }: any) => {
     // ── Appearance ────────────────────────────────────────────────────────────
     const [reducedMotion, setReducedMotion] = useState(false);
 
+    const { userId } = useApp();
+
     const PLAYBACK_SPEEDS: PlaybackSpeed[] = [0.75, 1, 1.25, 1.5, 2];
     const AUDIO_QUALITIES: AudioQuality[]  = ['Low', 'Standard', 'High'];
 
@@ -403,6 +409,26 @@ const AppSettings = ({ navigation }: any) => {
 
     const [offlineEnabled, setOfflineEnabled] = useState(true);
     const { totalSize, refresh: refreshDownloads } = useDownloads();
+
+    const [authorNotifications, setAuthorNotifications] = useState(true);
+
+    useEffect(() => {
+        AsyncStorage.getItem(NOTIF_AUTHOR_KEY).then(val => {
+            if (val !== null) setAuthorNotifications(val === 'true');
+        });
+    }, []);
+
+    const handleAuthorNotificationsChange = async (value: boolean) => {
+        setAuthorNotifications(value);
+        await AsyncStorage.setItem(NOTIF_AUTHOR_KEY, String(value));
+        if (userId) {
+            if (!value) {
+                await Notifications.unregisterToken(userId);
+            } else {
+                await Notifications.registerToken(userId);
+            }
+        }
+    };
 
     useEffect(() => {
         getFavoriteThreshold().then(setFavoriteThreshold);
@@ -515,6 +541,17 @@ const AppSettings = ({ navigation }: any) => {
                             label="Default Speed"
                             value={`${playbackSpeed}x`}
                             onPress={() => open('playbackSpeed')}
+                        />
+                    </Section>
+
+                    {/* ── Notifications ── */}
+                    <Section title="Notifications">
+                        <ToggleRow
+                            icon="bell"
+                            label="New stories from followed authors"
+                            description="Get notified when an author you follow publishes a new story"
+                            value={authorNotifications}
+                            onChange={handleAuthorNotificationsChange}
                         />
                     </Section>
 

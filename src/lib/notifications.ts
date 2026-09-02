@@ -1,10 +1,11 @@
 /**
  * notifications.ts
- * Handles push notification permission and token registration.
+ * Handles push notification permission, token registration and unregistration.
  *
  * Usage:
  *   import { Notifications } from '@/lib/notifications';
- *   await Notifications.registerToken(userId); // call after sign-in
+ *   await Notifications.registerToken(userId);   // call after sign-in
+ *   await Notifications.unregisterToken(userId); // call when user disables notifications
  */
 
 import * as ExpoNotifications from 'expo-notifications';
@@ -13,12 +14,15 @@ import { Platform } from 'react-native';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 
-// Show notifications when app is in foreground
+// ---------------------------------------------------------------------------
+// Notification handler — show alerts when app is in foreground
+// ---------------------------------------------------------------------------
+
 ExpoNotifications.setNotificationHandler({
     handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge:  false,
+        shouldShowAlert:  true,
+        shouldPlaySound:  true,
+        shouldSetBadge:   false,
         shouldShowBanner: true,
         shouldShowList:   true,
     }),
@@ -55,9 +59,8 @@ async function registerToken(userId: string): Promise<void> {
         });
 
         const pushToken = tokenData.data;
-        const platform  = Platform.OS; // 'ios' | 'android'
+        const platform  = Platform.OS;
 
-        // Save to UserDevice table
         const client = generateClient<Schema>();
 
         // Check if a record already exists for this user
@@ -91,9 +94,36 @@ async function registerToken(userId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Unregister — removes token from UserDevice table so Lambda skips this user
+// Called when user disables author notifications in Settings
+// ---------------------------------------------------------------------------
+
+async function unregisterToken(userId: string): Promise<void> {
+    if (!Device.isDevice) return;
+
+    try {
+        const client = generateClient<Schema>();
+
+        const { data: records } = await (client.models as any).UserDevice.list({
+            filter: { userId: { eq: userId } },
+        });
+
+        for (const record of records ?? []) {
+            await (client.models as any).UserDevice.delete({ id: record.id });
+        }
+
+        console.log('[Notifications] Token unregistered for user:', userId);
+
+    } catch (err) {
+        console.warn('[Notifications] unregisterToken failed:', err);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Export
 // ---------------------------------------------------------------------------
 
 export const Notifications = {
     registerToken,
+    unregisterToken,
 };
