@@ -5,7 +5,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 
-const client = generateClient<Schema>();
+
 
 export const FAVORITE_THRESHOLD_KEY = '@runts/favorite_threshold';
 export const DEFAULT_THRESHOLD      = 8;
@@ -29,6 +29,7 @@ export function useFavoritedStories(threshold: number) {
     return useQuery({
         queryKey: ['favoritedStories', threshold, eroticEnabled],
         queryFn: async () => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
 
             const { data: ratings } = await client.models.UserRating.list({

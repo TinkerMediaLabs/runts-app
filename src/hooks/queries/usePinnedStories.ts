@@ -7,7 +7,7 @@ import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
 
-const client = generateClient<Schema>();
+
 
 // ─── Fetch all pinned stories for current user ────────────────────────────
 export function usePinnedStories() {
@@ -16,6 +16,7 @@ export function usePinnedStories() {
     return useQuery({
         queryKey: ['pinnedStories', eroticEnabled, eroticInPlaylist],
         queryFn: async () => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
             const { data, errors } = await client.models.UserPinnedStory.list({
                 filter: { userId: { eq: userId } },
@@ -49,6 +50,7 @@ export function usePinnedStoryIds() {
   return useQuery({
     queryKey: ['pinnedStoryIds'],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
       const { data, errors } = await client.models.UserPinnedStory.list({
         filter: { userId: { eq: userId } },
@@ -66,6 +68,7 @@ export function usePinStory() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
       const { data: existing } = await client.models.UserPinnedStory.list({
@@ -110,6 +113,7 @@ export function useUnpinStory() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
       const { data: existing } = await client.models.UserPinnedStory.list({

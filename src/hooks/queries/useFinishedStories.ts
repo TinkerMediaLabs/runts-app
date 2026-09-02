@@ -3,13 +3,14 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
 
-const client = generateClient<Schema>();
+
 
 // ─── Fetch finished stories for current user ──────────────────────────────
 export function useFinishedStories() {
   return useQuery({
     queryKey: ['finishedStories'],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
       const { data, errors } = await client.models.UserFinishedStory.list({
         filter: { userId: { eq: userId } },
@@ -29,6 +30,7 @@ export function useMarkFinished() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
       // Check if already finished

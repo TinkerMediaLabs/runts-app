@@ -5,7 +5,7 @@ import type { Schema } from '../../amplify/data/resource';
 import { navigate } from '@/navigation/RootNavigator';
 import { useApp } from '@/context/AppContext';
 
-const client = generateClient<Schema>();
+
 
 const STORY_PATH_RE = /\/runts\/story\/([a-zA-Z0-9_-]+)/;
 

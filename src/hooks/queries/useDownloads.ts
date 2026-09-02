@@ -19,7 +19,7 @@ import {
   type DownloadRecord,
 } from '../../lib/offlineStorage';
 
-const client = generateClient<Schema>();
+
 
 // ---------------------------------------------------------------------------
 // Standalone functions — safe to call outside React components

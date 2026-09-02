@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
-const client = generateClient<Schema>();
+
 
 // ---------------------------------------------------------------------------
 // Fetches all live erotic stories sorted by newest first.
@@ -14,6 +14,7 @@ export function useEroticStories() {
     return useQuery({
         queryKey: ['eroticStories'],
 queryFn: async () => {
+      const client = generateClient<Schema>();
     const { data: allData } = await client.models.Story.list();
 console.log('total stories in table:', allData?.length);
 console.log('erotic in table:', allData?.filter(s => s.isErotic === 'true')?.length);

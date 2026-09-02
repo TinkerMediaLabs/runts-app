@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
-const client = generateClient<Schema>();
+
 
 export const SEARCH_PAGE_SIZE = 20;
 
@@ -64,6 +64,7 @@ export function useSearchStories({
   return useInfiniteQuery({
     queryKey: ['searchStories', query, sortBy, tagId, duration],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const client = generateClient<Schema>();
       let data: any[] = [];
       let nextToken: string | null | undefined;
 
@@ -163,6 +164,7 @@ export function useSearchAuthors({
   return useQuery({
     queryKey: ['searchAuthors', query],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data } = await client.models.Author.list();
       if (!query || query.length < 2) return data ?? [];
       const q = normalise(query);
@@ -190,6 +192,7 @@ export function useSearchTags({
   return useQuery({
     queryKey: ['searchTags', query],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data } = await client.models.Tag.list();
       if (!query || query.length < 2) return data ?? [];
       const q = normalise(query);

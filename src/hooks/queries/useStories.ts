@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
-const client = generateClient<Schema>();
+
 
 // ─── All live stories sorted by newest ───────────────────────────────────────
 export function useStories() {
   return useQuery({
     queryKey: ['stories'],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByLiveAndPublishedAt(
         { live: 'true' },
         { sortDirection: 'DESC' }
@@ -25,6 +26,7 @@ export function useStoriesByTagNew(tagId: string) {
   return useQuery({
     queryKey: ['stories', 'tag', 'new', tagId],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndPublishedAt(
         { primaryTagId: tagId },
         { sortDirection: 'DESC' }
@@ -42,6 +44,7 @@ export function useStoriesByTagTrending(tagId: string) {
   return useQuery({
     queryKey: ['stories', 'tag', 'trending', tagId],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndNumListens(
         { primaryTagId: tagId },
         { sortDirection: 'DESC' }
@@ -58,6 +61,7 @@ export function useStoriesByStoryTag(tagId: string) {
     return useQuery({
         queryKey: ['stories', 'storyTag', tagId],
         queryFn: async () => {
+      const client = generateClient<Schema>();
             const { data: links } = await client.models.StoryTag.list({
                 filter: { tagId: { eq: tagId } },
             });
@@ -86,6 +90,7 @@ export function useStoriesByTagShort(tagId: string, maxDuration: number = 1200) 
   return useQuery({
     queryKey: ['stories', 'tag', 'short', tagId],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndDuration(
         { primaryTagId: tagId },
         { sortDirection: 'ASC' }
@@ -104,6 +109,7 @@ export function useTrendingStories() {
   return useQuery({
     queryKey: ['stories', 'trending'],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByLiveAndNumListens(
         { live: 'true' },
         { sortDirection: 'DESC' }
@@ -120,6 +126,7 @@ export function useStoriesByAuthor(authorId: string) {
   return useQuery({
     queryKey: ['stories', 'author', authorId],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByAuthorIdAndPublishedAt(
         { authorId },
         { sortDirection: 'DESC' }
@@ -137,6 +144,7 @@ export function useStory(id: string) {
   return useQuery({
     queryKey: ['story', id],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.get({ id });
       if (errors) throw new Error(errors[0].message);
       return data;
