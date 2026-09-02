@@ -127,7 +127,11 @@ const handler = async (event) => {
         }
         catch { /* use default */ }
         // Send notifications
-        await sendPushNotifications(tokens, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
-    }
-};
+        await sendPushNotifications(
+            tokens,
+            `🎧 New story from ${authorName} is now live! `,
+            `"👉 ${storyTitle}"`,
+            storyId,
+        );    }
+        };
 exports.handler = handler;
