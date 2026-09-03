@@ -1,12 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-} from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Screen from '@/components/common/Screen';
 import { useApp } from '@/context/AppContext';

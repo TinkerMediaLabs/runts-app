@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    Dimensions,
-    ActivityIndicator,
-    Keyboard,
-    TouchableWithoutFeedback,
-    KeyboardAvoidingView,
-    ScrollView,
-    Platform,
-} from 'react-native';
+import { View, TouchableOpacity, Dimensions, ActivityIndicator, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 
 import Animated, {
     FadeIn,

@@ -1,11 +1,6 @@
 import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MenuHeader from '../../components/common/MenuHeader';

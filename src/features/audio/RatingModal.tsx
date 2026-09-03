@@ -1,18 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Dimensions,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 
 import Animated, {
   useSharedValue,

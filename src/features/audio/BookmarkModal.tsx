@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  TouchableWithoutFeedback,
-  StyleSheet,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 

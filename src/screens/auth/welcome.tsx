@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Image,
-    Dimensions,
-} from "react-native";
+import { View, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Screen from "@/components/common/Screen";
 import useStyles from "@/theme/styles";

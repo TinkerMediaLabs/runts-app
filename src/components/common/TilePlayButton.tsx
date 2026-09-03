@@ -1,9 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
-import { 
-    View, 
-    Text, 
-    TouchableOpacity 
-} from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import FontAwesome from '@react-native-vector-icons/fontawesome';

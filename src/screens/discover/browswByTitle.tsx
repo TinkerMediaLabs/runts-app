@@ -1,16 +1,6 @@
 import React, { useRef, useMemo, useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-    Dimensions,
-    LayoutAnimation,
-    UIManager,
-    Platform,
-} from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet, Dimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Animated, {
     useSharedValue,

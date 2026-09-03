@@ -1,12 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-  RefreshControl,
-} from 'react-native';
+import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@react-native-vector-icons/fontawesome';

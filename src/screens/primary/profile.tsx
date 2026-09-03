@@ -1,16 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    ScrollView,
-    Animated,
-    StyleSheet,
-    Dimensions,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Image, TouchableOpacity, ScrollView, Animated, StyleSheet, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';

@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    Switch,
-    TouchableOpacity,
-    ScrollView,
-    Modal,
-    StyleSheet,
-    Dimensions,
-    TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Switch, TouchableOpacity, ScrollView, Modal, StyleSheet, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';

@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-    View,
-    Text,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-} from 'react-native';
+import { View, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import DraggableFlatList, {
     RenderItemParams,

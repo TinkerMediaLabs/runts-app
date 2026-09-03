@@ -4,15 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    Dimensions,
-    TextInputProps,
-} from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions, TextInputProps } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 
 import Feather from '@react-native-vector-icons/feather';
 

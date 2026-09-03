@@ -1,8 +1,5 @@
-import {
-    View,
-    Text,
-    TouchableOpacity, 
-} from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import useStyles from '@/theme/styles';
 import useTypography from '@/theme/typography';

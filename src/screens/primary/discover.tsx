@@ -1,13 +1,6 @@
 import React, { useMemo } from 'react';
-import {
-    Dimensions,
-    View,
-    ScrollView,
-    Platform,
-    TouchableOpacity,
-    Text,
-    StyleSheet,
-} from 'react-native';
+import { Dimensions, View, ScrollView, Platform, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';

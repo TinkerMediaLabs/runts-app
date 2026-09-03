@@ -1,18 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    Text,
-    View,
-    StyleSheet,
-    Dimensions,
-    ScrollView,
-    TouchableOpacity,
-    FlatList,
-    TextInput,
-    KeyboardAvoidingView,
-    Platform,
-    ActivityIndicator,
-    Share
-} from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 
 import { useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -5,16 +5,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Modal,
-    TouchableWithoutFeedback,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

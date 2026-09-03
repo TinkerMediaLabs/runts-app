@@ -5,20 +5,8 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  ActivityIndicator,
-  Image,
-  Modal,
-  TouchableWithoutFeedback,
-  ScrollView,
-  InteractionManager,
-} from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, Image, Modal, TouchableWithoutFeedback, ScrollView, InteractionManager } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Animated, {
   useSharedValue,

@@ -1,10 +1,8 @@
 //this is where users can edit and update their user info
 
 import React, {useState, useEffect, useContext} from 'react';
-import { 
-    View, 
-    Text,
-} from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Screen from '@/components/common/Screen';
 

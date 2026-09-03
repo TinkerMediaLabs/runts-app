@@ -1,13 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    Dimensions,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-} from 'react-native';
+import { View, FlatList, Dimensions, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import ProgressTile from './ProgressTile';
 import { useInProgressStories } from '../../hooks/queries/useInProgressStories';

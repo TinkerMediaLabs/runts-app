@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    TouchableOpacity,
-    StyleSheet,
-} from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';

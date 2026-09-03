@@ -1,14 +1,6 @@
 import React, { useMemo, useRef } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    Dimensions,
-    ActivityIndicator,
-} from 'react-native';
+import { View, FlatList, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

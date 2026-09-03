@@ -1,33 +1,59 @@
-import { Ionicons } from '@expo/vector-icons';
-import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
+import {
+  useFonts,
+  Urbanist_100Thin,
+  Urbanist_100Thin_Italic,
+  Urbanist_200ExtraLight,
+  Urbanist_200ExtraLight_Italic,
+  Urbanist_300Light,
+  Urbanist_300Light_Italic,
+  Urbanist_400Regular,
+  Urbanist_400Regular_Italic,
+  Urbanist_500Medium,
+  Urbanist_500Medium_Italic,
+  Urbanist_600SemiBold,
+  Urbanist_600SemiBold_Italic,
+  Urbanist_700Bold,
+  Urbanist_700Bold_Italic,
+  Urbanist_800ExtraBold,
+  Urbanist_800ExtraBold_Italic,
+  Urbanist_900Black,
+  Urbanist_900Black_Italic,
+} from '@expo-google-fonts/urbanist';
 
 export default function useCachedResources() {
   const [isLoadingComplete, setLoadingComplete] = React.useState(false);
 
-  // Load any resources or data that we need prior to rendering the app
+  const [fontsLoaded] = useFonts({
+    Urbanist_100Thin,
+    Urbanist_100Thin_Italic,
+    Urbanist_200ExtraLight,
+    Urbanist_200ExtraLight_Italic,
+    Urbanist_300Light,
+    Urbanist_300Light_Italic,
+    Urbanist_400Regular,
+    Urbanist_400Regular_Italic,
+    Urbanist_500Medium,
+    Urbanist_500Medium_Italic,
+    Urbanist_600SemiBold,
+    Urbanist_600SemiBold_Italic,
+    Urbanist_700Bold,
+    Urbanist_700Bold_Italic,
+    Urbanist_800ExtraBold,
+    Urbanist_800ExtraBold_Italic,
+    Urbanist_900Black,
+    Urbanist_900Black_Italic,
+  });
+
   React.useEffect(() => {
-    async function loadResourcesAndDataAsync() {
-      try {
-        SplashScreen.preventAutoHideAsync();
+    SplashScreen.preventAutoHideAsync();
 
-        // Load fonts
-        // await Font.loadAsync({
-        //   ...Ionicons.font,
-        //   'space-mono': require('../assets/fonts/SpaceMono-Regular.ttf'),
-        // });
-      } catch (e) {
-        // We might want to provide this error information to an error reporting service
-        console.warn(e);
-      } finally {
-        setLoadingComplete(true);
-        SplashScreen.hideAsync();
-      }
+    if (fontsLoaded) {
+      setLoadingComplete(true);
+      SplashScreen.hideAsync();
     }
-
-    loadResourcesAndDataAsync();
-  }, []);
+  }, [fontsLoaded]);
 
   return isLoadingComplete;
 }

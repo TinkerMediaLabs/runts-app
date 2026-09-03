@@ -1,20 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    TextInput,
-    ActivityIndicator,
-    ScrollView,
-    Modal,
-    StyleSheet,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    Image,
-    Linking
-} from 'react-native';
+import { View, TouchableOpacity, TouchableWithoutFeedback, ActivityIndicator, ScrollView, Modal, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, Image, Linking } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';

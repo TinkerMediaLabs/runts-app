@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    TouchableWithoutFeedback,
-    Image,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableWithoutFeedback, Image, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,

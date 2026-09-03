@@ -1,15 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import {
-    View,
-    Text,
-    TouchableWithoutFeedback,
-    TouchableOpacity,
-    ScrollView,
-    Modal,
-    Dimensions,
-    Animated,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableWithoutFeedback, TouchableOpacity, ScrollView, Modal, Dimensions, Animated, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 // ---------------------------------------------------------------------------
 // Types
