@@ -6,6 +6,7 @@
  *   import { Notifications } from '@/lib/notifications';
  *   await Notifications.registerToken(userId);   // call after sign-in
  *   await Notifications.unregisterToken(userId); // call when user disables notifications
+ *   Notifications.addNotificationTapListener();  // call once at app startup
  */
 
 import * as ExpoNotifications from 'expo-notifications';
@@ -13,6 +14,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
+import { navigate } from '../navigation/RootNavigator';
 
 // ---------------------------------------------------------------------------
 // Notification handler — show alerts when app is in foreground
@@ -27,6 +29,39 @@ ExpoNotifications.setNotificationHandler({
         shouldShowList:   true,
     }),
 });
+
+// ---------------------------------------------------------------------------
+// Tap listener — navigate to the story screen when a notification is tapped
+// ---------------------------------------------------------------------------
+
+let tapListenerSubscription: ReturnType<typeof ExpoNotifications.addNotificationResponseReceivedListener> | null = null;
+
+function addNotificationTapListener(): void {
+    if (tapListenerSubscription) return; // already registered
+
+    tapListenerSubscription = ExpoNotifications.addNotificationResponseReceivedListener(response => {
+        const data = response.notification.request.content.data;
+        const storyId = data?.storyId as string | undefined;
+
+        if (storyId) {
+            navigate('StoryScreen', { storyID: storyId });
+        }
+    });
+}
+
+async function checkColdStartNotification(): Promise<void> {
+    const response = await ExpoNotifications.getLastNotificationResponseAsync();
+    const storyId = response?.notification.request.content.data?.storyId as string | undefined;
+
+    if (storyId) {
+        navigate('StoryScreen', { storyID: storyId });
+    }
+}
+
+function removeNotificationTapListener(): void {
+    tapListenerSubscription?.remove();
+    tapListenerSubscription = null;
+}
 
 // ---------------------------------------------------------------------------
 // Register device push token and save to UserDevice table
@@ -126,4 +161,7 @@ async function unregisterToken(userId: string): Promise<void> {
 export const Notifications = {
     registerToken,
     unregisterToken,
+    addNotificationTapListener,
+    removeNotificationTapListener,
+    checkColdStartNotification,
 };

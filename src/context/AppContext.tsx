@@ -278,6 +278,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         refreshAuth();
+        Notifications.addNotificationTapListener();
+
+         // Delay slightly so NavigationContainer is mounted and ready
+        setTimeout(() => {
+            Notifications.checkColdStartNotification();
+        }, 1000);
 
         const unsubscribe = Hub.listen('auth', ({ payload }) => {
             switch (payload.event) {
@@ -295,6 +301,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
 
         return unsubscribe;
+        Notifications.removeNotificationTapListener();
     }, []);
 
     useEffect(() => {
