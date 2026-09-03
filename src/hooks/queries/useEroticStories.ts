@@ -23,7 +23,7 @@ console.log('erotic in table:', allData?.filter(s => s.isErotic === 'true')?.len
         let nextToken: string | null = null;
 
         do {
-            const { data, nextToken: next } = await (client.models.Story as any)
+            const { data, nextToken: next }: { data: any[]; nextToken: string | null } = await (client.models.Story as any)
                 .listStoryByLiveAndPublishedAt(
                     { live: 'true' },
                     {

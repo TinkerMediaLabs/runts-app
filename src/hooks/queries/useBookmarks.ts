@@ -87,9 +87,9 @@ export function useCreateBookmark() {
                 createdAt: new Date().toISOString(),
             });
         },
-        onSuccess: () => {
+       onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-            Analytics.storyBookmarked({          // ← add
+            Analytics.storyBookmarked({
                 storyId:         variables.storyId,
                 positionSeconds: variables.positionSeconds,
             });

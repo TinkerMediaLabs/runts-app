@@ -15,6 +15,7 @@ import { useApp } from '@/context/AppContext';
 import { usePlayer } from '@/context/PlayerContext';
 
 import MenuHeader from '../../components/common/MenuHeader';
+import { useNavigation } from '@react-navigation/native';
 
 
 const EditProfile = () => {
@@ -24,6 +25,8 @@ const EditProfile = () => {
 
     const styles = useStyles();
     const typo = useTypography();
+
+    const navigation = useNavigation();
 
     return (
         <Screen>

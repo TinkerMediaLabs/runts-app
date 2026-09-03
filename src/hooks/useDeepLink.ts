@@ -27,6 +27,7 @@ export function useDeepLink() {
         const storyId = match[1];
 
         try {
+            const client = generateClient<Schema>();
             const { data: story } = await client.models.Story.get({ id: storyId });
 
             if (story?.isErotic === 'true' && !eroticEnabled) {

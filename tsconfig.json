@@ -2,10 +2,13 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "strict": true,
-    "baseUrl": ".",
+    "skipLibCheck": true,
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
+      ],
+      "@rudderstack/rudder-sdk-react-native": [
+        "./src/types/rudderstack-stub.ts"
       ]
     }
   },

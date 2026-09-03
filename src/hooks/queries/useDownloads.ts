@@ -167,6 +167,7 @@ export async function syncDownloads(): Promise<void> {
 
   try {
     const { userId } = await getCurrentUser();
+    const client = generateClient<Schema>();
 
     const { data: pinnedRecords } = await client.models.UserPinnedStory.list({
       filter: { userId: { eq: userId } },
