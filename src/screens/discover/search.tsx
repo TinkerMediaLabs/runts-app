@@ -51,6 +51,8 @@ import {
   type DurationFilter,
 } from '../../hooks/queries/useSearch';
 
+import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
+
 import { Analytics } from '@/lib/analytics';
 
 import { spacing } from '@/theme/spacing';
@@ -135,34 +137,38 @@ const SearchAuthorItem = React.memo(({
 }: {
   item: any;
   navigation: any;
-}) => (
-  <TouchableOpacity
-    activeOpacity={0.75}
-    onPress={() => navigation.navigate('AuthorDetails', { id: item.id })}
-    style={styles.authorItem}
-  >
-    <Image
-      source={
-        item.profilePicUri
-          ? { uri: item.profilePicUri }
-          : require('../../../assets/images/blankprofile.png')
-      }
-      style={styles.authorAvatar}
-    />
-    <View style={styles.authorInfo}>
-      <Text style={styles.authorName} numberOfLines={1}>{item.name}</Text>
-      {item.bio ? (
-        <Text style={styles.authorBio} numberOfLines={2}>{item.bio}</Text>
-      ) : null}
-    </View>
-    <FontAwesome5
-      name={'chevron-right' as any}
-      size={12}
-      color="rgba(255,255,255,0.25)"
-      iconStyle="solid"
-    />
-  </TouchableOpacity>
-));
+}) => {
+  const { data: authorImageUrl } = useAuthorImage(item?.profilePicUri);
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.75}
+      onPress={() => navigation.navigate('AuthorDetails', { id: item.id })}
+      style={styles.authorItem}
+    >
+      <Image
+        source={
+          authorImageUrl
+            ? { uri: authorImageUrl }
+            : require('../../../assets/images/blankprofile.png')
+        }
+        style={styles.authorAvatar}
+      />
+      <View style={styles.authorInfo}>
+        <Text style={styles.authorName} numberOfLines={1}>{item.name}</Text>
+        {item.bio ? (
+          <Text style={styles.authorBio} numberOfLines={2}>{item.bio}</Text>
+        ) : null}
+      </View>
+      <FontAwesome5
+        name={'chevron-right' as any}
+        size={12}
+        color="rgba(255,255,255,0.25)"
+        iconStyle="solid"
+      />
+    </TouchableOpacity>
+  );
+});
 
 // ---------------------------------------------------------------------------
 // FilterChip

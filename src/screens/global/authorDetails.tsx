@@ -33,6 +33,7 @@ import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useStories } from '../../hooks/queries/useStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useTags } from '../../hooks/queries/useTags';
+import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
 import {
   useIsFollowing,
@@ -114,6 +115,7 @@ const CreatorProfile = () => {
 
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: author, isLoading: authorLoading } = useAuthor(id);
+    const { data: authorImageUrl } = useAuthorImage(author?.profilePicUri);
     const { data: allStories, isLoading: storiesLoading } = useStories();
     const { data: tags } = useTags();
 
@@ -260,8 +262,8 @@ const CreatorProfile = () => {
                         <View style={styles.avatarWrapper}>
                             <Image
                                 source={
-                                    author?.profilePicUri
-                                        ? { uri: author.profilePicUri }
+                                    authorImageUrl
+                                        ? { uri: authorImageUrl }
                                         : require('../../../assets/images/blankprofile.png')
                                 }
                                 style={styles.avatar}
