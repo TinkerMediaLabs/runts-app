@@ -221,7 +221,7 @@ const CreatorProfile = () => {
                <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={handleToggleFollow}
-                    disabled={following || unfollowing || followLoading}
+                    // disabled={following || unfollowing || followLoading}
                     style={[styles.followBtn, isFollowing && styles.followBtnActive]}
                     >
                     <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
