@@ -21,7 +21,7 @@ import {
     useStoriesByTagShort,
     useStoriesByStoryTag,
 } from '../../hooks/queries/useStories';
-import { useTags }    from '../../hooks/queries/useTags';
+import { useTagNames }    from '../../hooks/queries/useTagNames';
 import { useAuthors } from '../../hooks/queries/useAuthors';
 
 // ---------------------------------------------------------------------------
@@ -40,19 +40,17 @@ const GenreHome = ({ navigation }: any) => {
     const { data: trendingStories, isLoading: trendingLoading } = useStoriesByTagTrending(tagId);
     const { data: shortStories,    isLoading: shortLoading }    = useStoriesByTagShort(tagId);
 
-    const { data: tags }    = useTags();
     const { data: authors } = useAuthors();
 
     const isLoading = newLoading || trendingLoading || shortLoading;
 
     // ── Lookup maps ───────────────────────────────────────────────────────────
-    const tagMap = useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
+const primaryTagIds = useMemo(() => {
+    const all = [...(newStories ?? []), ...(trendingStories ?? []), ...(shortStories ?? [])];
+    return all.flatMap((s: any) => [s.primaryTagId, s.secondaryTagId]);
+}, [newStories, trendingStories, shortStories]);
+
+const { data: tagMap = {} } = useTagNames(primaryTagIds);
 
     const authorMap = useMemo(() => {
         if (!authors) return {};
@@ -86,10 +84,20 @@ const GenreHome = ({ navigation }: any) => {
     const { data: taggedStories, isLoading: taggedLoading } =
         useStoriesByStoryTag(primaryEmpty ? tagId : '');
 
-    const enrichedTagged = useMemo(
-        () => enrich(taggedStories ?? []),
-        [taggedStories, tagMap, authorMap]
-    );
+const taggedTagIds = useMemo(() => {
+    return (taggedStories ?? []).flatMap((s: any) => [s.primaryTagId, s.secondaryTagId]);
+}, [taggedStories]);
+
+const { data: taggedTagMap = {} } = useTagNames(taggedTagIds);
+
+const enrichedTagged = useMemo(() => {
+    return (taggedStories ?? []).map((s: any) => ({
+        ...s,
+        primaryTagName:   taggedTagMap[s.primaryTagId   ?? ''] ?? tagMap[s.primaryTagId   ?? ''] ?? '',
+        secondaryTagName: taggedTagMap[s.secondaryTagId ?? ''] ?? tagMap[s.secondaryTagId ?? ''] ?? '',
+        authorName:       authorMap[s.authorId ?? ''] ?? '',
+    }));
+}, [taggedStories, taggedTagMap, tagMap, authorMap]);
 
     const totalLoading = isLoading || (primaryEmpty && taggedLoading);
     const totalEmpty   =

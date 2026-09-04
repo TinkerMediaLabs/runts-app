@@ -30,7 +30,8 @@ import SearchInput from '../../components/common/SearchInput';
 
 import { useStoryImage }  from '../../hooks/queries/useStoryImage';
 import { useAuthors }     from '../../hooks/queries/useAuthors';
-import { usePrimaryTags, useTags } from '../../hooks/queries/useTags';
+import { usePrimaryTags } from '../../hooks/queries/useTags';
+import { useTagNames } from '../../hooks/queries/useTagNames';
 import {
   useSearchStories,
   useSearchAuthors,
@@ -388,7 +389,6 @@ const SearchScreen = ({ navigation }: any) => {
   // ── Supporting data ───────────────────────────────────────────────────────
   const { data: authors }     = useAuthors();
   const { data: primaryTags } = usePrimaryTags();
-  const { data: tags } = useTags();
 
   const authorMap = useMemo(() => {
     if (!authors) return {};
@@ -398,13 +398,6 @@ const SearchScreen = ({ navigation }: any) => {
     }, {});
   }, [authors]);
 
-const tagMap = useMemo(() => {
-    if (!tags) return {};
-    return tags.reduce((acc: Record<string, string>, t) => {
-      if (t.id && t.name) acc[t.id] = t.name;
-      return acc;
-    }, {});
-}, [tags]);
 
   // ── Search queries (lazy per tab) ─────────────────────────────────────────
 const {
@@ -420,6 +413,7 @@ const {
     duration,
     enabled:  true,
 });
+
 
 const {
     data: authorData,
@@ -448,6 +442,12 @@ const storyItems = useMemo(() => {
     if (eroticEnabled) return all;
     return all.filter((s: any) => s.isErotic !== 'true');
 }, [storyData, eroticEnabled]);
+
+  const allTagIds = useMemo(() => {
+      return storyItems.flatMap((s: any) => [s.primaryTagId, s.secondaryTagId]);
+  }, [storyItems]);
+
+  const { data: tagMap = {} } = useTagNames(allTagIds);
 
 const authorResults = useMemo(() => {
     return authorData?.pages.flatMap(p => p.items) ?? [];

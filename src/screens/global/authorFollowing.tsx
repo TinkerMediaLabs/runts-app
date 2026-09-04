@@ -7,10 +7,10 @@ import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
 import AuthorTile from '../../components/story/AuthorTile';
 import { useFollowedAuthors } from '../../hooks/queries/useAuthorFollowing';
-import { useTags } from '../../hooks/queries/useTags';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { useStories } from '../../hooks/queries/useStories';
+import { useTagNames } from '@/hooks/queries/useTagNames';
 
 export default function AuthorFollowingScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -28,16 +28,6 @@ export default function AuthorFollowingScreen({ navigation }: any) {
     }, {});
     }, [allStories]);
 
-  const { data: tags } = useTags();
-
-  const tagMap = useMemo(() => {
-    if (!tags) return {};
-    return tags.reduce((acc: Record<string, string>, tag) => {
-      if (tag.id && tag.name) acc[tag.id] = tag.name;
-      return acc;
-    }, {});
-  }, [tags]);
-
   const {
     data,
     isLoading,
@@ -45,6 +35,13 @@ export default function AuthorFollowingScreen({ navigation }: any) {
     fetchNextPage,
     hasNextPage,
   } = useFollowedAuthors();
+
+  const allAuthorTagIds = useMemo(() => {
+    const items = data?.pages.flatMap(p => p.items) ?? [];
+    return items.flatMap((item: any) => item.author?.primaryGenres ?? []);
+}, [data]);
+
+const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
 
   const items = data?.pages.flatMap(p => p.items) ?? [];
 

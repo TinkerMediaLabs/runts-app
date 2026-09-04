@@ -19,7 +19,7 @@ import LetterBrowser, { LengthFilter } from '../../components/story/LetterBrowse
 
 import { useStories }    from '../../hooks/queries/useStories';
 import { useAuthors }    from '../../hooks/queries/useAuthors';
-import { useTags }       from '../../hooks/queries/useTags';
+import { useTagNames }       from '../../hooks/queries/useTagNames';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 // ---------------------------------------------------------------------------
@@ -138,8 +138,6 @@ const BrowseByTitle = ({ navigation }: any) => {
     } = useStories();
 
     const { data: authors } = useAuthors();
-    const { data: tags }    = useTags();
-
     const authorMap = useMemo(() => {
         if (!authors) return {};
         return authors.reduce((acc: Record<string, string>, a) => {
@@ -148,13 +146,6 @@ const BrowseByTitle = ({ navigation }: any) => {
         }, {});
     }, [authors]);
 
-    const tagMap = useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, t) => {
-            if (t.id && t.name) acc[t.id] = t.name;
-            return acc;
-        }, {});
-    }, [tags]);
 
     // ── Filter stories by letter + duration ───────────────────────────────────
     // LetterBrowser expresses duration in milliseconds; Story.duration is in
@@ -170,6 +161,13 @@ const BrowseByTitle = ({ navigation }: any) => {
             return true;
         });
     }, [allStories, selectedLetter, startingTime, endingTime]);
+
+        const allTagIds = useMemo(() => {
+        if (!filteredStories) return [];
+        return filteredStories.flatMap((s: any) => [s.primaryTagId, s.secondaryTagId]);
+    }, [filteredStories]);
+
+    const { data: tagMap = {} } = useTagNames(allTagIds);
 
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleLetterSelect = (letter: string, index: number) => {

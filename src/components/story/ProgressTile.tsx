@@ -18,16 +18,16 @@ import StoryTile from './StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useDeleteInProgressStory } from '../../hooks/queries/useInProgressStories';
 
+import { useTag } from '../../hooks/queries/useTagNames';
+
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 
 const ProgressTile = ({
     inProgressRecord,
-    tagMap,
     authorMap,
 }: {
     inProgressRecord: any;
-    tagMap: Record<string, string>;
     authorMap: Record<string, string>;
 }) => {
     const [story, setStory] = useState<any>(null);
@@ -49,6 +49,9 @@ const ProgressTile = ({
         story?.imageUri?.startsWith('stories/') ? story.imageUri : null
     );
     const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
+
+    const { data: primaryTagData }   = useTag(story?.primaryTagId);
+    const { data: secondaryTagData } = useTag(story?.secondaryTagId);
 
     // Derived values — safe when story is null
     const progressSeconds = inProgressRecord.progressSeconds ?? 0;
@@ -78,8 +81,8 @@ const ProgressTile = ({
             <StoryTile
                 title={story.title}
                 imageUri={displayImageUri}
-                primaryTag={tagMap[story.primaryTagId ?? ''] ?? ''}
-                secondaryTag={tagMap[story.secondaryTagId ?? ''] ?? ''}
+                primaryTag={primaryTagData?.name ?? ''}
+                secondaryTag={secondaryTagData?.name ?? ''}
                 audioUri={story.audioUri ?? ''}
                 summary={story.summary ?? ''}
                 author={authorMap[story.authorId ?? ''] ?? ''}

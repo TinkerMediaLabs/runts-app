@@ -21,6 +21,7 @@ import ContinueListening from '../../components/story/ContinueListening';
 
 import { useStories } from '../../hooks/queries/useStories';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
+import { useTagNames } from '../../hooks/queries/useTagNames';
 
 const HomeScreen = ({ navigation }: any) => {
 
@@ -64,13 +65,12 @@ const HomeScreen = ({ navigation }: any) => {
         setText(welcomeText[getRandomInt(welcomeText.length)]);
     }, []);
 
-    const tagMap = React.useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
+    const allTagIds = React.useMemo(() => {
+        if (!stories) return [];
+        return stories.flatMap(s => [s.primaryTagId, s.secondaryTagId]);
+    }, [stories]);
+
+    const { data: tagMap } = useTagNames(allTagIds);
 
     const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
