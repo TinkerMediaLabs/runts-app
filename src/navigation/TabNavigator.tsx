@@ -4,6 +4,7 @@ import {Dimensions} from 'react-native';
 
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Octicons } from '@react-native-vector-icons/octicons';
+import { MaterialDesignIcons } from '@react-native-vector-icons/material-design-icons';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -65,37 +66,71 @@ export default function BottomTabNavigator() {
         }
           }}>
       <BottomTab.Screen
-        name="Discover"
-        component={HomeNavigator}
-        options={{
-          tabBarIcon: ({ color }) => <Octicons name='telescope-fill' size={25} style={{ marginBottom: -4 }} color={color} />,
-          headerShown: false
-        }}
+  name="Discover"
+  component={HomeNavigator}
+  options={{
+    tabBarLabel: 'For You',
+    tabBarIcon: ({ focused, color }) => (
+      <Ionicons
+        name={focused ? 'sparkles' : 'sparkles-outline'}
+        size={22}
+        style={{ marginBottom: -4 }}
+        color={color}
       />
-      <BottomTab.Screen
-        name="Browse"
-        component={DiscoverNavigator}
-        options={{
-          tabBarIcon: ({ color }) => <Ionicons name='library-sharp' size={25} style={{ marginBottom: -4 }} color={color} />,
-          headerShown: false,
-        }}
+    ),
+    headerShown: false,
+  }}
+/>
+<BottomTab.Screen
+  name="Browse"
+  component={DiscoverNavigator}
+  options={{
+    tabBarLabel: 'Browse',
+    tabBarIcon: ({ focused, color }) => (
+      <Ionicons
+        name={focused ? 'compass' : 'compass-outline'}
+        size={25}
+        style={{ marginBottom: -4 }}
+        color={color}
       />
-      <BottomTab.Screen
-        name="Playlist"
-        component={PlaylistNavigator}
-        options={{
-          tabBarIcon: ({ color }) => <Ionicons name='disc' size={25} style={{ marginBottom: -4 }} color={color} />,
-          headerShown: false,
-        }}
+    ),
+    headerShown: false,
+  }}
+/>
+<BottomTab.Screen
+  name="Playlist"
+  component={PlaylistNavigator}
+  options={{
+    tabBarLabel: 'Library',
+    tabBarIcon: ({ focused, color }) => (
+      <Ionicons
+        name={focused ? 'library-sharp' : 'library-outline'}
+        size={22}
+        style={{ marginBottom: -4 }}
+        color={color}
       />
-        {!isPremium && (                          
-        <BottomTab.Screen name="Premium" component={PremiumNavigator}
-          options={{
-            tabBarIcon: ({ color }) => <Ionicons name='star' size={25} style={{ marginBottom: -4 }} color={color} />,
-            headerShown: false,
-          }}
+    ),
+    headerShown: false,
+  }}
+/>
+{!isPremium && (
+  <BottomTab.Screen
+    name="Premium"
+    component={PremiumNavigator}
+    options={{
+      tabBarLabel: 'Premium',
+      tabBarIcon: ({ focused, color }) => (
+        <MaterialDesignIcons
+          name={focused ? 'crown' : 'crown-outline'}
+          size={25}
+          style={{ marginBottom: -4 }}
+          color={color}
         />
-      )}
+      ),
+      headerShown: false,
+    }}
+  />
+)}
       
     </BottomTab.Navigator>
   );
