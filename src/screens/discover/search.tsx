@@ -30,7 +30,7 @@ import SearchInput from '../../components/common/SearchInput';
 
 import { useStoryImage }  from '../../hooks/queries/useStoryImage';
 import { useAuthors }     from '../../hooks/queries/useAuthors';
-import { usePrimaryTags } from '../../hooks/queries/useTags';
+import { usePrimaryTags, useTags } from '../../hooks/queries/useTags';
 import {
   useSearchStories,
   useSearchAuthors,
@@ -79,6 +79,11 @@ const DURATION_OPTIONS: { value: DurationFilter; label: string }[] = [
 const DEBOUNCE_MS = 300;
 const SCRUNCH_END = 60; // scrollY value at which scrunch is complete
 
+function formatCount(count: number, hasMore?: boolean): string {
+    if (count === 0) return '0';
+    return hasMore ? `${count}+` : String(count);
+}
+
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<any>);
 
 // ---------------------------------------------------------------------------
@@ -105,6 +110,7 @@ const SearchStoryItem = React.memo(({
       title={item.title}
       imageUri={displayImageUri}
       primaryTag={tagMap[item.primaryTagId ?? ''] ?? ''}
+      secondaryTag={tagMap[item.secondaryTagId ?? ''] ?? ''}
       audioUri={item.audioUri ?? ''}
       summary={item.summary ?? ''}
       author={authorMap[item.authorId ?? ''] ?? ''}
@@ -382,6 +388,7 @@ const SearchScreen = ({ navigation }: any) => {
   // ── Supporting data ───────────────────────────────────────────────────────
   const { data: authors }     = useAuthors();
   const { data: primaryTags } = usePrimaryTags();
+  const { data: tags } = useTags();
 
   const authorMap = useMemo(() => {
     if (!authors) return {};
@@ -391,55 +398,65 @@ const SearchScreen = ({ navigation }: any) => {
     }, {});
   }, [authors]);
 
-  const tagMap = useMemo(() => {
-    if (!primaryTags) return {};
-    return primaryTags.reduce((acc: Record<string, string>, t) => {
+const tagMap = useMemo(() => {
+    if (!tags) return {};
+    return tags.reduce((acc: Record<string, string>, t) => {
       if (t.id && t.name) acc[t.id] = t.name;
       return acc;
     }, {});
-  }, [primaryTags]);
+}, [tags]);
 
   // ── Search queries (lazy per tab) ─────────────────────────────────────────
-  const {
+const {
     data: storyData,
     isLoading: storiesLoading,
     isFetchingNextPage: storiesFetchingMore,
     fetchNextPage: fetchMoreStories,
     hasNextPage: hasMoreStories,
-  } = useSearchStories({
+} = useSearchStories({
     query:    debouncedQuery,
     sortBy,
     tagId:    selectedTagId,
     duration,
-    enabled:  activeTab === 'stories',
-  });
+    enabled:  true,
+});
 
-  const {
-    data: authorResults,
+const {
+    data: authorData,
     isLoading: authorsLoading,
-  } = useSearchAuthors({
+    isFetchingNextPage: authorsFetchingMore,
+    fetchNextPage: fetchMoreAuthors,
+    hasNextPage: hasMoreAuthors,
+} = useSearchAuthors({
     query:   debouncedQuery,
-    enabled: activeTab === 'authors',
-  });
+    enabled: true,
+});
 
-  const {
-    data: tagResults,
+const {
+    data: tagData,
     isLoading: tagsLoading,
-  } = useSearchTags({
+    isFetchingNextPage: tagsFetchingMore,
+    fetchNextPage: fetchMoreTags,
+    hasNextPage: hasMoreTags,
+} = useSearchTags({
     query:   debouncedQuery,
-    enabled: activeTab === 'tags',
-  });
+    enabled: true,
+});
 
-  const storyItems = useMemo(() => {
+const storyItems = useMemo(() => {
     const all = storyData?.pages.flatMap(p => p.items) ?? [];
-    // Filter erotic stories from search results when erotic is disabled
     if (eroticEnabled) return all;
     return all.filter((s: any) => s.isErotic !== 'true');
 }, [storyData, eroticEnabled]);
 
-  const filteredTagResults = useMemo(() => {
-      return (tagResults ?? []).filter((t: any) => !t.isErotic);
-  }, [tagResults]);
+const authorResults = useMemo(() => {
+    return authorData?.pages.flatMap(p => p.items) ?? [];
+}, [authorData]);
+
+const filteredTagResults = useMemo(() => {
+    const all = tagData?.pages.flatMap(p => p.items) ?? [];
+    return all.filter((t: any) => !t.isErotic);
+}, [tagData]);
 
   // ── Render helpers ────────────────────────────────────────────────────────
   const renderStory = useCallback(({ item }: any) => (
@@ -512,6 +529,11 @@ const SearchScreen = ({ navigation }: any) => {
         <View style={styles.tabBar}>
           {TABS.map((tab, i) => {
             const isActive = activeTab === tab.id;
+            const countLabel =
+              tab.id === 'stories' ? formatCount(storyItems.length, hasMoreStories) :
+              tab.id === 'authors' ? formatCount(authorResults.length, hasMoreAuthors) :
+              formatCount(filteredTagResults.length, hasMoreTags);
+
             return (
               <TouchableOpacity
                 key={tab.id}
@@ -520,12 +542,9 @@ const SearchScreen = ({ navigation }: any) => {
                 style={styles.tab}
               >
                 <Animated.View style={tabIconStyle}>
-                  <FontAwesome5
-                    name={tab.icon}
-                    size={13}
-                    color={isActive ? 'cyan' : 'rgba(255,255,255,0.35)'}
-                    iconStyle="solid"
-                  />
+                  <Text style={[styles.tabCount, isActive && styles.tabCountActive]}>
+                    {countLabel}
+                  </Text>
                 </Animated.View>
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                   {tab.label}
@@ -633,16 +652,25 @@ const SearchScreen = ({ navigation }: any) => {
                 <ActivityIndicator color="cyan" />
               </View>
             ) : (
-              <AnimatedFlatList
-                data={authorResults ?? []}
-                renderItem={renderAuthor}
-                keyExtractor={(item: any) => item.id}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                onScroll={scrollHandler}
-                scrollEventThrottle={16}
-                contentContainerStyle={styles.listContent}
-                ListEmptyComponent={
+             <AnimatedFlatList
+              data={authorResults}
+              renderItem={renderAuthor}
+              keyExtractor={(item: any) => item.id}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
+              onEndReached={() => {
+                  if (hasMoreAuthors && !authorsFetchingMore) fetchMoreAuthors();
+              }}
+              onEndReachedThreshold={0.4}
+              contentContainerStyle={styles.listContent}
+              ListFooterComponent={
+                  authorsFetchingMore
+                      ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+                      : null
+              }
+              ListEmptyComponent={
                   <EmptyState
                     icon={'user-edit' as any}
                     title={debouncedQuery.length >= 2
@@ -663,7 +691,7 @@ const SearchScreen = ({ navigation }: any) => {
                 <ActivityIndicator color="cyan" />
               </View>
             ) : (
-              <AnimatedFlatList
+             <AnimatedFlatList
                 data={filteredTagResults}
                 renderItem={renderTag}
                 keyExtractor={(item: any) => item.id}
@@ -671,7 +699,16 @@ const SearchScreen = ({ navigation }: any) => {
                 keyboardShouldPersistTaps="handled"
                 onScroll={scrollHandler}
                 scrollEventThrottle={16}
+                onEndReached={() => {
+                    if (hasMoreTags && !tagsFetchingMore) fetchMoreTags();
+                }}
+                onEndReachedThreshold={0.4}
                 contentContainerStyle={styles.listContent}
+                ListFooterComponent={
+                    tagsFetchingMore
+                        ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+                        : null
+                }
                 ListEmptyComponent={
                   <EmptyState
                     icon={'tag' as any}
@@ -742,6 +779,15 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: 'cyan',
   },
+  tabCount: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.35)',
+    lineHeight: 16,
+},
+tabCountActive: {
+    color: 'cyan',
+},
   tabIndicator: {
     position: 'absolute',
     bottom: 0,

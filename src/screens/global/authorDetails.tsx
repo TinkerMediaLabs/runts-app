@@ -66,6 +66,7 @@ const AuthorStoryTile = ({ item, tagMap, authorName }: { item: any; tagMap: Reco
             title={item.title}
             imageUri={displayImageUri}
             primaryTag={tagMap[item.primaryTagId] ?? ''}
+            secondaryTag={tagMap[item.secondaryTagId ?? ''] ?? ''}
             audioUri={item.audioUri}
             summary={item.summary}
             description={item.description}
@@ -165,7 +166,7 @@ const CreatorProfile = () => {
     const headerStyle = useAnimatedStyle(() => ({
         opacity: interpolate(
             scrollY.value,
-            [0, HEADER_H * 0.6],
+            [0, HEADER_H * 2.0],
             [1, 0],
             Extrapolation.CLAMP
         ),
@@ -251,17 +252,13 @@ const CreatorProfile = () => {
                         />
 
                         {/* Avatar */}
-                        <View style={styles.avatarWrapper}>
-                            <Image
-                                source={
-                                    authorImageUrl
-                                        ? { uri: authorImageUrl }
-                                        : require('../../../assets/images/blankprofile.png')
-                                }
-                                style={styles.avatar}
-                            />
-                            <View style={styles.avatarRing} />
-                        </View>
+                        {/* Avatar — hidden entirely if the author has no image */}
+                        {authorImageUrl ? (
+                            <View style={styles.avatarWrapper}>
+                                <Image source={{ uri: authorImageUrl }} style={styles.avatar} />
+                                <View style={styles.avatarRing} />
+                            </View>
+                        ) : null}
 
                         {/* Name */}
                         <Text style={styles.name}>{author?.name ?? ''}</Text>

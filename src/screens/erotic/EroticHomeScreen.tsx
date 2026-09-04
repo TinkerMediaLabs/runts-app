@@ -62,6 +62,7 @@ const EroticStoryItem = React.memo(({ item, authorMap, tagMap }: {
                 title={item.title}
                 imageUri={displayImageUri}
                 primaryTag={tagMap[item.primaryTagId ?? ''] ?? ''}
+                secondaryTag={tagMap[item.secondaryTagId ?? ''] ?? ''}
                 audioUri={item.audioUri ?? ''}
                 summary={item.summary ?? ''}
                 description={item.description ?? ''}

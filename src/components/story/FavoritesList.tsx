@@ -32,6 +32,7 @@ const FavoriteStoryRow = ({ story, authorMap, tagMap }: any) => {
         title={story.title}
         imageUri={displayImageUri}
         primaryTag={tagMap[story.primaryTagId ?? ''] ?? ''}
+        secondaryTag={tagMap[story.secondaryTagId ?? ''] ?? ''}
         audioUri={story.audioUri ?? ''}
         summary={story.summary ?? ''}
         author={authorMap[story.authorId ?? ''] ?? ''}

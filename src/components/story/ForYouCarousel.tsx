@@ -64,6 +64,7 @@ type ItemProps = {
     id:             string;
     title:          string;
     primaryTagName: string;
+    secondaryTagName: string;
     summary:        string;
     imageUri:       string;
     audioUri:       string;
@@ -76,7 +77,7 @@ type ItemProps = {
 };
 
 const CarouselItem = ({
-    id, title, primaryTagName, summary,
+    id, title, primaryTagName, secondaryTagName, summary,
     imageUri, audioUri, author, duration,
     numListens, avgRating, numRatings,
     isPremium,
@@ -190,9 +191,14 @@ const CarouselItem = ({
 
                         {/* Stats row: tag · rating · listens */}
                         <View style={styles.metaRow}>
-                            {primaryTagName ? (
+                           {primaryTagName ? (
                                 <View style={styles.tagPill}>
                                     <Text style={styles.tagPillText}>{primaryTagName}</Text>
+                                </View>
+                            ) : null}
+                            {secondaryTagName ? (
+                                <View style={styles.tagPill}>
+                                    <Text style={styles.tagPillText}>{secondaryTagName}</Text>
                                 </View>
                             ) : null}
 
@@ -271,6 +277,7 @@ const ForYouCarousel = ({ stories, tagMap }: {
             title={item?.title}
             imageUri={item?.imageUri ?? ''}
             primaryTagName={item?.primaryTagName ?? ''}
+            secondaryTagName={item?.secondaryTagName ?? ''}
             audioUri={item?.audioUri ?? ''}
             summary={item?.summary ?? ''}
             author={item?.authorName ?? ''}

@@ -30,6 +30,7 @@ const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 const StoryTile = ({
     title,
     primaryTag,
+    secondaryTag,
     summary,
     imageUri,
     nsfw,
@@ -120,6 +121,12 @@ const StoryTile = ({
 
                             <View style={styles.metaRow}>
                                 <Text style={styles.tag}>{primaryTag}</Text>
+                                {secondaryTag ? (
+                                    <>
+                                        <View style={styles.dot} />
+                                        <Text style={styles.tag}>{secondaryTag}</Text>
+                                    </>
+                                ) : null}
                                 <View style={styles.dot} />
                                 <FontAwesome5 name="headphones" size={11} color="#ffffff40" iconStyle="solid" />
                                 <Text style={styles.listenCount}>{numListens ?? 0}</Text>
@@ -154,6 +161,21 @@ const StoryTile = ({
                                     resizeMode="cover"
                                 />
                             </TouchableWithoutFeedback>
+
+                            {(primaryTag || secondaryTag) ? (
+                                <View style={styles.expandedTagRow}>
+                                    {primaryTag ? (
+                                        <View style={styles.expandedTagPill}>
+                                            <Text style={styles.expandedTagPillText}>{primaryTag}</Text>
+                                        </View>
+                                    ) : null}
+                                    {secondaryTag ? (
+                                        <View style={styles.expandedTagPill}>
+                                            <Text style={styles.expandedTagPillText}>{secondaryTag}</Text>
+                                        </View>
+                                    ) : null}
+                                </View>
+                            ) : null}
 
                             {/* Summary */}
                             {summary ? (
@@ -238,6 +260,7 @@ const styles = StyleSheet.create({
         height: 60,
         borderRadius: 10,
         backgroundColor: '#2a2a2a',
+        alignSelf: 'flex-start',
         // width is animated — don't set it here
     },
     textBlock: {
@@ -298,6 +321,23 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#ffffffa5',
         lineHeight: 20,
+    },
+    expandedTagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+},
+    expandedTagPill: {
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 10,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    expandedTagPillText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.75)',
+        textTransform: 'capitalize',
     },
     actions: {
         flexDirection: 'row',

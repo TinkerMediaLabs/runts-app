@@ -72,6 +72,7 @@ const BrowseStoryItem = React.memo(({
                 title={item.title}
                 imageUri={displayImageUri}
                 primaryTag={tagMap[item.primaryTagId ?? ''] ?? ''}
+                secondaryTag={tagMap[item.secondaryTagId ?? ''] ?? ''}
                 audioUri={item.audioUri ?? ''}
                 summary={item.summary ?? ''}
                 description={item.description ?? ''}

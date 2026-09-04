@@ -52,6 +52,7 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
             imageUri={item.imageUri}
             primaryTagName={item.primaryTagName}
             secondaryTagName={item.secondaryTagName}
+            author={item.authorName}
             audioUri={item.audioUri}
             summary={item.summary}
             description={item.description}
