@@ -5,7 +5,9 @@
 # Swaps in the correct amplify_outputs.json for the target environment,
 # verifies it matches the expected AppSync URL, publishes the OTA update
 # to both platforms, then restores your local amplify_outputs.json back
-# to whatever it was before running this script.
+# to whatever it was before running this script — even if a step fails
+# partway through (e.g. a network timeout), via a trap that always runs
+# the restore on exit.
 
 set -e
 
@@ -42,6 +44,20 @@ esac
 echo "Backing up current amplify_outputs.json..."
 cp amplify_outputs.json /tmp/amplify_outputs.current.json.bak
 
+# Guarantee restoration on ANY exit — success, failure, network timeout,
+# or Ctrl+C — so the local file can never be left stuck on the wrong
+# environment again.
+RESTORED=0
+restore_config() {
+  if [ "$RESTORED" -eq 0 ] && [ -f /tmp/amplify_outputs.current.json.bak ]; then
+    cp /tmp/amplify_outputs.current.json.bak amplify_outputs.json
+    rm -f /tmp/amplify_outputs.current.json.bak
+    RESTORED=1
+    echo "Restored local amplify_outputs.json to its previous state."
+  fi
+}
+trap restore_config EXIT
+
 echo "Swapping in $CONFIG_FILE for $ENV..."
 cp "$CONFIG_FILE" amplify_outputs.json
 
@@ -49,8 +65,6 @@ ACTUAL_URL=$(grep -o '"url": *"[^"]*"' amplify_outputs.json | grep -o "https://[
 
 if [[ "$ACTUAL_URL" != *"$EXPECTED_URL"* ]]; then
   echo "ERROR: amplify_outputs.json does not match expected $ENV URL ($EXPECTED_URL). Aborting, no publish happened."
-  cp /tmp/amplify_outputs.current.json.bak amplify_outputs.json
-  rm /tmp/amplify_outputs.current.json.bak
   exit 1
 fi
 
@@ -60,8 +74,4 @@ echo "Publishing to branch: $BRANCH"
 eas update --branch "$BRANCH" --message "$MESSAGE" --platform ios
 eas update --branch "$BRANCH" --message "$MESSAGE" --platform android
 
-echo "Restoring previous local amplify_outputs.json..."
-cp /tmp/amplify_outputs.current.json.bak amplify_outputs.json
-rm /tmp/amplify_outputs.current.json.bak
-
-echo "Done. Local amplify_outputs.json restored to its previous state."
+echo "Publish complete."
