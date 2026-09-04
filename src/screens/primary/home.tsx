@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, TouchableWithoutFeedback, View, Dimensions, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import { FontAwesome } from '@react-native-vector-icons/fontawesome';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
@@ -114,7 +114,7 @@ const HomeScreen = ({ navigation }: any) => {
                         </Text>
                         <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')}>
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
-                                <FontAwesome name="user" size={20} color="#fff" />
+                                <Ionicons name="person" size={20} color="#fff" />
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
