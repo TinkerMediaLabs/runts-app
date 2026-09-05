@@ -179,6 +179,8 @@ const styles = StyleSheet.create({
         overflow:        'hidden',
         justifyContent:  'flex-end',
         backgroundColor: '#1c1c1c',
+        borderWidth:     0.5,
+        borderColor:     'rgba(255,255,255,0.1)',
     },
     cardImage: {
         borderRadius: 14,

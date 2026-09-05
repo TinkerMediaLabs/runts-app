@@ -327,14 +327,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
 
-    card: {
-        width:           CARD_WIDTH,
-        height:          CARD_HEIGHT,
-        borderRadius:    15,
-        overflow:        'hidden',
-        justifyContent:  'flex-end',
-        backgroundColor: '#171717',
-    },
+card: {
+    width:           CARD_WIDTH,
+    height:          CARD_HEIGHT,
+    borderRadius:    15,
+    overflow:        'hidden',
+    justifyContent:  'flex-end',
+    backgroundColor: '#171717',
+    borderWidth:     0.5,
+    borderColor:     'rgba(255,255,255,0.1)',
+},
     cardImage: {
         borderRadius: 15,
     },
