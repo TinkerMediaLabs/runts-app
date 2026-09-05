@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-    View,
-    Text,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-} from 'react-native';
+import { View, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import DraggableFlatList, {
     RenderItemParams,
@@ -18,8 +13,8 @@ import StoryTile from './StoryTile';
 import { useApp } from '@/context/AppContext';
 import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
-import { useTags } from '../../hooks/queries/useTags';
 import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useTag } from '../../hooks/queries/useTagNames';
 
 const client = generateClient<Schema>();
 
@@ -31,17 +26,14 @@ type StoryTileListProps = {
 // ---------------------------------------------------------------------------
 // Per-tile wrapper — resolves story data + S3 image
 // ---------------------------------------------------------------------------
-
 const PinnedStoryTile = ({
     item,
-    tagMap,
     authorMap,
     reorderEnabled,
     drag,
     isActive,
 }: {
     item: any;
-    tagMap: Record<string, string>;
     authorMap: Record<string, string>;
     reorderEnabled: boolean;
     drag?: () => void;
@@ -66,13 +58,17 @@ const PinnedStoryTile = ({
     );
     const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
 
+    const { data: primaryTagData }   = useTag(story?.primaryTagId);
+    const { data: secondaryTagData } = useTag(story?.secondaryTagId);
+
     if (!story) return null;
 
     return (
         <StoryTile
             title={story.title}
             imageUri={displayImageUri}
-            primaryTag={tagMap[story.primaryTagId ?? ''] ?? ''}
+            primaryTag={primaryTagData?.name ?? ''}
+            secondaryTag={secondaryTagData?.name ?? ''}
             audioUri={story.audioUri ?? ''}
             summary={story.summary ?? ''}
             author={authorMap[story.authorId ?? ''] ?? ''}
@@ -97,7 +93,6 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
     const { userId } = useApp();
 
     const { data: pinnedStories, isLoading, refetch } = usePinnedStories();
-    const { data: tags }    = useTags();
     const { data: authors } = useAuthors();
 
     const [isFetching, setIsFetching] = useState(false);
@@ -109,15 +104,6 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
             setLocalData(pinnedStories);
         }
     }, [pinnedStories]);
-
-    // Build tag lookup map
-    const tagMap = useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
 
     // Build author lookup map
     const authorMap = useMemo(() => {
@@ -156,7 +142,6 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         <ScaleDecorator activeScale={1.02}>
             <PinnedStoryTile
                 item={item}
-                tagMap={tagMap}
                 authorMap={authorMap}
                 reorderEnabled={reorderEnabled}
                 drag={drag}

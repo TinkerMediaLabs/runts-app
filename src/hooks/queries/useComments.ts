@@ -3,13 +3,14 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-const client = generateClient<Schema>();
+
 
 // ── Fetch comments for a story, sorted oldest first ───────────────────────
 export function useComments(storyId: string) {
   return useQuery({
     queryKey: ['comments', storyId],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { data } = await client.models.Comment.list({
         filter: { storyId: { eq: storyId } },
       });
@@ -35,6 +36,7 @@ export function usePostComment() {
       content: string;
       userName: string;
     }) => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
       return client.models.Comment.create({ userId, storyId, content, userName });
     },
@@ -57,6 +59,7 @@ export function useUpdateComment() {
       content: string;
       storyId: string;
     }) => {
+      const client = generateClient<Schema>();
       return client.models.Comment.update({ id, content });
     },
     onSuccess: (_, variables) => {
@@ -70,6 +73,7 @@ export function useDeleteComment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id }: { id: string; storyId: string }) => {
+      const client = generateClient<Schema>();
       return client.models.Comment.delete({ id });
     },
     onSuccess: (_, variables) => {

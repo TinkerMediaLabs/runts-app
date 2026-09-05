@@ -1,10 +1,8 @@
 //this screen is for users to see the list of stories that they have started but not yet finished
 
 import React, {useState, useEffect, useContext} from 'react';
-import { 
-    View, 
-    Text,
-} from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Screen from '@/components/common/Screen';
 

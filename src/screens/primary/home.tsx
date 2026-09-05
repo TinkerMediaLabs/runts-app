@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import {
-    ScrollView,
-    TouchableWithoutFeedback,
-    View,
-    Text,
-    Dimensions,
-    ActivityIndicator,
-} from 'react-native';
+import { ScrollView, TouchableWithoutFeedback, View, Dimensions, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
-import { FontAwesome } from '@react-native-vector-icons/fontawesome';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
@@ -27,6 +21,7 @@ import ContinueListening from '../../components/story/ContinueListening';
 
 import { useStories } from '../../hooks/queries/useStories';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
+import { useTagNames } from '../../hooks/queries/useTagNames';
 
 const HomeScreen = ({ navigation }: any) => {
 
@@ -70,13 +65,12 @@ const HomeScreen = ({ navigation }: any) => {
         setText(welcomeText[getRandomInt(welcomeText.length)]);
     }, []);
 
-    const tagMap = React.useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
+    const allTagIds = React.useMemo(() => {
+        if (!stories) return [];
+        return stories.flatMap(s => [s.primaryTagId, s.secondaryTagId]);
+    }, [stories]);
+
+    const { data: tagMap } = useTagNames(allTagIds);
 
     const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
@@ -120,7 +114,7 @@ const HomeScreen = ({ navigation }: any) => {
                         </Text>
                         <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')}>
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
-                                <FontAwesome name="user" size={20} color="#fff" />
+                                <Ionicons name="person" size={20} color="#fff" />
                             </View>
                         </TouchableWithoutFeedback>
                     </View>

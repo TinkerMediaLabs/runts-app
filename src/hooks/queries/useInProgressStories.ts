@@ -3,7 +3,7 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
 
-const client = generateClient<Schema>();
+
 
 // ---------------------------------------------------------------------------
 // Main Continue Listening — NEVER shows erotic stories.
@@ -15,6 +15,7 @@ export function useInProgressStories() {
     return useQuery({
         queryKey: ['inProgressStories'],
         queryFn: async () => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
             const { data, errors } = await client.models.UserInProgressStory.list({
                 filter: { userId: { eq: userId } },
@@ -49,6 +50,7 @@ export function useEroticInProgressStories() {
     return useQuery({
         queryKey: ['eroticInProgressStories'],
         queryFn: async () => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
             const { data, errors } = await client.models.UserInProgressStory.list({
                 filter: { userId: { eq: userId } },
@@ -118,6 +120,7 @@ export function useDeleteInProgressStory() {
 
     return useMutation({
         mutationFn: async (storyId: string) => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
             const { data: existing } = await client.models.UserInProgressStory.list({
                 filter: {

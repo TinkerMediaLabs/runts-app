@@ -13,5 +13,8 @@ export const storage = defineStorage({
     'authors/*': [
       allow.authenticated.to(['read', 'write', 'delete']),
     ],
+    'narrators/*': [
+      allow.authenticated.to(['read', 'write', 'delete']),
+    ],
   }),
 });

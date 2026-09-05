@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
+import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
 import { useUnfollowAuthor } from '../../hooks/queries/useAuthorFollowing';
 
@@ -30,6 +25,7 @@ export default function AuthorTile({
 
  const navigation = useNavigation<any>();
   const { mutate: unfollow, isPending } = useUnfollowAuthor();
+  const { data: authorImageUrl } = useAuthorImage(author?.profilePicUri);
 
   const primaryGenreNames = (author?.primaryGenres ?? [])
     .map((tagId: string) => tagMap[tagId])
@@ -46,14 +42,14 @@ export default function AuthorTile({
       style={styles.tile}
     >
       {/* Avatar */}
-      <Image
+     <Image
         source={
-          author?.profilePicUri
-            ? { uri: author.profilePicUri }
-            : require('../../../assets/images/blankprofile.png')
+            authorImageUrl
+                ? { uri: authorImageUrl }
+                : require('../../../assets/images/blankprofile.png')
         }
         style={styles.avatar}
-      />
+    />
 
       {/* Content */}
       <View style={styles.content}>

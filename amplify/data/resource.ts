@@ -212,6 +212,20 @@ Comment: a
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
+      // ── Narrator ──────────────────────────────────────────────────────────────
+  Narrator: a
+    .model({
+      id: a.id().required(),
+      name: a.string().required(),
+      profilePicUri: a.string(),
+      bio: a.string(),
+      stories: a.hasMany('StoryNarrator', 'narratorId'),
+    })
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
   // ── Story ─────────────────────────────────────────────────────────────────
   // CHANGED: added avgRating, numRatings, numComments (all optional — safe
   // to add to existing DynamoDB table, existing items unaffected).
@@ -244,8 +258,20 @@ Comment: a
       publisherId: a.string(),
       primaryTagId: a.string(),
       secondaryTagId: a.string(),
+      storyFormat: a.enum(['SHORT_STORY', 'NOVELLA', 'FLASH_FICTION']),
+      sequenceNumber: a.integer(),
+      universeId: a.string(),
+      pov: a.enum(['THIRD_PERSON', 'SECOND_PERSON', 'FIRST_PERSON', 'MULTIPLE_POV']),
+      narrationType: a.enum(['AI', 'HUMAN', 'MIXED']),
+      contentWarnings: a.string().array(),
+      tone: a.enum([
+        'FUNNY', 'DARK', 'SUSPENSEFUL', 'WHIMSICAL', 'ROMANTIC',
+        'EERIE', 'THOUGHT_PROVOKING', 'HOPEFUL', 'MELANCHOLIC', 'ADVENTUROUS',
+      ]),
       // Relations
       author: a.belongsTo('Author', 'authorId'),
+      universe: a.belongsTo('Universe', 'universeId'),
+      narrators: a.hasMany('StoryNarrator', 'storyId'),
       publisher: a.belongsTo('Publisher', 'publisherId'),
       tags: a.hasMany('StoryTag', 'storyId'),
       pinnedBy: a.hasMany('UserPinnedStory', 'storyId'),
@@ -265,6 +291,7 @@ Comment: a
       index('primaryTagId').sortKeys(['numListens']).name('byTagAndListens'),
       index('primaryTagId').sortKeys(['duration']).name('byTagAndDuration'),
       index('authorId').sortKeys(['publishedAt']).name('byAuthorAndPublishedAt'),
+      index('universeId').sortKeys(['publishedAt']).name('byUniverseAndPublishedAt'),
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
@@ -284,6 +311,18 @@ Comment: a
       tileImageUri: a.string(),
       isErotic: a.boolean().default(false),
       stories: a.hasMany('StoryTag', 'tagId'),
+    })
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
+      // ── Universe ──────────────────────────────────────────────────────────────
+  Universe: a
+    .model({
+      id: a.id().required(),
+      name: a.string().required(),
+      stories: a.hasMany('Story', 'universeId'),
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
@@ -318,6 +357,19 @@ Comment: a
       allow.owner(),
   ]),
 
+    // ── StoryNarrator (join table for many-to-many) ────────────────────────────
+  StoryNarrator: a
+    .model({
+      storyId: a.string().required(),
+      narratorId: a.string().required(),
+      story: a.belongsTo('Story', 'storyId'),
+      narrator: a.belongsTo('Narrator', 'narratorId'),
+    })
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
   // ── StoryTag (join table for many-to-many) ────────────────────────────────
   StoryTag: a
     .model({
@@ -337,6 +389,8 @@ Comment: a
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(incrementListens)),
 });
+
+
 
 
 

@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ImageBackground,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import FontAwesome  from '@react-native-vector-icons/fontawesome';
@@ -47,11 +42,13 @@ function fmtListens(n: number): string {
 const HorzStoryTile = ({
     title,
     primaryTagName,
+    secondaryTagName,
     imageUri,
     id,
     numListens,
     duration,
     avgRating,
+    author,
 }: any) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -102,9 +99,18 @@ const HorzStoryTile = ({
 
                     <View style={styles.info}>
                         {/* Tag */}
-                        {primaryTagName ? (
-                            <View style={styles.tagPill}>
-                                <Text style={styles.tagPillText}>{primaryTagName}</Text>
+                        {(primaryTagName || secondaryTagName) ? (
+                            <View style={styles.tagRow}>
+                                {primaryTagName ? (
+                                    <View style={styles.tagPill}>
+                                        <Text style={styles.tagPillText}>{primaryTagName}</Text>
+                                    </View>
+                                ) : null}
+                                {secondaryTagName ? (
+                                    <View style={styles.tagPill}>
+                                        <Text style={styles.tagPillText}>{secondaryTagName}</Text>
+                                    </View>
+                                ) : null}
                             </View>
                         ) : null}
 
@@ -112,6 +118,19 @@ const HorzStoryTile = ({
                         <Text style={styles.title} numberOfLines={3}>
                             {title}
                         </Text>
+
+                          {/* Author */}
+                            {author ? (
+                                <View style={styles.authorRow}>
+                                    <FontAwesome5
+                                        name="book-open"
+                                        size={9}
+                                        color="rgba(255,255,255,0.5)"
+                                        iconStyle="solid"
+                                    />
+                                    <Text style={styles.authorText} numberOfLines={1}>{author}</Text>
+                                </View>
+                            ) : null}
 
                         {/* Stats row */}
                         <View style={styles.statsRow}>
@@ -160,6 +179,8 @@ const styles = StyleSheet.create({
         overflow:        'hidden',
         justifyContent:  'flex-end',
         backgroundColor: '#1c1c1c',
+        borderWidth:     0.5,
+        borderColor:     'rgba(255,255,255,0.1)',
     },
     cardImage: {
         borderRadius: 14,
@@ -201,6 +222,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
         paddingVertical:   2,
     },
+    tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+},
+authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+},
+authorText: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.5)',
+    flexShrink: 1,
+},
     tagPillText: {
         fontSize:      10,
         fontWeight:    '600',

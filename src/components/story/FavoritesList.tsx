@@ -1,12 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-  RefreshControl,
-} from 'react-native';
+import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
@@ -19,7 +13,7 @@ import {
 } from '../../hooks/queries/useFavoritedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthors } from '../../hooks/queries/useAuthors';
-import { useTags }    from '../../hooks/queries/useTags';
+import { useTagNames }    from '../../hooks/queries/useTagNames';
 
 // ---------------------------------------------------------------------------
 // Story row — resolves S3 image before rendering
@@ -38,6 +32,7 @@ const FavoriteStoryRow = ({ story, authorMap, tagMap }: any) => {
         title={story.title}
         imageUri={displayImageUri}
         primaryTag={tagMap[story.primaryTagId ?? ''] ?? ''}
+        secondaryTag={tagMap[story.secondaryTagId ?? ''] ?? ''}
         audioUri={story.audioUri ?? ''}
         summary={story.summary ?? ''}
         author={authorMap[story.authorId ?? ''] ?? ''}
@@ -63,7 +58,6 @@ export default function FavoritesList({ tabBarHeight }: { tabBarHeight: number }
   const [isFetching,  setIsFetching]  = useState(false);
 
   const { data: authors } = useAuthors();
-  const { data: tags }    = useTags();
 
   const authorMap = React.useMemo(() => {
     if (!authors) return {};
@@ -73,13 +67,6 @@ export default function FavoritesList({ tabBarHeight }: { tabBarHeight: number }
     }, {});
   }, [authors]);
 
-  const tagMap = React.useMemo(() => {
-    if (!tags) return {};
-    return tags.reduce((acc: Record<string, string>, t) => {
-      if (t.id && t.name) acc[t.id] = t.name;
-      return acc;
-    }, {});
-  }, [tags]);
 
   // Re-read threshold whenever the tab comes into focus
   // (user may have changed it in settings)
@@ -94,6 +81,13 @@ export default function FavoritesList({ tabBarHeight }: { tabBarHeight: number }
     isLoading,
     refetch,
   } = useFavoritedStories(threshold);
+
+  const allTagIds = React.useMemo(() => {
+    if (!stories) return [];
+    return stories.flatMap((s: any) => [s.primaryTagId, s.secondaryTagId]);
+}, [stories]);
+
+const { data: tagMap = {} } = useTagNames(allTagIds);
 
   const onRefresh = async () => {
     setIsFetching(true);

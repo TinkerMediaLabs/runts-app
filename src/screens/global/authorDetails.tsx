@@ -1,14 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Image,
-    FlatList,
-    StyleSheet,
-    Dimensions,
-    ActivityIndicator,
-} from 'react-native';
+import { View, TouchableOpacity, Image, FlatList, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +25,7 @@ import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useStories } from '../../hooks/queries/useStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useTags } from '../../hooks/queries/useTags';
+import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
 import {
   useIsFollowing,
@@ -73,6 +66,7 @@ const AuthorStoryTile = ({ item, tagMap, authorName }: { item: any; tagMap: Reco
             title={item.title}
             imageUri={displayImageUri}
             primaryTag={tagMap[item.primaryTagId] ?? ''}
+            secondaryTag={tagMap[item.secondaryTagId ?? ''] ?? ''}
             audioUri={item.audioUri}
             summary={item.summary}
             description={item.description}
@@ -114,6 +108,7 @@ const CreatorProfile = () => {
 
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: author, isLoading: authorLoading } = useAuthor(id);
+    const { data: authorImageUrl } = useAuthorImage(author?.profilePicUri);
     const { data: allStories, isLoading: storiesLoading } = useStories();
     const { data: tags } = useTags();
 
@@ -171,7 +166,7 @@ const CreatorProfile = () => {
     const headerStyle = useAnimatedStyle(() => ({
         opacity: interpolate(
             scrollY.value,
-            [0, HEADER_H * 0.6],
+            [0, HEADER_H * 2.0],
             [1, 0],
             Extrapolation.CLAMP
         ),
@@ -219,7 +214,7 @@ const CreatorProfile = () => {
                <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={handleToggleFollow}
-                    disabled={following || unfollowing || followLoading}
+                    // disabled={following || unfollowing || followLoading}
                     style={[styles.followBtn, isFollowing && styles.followBtnActive]}
                     >
                     <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
@@ -257,17 +252,13 @@ const CreatorProfile = () => {
                         />
 
                         {/* Avatar */}
-                        <View style={styles.avatarWrapper}>
-                            <Image
-                                source={
-                                    author?.profilePicUri
-                                        ? { uri: author.profilePicUri }
-                                        : require('../../../assets/images/blankprofile.png')
-                                }
-                                style={styles.avatar}
-                            />
-                            <View style={styles.avatarRing} />
-                        </View>
+                        {/* Avatar — hidden entirely if the author has no image */}
+                        {authorImageUrl ? (
+                            <View style={styles.avatarWrapper}>
+                                <Image source={{ uri: authorImageUrl }} style={styles.avatar} />
+                                <View style={styles.avatarRing} />
+                            </View>
+                        ) : null}
 
                         {/* Name */}
                         <Text style={styles.name}>{author?.name ?? ''}</Text>

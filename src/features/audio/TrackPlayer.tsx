@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Dimensions,
-  ScrollView,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { View, TouchableOpacity, Image, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Animated, {
   useAnimatedStyle,

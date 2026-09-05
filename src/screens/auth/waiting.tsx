@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/common/AppText';
 import { StatusBar } from 'expo-status-bar';
 
 import Animated, {

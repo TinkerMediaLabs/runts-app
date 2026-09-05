@@ -1,12 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-} from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Screen from '@/components/common/Screen';
 import { useApp } from '@/context/AppContext';
@@ -14,11 +8,11 @@ import MenuHeader from '../../components/common/MenuHeader';
 import StoryTile from '../../components/story/StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useFinishedStories } from '../../hooks/queries/useFinishedStories';
-import { useTags } from '../../hooks/queries/useTags';
 import { useAuthors } from '../../hooks/queries/useAuthors';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { spacing } from '../../theme/spacing';
+import { useTag } from '../../hooks/queries/useTagNames';
 
 const client = generateClient<Schema>();
 
@@ -28,11 +22,9 @@ const client = generateClient<Schema>();
 
 const HistoryStoryTile = ({
     item,
-    tagMap,
     authorMap,
 }: {
     item: any;
-    tagMap: Record<string, string>;
     authorMap: Record<string, string>;
 }) => {
     const [story, setStory] = useState<any>(null);
@@ -54,13 +46,17 @@ const HistoryStoryTile = ({
     );
     const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
 
+    const { data: primaryTagData }   = useTag(story?.primaryTagId);
+    const { data: secondaryTagData } = useTag(story?.secondaryTagId);
+
     if (!story) return null;
 
     return (
         <StoryTile
             title={story.title}
             imageUri={displayImageUri}
-            primaryTag={tagMap[story.primaryTagId ?? ''] ?? ''}
+            primaryTag={primaryTagData?.name ?? ''}
+            secondaryTag={secondaryTagData?.name ?? ''}
             audioUri={story.audioUri ?? ''}
             summary={story.summary ?? ''}
             author={authorMap[story.authorId ?? ''] ?? ''}
@@ -81,17 +77,8 @@ const History = ({ navigation }: any) => {
     const { userId } = useApp();
 
     const { data: finishedStories, isLoading, refetch } = useFinishedStories();
-    const { data: tags }    = useTags();
     const { data: authors } = useAuthors();
     const [isFetching, setIsFetching] = useState(false);
-
-    const tagMap = useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
 
     const authorMap = useMemo(() => {
         if (!authors) return {};
@@ -110,7 +97,6 @@ const History = ({ navigation }: any) => {
     const renderItem = ({ item }: any) => (
         <HistoryStoryTile
             item={item}
-            tagMap={tagMap}
             authorMap={authorMap}
         />
     );

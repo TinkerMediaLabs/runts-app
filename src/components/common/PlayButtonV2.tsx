@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import useOnPlay from '@/components/functions/OnPlay';
 import { useApp } from '@/context/AppContext';

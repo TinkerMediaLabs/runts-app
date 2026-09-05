@@ -1,12 +1,6 @@
 import React, { useState, useRef } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Animated,
-    StyleSheet,
-    Dimensions,
-} from 'react-native';
+import { View, TouchableOpacity, Animated, StyleSheet, Dimensions } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

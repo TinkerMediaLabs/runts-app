@@ -2,17 +2,8 @@
 // Shows plan options and calls to action to subscribe.
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView,
-    StyleSheet,
-    Linking,
-    Image,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, Linking, Image, Alert, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';

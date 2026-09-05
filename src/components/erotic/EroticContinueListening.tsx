@@ -1,14 +1,6 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView,
-    Image,
-    StyleSheet,
-    ActivityIndicator,
-    Dimensions,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
 import { generateClient } from 'aws-amplify/data';

@@ -1,16 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import {
-    View,
-    Text,
-    Image,
-    StyleSheet,
-    Dimensions,
-    TouchableOpacity,
-    FlatList,
-    ActivityIndicator,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-} from 'react-native';
+import { View, Image, StyleSheet, Dimensions, TouchableOpacity, FlatList, ActivityIndicator, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Animated, {
     useSharedValue,

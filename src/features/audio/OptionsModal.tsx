@@ -1,12 +1,6 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
+import { View, TouchableOpacity, TouchableWithoutFeedback, StyleSheet, Dimensions } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Animated, {
   useSharedValue,

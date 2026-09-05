@@ -1,33 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    Dimensions,
-    RefreshControl,
-    ActivityIndicator,
-    StyleSheet,
-} from 'react-native';
+import { View, FlatList, Dimensions, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import ProgressTile from './ProgressTile';
 import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
-import { useTags } from '../../hooks/queries/useTags';
 import { useAuthors } from '../../hooks/queries/useAuthors';
 
 const StoryTileList = () => {
 
     const { data: inProgressStories, isLoading, refetch } = useInProgressStories();
-    const { data: tags }    = useTags();
     const { data: authors } = useAuthors();
     const [isFetching, setIsFetching] = useState(false);
-
-    const tagMap = useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
 
     const authorMap = useMemo(() => {
         if (!authors) return {};
@@ -46,7 +29,6 @@ const StoryTileList = () => {
     const renderItem = ({ item }: any) => (
         <ProgressTile
             inProgressRecord={item}
-            tagMap={tagMap}
             authorMap={authorMap}
         />
     );

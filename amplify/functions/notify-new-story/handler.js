@@ -2,15 +2,15 @@
 /**
  * notify-new-story Lambda
  *
- * Triggered by DynamoDB Stream on the Story table.
- * When a story's `live` field changes from 'false' to 'true':
+ * Triggered by SQS (runts-notify-new-story-queue).
+ * Each message body contains: { storyId, authorId, title, isErotic }
+ * queued by the runts-notify-story-stream Lambda when a story's
+ * `live` field flips from 'false' to 'true'.
+ *
  *   1. Skip erotic stories
  *   2. Find all users following the story's author
  *   3. Find their push tokens from UserDevice table
  *   4. Send push notifications via Expo Push API
- *
- * 1-hour delay is handled by EventBridge Scheduler (created separately)
- * or by checking publishedAt timestamp in the handler.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
@@ -53,7 +53,6 @@ async function getPushTokens(userIds) {
 async function sendPushNotifications(tokens, title, body, storyId) {
     if (tokens.length === 0)
         return;
-    // Expo push API accepts batches of up to 100
     const BATCH_SIZE = 100;
     for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
         const batch = tokens.slice(i, i + BATCH_SIZE);
@@ -64,11 +63,13 @@ async function sendPushNotifications(tokens, title, body, storyId) {
             data: { storyId },
             sound: 'default',
         }));
-        await fetch(EXPO_PUSH_URL, {
+        const res = await fetch(EXPO_PUSH_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(messages),
         });
+        const json = await res.json().catch(() => null);
+        console.log('[notify-new-story] Expo push response:', JSON.stringify(json));
     }
     console.log(`[notify-new-story] Sent to ${tokens.length} device(s)`);
 }
@@ -77,56 +78,56 @@ async function sendPushNotifications(tokens, title, body, storyId) {
 // ---------------------------------------------------------------------------
 const handler = async (event) => {
     for (const record of event.Records) {
-        if (record.eventName !== 'MODIFY')
-            continue;
-        const oldImage = record.dynamodb?.OldImage;
-        const newImage = record.dynamodb?.NewImage;
-        if (!oldImage || !newImage)
-            continue;
-        const oldStory = (0, util_dynamodb_1.unmarshall)(oldImage);
-        const newStory = (0, util_dynamodb_1.unmarshall)(newImage);
-        // Only fire when live flips from false → true
-        if (oldStory.live === 'true' || newStory.live !== 'true')
-            continue;
-        // Skip erotic stories
-        if (newStory.isErotic === 'true') {
-            console.log('[notify-new-story] Skipping erotic story:', newStory.id);
+        let message;
+        try {
+            message = JSON.parse(record.body);
+        }
+        catch (err) {
+            console.log('[notify-new-story] Failed to parse SQS message body:', record.body);
             continue;
         }
-        const authorId = newStory.authorId;
-        if (!authorId)
+        const { storyId, authorId, title, isErotic } = message;
+        if (isErotic === 'true') {
+            console.log('[notify-new-story] Skipping erotic story:', storyId);
             continue;
-        const storyTitle = newStory.title ?? 'New Story';
-        const storyId = newStory.id;
-        console.log(`[notify-new-story] Story went live: "${storyTitle}" (${storyId})`);
-        // Get followers
+        }
+        if (!authorId) {
+            console.log('[notify-new-story] Missing authorId, skipping:', storyId);
+            continue;
+        }
+        if (!storyId) {
+            console.log('[notify-new-story] Missing storyId, skipping');
+            continue;
+        }
+        const storyTitle = title ?? 'New Story';
+        console.log(`[notify-new-story] Processing story: "${storyTitle}" (${storyId})`);
         const followerIds = await getFollowers(authorId);
         if (followerIds.length === 0) {
             console.log('[notify-new-story] No followers found');
             continue;
         }
         console.log(`[notify-new-story] Found ${followerIds.length} follower(s)`);
-        // Get push tokens
         const tokens = await getPushTokens(followerIds);
         if (tokens.length === 0) {
             console.log('[notify-new-story] No push tokens found');
             continue;
         }
-        // Get author name for notification body
-        let authorName = 'An author you follow';
+        let authorName = 'an author you follow';
         try {
-            const authorResult = await dynamo.send(new client_dynamodb_1.ScanCommand({
+            const authorResult = await dynamo.send(new client_dynamodb_1.GetItemCommand({
                 TableName: table('Author'),
-                FilterExpression: 'id = :aid',
-                ExpressionAttributeValues: { ':aid': { S: authorId } },
-                Limit: 1,
+                Key: { id: { S: authorId } },
             }));
-            if (authorResult.Items?.[0]) {
-                authorName = (0, util_dynamodb_1.unmarshall)(authorResult.Items[0]).name ?? authorName;
+            if (authorResult.Item) {
+                authorName = (0, util_dynamodb_1.unmarshall)(authorResult.Item).name ?? authorName;
+            }
+            else {
+                console.log('[notify-new-story] No author found for authorId:', authorId);
             }
         }
-        catch { /* use default */ }
-        // Send notifications
+        catch (err) {
+            console.log('[notify-new-story] Author lookup failed:', err);
+        }
         await sendPushNotifications(tokens, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
     }
 };

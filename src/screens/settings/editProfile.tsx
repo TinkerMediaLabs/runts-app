@@ -1,10 +1,8 @@
 //this is where users can edit and update their user info
 
 import React, {useState, useEffect, useContext} from 'react';
-import { 
-    View, 
-    Text,
-} from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import Screen from '@/components/common/Screen';
 
@@ -17,6 +15,7 @@ import { useApp } from '@/context/AppContext';
 import { usePlayer } from '@/context/PlayerContext';
 
 import MenuHeader from '../../components/common/MenuHeader';
+import { useNavigation } from '@react-navigation/native';
 
 
 const EditProfile = () => {
@@ -26,6 +25,8 @@ const EditProfile = () => {
 
     const styles = useStyles();
     const typo = useTypography();
+
+    const navigation = useNavigation();
 
     return (
         <Screen>

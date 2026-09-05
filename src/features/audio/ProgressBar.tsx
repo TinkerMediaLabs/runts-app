@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { View, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { Slider, SliderThemeType } from 'react-native-awesome-slider';
 import {

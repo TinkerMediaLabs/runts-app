@@ -7,7 +7,7 @@ import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
 
-const client = generateClient<Schema>();
+
 
 // ─── Fetch all pinned stories for current user ────────────────────────────
 export function usePinnedStories() {
@@ -16,6 +16,7 @@ export function usePinnedStories() {
     return useQuery({
         queryKey: ['pinnedStories', eroticEnabled, eroticInPlaylist],
         queryFn: async () => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
             const { data, errors } = await client.models.UserPinnedStory.list({
                 filter: { userId: { eq: userId } },
@@ -49,6 +50,7 @@ export function usePinnedStoryIds() {
   return useQuery({
     queryKey: ['pinnedStoryIds'],
     queryFn: async () => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
       const { data, errors } = await client.models.UserPinnedStory.list({
         filter: { userId: { eq: userId } },
@@ -66,6 +68,7 @@ export function usePinStory() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
       const { data: existing } = await client.models.UserPinnedStory.list({
@@ -82,14 +85,30 @@ export function usePinStory() {
       if (errors) throw new Error(errors[0].message);
       return data;
     },
+    onMutate: async (storyId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['pinnedStoryIds'] });
+      const previous = queryClient.getQueryData<Set<string>>(['pinnedStoryIds']);
+
+      queryClient.setQueryData<Set<string>>(['pinnedStoryIds'], (old) => {
+        const next = new Set(old ?? []);
+        next.add(storyId);
+        return next;
+      });
+
+      return { previous };
+    },
+    onError: (_err, _storyId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['pinnedStoryIds'], context.previous);
+      }
+    },
     onSuccess: (_, storyId) => {
-      queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
       Analytics.storyPinned({ storyId });
 
       // Trigger download in background — non-blocking
       getOfflineEnabled().then(enabled => {
         if (!enabled) return;
+        const client = generateClient<Schema>();
         client.models.Story.get({ id: storyId }).then(({ data: story }) => {
           if (story?.audioUri) {
             downloadStory({
@@ -101,6 +120,10 @@ export function usePinStory() {
         });
       });
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
+      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+    },
   });
 }
 
@@ -110,6 +133,7 @@ export function useUnpinStory() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
+      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
       const { data: existing } = await client.models.UserPinnedStory.list({
@@ -128,15 +152,34 @@ export function useUnpinStory() {
       });
       if (errors) throw new Error(errors[0].message);
     },
+    onMutate: async (storyId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['pinnedStoryIds'] });
+      const previous = queryClient.getQueryData<Set<string>>(['pinnedStoryIds']);
+
+      queryClient.setQueryData<Set<string>>(['pinnedStoryIds'], (old) => {
+        const next = new Set(old ?? []);
+        next.delete(storyId);
+        return next;
+      });
+
+      return { previous };
+    },
+    onError: (_err, _storyId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['pinnedStoryIds'], context.previous);
+      }
+    },
     onSuccess: (_, storyId) => {
-      queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
       Analytics.storyUnpinned({ storyId });
 
       // Delete local download in background — non-blocking
       deleteDownload(storyId).catch(err =>
         console.warn('Unpin delete download error:', err)
       );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
+      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
     },
   });
 }
@@ -147,11 +190,11 @@ export function useTogglePin() {
   const unpinStory = useUnpinStory();
 
   return {
-    toggle: async (storyId: string, isPinned: boolean) => {
+    toggle: (storyId: string, isPinned: boolean) => {
       if (isPinned) {
-        await unpinStory.mutateAsync(storyId);
+        unpinStory.mutate(storyId);
       } else {
-        await pinStory.mutateAsync(storyId);
+        pinStory.mutate(storyId);
       }
     },
     isLoading: pinStory.isPending || unpinStory.isPending,

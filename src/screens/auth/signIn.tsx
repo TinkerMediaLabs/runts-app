@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Dimensions,
-    Linking,
-    ActivityIndicator,
-    Keyboard,
-    TouchableWithoutFeedback,
-    Image,
-} from 'react-native';
+import { View, TouchableOpacity, Dimensions, Linking, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Image } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { StatusBar } from 'expo-status-bar';
 

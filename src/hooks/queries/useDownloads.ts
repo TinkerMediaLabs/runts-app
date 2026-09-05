@@ -19,7 +19,7 @@ import {
   type DownloadRecord,
 } from '../../lib/offlineStorage';
 
-const client = generateClient<Schema>();
+
 
 // ---------------------------------------------------------------------------
 // Standalone functions — safe to call outside React components
@@ -167,6 +167,7 @@ export async function syncDownloads(): Promise<void> {
 
   try {
     const { userId } = await getCurrentUser();
+    const client = generateClient<Schema>();
 
     const { data: pinnedRecords } = await client.models.UserPinnedStory.list({
       filter: { userId: { eq: userId } },

@@ -1,10 +1,6 @@
 import React, { forwardRef } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { TextInput } from '@/components/common/AppTextInput';
 import { FontAwesome5 } from '@expo/vector-icons';
 
 type SearchInputProps = {

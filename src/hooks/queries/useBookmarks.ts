@@ -5,7 +5,7 @@ import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
 
-const client = generateClient<Schema>();
+
 const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
@@ -20,6 +20,7 @@ export function useBookmarks() {
     return useInfiniteQuery({
         queryKey: ['bookmarks', eroticEnabled],
         queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
 
             const { data, nextToken } = await (client.models.UserBookmark as any)
@@ -76,6 +77,7 @@ export function useCreateBookmark() {
             positionSeconds: number;
             name:            string;
         }) => {
+      const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
             return client.models.UserBookmark.create({
                 userId,
@@ -85,9 +87,9 @@ export function useCreateBookmark() {
                 createdAt: new Date().toISOString(),
             });
         },
-        onSuccess: () => {
+       onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-            Analytics.storyBookmarked({          // ← add
+            Analytics.storyBookmarked({
                 storyId:         variables.storyId,
                 positionSeconds: variables.positionSeconds,
             });
@@ -103,6 +105,7 @@ export function useDeleteBookmark() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (bookmarkId: string) => {
+      const client = generateClient<Schema>();
             return client.models.UserBookmark.delete({ id: bookmarkId });
         },
         onSuccess: () => {

@@ -1,14 +1,6 @@
 import React, { useMemo, useRef } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    Dimensions,
-    ActivityIndicator,
-} from 'react-native';
+import { View, FlatList, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +15,7 @@ import { useEroticStories } from '@/hooks/queries/useEroticStories';
 import { useTags }       from '@/hooks/queries/useTags';
 import { useAuthors }    from '@/hooks/queries/useAuthors';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
+import { useTagNames }       from '@/hooks/queries/useTagNames';
 
 const { width } = Dimensions.get('window');
 const GENRE_TILE_W = 130;
@@ -70,6 +63,7 @@ const EroticStoryItem = React.memo(({ item, authorMap, tagMap }: {
                 title={item.title}
                 imageUri={displayImageUri}
                 primaryTag={tagMap[item.primaryTagId ?? ''] ?? ''}
+                secondaryTag={tagMap[item.secondaryTagId ?? ''] ?? ''}
                 audioUri={item.audioUri ?? ''}
                 summary={item.summary ?? ''}
                 description={item.description ?? ''}
@@ -108,13 +102,12 @@ const EroticHomeScreen = () => {
         }, {});
     }, [authors]);
 
-    const tagMap = useMemo(() => {
-        if (!allTags) return {};
-        return allTags.reduce((acc: Record<string, string>, t) => {
-            if (t.id && t.name) acc[t.id] = t.name;
-            return acc;
-        }, {});
-    }, [allTags]);
+    const storyTagIds = useMemo(() => {
+        if (!eroticStories) return [];
+        return eroticStories.flatMap((s: any) => [s.primaryTagId, s.secondaryTagId]);
+    }, [eroticStories]);
+
+    const { data: tagMap = {} } = useTagNames(storyTagIds);
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (

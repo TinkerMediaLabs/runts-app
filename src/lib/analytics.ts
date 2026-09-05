@@ -135,7 +135,7 @@ function eroticDisabled(): void {
 // Internal helper
 // ---------------------------------------------------------------------------
 
-function track(event: string, properties: Record<string, unknown>): void {
+function track<T extends object>(event: string, properties: T): void {
     if (!initialised) return;
     rudderClient.track(event, properties);
 }

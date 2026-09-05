@@ -361,7 +361,7 @@ async function seed() {
         } catch (err: any) {
            const msg = err?.message ?? err?.errors?.[0]?.message ?? JSON.stringify(err);
     if (msg?.includes('already exists') || msg?.includes('ConditionalCheckFailed')) {
-        console.log(`  ↷ Already exists: ${(tag as any).name ?? (story as any).title ?? ''}`);
+        console.log(`  ↷ Already exists: ${(story as any).title ?? ''}`);
     } else {
         console.error(`  ✗ Failed:`, msg);
     }

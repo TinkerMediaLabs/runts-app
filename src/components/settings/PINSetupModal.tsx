@@ -1,16 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    Modal,
-    StyleSheet,
-    Animated,
-    Dimensions,
-    Platform,
-    KeyboardAvoidingView,
-} from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
+import { Text } from '@/components/common/AppText';
+import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
 
 const { width } = Dimensions.get('window');

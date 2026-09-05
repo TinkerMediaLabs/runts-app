@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
-const client = generateClient<Schema>();
+
 
 export const SEARCH_PAGE_SIZE = 20;
 
@@ -64,6 +64,7 @@ export function useSearchStories({
   return useInfiniteQuery({
     queryKey: ['searchStories', query, sortBy, tagId, duration],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const client = generateClient<Schema>();
       let data: any[] = [];
       let nextToken: string | null | undefined;
 
@@ -150,7 +151,10 @@ export function useSearchStories({
 }
 
 // ---------------------------------------------------------------------------
-// Authors — full list, client-side filter (authors list is small)
+// Authors — paginated (mirrors Stories pattern), client-side text filter
+// per page. Never assume the table is small enough to fetch in full —
+// paginate now so this scales the same way as Stories as the author
+// catalog grows.
 // ---------------------------------------------------------------------------
 
 export function useSearchAuthors({
@@ -160,24 +164,37 @@ export function useSearchAuthors({
   query: string;
   enabled: boolean;
 }) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['searchAuthors', query],
-    queryFn: async () => {
-      const { data } = await client.models.Author.list();
-      if (!query || query.length < 2) return data ?? [];
-      const q = normalise(query);
-      return (data ?? []).filter(a =>
-        normalise(a.name).includes(q) ||
-        normalise(a.bio ?? '').includes(q)
-      );
+    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const client = generateClient<Schema>();
+      const { data, nextToken } = await client.models.Author.list({
+        limit: SEARCH_PAGE_SIZE,
+        nextToken: pageParam,
+      });
+
+      let items = data ?? [];
+      if (query && query.length >= 2) {
+        const q = normalise(query);
+        items = items.filter((a: any) =>
+          normalise(a.name).includes(q) ||
+          normalise(a.bio ?? '').includes(q)
+        );
+      }
+
+      return { items, nextToken: nextToken ?? null };
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
     enabled,
     staleTime: 1000 * 60 * 5,
   });
 }
 
 // ---------------------------------------------------------------------------
-// Tags — full list, client-side filter (fixed small set)
+// Tags — paginated (mirrors Stories pattern), client-side text filter
+// per page. Same reasoning as Authors above — don't assume a small,
+// fixed set forever.
 // ---------------------------------------------------------------------------
 
 export function useSearchTags({
@@ -187,16 +204,25 @@ export function useSearchTags({
   query: string;
   enabled: boolean;
 }) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['searchTags', query],
-    queryFn: async () => {
-      const { data } = await client.models.Tag.list();
-      if (!query || query.length < 2) return data ?? [];
-      const q = normalise(query);
-      return (data ?? []).filter(t =>
-        normalise(t.name).includes(q)
-      );
+    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const client = generateClient<Schema>();
+      const { data, nextToken } = await client.models.Tag.list({
+        limit: SEARCH_PAGE_SIZE,
+        nextToken: pageParam,
+      });
+
+      let items = data ?? [];
+      if (query && query.length >= 2) {
+        const q = normalise(query);
+        items = items.filter((t: any) => normalise(t.name).includes(q));
+      }
+
+      return { items, nextToken: nextToken ?? null };
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
     enabled,
     staleTime: 1000 * 60 * 5,
   });
