@@ -60,6 +60,9 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
             numListens={item.numListens}
             credit={item.credit}
             nsfw={item.nsfw}
+            isNew={item.isNew}
+            progressStatus={item.progressStatus}
+            progressSeconds={item.progressSeconds}
         />
     );
 

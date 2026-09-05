@@ -37,6 +37,7 @@ const CARD_WIDTH  = width * 0.9;
 const CARD_HEIGHT = height * 0.40;
 const EXPAND_H    = 120;
 const TIMING_CFG  = { duration: 200, easing: Easing.out(Easing.quad) };
+const LISTENS_THRESHOLD = 1000;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,6 +57,19 @@ function fmtListens(n: number): string {
     return String(n ?? 0);
 }
 
+type ProgressStatus = 'none' | 'in_progress' | 'completed';
+
+function getDurationDisplay(duration: number, progressStatus: ProgressStatus, progressSeconds: number) {
+    if (progressStatus === 'completed') {
+        return { text: fmtDuration(duration), color: '#4ADE80', icon: 'check-circle' as const };
+    }
+    if (progressStatus === 'in_progress') {
+        const remaining = Math.max(0, duration - (progressSeconds ?? 0));
+        return { text: `${fmtDuration(remaining)} left`, color: 'cyan', icon: 'clock' as const };
+    }
+    return { text: fmtDuration(duration), color: 'rgba(255,255,255,0.85)', icon: 'clock' as const };
+}
+
 // ---------------------------------------------------------------------------
 // CarouselItem
 // ---------------------------------------------------------------------------
@@ -69,18 +83,22 @@ type ItemProps = {
     imageUri:       string;
     audioUri:       string;
     author:         string;
+    narratorDisplay?: string;
     duration:       number;
     numListens:     number;
     avgRating?:     number | null;
     numRatings?:    number | null;
     isPremium?:     boolean;
+    isNew?:         boolean;
+    progressStatus?: ProgressStatus;
+    progressSeconds?: number;
 };
 
 const CarouselItem = ({
     id, title, primaryTagName, secondaryTagName, summary,
-    imageUri, audioUri, author, duration,
+    imageUri, audioUri, author, narratorDisplay, duration,
     numListens, avgRating, numRatings,
-    isPremium,
+    isPremium, isNew, progressStatus = 'none', progressSeconds = 0,
 }: ItemProps) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -116,6 +134,8 @@ const CarouselItem = ({
     }));
 
     const hasRating = avgRating != null && avgRating > 0;
+    const showListens = (numListens ?? 0) >= LISTENS_THRESHOLD;
+    const durationDisplay = getDurationDisplay(duration, progressStatus, progressSeconds);
 
     return (
         <View style={styles.itemWrapper}>
@@ -125,16 +145,25 @@ const CarouselItem = ({
                     style={styles.card}
                     imageStyle={styles.cardImage}
                 >
-                    {/* Duration pill — top right */}
+                    {/* NEW badge — top left */}
+                    {isNew && (
+                        <View style={styles.newBadge} pointerEvents="none">
+                            <Text style={styles.newBadgeText}>NEW</Text>
+                        </View>
+                    )}
+
+                    {/* Duration / progress pill — top right */}
                     {duration > 0 && (
                         <View style={styles.durationPill} pointerEvents="none">
                             <FontAwesome5
-                                name={'clock' as any}
+                                name={durationDisplay.icon}
                                 size={9}
-                                color="rgba(255,255,255,0.8)"
+                                color={durationDisplay.color}
                                 iconStyle="solid"
                             />
-                            <Text style={styles.durationText}>{fmtDuration(duration)}</Text>
+                            <Text style={[styles.durationText, { color: durationDisplay.color }]}>
+                                {durationDisplay.text}
+                            </Text>
                         </View>
                     )}
 
@@ -178,7 +207,7 @@ const CarouselItem = ({
                             </Animated.View>
                         </View>
 
-                        {/* Author */}
+                        {/* Author + Narrator */}
                         <View style={styles.metaRow}>
                             <FontAwesome5
                                 name="book-open"
@@ -187,9 +216,21 @@ const CarouselItem = ({
                                 iconStyle="solid"
                             />
                             <Text style={styles.metaText}>{author}</Text>
+                            {narratorDisplay ? (
+                                <>
+                                    <View style={styles.metaDot} />
+                                    <FontAwesome5
+                                        name="microphone"
+                                        size={10}
+                                        color="rgba(255,255,255,0.55)"
+                                        iconStyle="solid"
+                                    />
+                                    <Text style={styles.metaText}>{narratorDisplay}</Text>
+                                </>
+                            ) : null}
                         </View>
 
-                        {/* Stats row: tag · rating · listens */}
+                        {/* Stats row: tags · rating · listens (if threshold met) */}
                         <View style={styles.metaRow}>
                            {primaryTagName ? (
                                 <View style={styles.tagPill}>
@@ -216,14 +257,18 @@ const CarouselItem = ({
                                 </>
                             )}
 
-                            <View style={styles.metaDot} />
-                            <FontAwesome5
-                                name="headphones"
-                                size={10}
-                                color="rgba(255,255,255,0.5)"
-                                iconStyle="solid"
-                            />
-                            <Text style={styles.metaText}>{fmtListens(numListens)}</Text>
+                            {showListens && (
+                                <>
+                                    <View style={styles.metaDot} />
+                                    <FontAwesome5
+                                        name="headphones"
+                                        size={10}
+                                        color="rgba(255,255,255,0.5)"
+                                        iconStyle="solid"
+                                    />
+                                    <Text style={styles.metaText}>{fmtListens(numListens)}</Text>
+                                </>
+                            )}
                         </View>
 
                         {/* Expanded section */}
@@ -281,11 +326,15 @@ const ForYouCarousel = ({ stories, tagMap }: {
             audioUri={item?.audioUri ?? ''}
             summary={item?.summary ?? ''}
             author={item?.authorName ?? ''}
+            narratorDisplay={item?.narratorDisplay ?? ''}
             duration={item?.duration ?? 0}
             numListens={item?.numListens ?? 0}
             avgRating={item?.avgRating}
             numRatings={item?.numRatings}
             isPremium={item?.isPremium === true}
+            isNew={item?.isNew === true}
+            progressStatus={item?.progressStatus ?? 'none'}
+            progressSeconds={item?.progressSeconds ?? 0}
         />
     );
 
@@ -341,6 +390,24 @@ card: {
         borderRadius: 15,
     },
 
+    // ── NEW badge ──────────────────────────────────────────────────────────────
+    newBadge: {
+        position:       'absolute',
+        top:            12,
+        left:           12,
+        backgroundColor: 'cyan',
+        borderRadius:   20,
+        paddingHorizontal: 9,
+        paddingVertical:   4,
+        zIndex: 2,
+    },
+    newBadgeText: {
+        fontSize:   10,
+        fontWeight: '800',
+        color:      '#000',
+        letterSpacing: 0.5,
+    },
+
     // ── Duration pill ─────────────────────────────────────────────────────────
     durationPill: {
         position:       'absolute',
@@ -359,7 +426,6 @@ card: {
     durationText: {
         fontSize:   11,
         fontWeight: '600',
-        color:      'rgba(255,255,255,0.85)',
         letterSpacing: 0.3,
     },
 

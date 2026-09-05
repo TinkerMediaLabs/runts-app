@@ -23,6 +23,11 @@ import { useStories } from '../../hooks/queries/useStories';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 import { useTagNames } from '../../hooks/queries/useTagNames';
 
+import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useNarrators } from '../../hooks/queries/useNarrators';
+import { useStoryNarratorLinks } from '../../hooks/queries/useStoryNarratorLinks';
+import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
+
 const HomeScreen = ({ navigation }: any) => {
 
     const { userId } = useApp();
@@ -72,22 +77,53 @@ const HomeScreen = ({ navigation }: any) => {
 
     const { data: tagMap } = useTagNames(allTagIds);
 
-    const enrichedStories = React.useMemo(() => {
-        if (!stories) return [];
-        return stories
-            .filter(story => !!story.id && story.isErotic !== 'true')  // ← add erotic filter
-            .map(story => ({
-                ...story,
-                primaryTagName:   story.primaryTagId   ? tagMap[story.primaryTagId]   ?? '' : '',
-                secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
-                authorName:       story.authorId       ? authorMap[story.authorId]    ?? '' : '',
-            }));
-    }, [stories, tagMap, authorMap]);
-
     const topTags = React.useMemo(() => {
         if (!tags) return [];
         return tags.filter(t => !t.isErotic).slice(0, 4);  // ← add erotic filter
     }, [tags]);
+
+    const progressMap = useStoryProgressMap();
+    const { data: narrators = [] } = useNarrators();
+    const { data: storyNarratorLinks = [] } = useStoryNarratorLinks();
+
+    const narratorNameMap = React.useMemo(() => {
+        const m: Record<string, string> = {};
+        narrators.forEach((n: any) => {
+            if (n.id && n.name) m[n.id] = n.name;
+        });
+        return m;
+    }, [narrators]);
+
+    const storyNarratorsMap = React.useMemo(() => {
+        const m: Record<string, string[]> = {};
+        storyNarratorLinks.forEach((link: any) => {
+            if (!link.storyId || !link.narratorId) return;
+            const name = narratorNameMap[link.narratorId];
+            if (!name) return;
+            if (!m[link.storyId]) m[link.storyId] = [];
+            m[link.storyId].push(name);
+        });
+        return m;
+    }, [storyNarratorLinks, narratorNameMap]);
+
+        const enrichedStories = React.useMemo(() => {
+        if (!stories) return [];
+        return stories
+            .filter(story => !!story.id && story.isErotic !== 'true')
+            .map(story => {
+                const progress = progressMap[story.id];
+                return {
+                    ...story,
+                    primaryTagName:   story.primaryTagId   ? tagMap[story.primaryTagId]   ?? '' : '',
+                    secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
+                    authorName:       story.authorId       ? authorMap[story.authorId]    ?? '' : '',
+                    narratorDisplay:  formatNarratorDisplay(storyNarratorsMap[story.id]),
+                    isNew:            isRecentlyPublished(story.publishedAt),
+                    progressStatus:   progress?.status ?? 'none',
+                    progressSeconds:  progress?.progressSeconds ?? 0,
+                };
+            });
+    }, [stories, tagMap, authorMap, storyNarratorsMap, progressMap]);
 
     return (
         <Screen>
