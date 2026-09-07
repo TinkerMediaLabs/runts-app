@@ -14,34 +14,11 @@ import LoadingItem from '../common/LoadingItem';
 import { spacing } from '../../theme/spacing';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
+import { getDurationDisplay, type ProgressStatus } from '../../lib/storyDisplay';
+
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function fmtDuration(s: number): string {
-    if (!s) return '';
-    const m = Math.round(s / 60);
-    if (m < 60) return `${m}m`;
-    const h = Math.floor(m / 60);
-    const rem = m % 60;
-    return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
-}
-
-type ProgressStatus = 'none' | 'in_progress' | 'completed';
-
-function getDurationDisplay(duration: number, progressStatus: ProgressStatus, progressSeconds: number) {
-    if (progressStatus === 'completed') {
-        return { text: fmtDuration(duration), color: '#4ADE80', icon: 'check-circle' as const };
-    }
-    if (progressStatus === 'in_progress') {
-        const remaining = Math.max(0, duration - (progressSeconds ?? 0));
-        return { text: `${fmtDuration(remaining)} left`, color: 'cyan', icon: 'clock' as const };
-    }
-    return { text: fmtDuration(duration), color: 'rgba(255,255,255,0.85)', icon: 'clock' as const };
-}
 
 // ---------------------------------------------------------------------------
 // Component

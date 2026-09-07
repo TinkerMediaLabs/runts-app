@@ -46,6 +46,12 @@ import type { Schema }   from '../../../amplify/data/resource';
 
 import { Analytics } from '@/lib/analytics';
 
+import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useNarrators } from '../../hooks/queries/useNarrators';
+import { useUniverse } from '../../hooks/queries/useUniverse';
+import { getDurationDisplay, formatNarratorDisplay } from '../../lib/storyDisplay';
+import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
+
 
 
 const client = generateClient<Schema>();
@@ -190,6 +196,43 @@ const StoryScreen = ({ navigation }: any) => {
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: story, isLoading } = useStory(storyID);
     const { data: author } = useAuthor(story?.authorId ?? '');
+
+    const progressMap = useStoryProgressMap();
+    const progress = progressMap[story?.id ?? ''];
+    const { data: narrators = [] } = useNarrators();
+    const { data: universe } = useUniverse(story?.universeId);
+
+    const [storyNarratorNames, setStoryNarratorNames] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (!storyID) return;
+        async function fetchNarrators() {
+            try {
+                const { data: links } = await client.models.StoryNarrator.list({
+                    filter: { storyId: { eq: storyID } },
+                });
+                if (!links?.length) {
+                    setStoryNarratorNames([]);
+                    return;
+                }
+                const names = links
+                    .map((link: any) => narrators.find((n: any) => n.id === link.narratorId)?.name)
+                    .filter(Boolean) as string[];
+                setStoryNarratorNames(names);
+            } catch (e) {
+                console.log('Error fetching story narrators:', e);
+            }
+        }
+        fetchNarrators();
+    }, [storyID, narrators]);
+
+    const narratorDisplay = formatNarratorDisplay(storyNarratorNames);
+    const durationDisplay = getDurationDisplay(
+        story?.duration ?? 0,
+        progress?.status ?? 'none',
+        progress?.progressSeconds ?? 0
+    );
+
     const { data: resolvedImageUri } = useStoryImage(
         story?.imageUri?.startsWith('stories/') ? story.imageUri : null
     );
@@ -477,23 +520,29 @@ const handleDelete = (id: string) => {
                 <Animated.View style={[styles.contentCard, bounceStyle]}>
 
                     {/* Title + author */}
-                    <View style={styles.titleSection}>
-                        <Text style={styles.title}>{story?.title}</Text>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.title}>{story?.title}</Text>
 
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => navigation.navigate('AuthorDetails', { id: story?.authorId })}
-                            style={styles.authorRow}
-                        >
-                            <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
-                            <Text style={styles.author}>{author?.name ?? ''}</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('AuthorDetails', { id: story?.authorId })}
+                        style={styles.authorRow}
+                    >
+                        <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+                        <Text style={styles.author}>{author?.name ?? ''}</Text>
+                    </TouchableOpacity>
+
+                    {narratorDisplay ? (
+                        <View style={[styles.authorRow, { marginTop: 4 }]}>
+                            <FontAwesome5 name="microphone" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+                            <Text style={styles.author}>{narratorDisplay}</Text>
+                        </View>
+                    ) : null}
+                </View>
 
                     {/* Stats row */}
                     <View style={styles.statsRow}>
-                        <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
-                        <StatPill icon="clock"      value={TimeConversion(story?.duration)} />
+                        <StatPill icon={durationDisplay.icon} value={durationDisplay.text} color={durationDisplay.color} />
                         {story?.avgRating != null && (
                             <StatPill
                                 icon="star"
@@ -501,6 +550,7 @@ const handleDelete = (id: string) => {
                                 color="#C9A84C"
                             />
                         )}
+                        <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
                     </View>
 
                     {/* Action icons */}
@@ -536,7 +586,49 @@ const handleDelete = (id: string) => {
                         />
                     </View>
 
+                                       {/* Story Format / Story Tone / POV */}
+                    {(story?.storyFormat || story?.tone || story?.pov) ? (
+                        <View style={styles.metaLineRow}>
+                            {story?.storyFormat ? (
+                                <Text style={styles.metaLineText}>
+                                    {STORY_FORMATS[story.storyFormat] ?? story.storyFormat}
+                                </Text>
+                            ) : null}
+                            {story?.tone ? (
+                                <>
+                                    {story?.storyFormat ? <Text style={styles.metaLineDot}>·</Text> : null}
+                                    <Text style={styles.metaLineText}>
+                                        {TONES[story.tone] ?? story.tone}
+                                    </Text>
+                                </>
+                            ) : null}
+                            {story?.pov ? (
+                                <>
+                                    {(story?.storyFormat || story?.tone) ? <Text style={styles.metaLineDot}>·</Text> : null}
+                                    <Text style={styles.metaLineText}>
+                                        {POV_OPTIONS[story.pov] ?? story.pov}
+                                    </Text>
+                                </>
+                            ) : null}
+                        </View>
+                    ) : null}
+
                     <View style={styles.separator} />
+
+                    {/* Universe / Sequence Number */}
+                    {(universe?.name || story?.sequenceNumber) ? (
+                        <View style={styles.universeRow}>
+                            {universe?.name ? (
+                                <Text style={styles.universeText}>{universe.name}</Text>
+                            ) : null}
+                            {universe?.name && story?.sequenceNumber ? (
+                                <Text style={styles.universeDot}>·</Text>
+                            ) : null}
+                            {story?.sequenceNumber ? (
+                                <Text style={styles.universeText}>Part {story.sequenceNumber}</Text>
+                            ) : null}
+                        </View>
+                    ) : null}
 
                     {/* Summary */}
                     {story?.summary ? (
@@ -556,6 +648,7 @@ const handleDelete = (id: string) => {
                     ) : null}
 
                     {/* Tags */}
+                                        {/* Tags */}
                     {storyTags.length > 0 && (
                         <View style={styles.tagsSection}>
                             <Text style={styles.sectionLabel}>Tags</Text>
@@ -570,6 +663,22 @@ const handleDelete = (id: string) => {
                                             name: tag.name,
                                         })}
                                     />
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Content Warnings */}
+                    {(story?.contentWarnings?.length ?? 0) > 0 && (
+                        <View style={styles.tagsSection}>
+                            <Text style={styles.sectionLabel}>Content Warnings</Text>
+                            <View style={styles.tagsWrap}>
+                                {(story?.contentWarnings ?? []).filter(Boolean).map((warning: any) => (                                  
+                                    <View key={warning} style={styles.warningChip}>
+                                        <Text style={styles.warningChipText}>
+                                            {CONTENT_WARNINGS[warning] ?? warning}
+                                        </Text>
+                                    </View>
                                 ))}
                             </View>
                         </View>
@@ -1063,6 +1172,50 @@ const styles = StyleSheet.create({
     tagChipTextErotic: {
         color: '#ff7c2a',
     },
+    metaLineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+    flexWrap: 'wrap',
+},
+metaLineText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.55)',
+},
+metaLineDot: {
+    color: 'rgba(255,255,255,0.25)',
+    fontSize: 13,
+},
+universeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+},
+universeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'cyan',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+},
+universeDot: {
+    color: 'rgba(0,255,255,0.4)',
+    fontSize: 13,
+},
+warningChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,68,68,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,68,68,0.4)',
+},
+warningChipText: {
+    color: '#ff8888',
+    fontSize: 13,
+},
 });
 
 export default StoryScreen;
