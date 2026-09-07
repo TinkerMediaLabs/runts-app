@@ -10,6 +10,7 @@ import { upsertInProgressStory, getInProgressSeconds } from '@/hooks/queries/use
 import { Hub } from 'aws-amplify/utils';
 import { getDefaultPlaybackSpeed, getAutoplayEnabled } from '@/lib/audioSettings';
 import { useApp } from '@/context/AppContext';
+import { navigate } from '@/navigation/RootNavigator';
 
 import { Analytics } from '@/lib/analytics';
 
@@ -31,6 +32,8 @@ type PlayerState = {
     playbackRate: number;
     playError: string | null;
     pendingRatingStoryId: string | null;
+    pendingRatingTitle: string | null;
+    pendingRatingArtwork: string | null;
 };
 
 const PlayerContext = createContext<any>(null);
@@ -43,6 +46,8 @@ export const PlayerProvider = ({ children }: any) => {
         playbackRate:         1,
         playError:            null,
         pendingRatingStoryId: null,
+        pendingRatingTitle:   null,
+        pendingRatingArtwork: null,
     });
 
     const { refreshProfile, eroticEnabled, eroticInPlaylist, isPremium } = useApp();
@@ -112,7 +117,12 @@ export const PlayerProvider = ({ children }: any) => {
                     storyId,
                     finishedAt: new Date().toISOString(),
                 });
-                setState(prev => ({ ...prev, pendingRatingStoryId: storyId }));
+                setState(prev => ({
+                    ...prev,
+                    pendingRatingStoryId: storyId,
+                    pendingRatingTitle:   currentTrackRef.current?.title ?? '',
+                    pendingRatingArtwork: currentTrackRef.current?.artwork ?? '',
+                }));
 
                 try {
                     const [{ data: story }, { data: user }] = await Promise.all([
@@ -166,10 +176,10 @@ export const PlayerProvider = ({ children }: any) => {
                 if (nextStory) {
                     await playNext();
                 } else {
-                    setState(prev => ({ ...prev, isPlaying: false }));
+                    await closePlayerAfterCompletion();
                 }
             } else {
-                setState(prev => ({ ...prev, isPlaying: false }));
+                await closePlayerAfterCompletion();
             }
 
         } catch (err) {
@@ -308,8 +318,18 @@ export const PlayerProvider = ({ children }: any) => {
         }
     };
 
-    const clearPendingRating = () =>
-        setState(prev => ({ ...prev, pendingRatingStoryId: null }));
+    const clearPendingRating = () => {
+        const finishedStoryId = state.pendingRatingStoryId;
+        setState(prev => ({
+            ...prev,
+            pendingRatingStoryId: null,
+            pendingRatingTitle:   null,
+            pendingRatingArtwork: null,
+        }));
+        if (finishedStoryId) {
+            navigate('StoryScreen', { storyID: finishedStoryId });
+        }
+    };
 
     const setPlaybackRate = async (rate: number) => {
         await audioEngine.setRate(rate);
@@ -335,7 +355,34 @@ export const PlayerProvider = ({ children }: any) => {
             playbackRate:         1,
             playError:            null,
             pendingRatingStoryId: null,
+            pendingRatingTitle: null,
+            pendingRatingArtwork: null,
         });
+    };
+
+    // Used when a one-off story finishes with nothing left to autoplay — fully
+// closes the player (both expanded and mini views disappear, since both are
+// gated on currentTrack), but preserves any pending rating info so the
+// rating modal — rendered independently of the player's track state —
+// keeps working correctly afterward.
+    const closePlayerAfterCompletion = async () => {
+        setSleepTimer(null);
+        stopProgressTracking();
+        isPlayingRef.current    = false;
+        currentTrackRef.current = null;
+        lastPlayedStoryIdRef.current = null;
+        playlistRef.current     = [];
+        playlistIndexRef.current = -1;
+        setHasNextTrack(false);
+        await audioEngine.stop();
+        setState(prev => ({
+            ...prev,
+            currentTrack: null,
+            isPlaying:    false,
+            playbackRate: 1,
+            playError:    null,
+            // pendingRating* fields intentionally preserved
+        }));
     };
 
     const setSleepTimer = async (minutes: number | null) => {

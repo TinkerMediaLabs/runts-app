@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import { View, TouchableOpacity, Image, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import { useStoryNarratorNames } from '@/hooks/queries/useStoryNarratorNames';
+import { formatNarratorDisplay } from '@/lib/storyDisplay';
 
 import Animated, {
   useAnimatedStyle,
@@ -39,7 +41,6 @@ import { audioEngine } from '@/features/audio/audioEngine';
 import ProgressBar from './ProgressBar';
 import PlayerControls from './PlayerControls';
 import OptionsModal from './OptionsModal';
-import BasicTagsList from '@/components/story/BasicTagsList';
 import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
@@ -94,6 +95,15 @@ export default function TrackPlayerWidget({ expanded }: any) {
     setShowBookmarkModal(true);
   };
 
+  const handleShare = async () => {
+    if (!track) return;
+    await Share.share({
+        message: `Check out "${track.title}" on Runts: https://tinkermedia.net/runts/story/${track.id}`,
+        url: `https://tinkermedia.net/runts/story/${track.id}`,
+        title: track.title ?? 'Runts',
+    });
+};
+
   const insets = useSafeAreaInsets();
   const { tabBarHeight } = usePlayerUI();
 
@@ -105,7 +115,10 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: currentStory } = useStory(track?.id ?? null);
-    const { data: allTags } = useTags();
+  const { data: allTags } = useTags();
+
+  const { data: narratorNames = [] } = useStoryNarratorNames(currentStory?.id);
+  const narratorDisplay = formatNarratorDisplay(narratorNames);
 
   const storyTags = React.useMemo(() => {
     if (!currentStory || !allTags) return [];
@@ -327,47 +340,28 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   {/* HEADER — chevron left, pan zone middle, options button right */}
                   <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
                     <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
-                      <Feather name="chevron-down" size={28} color="#fff" />
+                        <Feather name="chevron-down" size={28} color="#fff" />
                     </TouchableOpacity>
+
                     <GestureDetector gesture={panGesture}>
-                      <View style={styles.heroPanZone} />
+                        <View style={styles.heroPanZone} />
                     </GestureDetector>
 
-                    {/* HEADER — chevron left, pan zone middle, sleep pill + options right */}
-                    <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
-                      <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
-                        <Feather name="chevron-down" size={28} color="#fff" />
-                      </TouchableOpacity>
-
-                      <GestureDetector gesture={panGesture}>
-                        <View style={styles.heroPanZone} />
-                      </GestureDetector>
-
-                      {/* Sleep timer pill — only shown when active */}
-                      {sleepMinutesLeft !== null && (
+                    {/* Sleep timer pill — only shown when active */}
+                    {sleepMinutesLeft !== null && (
                         <View style={styles.sleepPill}>
-                          <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
+                            <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
                         </View>
-                      )}
+                    )}
 
-                      <TouchableOpacity
+                    <TouchableOpacity
                         style={styles.headerbutton}
                         onPress={() => setShowOptions(true)}
                         activeOpacity={0.7}
-                      >
-                        <Feather name="more-vertical" size={24} color="#fff" />
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* Options button — right side of header */}
-                    <TouchableOpacity
-                      style={styles.headerbutton}
-                      onPress={() => setShowOptions(true)}
-                      activeOpacity={0.7}
                     >
-                      <Feather name="more-vertical" size={24} color="#fff" />
+                        <Feather name="more-vertical" size={24} color="#fff" />
                     </TouchableOpacity>
-                  </View>
+                </View>
 
                   <LinearGradient
                     colors={gradientColors}
@@ -387,16 +381,19 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 <View style={styles.content}>
                   <View style={styles.info}>
                     <View style={styles.titlecontainer}>
-                      <Text style={styles.bigTitle}>{track.title}</Text>
-                    <TouchableWithoutFeedback onPress={() => {
-                      if (currentStory?.authorId) {
-                        navigate('AuthorDetails', { id: currentStory.authorId });
-                        collapsePlayer();
-                      }
-                    }}>
-                      <Text style={styles.artist}>by {track.artist}</Text>
-                    </TouchableWithoutFeedback>
-                    </View>
+                        <Text style={styles.bigTitle}>{track.title}</Text>
+                      <TouchableWithoutFeedback onPress={() => {
+                        if (currentStory?.authorId) {
+                          navigate('AuthorDetails', { id: currentStory.authorId });
+                          collapsePlayer();
+                        }
+                      }}>
+                        <Text style={styles.artist}>by {track.artist}</Text>
+                      </TouchableWithoutFeedback>
+                      {narratorDisplay ? (
+                        <Text style={styles.narrator}>Narrated by {narratorDisplay}</Text>
+                      ) : null}
+                      </View>
 
                     <View style={styles.actioncontainer}>
                      <TouchableWithoutFeedback onPress={() => {
@@ -418,10 +415,10 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           <PinButton storyId={track.id} size={20} />
                         </View>
                         <View style={styles.actionbutton}>
-                          <TouchableWithoutFeedback>
-                            <FontAwesome5 name="share" size={22} color="#fff" />
+                          <TouchableWithoutFeedback onPress={handleShare}>
+                              <FontAwesome5 name="share" size={20} color="#fff" />
                           </TouchableWithoutFeedback>
-                        </View>
+                      </View>
                         <View style={styles.actionbutton}>
                           <TouchableOpacity onPress={handleBookmarkPress} activeOpacity={0.7}>
                             <FontAwesome5 name={'bookmark' as any} size={20} color="#fff" />
@@ -449,10 +446,6 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 </View>
 
                 <View style={{ height: 80 }} />
-
-                <View style={styles.tagsbox}>
-                  <BasicTagsList tags={storyTags} />
-                </View>
 
               </View>
 
@@ -500,15 +493,6 @@ export default function TrackPlayerWidget({ expanded }: any) {
               }}
             />
 
-            {/* Rating modal — appears on first story completion */}
-            <RatingModal
-              visible={!!state.pendingRatingStoryId}
-              storyId={state.pendingRatingStoryId ?? ''}
-              storyTitle={track?.title ?? ''}
-              artwork={track?.artwork}
-              onClose={clearPendingRating}
-            />
-
           </Animated.View>
         )}
 
@@ -546,6 +530,16 @@ export default function TrackPlayerWidget({ expanded }: any) {
         </Animated.View>
       )}
 
+      {/* Rating modal — rendered independently of player/track state so it
+          keeps working correctly even after the player fully closes on
+          one-off story completion */}
+      <RatingModal
+        visible={!!state.pendingRatingStoryId}
+        storyId={state.pendingRatingStoryId ?? ''}
+        storyTitle={state.pendingRatingTitle ?? ''}
+        artwork={state.pendingRatingArtwork ?? undefined}
+        onClose={clearPendingRating}
+      />
     </View>
   );
 }
@@ -609,6 +603,11 @@ const styles = StyleSheet.create({
     color: '#aaa',
     marginTop: 4,
   },
+  narrator: {
+    color: '#888',
+    marginTop: 2,
+    fontSize: 13,
+},
   tags: {
     marginTop: 10,
   },
