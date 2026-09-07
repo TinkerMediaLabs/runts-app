@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share } from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useIsLocked }   from '../../hooks/useIsLocked';
 import PaywallModal      from '../../components/common/PaywallModal';
+import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 
 import Animated, {
     useSharedValue,
@@ -336,16 +337,6 @@ const StoryScreen = ({ navigation }: any) => {
         }
     };
 
-    // Star appearance:
-    // - Not finished → dim outlined star (not tappable)
-    // - Finished, no rating → gold outlined star
-    // - Finished + rated → gold solid star
-    const starIcon  = userRating ? 'star' : 'star';
-    const starStyle = userRating ? 'solid' : 'regular';
-    const starColor = hasFinished
-        ? '#C9A84C'
-        : 'rgba(255,255,255,0.3)';
-
     const handleShare = async () => {
         await Share.share({
             message: `Check out "${story?.title}" on Runts: https://tinkermedia.net/runts/story/${story?.id}`,
@@ -542,6 +533,12 @@ const handleDelete = (id: string) => {
 
                     {/* Stats row */}
                     <View style={styles.statsRow}>
+                        {story?.licenseType === 'runts_exclusive' && (
+                            <View style={styles.ogPill}>
+                                <Image source={require('../../../assets/images/icon24w.png')} style={styles.ogIcon} />
+                                <Text style={styles.ogPillText}>OG</Text>
+                            </View>
+                        )}
                         <StatPill icon={durationDisplay.icon} value={durationDisplay.text} color={durationDisplay.color} />
                         {story?.avgRating != null && (
                             <StatPill
@@ -559,15 +556,23 @@ const handleDelete = (id: string) => {
                             <PinButton storyId={story?.id ?? ''} size={22} />
 
                             {/* Star — gold outlined if finished+unrated, solid if rated, dim if not finished */}
-                            <ActionBtn onPress={() => {
-                                if (hasFinished) setShowRatingModal(true);
-                            }}>
-                                <FontAwesome
-                                    name={starStyle === 'solid' ? 'star' : 'star-o'}
-                                    size={22}
-                                    color={starColor}
-                                />
-                            </ActionBtn>
+                            {/* Personal rating badge — hidden if not finished, "Rate" prompt if finished+unrated, rating value if rated */}
+                                {hasFinished && (
+                                    <TouchableOpacity
+                                        onPress={() => setShowRatingModal(true)}
+                                        activeOpacity={0.7}
+                                        style={styles.personalRatingPill}
+                                    >
+                                        <MaterialDesignIcons
+                                            name={userRating ? 'account-star' : 'account-star-outline'}
+                                            size={24}
+                                            color="#C9A84C"
+                                        />
+                                        <Text style={styles.personalRatingText}>
+                                            {userRating ? userRating.rating : 'Rate'}
+                                        </Text>
+                                    </TouchableOpacity>
+)}
 
                            <TouchableOpacity onPress={handleShare} activeOpacity={0.7}>
                                 <FontAwesome name="share" size={22} color="#fff" />
@@ -587,32 +592,6 @@ const handleDelete = (id: string) => {
                     </View>
 
                                        {/* Story Format / Story Tone / POV */}
-                    {(story?.storyFormat || story?.tone || story?.pov) ? (
-                        <View style={styles.metaLineRow}>
-                            {story?.storyFormat ? (
-                                <Text style={styles.metaLineText}>
-                                    {STORY_FORMATS[story.storyFormat] ?? story.storyFormat}
-                                </Text>
-                            ) : null}
-                            {story?.tone ? (
-                                <>
-                                    {story?.storyFormat ? <Text style={styles.metaLineDot}>·</Text> : null}
-                                    <Text style={styles.metaLineText}>
-                                        {TONES[story.tone] ?? story.tone}
-                                    </Text>
-                                </>
-                            ) : null}
-                            {story?.pov ? (
-                                <>
-                                    {(story?.storyFormat || story?.tone) ? <Text style={styles.metaLineDot}>·</Text> : null}
-                                    <Text style={styles.metaLineText}>
-                                        {POV_OPTIONS[story.pov] ?? story.pov}
-                                    </Text>
-                                </>
-                            ) : null}
-                        </View>
-                    ) : null}
-
                     <View style={styles.separator} />
 
                     {/* Universe / Sequence Number */}
@@ -630,24 +609,31 @@ const handleDelete = (id: string) => {
                         </View>
                     ) : null}
 
+                    {/* Story Format / Story Tone / POV — pills, same style as numListens */}
+                    {(story?.storyFormat || story?.tone || story?.pov) ? (
+                        <View style={styles.statsRow}>
+                            {story?.storyFormat ? (
+                                <StatPill icon="book" value={STORY_FORMATS[story.storyFormat] ?? story.storyFormat} />
+                            ) : null}
+                            {story?.tone ? (
+                                <StatPill icon="theater-masks" value={TONES[story.tone] ?? story.tone} />
+                            ) : null}
+                            {story?.pov ? (
+                                <StatPill icon="eye" value={POV_OPTIONS[story.pov] ?? story.pov} />
+                            ) : null}
+                        </View>
+                    ) : null}
+
+                    <View style={styles.separator} />
+
+                 
+
                     {/* Summary */}
                     {story?.summary ? (
                         <Text style={styles.summary}>{story.summary}</Text>
                     ) : null}
 
-                    {/* Description */}
-                    {story?.description ? (
-                        <Text style={styles.description}>{story.description}</Text>
-                    ) : null}
-
-                    {/* Credit */}
-                    {story?.credit ? (
-                        <Text style={[styles.description, { marginTop: 12, fontStyle: 'italic' }]}>
-                            {story.credit}
-                        </Text>
-                    ) : null}
-
-                    {/* Tags */}
+                     {/* Tags */}
                                         {/* Tags */}
                     {storyTags.length > 0 && (
                         <View style={styles.tagsSection}>
@@ -667,6 +653,20 @@ const handleDelete = (id: string) => {
                             </View>
                         </View>
                     )}
+
+                    {/* Description */}
+                    {story?.description ? (
+                        <Text style={styles.description}>{story.description}</Text>
+                    ) : null}
+
+                    {/* Credit */}
+                    {story?.credit ? (
+                        <Text style={[styles.description, { marginTop: 12, fontStyle: 'italic' }]}>
+                            {story.credit}
+                        </Text>
+                    ) : null}
+
+                     <View style={[styles.separator, { marginTop: 20, marginBottom: 0 }]} />
 
                     {/* Content Warnings */}
                     {(story?.contentWarnings?.length ?? 0) > 0 && (
@@ -954,7 +954,8 @@ const styles = StyleSheet.create({
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: '#2a2a2a',
-        marginVertical: 20,
+        marginBottom: 20
+
     },
 
     summary: {
@@ -971,6 +972,7 @@ const styles = StyleSheet.create({
 
     tagsSection: {
         marginTop: 20,
+        marginBottom: 30
     },
     tagsWrap: {
         flexDirection: 'row',
@@ -1191,7 +1193,7 @@ universeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: 16,
 },
 universeText: {
     fontSize: 13,
@@ -1215,6 +1217,36 @@ warningChip: {
 warningChipText: {
     color: '#ff8888',
     fontSize: 13,
+},
+personalRatingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+},
+personalRatingText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#C9A84C',
+},
+ogPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,255,255,0.1)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0,255,255,0.3)',
+},
+ogIcon: {
+    width: 14,
+    height: 14,
+},
+ogPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'cyan',
 },
 });
 

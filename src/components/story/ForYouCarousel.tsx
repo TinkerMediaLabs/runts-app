@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, ImageBackground, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Dimensions, ImageBackground, TouchableOpacity, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -99,6 +99,14 @@ const CarouselItem = ({
         isExpanded.value     = next;
         expandProgress.value = withTiming(next ? 1 : 0, TIMING_CFG);
     };
+
+    const handleShare = async () => {
+    await Share.share({
+        message: `Check out "${title}" on Runts: https://tinkermedia.net/runts/story/${id}`,
+        url: `https://tinkermedia.net/runts/story/${id}`,
+        title: title ?? 'Runts',
+    });
+};
 
     const expandStyle = useAnimatedStyle(() => ({
         height:  interpolate(expandProgress.value, [0, 1], [0, EXPAND_H]),
@@ -270,7 +278,7 @@ const CarouselItem = ({
                                     )}
                                     <View style={styles.iconActions}>
                                         <PinButton storyId={id} size={20} />
-                                        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+                                        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7} onPress={handleShare}>
                                             <FontAwesome name="share" size={18} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>
                                     </View>
