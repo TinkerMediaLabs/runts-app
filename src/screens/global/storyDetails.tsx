@@ -480,8 +480,9 @@ const handleDelete = (id: string) => {
             />
 
             {/* ── Sticky header ── */}
-            <Animated.View style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}>
-                <CloseButton navigation={navigation} />
+                {!showRatingModal && (
+                <Animated.View style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}>
+                    <CloseButton navigation={navigation} />
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}
                 </Animated.Text>
@@ -499,6 +500,7 @@ const handleDelete = (id: string) => {
                     <View style={{ width: 30, height: 30, margin: 12 }} />
                 )}
             </Animated.View>
+            )}
             {/* ── Scrollable content ── */}
             <Animated.ScrollView
                 onScroll={scrollHandler}
@@ -809,9 +811,11 @@ const handleDelete = (id: string) => {
             </Animated.ScrollView>
 
             {/* Back button */}
-            <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
-                <CloseButton navigation={navigation} />
-            </View>
+            {!showRatingModal && (
+                <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
+                    <CloseButton navigation={navigation} />
+                </View>
+            )}
 
             {/* Rating modal — re-rate from story detail */}
             <RatingModal
