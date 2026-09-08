@@ -169,6 +169,23 @@ const SearchAuthorItem = React.memo(({
 });
 
 // ---------------------------------------------------------------------------
+// GenreTile
+// ---------------------------------------------------------------------------
+
+const GenreTile = React.memo(({ item, onPress }: { item: any; onPress: () => void }) => (
+  <TouchableOpacity
+    activeOpacity={0.7}
+    onPress={onPress}
+    style={styles.genreTile}
+  >
+    <Text style={styles.genreTileName} numberOfLines={1}>{item.name}</Text>
+    <Text style={styles.genreTileCount}>
+      {item.storyCount ?? 0} {(item.storyCount ?? 0) === 1 ? 'story' : 'stories'}
+    </Text>
+  </TouchableOpacity>
+));
+
+// ---------------------------------------------------------------------------
 // FilterChip
 // ---------------------------------------------------------------------------
 
@@ -597,27 +614,10 @@ const filteredTagResults = useMemo(() => {
   ), [navigation]);
 
   const renderTag = useCallback(({ item }: any) => (
-    <TouchableOpacity
-      activeOpacity={0.7}
+    <GenreTile
+      item={item}
       onPress={() => navigation.navigate('TagHomeScreen', { id: item.id, name: item.name })}
-      style={styles.tagItem}
-    >
-      <View style={styles.tagItemInner}>
-        <FontAwesome5 name={'tag' as any} size={14} color="cyan" iconStyle="solid" />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.tagName}>{item.name}</Text>
-          <Text style={styles.tagType}>
-            {item.isPrimary ? 'Primary Genre' : 'Tag'}
-          </Text>
-        </View>
-        <FontAwesome5
-          name={'chevron-right' as any}
-          size={12}
-          color="rgba(255,255,255,0.25)"
-          iconStyle="solid"
-        />
-      </View>
-    </TouchableOpacity>
+    />
   ), [navigation]);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -810,6 +810,8 @@ const filteredTagResults = useMemo(() => {
              <AnimatedFlatList
                 data={filteredTagResults}
                 renderItem={renderTag}
+                numColumns={2}
+                columnWrapperStyle={styles.genreRow}
                 keyExtractor={(item: any) => item.id}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
@@ -1005,31 +1007,6 @@ tabCountActive: {
     color: 'rgba(255,255,255,0.45)',
     lineHeight: 17,
   },
-
-  tagItem: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1e1e1e',
-  },
-  tagItemInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.margin,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  tagName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  tagType: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.35)',
-    marginTop: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1107,6 +1084,30 @@ tabCountActive: {
     color: 'cyan',
     fontWeight: '700',
   },
+  genreRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.margin,
+},
+genreTile: {
+    width: '48%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: '#2a2a2a',
+    padding: 16,
+    marginBottom: 12,
+},
+genreTileName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+    textTransform: 'capitalize',
+},
+genreTileCount: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
+},
 });
 
 export default SearchScreen;
