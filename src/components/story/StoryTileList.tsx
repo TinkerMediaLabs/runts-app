@@ -80,6 +80,9 @@ const PinnedStoryTile = ({
             drag={reorderEnabled ? drag : undefined}
             isActive={isActive}
             isPremium={story.isPremium}
+            licenseType={item.licenseType}
+            universeId={item.universeId}
+            sequenceNumber={item.sequenceNumber}
         />
     );
 };

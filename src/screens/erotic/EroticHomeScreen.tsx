@@ -70,6 +70,9 @@ const EroticStoryItem = React.memo(({ item, authorMap, tagMap }: {
                 author={authorMap[item.authorId ?? ''] ?? ''}
                 duration={item.duration ?? 0}
                 numListens={item.numListens ?? 0}
+                licenseType={item.licenseType}
+                universeId={item.universeId}
+                sequenceNumber={item.sequenceNumber}
             />
         </View>
     );

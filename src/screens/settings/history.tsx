@@ -64,6 +64,9 @@ const HistoryStoryTile = ({
             duration={story.duration ?? 0}
             id={story.id}
             numListens={story.numListens ?? 0}
+            licenseType={story.licenseType}
+            universeId={story.universeId}
+            sequenceNumber={story.sequenceNumber}
         />
     );
 };

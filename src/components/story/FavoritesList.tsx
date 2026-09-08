@@ -39,6 +39,9 @@ const FavoriteStoryRow = ({ story, authorMap, tagMap }: any) => {
         description={story.description ?? ''}
         duration={story.duration ?? 0}
         numListens={story.numListens ?? 0}
+        licenseType={story.licenseType}
+        universeId={story.universeId}
+        sequenceNumber={story.sequenceNumber}
       />
       {/* Rating badge */}
       <View style={styles.ratingBadge}>

@@ -74,6 +74,9 @@ const AuthorStoryTile = ({ item, tagMap, authorName }: { item: any; tagMap: Reco
             duration={item.duration}
             id={item.id}
             numListens={item.numListens}
+            licenseType={item.licenseType}
+            universeId={item.universeId}
+            sequenceNumber={item.sequenceNumber}
         />
     );
 };

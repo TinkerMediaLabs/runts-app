@@ -118,6 +118,9 @@ const SearchStoryItem = React.memo(({
       description={item.description ?? ''}
       duration={item.duration ?? 0}
       numListens={item.numListens ?? 0}
+      licenseType={item.licenseType}
+      universeId={item.universeId}
+      sequenceNumber={item.sequenceNumber}
     />
   );
 });
