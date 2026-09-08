@@ -1001,6 +1001,7 @@ const styles = StyleSheet.create({
     // ── Reactions ─────────────────────────────────────────────────────────────
     reactionsSection: {
         marginTop: 20,
+        marginBottom: 20
     },
     reactionsRow: {
         flexDirection: 'row',
