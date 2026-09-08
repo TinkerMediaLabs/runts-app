@@ -305,6 +305,7 @@ Comment: a
       name: a.string().required(),
       isPrimary: a.boolean(),
       isPremiumGenre: a.boolean().default(false),
+      storyCount: a.integer().default(0),
       color: a.string(),
       icon: a.string(),
       imageUri: a.string(),
