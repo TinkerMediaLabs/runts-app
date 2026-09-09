@@ -14,26 +14,11 @@ import LoadingItem from '../common/LoadingItem';
 import { spacing } from '../../theme/spacing';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
+import { getDurationDisplay, type ProgressStatus } from '../../lib/storyDisplay';
+
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function fmtDuration(s: number): string {
-    if (!s) return '';
-    const m = Math.round(s / 60);
-    if (m < 60) return `${m}m`;
-    const h = Math.floor(m / 60);
-    const rem = m % 60;
-    return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
-}
-
-function fmtListens(n: number): string {
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-    return String(n ?? 0);
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -45,10 +30,12 @@ const HorzStoryTile = ({
     secondaryTagName,
     imageUri,
     id,
-    numListens,
     duration,
     avgRating,
     author,
+    isNew,
+    progressStatus = 'none',
+    progressSeconds = 0,
 }: any) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -59,6 +46,7 @@ const HorzStoryTile = ({
     const displayImageUri = resolvedImageUri ?? imageUri;
 
     const hasRating = avgRating != null && avgRating > 0;
+    const durationDisplay = getDurationDisplay(duration, progressStatus, progressSeconds);
 
     return (
         <TouchableOpacity
@@ -72,16 +60,25 @@ const HorzStoryTile = ({
                     style={styles.card}
                     imageStyle={styles.cardImage}
                 >
-                    {/* Duration pill — top right */}
+                    {/* NEW badge — top left */}
+                    {isNew && (
+                        <View style={styles.newBadge} pointerEvents="none">
+                            <Text style={styles.newBadgeText}>NEW</Text>
+                        </View>
+                    )}
+
+                    {/* Duration / progress pill — top right */}
                     {duration > 0 && (
                         <View style={styles.durationPill} pointerEvents="none">
                             <FontAwesome5
-                                name={'clock' as any}
+                                name={durationDisplay.icon}
                                 size={8}
-                                color="rgba(255,255,255,0.85)"
+                                color={durationDisplay.color}
                                 iconStyle="solid"
                             />
-                            <Text style={styles.durationText}>{fmtDuration(duration)}</Text>
+                            <Text style={[styles.durationText, { color: durationDisplay.color }]}>
+                                {durationDisplay.text}
+                            </Text>
                         </View>
                     )}
 
@@ -98,7 +95,25 @@ const HorzStoryTile = ({
                     />
 
                     <View style={styles.info}>
-                        {/* Tag */}
+                        {/* Title */}
+                        <Text style={styles.title} numberOfLines={3}>
+                            {title}
+                        </Text>
+
+                        {/* Author */}
+                        {author ? (
+                            <View style={styles.authorRow}>
+                                <FontAwesome5
+                                    name="book-open"
+                                    size={9}
+                                    color="rgba(255,255,255,0.5)"
+                                    iconStyle="solid"
+                                />
+                                <Text style={styles.authorText} numberOfLines={1}>{author}</Text>
+                            </View>
+                        ) : null}
+
+                        {/* Tags */}
                         {(primaryTagName || secondaryTagName) ? (
                             <View style={styles.tagRow}>
                                 {primaryTagName ? (
@@ -114,27 +129,9 @@ const HorzStoryTile = ({
                             </View>
                         ) : null}
 
-                        {/* Title */}
-                        <Text style={styles.title} numberOfLines={3}>
-                            {title}
-                        </Text>
-
-                          {/* Author */}
-                            {author ? (
-                                <View style={styles.authorRow}>
-                                    <FontAwesome5
-                                        name="book-open"
-                                        size={9}
-                                        color="rgba(255,255,255,0.5)"
-                                        iconStyle="solid"
-                                    />
-                                    <Text style={styles.authorText} numberOfLines={1}>{author}</Text>
-                                </View>
-                            ) : null}
-
-                        {/* Stats row */}
-                        <View style={styles.statsRow}>
-                            {hasRating && (
+                        {/* Rating (listens removed entirely for this tile) */}
+                        {hasRating && (
+                            <View style={styles.statsRow}>
                                 <View style={styles.ratingRow}>
                                     <FontAwesome
                                         name={'star' as any}
@@ -145,16 +142,8 @@ const HorzStoryTile = ({
                                         {(avgRating as number).toFixed(1)}
                                     </Text>
                                 </View>
-                            )}
-                            {hasRating && <View style={styles.dot} />}
-                            <FontAwesome5
-                                name="headphones"
-                                size={9}
-                                color="rgba(255,255,255,0.45)"
-                                iconStyle="solid"
-                            />
-                            <Text style={styles.statText}>{fmtListens(numListens)}</Text>
-                        </View>
+                            </View>
+                        )}
                     </View>
                 </ImageBackground>
             ) : (
@@ -186,6 +175,24 @@ const styles = StyleSheet.create({
         borderRadius: 14,
     },
 
+    // ── NEW badge ──────────────────────────────────────────────────────────────
+    newBadge: {
+        position:       'absolute',
+        top:            10,
+        left:           10,
+        backgroundColor: 'cyan',
+        borderRadius:   20,
+        paddingHorizontal: 7,
+        paddingVertical:   3,
+        zIndex: 2,
+    },
+    newBadgeText: {
+        fontSize:   9,
+        fontWeight: '800',
+        color:      '#000',
+        letterSpacing: 0.4,
+    },
+
     // ── Duration pill ─────────────────────────────────────────────────────────
     durationPill: {
         position:       'absolute',
@@ -204,7 +211,6 @@ const styles = StyleSheet.create({
     durationText: {
         fontSize:   10,
         fontWeight: '600',
-        color:      'rgba(255,255,255,0.85)',
         letterSpacing: 0.2,
     },
 
@@ -223,20 +229,20 @@ const styles = StyleSheet.create({
         paddingVertical:   2,
     },
     tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-},
-authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-},
-authorText: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
-    flexShrink: 1,
-},
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 4,
+    },
+    authorRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    authorText: {
+        fontSize: 10,
+        color: 'rgba(255,255,255,0.5)',
+        flexShrink: 1,
+    },
     tagPillText: {
         fontSize:      10,
         fontWeight:    '600',
@@ -266,16 +272,6 @@ authorText: {
         fontSize:   10,
         color:      '#C9A84C',
         fontWeight: '600',
-    },
-    dot: {
-        width:        2,
-        height:       2,
-        borderRadius: 1,
-        backgroundColor: 'rgba(255,255,255,0.25)',
-    },
-    statText: {
-        fontSize: 10,
-        color:    'rgba(255,255,255,0.45)',
     },
 });
 

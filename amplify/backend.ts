@@ -6,6 +6,7 @@ import { incrementListens } from './functions/increment-listens/resource';
 import { ratingAggregator } from './functions/rating-aggregator/resource';
 import { reactionAggregator } from './functions/reaction-aggregator/resource';
 import { commentCounter } from './functions/comment-counter/resource';
+import { tagCountAggregator } from './functions/tag-count-aggregator/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -18,6 +19,7 @@ const backend = defineBackend({
   ratingAggregator,
   reactionAggregator,
   commentCounter,
+  tagCountAggregator,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -26,6 +28,8 @@ const reactionTable      = backend.data.resources.tables['UserReaction'];
 const commentTable       = backend.data.resources.tables['Comment'];
 const faveTable          = backend.data.resources.tables['UserFavoritedStory'];
 const reactionCountTable = backend.data.resources.tables['StoryReactionCount'];
+const tagTable       = backend.data.resources.tables['Tag'];
+const storyTagTable  = backend.data.resources.tables['StoryTag'];
 
 // ── increment-listens ─────────────────────────────────────────────────────
 const incrementListensFn = backend.incrementListens.resources.lambda as lambda.Function;
@@ -62,6 +66,17 @@ commentCounterFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
 storyTable.grantReadWriteData(commentCounterFn);
 commentTable.grantStreamRead(commentCounterFn);
 commentCounterFn.addEventSource(new DynamoEventSource(commentTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 2,
+}));
+
+// ── tag-count-aggregator ──────────────────────────────────────────────────
+const tagCountAggregatorFn = backend.tagCountAggregator.resources.lambda as lambda.Function;
+tagCountAggregatorFn.addEnvironment('TAG_TABLE_NAME', tagTable.tableName);
+tagTable.grantReadWriteData(tagCountAggregatorFn);
+storyTagTable.grantStreamRead(tagCountAggregatorFn);
+tagCountAggregatorFn.addEventSource(new DynamoEventSource(storyTagTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,

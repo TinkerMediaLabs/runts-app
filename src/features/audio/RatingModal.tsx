@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { View, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Animated, {
   useSharedValue,
@@ -74,9 +75,8 @@ export default function RatingModal({
 }: RatingModalProps) {
   const queryClient = useQueryClient();
 
-  const { tabBarHeight } = usePlayerUI();
-  const MINI_PLAYER_HEIGHT = 70;
-  const footerBottomPadding = tabBarHeight + MINI_PLAYER_HEIGHT + 8;
+  const insets = useSafeAreaInsets();
+  const footerBottomPadding = insets.bottom + 16;
 
   const { profile } = useApp();
 
@@ -215,7 +215,7 @@ const handleSubmit = async () => {
   return (
     <Animated.View style={[StyleSheet.absoluteFillObject, styles.overlay, overlayStyle]}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <Animated.View style={[styles.card, cardStyle]}>

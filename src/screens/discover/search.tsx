@@ -118,6 +118,9 @@ const SearchStoryItem = React.memo(({
       description={item.description ?? ''}
       duration={item.duration ?? 0}
       numListens={item.numListens ?? 0}
+      licenseType={item.licenseType}
+      universeId={item.universeId}
+      sequenceNumber={item.sequenceNumber}
     />
   );
 });
@@ -164,6 +167,23 @@ const SearchAuthorItem = React.memo(({
     </TouchableOpacity>
   );
 });
+
+// ---------------------------------------------------------------------------
+// GenreTile
+// ---------------------------------------------------------------------------
+
+const GenreTile = React.memo(({ item, onPress }: { item: any; onPress: () => void }) => (
+  <TouchableOpacity
+    activeOpacity={0.7}
+    onPress={onPress}
+    style={styles.genreTile}
+  >
+    <Text style={styles.genreTileName} numberOfLines={1}>{item.name}</Text>
+    <Text style={styles.genreTileCount}>
+      {item.storyCount ?? 0} {(item.storyCount ?? 0) === 1 ? 'story' : 'stories'}
+    </Text>
+  </TouchableOpacity>
+));
 
 // ---------------------------------------------------------------------------
 // FilterChip
@@ -255,6 +275,129 @@ const SortSheet = ({
             )}
           </TouchableOpacity>
         ))}
+      </View>
+    </Modal>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// LengthSheet
+// ---------------------------------------------------------------------------
+
+const LengthSheet = ({
+  visible,
+  current,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  current: DurationFilter;
+  onSelect: (d: DurationFilter) => void;
+  onClose: () => void;
+}) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.sheetBackdrop} />
+      </TouchableWithoutFeedback>
+      <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={styles.sheetHandle} />
+        <Text style={styles.sheetTitle}>Story Length</Text>
+        {DURATION_OPTIONS.map(opt => (
+          <TouchableOpacity
+            key={opt.value}
+            activeOpacity={0.7}
+            onPress={() => { onSelect(opt.value); onClose(); }}
+            style={styles.sheetOption}
+          >
+            <Text style={[
+              styles.sheetOptionText,
+              current === opt.value && styles.sheetOptionTextActive,
+            ]}>
+              {opt.label}
+            </Text>
+            {current === opt.value && (
+              <FontAwesome name={'check' as any} size={14} color="cyan" />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    </Modal>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// GenreSheet
+// ---------------------------------------------------------------------------
+
+const GenreSheet = ({
+  visible,
+  tags,
+  current,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  tags: any[];
+  current: string | null;
+  onSelect: (id: string | null) => void;
+  onClose: () => void;
+}) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.sheetBackdrop} />
+      </TouchableWithoutFeedback>
+      <View style={[styles.sheet, styles.sheetHalf, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={styles.sheetHandle} />
+        <Text style={styles.sheetTitle}>Genre</Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => { onSelect(null); onClose(); }}
+            style={styles.sheetOption}
+          >
+            <Text style={[
+              styles.sheetOptionText,
+              current === null && styles.sheetOptionTextActive,
+            ]}>
+              All Genres
+            </Text>
+            {current === null && (
+              <FontAwesome name={'check' as any} size={14} color="cyan" />
+            )}
+          </TouchableOpacity>
+          {tags.map(tag => (
+            <TouchableOpacity
+              key={tag.id}
+              activeOpacity={0.7}
+              onPress={() => { onSelect(tag.id); onClose(); }}
+              style={styles.sheetOption}
+            >
+              <Text style={[
+                styles.sheetOptionText,
+                current === tag.id && styles.sheetOptionTextActive,
+              ]}>
+                {tag.name}
+              </Text>
+              {current === tag.id && (
+                <FontAwesome name={'check' as any} size={14} color="cyan" />
+              )}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -386,6 +529,9 @@ const SearchScreen = ({ navigation }: any) => {
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [showSortSheet, setShowSortSheet] = useState(false);
 
+  const [showLengthSheet, setShowLengthSheet] = useState(false);
+  const [showGenreSheet, setShowGenreSheet] = useState(false);
+
   // ── Supporting data ───────────────────────────────────────────────────────
   const { data: authors }     = useAuthors();
   const { data: primaryTags } = usePrimaryTags();
@@ -468,27 +614,10 @@ const filteredTagResults = useMemo(() => {
   ), [navigation]);
 
   const renderTag = useCallback(({ item }: any) => (
-    <TouchableOpacity
-      activeOpacity={0.7}
+    <GenreTile
+      item={item}
       onPress={() => navigation.navigate('TagHomeScreen', { id: item.id, name: item.name })}
-      style={styles.tagItem}
-    >
-      <View style={styles.tagItemInner}>
-        <FontAwesome5 name={'tag' as any} size={14} color="cyan" iconStyle="solid" />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.tagName}>{item.name}</Text>
-          <Text style={styles.tagType}>
-            {item.isPrimary ? 'Primary Genre' : 'Tag'}
-          </Text>
-        </View>
-        <FontAwesome5
-          name={'chevron-right' as any}
-          size={12}
-          color="rgba(255,255,255,0.25)"
-          iconStyle="solid"
-        />
-      </View>
-    </TouchableOpacity>
+    />
   ), [navigation]);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -569,37 +698,24 @@ const filteredTagResults = useMemo(() => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filterBar}
             >
-              <FilterChip
+             <FilterChip
                 label={`${SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? 'Sort'} ▾`}
                 active={sortBy !== 'newest'}
                 onPress={() => setShowSortSheet(true)}
                 icon={'sort' as any}
-              />
-              <View style={styles.filterDivider} />
-              {DURATION_OPTIONS.map(opt => (
-                <FilterChip
-                  key={opt.value}
-                  label={opt.label}
-                  active={duration === opt.value}
-                  onPress={() => setDuration(opt.value)}
-                />
-              ))}
-              <View style={styles.filterDivider} />
-              <FilterChip
-                label="All Genres"
-                active={selectedTagId === null}
-                onPress={() => setSelectedTagId(null)}
-              />
-              {(primaryTags ?? []).filter(tag => !tag.isErotic).map(tag => (
-                <FilterChip
-                    key={tag.id}
-                    label={tag.name ?? ''}
-                    active={selectedTagId === tag.id}
-                    onPress={() => setSelectedTagId(
-                        selectedTagId === tag.id ? null : tag.id
-                    )}
-                />
-              ))}
+            />
+            <View style={styles.filterDivider} />
+            <FilterChip
+                label={`${DURATION_OPTIONS.find(o => o.value === duration)?.label ?? 'Length'} ▾`}
+                active={duration !== 'any'}
+                onPress={() => setShowLengthSheet(true)}
+            />
+            <View style={styles.filterDivider} />
+            <FilterChip
+                label={`${selectedTagId ? ((primaryTags ?? []).find(t => t.id === selectedTagId)?.name ?? 'Genre') : 'All Genres'} ▾`}
+                active={selectedTagId !== null}
+                onPress={() => setShowGenreSheet(true)}
+            />
             </ScrollView>
           </Animated.View>
         </Animated.View>
@@ -694,6 +810,8 @@ const filteredTagResults = useMemo(() => {
              <AnimatedFlatList
                 data={filteredTagResults}
                 renderItem={renderTag}
+                numColumns={2}
+                columnWrapperStyle={styles.genreRow}
                 keyExtractor={(item: any) => item.id}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
@@ -732,6 +850,21 @@ const filteredTagResults = useMemo(() => {
           onSelect={setSortBy}
           onClose={() => setShowSortSheet(false)}
         />
+
+        <LengthSheet
+          visible={showLengthSheet}
+          current={duration}
+          onSelect={setDuration}
+          onClose={() => setShowLengthSheet(false)}
+      />
+
+      <GenreSheet
+          visible={showGenreSheet}
+          tags={(primaryTags ?? []).filter(tag => !tag.isErotic)}
+          current={selectedTagId}
+          onSelect={setSelectedTagId}
+          onClose={() => setShowGenreSheet(false)}
+      />
 
       </LinearGradient>
     </Screen>
@@ -874,31 +1007,6 @@ tabCountActive: {
     color: 'rgba(255,255,255,0.45)',
     lineHeight: 17,
   },
-
-  tagItem: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1e1e1e',
-  },
-  tagItemInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.margin,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  tagName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  tagType: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.35)',
-    marginTop: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -937,6 +1045,9 @@ tabCountActive: {
     borderBottomWidth: 0,
     borderColor: '#2a2a2a',
   },
+  sheetHalf: {
+    maxHeight: '50%',
+},
   sheetHandle: {
     width: 36,
     height: 4,
@@ -973,6 +1084,30 @@ tabCountActive: {
     color: 'cyan',
     fontWeight: '700',
   },
+  genreRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.margin,
+},
+genreTile: {
+    width: '48%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: '#2a2a2a',
+    padding: 16,
+    marginBottom: 12,
+},
+genreTileName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+    textTransform: 'capitalize',
+},
+genreTileCount: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
+},
 });
 
 export default SearchScreen;

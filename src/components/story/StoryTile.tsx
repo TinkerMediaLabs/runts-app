@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableWithoutFeedback, Image, StyleSheet } from 'react-native';
+import { View, TouchableWithoutFeedback, Image, StyleSheet, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
@@ -11,8 +11,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
-import AntDesign from '@react-native-vector-icons/ant-design';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,12 +18,12 @@ import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
+import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useUniverse } from '../../hooks/queries/useUniverse';
+import { getDurationDisplay } from '../../lib/storyDisplay';
 
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
-
-// Expanded content height — fixed so we can animate it cleanly
-//const EXPANDED_HEIGHT = 288;
 
 const StoryTile = ({
     title,
@@ -38,7 +36,9 @@ const StoryTile = ({
     author,
     duration,
     id,
-    numListens,
+    licenseType,
+    universeId,
+    sequenceNumber,
     reorderEnabled = false,
     drag,
     isActive,
@@ -48,40 +48,55 @@ const StoryTile = ({
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
+    const progressMap = useStoryProgressMap();
+    const progress = progressMap[id];
+    const durationDisplay = getDurationDisplay(
+        duration ?? 0,
+        progress?.status ?? 'none',
+        progress?.progressSeconds ?? 0
+    );
+
+    const { data: universe } = useUniverse(universeId);
+
     // 0 = collapsed, 1 = expanded
-    const progress = useSharedValue(0);
+    const progressAnim = useSharedValue(0);
     const expanded = useSharedValue(false);
 
-    const [isFav, setIsFav] = React.useState(false);
     const [expandedHeight, setExpandedHeight] = React.useState(300);
 
     const toggle = () => {
         if (reorderEnabled) return;
         const next = !expanded.value;
         expanded.value = next;
-        progress.value = withTiming(next ? 1 : 0, TIMING);
+        progressAnim.value = withTiming(next ? 1 : 0, TIMING);
     };
 
-    const onFavPress = () => setIsFav(f => !f);
+    const handleShare = async () => {
+        await Share.share({
+            message: `Check out "${title}" on Runts: https://tinkermedia.net/runts/story/${id}`,
+            url: `https://tinkermedia.net/runts/story/${id}`,
+            title: title ?? 'Runts',
+        });
+    };
 
     // ── Animated styles ─────────────────────────────────────────────────────
 
     // Artwork shrinks to 0 width + fades as tile expands
     const artworkStyle = useAnimatedStyle(() => ({
-        width:   interpolate(progress.value, [0, 1], [60, 0]),
-        opacity: interpolate(progress.value, [0, 0.4], [1, 0]),
-        marginRight: interpolate(progress.value, [0, 1], [12, 0]),
+        width:   interpolate(progressAnim.value, [0, 1], [60, 0]),
+        opacity: interpolate(progressAnim.value, [0, 0.4], [1, 0]),
+        marginRight: interpolate(progressAnim.value, [0, 1], [12, 0]),
     }));
 
     // Chevron rotates 180° on expand
     const chevronStyle = useAnimatedStyle(() => ({
-        transform: [{ rotate: `${interpolate(progress.value, [0, 1], [0, 180])}deg` }],
+        transform: [{ rotate: `${interpolate(progressAnim.value, [0, 1], [0, 180])}deg` }],
     }));
 
     // Expanded section clips in from height 0
     const expandedStyle = useAnimatedStyle(() => ({
-        height:  interpolate(progress.value, [0, 1], [0, expandedHeight]),
-        opacity: interpolate(progress.value, [0, 0.3], [0, 1]),
+        height:  interpolate(progressAnim.value, [0, 1], [0, expandedHeight]),
+        opacity: interpolate(progressAnim.value, [0, 0.3], [0, 1]),
     }));
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -119,18 +134,38 @@ const StoryTile = ({
                                 <Text style={styles.author} numberOfLines={1}>{author}</Text>
                             </View>
 
-                            <View style={styles.metaRow}>
-                                <Text style={styles.tag}>{primaryTag}</Text>
-                                {secondaryTag ? (
-                                    <>
-                                        <View style={styles.dot} />
-                                        <Text style={styles.tag}>{secondaryTag}</Text>
-                                    </>
-                                ) : null}
-                                <View style={styles.dot} />
-                                <FontAwesome5 name="headphones" size={11} color="#ffffff40" iconStyle="solid" />
-                                <Text style={styles.listenCount}>{numListens ?? 0}</Text>
+                            <View style={styles.infoRow}>
+                        {/* Duration — replaces numListens/headphones */}
+                            {duration > 0 && (
+                                <View style={styles.metaRow}>
+                                    <FontAwesome5
+                                        name={durationDisplay.icon}
+                                        size={11}
+                                        color={durationDisplay.color}
+                                        iconStyle="solid"
+                                    />
+                                    <Text style={[styles.durationText, { color: durationDisplay.color }]}>
+                                        {durationDisplay.text}
+                                    </Text>
+                                </View>
+                            )}
+                            {/* Tag pills — moved here from expanded view */}
+                            {(primaryTag || secondaryTag) ? (
+                                <View style={styles.tagRow}>
+                                    {primaryTag ? (
+                                        <View style={styles.tagPill}>
+                                            <Text style={styles.tagPillText}>{primaryTag}</Text>
+                                        </View>
+                                    ) : null}
+                                    {secondaryTag ? (
+                                        <View style={styles.tagPill}>
+                                            <Text style={styles.tagPillText}>{secondaryTag}</Text>
+                                        </View>
+                                    ) : null}
+                                </View>
+                            ) : null}
                             </View>
+                            
                         </View>
 
                         {/* Chevron */}
@@ -155,24 +190,34 @@ const StoryTile = ({
                             <TouchableWithoutFeedback
                                 onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
                             >
-                                <Image
-                                    source={{ uri: imageUri }}
-                                    style={styles.expandedImage}
-                                    resizeMode="cover"
-                                />
+                                <View>
+                                    <Image
+                                        source={{ uri: imageUri }}
+                                        style={styles.expandedImage}
+                                        resizeMode="cover"
+                                    />
+                                    {licenseType === 'runts_exclusive' && (
+                                        <View style={styles.ogBadge} pointerEvents="none">
+                                            <Image
+                                                source={require('../../../assets/images/icon24w.png')}
+                                                style={styles.ogBadgeIcon}
+                                            />
+                                        </View>
+                                    )}
+                                </View>
                             </TouchableWithoutFeedback>
 
-                            {(primaryTag || secondaryTag) ? (
-                                <View style={styles.expandedTagRow}>
-                                    {primaryTag ? (
-                                        <View style={styles.expandedTagPill}>
-                                            <Text style={styles.expandedTagPillText}>{primaryTag}</Text>
-                                        </View>
+                            {/* Universe / Sequence Number */}
+                            {(universe?.name || sequenceNumber) ? (
+                                <View style={styles.universeRow}>
+                                    {universe?.name ? (
+                                        <Text style={styles.universeText}>{universe.name}</Text>
                                     ) : null}
-                                    {secondaryTag ? (
-                                        <View style={styles.expandedTagPill}>
-                                            <Text style={styles.expandedTagPillText}>{secondaryTag}</Text>
-                                        </View>
+                                    {universe?.name && sequenceNumber ? (
+                                        <Text style={styles.universeDot}>·</Text>
+                                    ) : null}
+                                    {sequenceNumber ? (
+                                        <Text style={styles.universeText}>Part {sequenceNumber}</Text>
                                     ) : null}
                                 </View>
                             ) : null}
@@ -187,21 +232,8 @@ const StoryTile = ({
                                 <View style={styles.actionsLeft}>
                                     <PinButton storyId={id} size={20} />
 
-                                    <TouchableOpacity
-                                        onPress={onFavPress}
-                                        style={styles.actionBtn}
-                                        activeOpacity={0.7}
-                                    >
-                                        <FontAwesome5
-                                            name="star"
-                                            size={19}
-                                            color={isFav ? '#C9A84C' : '#ffffff70'}
-                                            iconStyle={isFav ? 'solid' : 'regular'}
-                                        />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity style={styles.actionBtn} activeOpacity={0.7}>
-                                        <FontAwesome name="share" size={19} color="#ffffff70" />
+                                    <TouchableOpacity onPress={handleShare} style={styles.actionBtn} activeOpacity={0.7}>
+                                        <FontAwesome5 name="share" size={19} color="#ffffff70" iconStyle="solid" />
                                     </TouchableOpacity>
                                 </View>
                                     <PlayButtonV2
@@ -276,29 +308,42 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
+        marginRight: 10,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
     },
     author: {
         fontSize: 12,
         color: '#ffffffa5',
         flex: 1,
     },
-    tag: {
+    durationText: {
         fontSize: 12,
-        color: '#ffffff90',
-        textTransform: 'capitalize',
-    },
-    dot: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: '#ffffff25',
-    },
-    listenCount: {
-        fontSize: 12,
-        color: '#ffffff70',
+        fontWeight: '600',
     },
     chevron: {
         paddingLeft: 10,
+    },
+
+    tagRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+    },
+    tagPill: {
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 10,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    tagPillText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.75)',
+        textTransform: 'capitalize',
     },
 
     // Expanded — overflow:hidden on the Animated.View clips the content
@@ -309,7 +354,7 @@ const styles = StyleSheet.create({
        borderTopColor: '#2a2a2a',
         paddingTop: 6,
         paddingHorizontal: 12,
-        paddingBottom: 16,  // ← change from 0
+        paddingBottom: 16,
         gap: 10,
     },
     expandedImage: {
@@ -317,27 +362,40 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 10,
     },
+    ogBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderRadius: 20,
+        padding: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(0,255,255,0.4)',
+    },
+    ogBadgeIcon: {
+        width: 16,
+        height: 16,
+    },
+    universeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    universeText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: 'cyan',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    universeDot: {
+        color: 'rgba(0,255,255,0.4)',
+        fontSize: 13,
+    },
     summary: {
         fontSize: 13,
         color: '#ffffffa5',
         lineHeight: 20,
-    },
-    expandedTagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-},
-    expandedTagPill: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        borderRadius: 10,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-    },
-    expandedTagPillText: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: 'rgba(255,255,255,0.75)',
-        textTransform: 'capitalize',
     },
     actions: {
         flexDirection: 'row',

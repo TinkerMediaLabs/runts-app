@@ -24,6 +24,11 @@ import {
 import { useTagNames }    from '../../hooks/queries/useTagNames';
 import { useAuthors } from '../../hooks/queries/useAuthors';
 
+import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useNarrators } from '../../hooks/queries/useNarrators';
+import { useStoryNarratorLinks } from '../../hooks/queries/useStoryNarratorLinks';
+import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
+
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -41,6 +46,30 @@ const GenreHome = ({ navigation }: any) => {
     const { data: shortStories,    isLoading: shortLoading }    = useStoriesByTagShort(tagId);
 
     const { data: authors } = useAuthors();
+
+    const progressMap = useStoryProgressMap();
+    const { data: narrators = [] } = useNarrators();
+    const { data: storyNarratorLinks = [] } = useStoryNarratorLinks();
+
+    const narratorNameMap = useMemo(() => {
+        const m: Record<string, string> = {};
+        narrators.forEach((n: any) => {
+            if (n.id && n.name) m[n.id] = n.name;
+        });
+        return m;
+    }, [narrators]);
+
+    const storyNarratorsMap = useMemo(() => {
+        const m: Record<string, string[]> = {};
+        storyNarratorLinks.forEach((link: any) => {
+            if (!link.storyId || !link.narratorId) return;
+            const name = narratorNameMap[link.narratorId];
+            if (!name) return;
+            if (!m[link.storyId]) m[link.storyId] = [];
+            m[link.storyId].push(name);
+        });
+        return m;
+    }, [storyNarratorLinks, narratorNameMap]);
 
     const isLoading = newLoading || trendingLoading || shortLoading;
 
@@ -61,16 +90,23 @@ const { data: tagMap = {} } = useTagNames(primaryTagIds);
     }, [authors]);
 
     const enrich = (stories: any[]) =>
-        stories.map(s => ({
-            ...s,
-            primaryTagName:   tagMap[s.primaryTagId   ?? ''] ?? '',
-            secondaryTagName: tagMap[s.secondaryTagId ?? ''] ?? '',
-            authorName:       authorMap[s.authorId    ?? ''] ?? '',
-        }));
+        stories.map(s => {
+            const progress = progressMap[s.id];
+            return {
+                ...s,
+                primaryTagName:   tagMap[s.primaryTagId   ?? ''] ?? '',
+                secondaryTagName: tagMap[s.secondaryTagId ?? ''] ?? '',
+                authorName:       authorMap[s.authorId    ?? ''] ?? '',
+                narratorDisplay:  formatNarratorDisplay(storyNarratorsMap[s.id]),
+                isNew:            isRecentlyPublished(s.publishedAt),
+                progressStatus:   progress?.status ?? 'none',
+                progressSeconds:  progress?.progressSeconds ?? 0,
+            };
+        });
 
-    const enrichedNew      = useMemo(() => enrich(newStories      ?? []), [newStories,      tagMap, authorMap]);
-    const enrichedTrending = useMemo(() => enrich(trendingStories ?? []), [trendingStories, tagMap, authorMap]);
-    const enrichedShort    = useMemo(() => enrich(shortStories    ?? []), [shortStories,    tagMap, authorMap]);
+    const enrichedNew      = useMemo(() => enrich(newStories      ?? []), [newStories,      tagMap, authorMap, storyNarratorsMap, progressMap]);
+    const enrichedTrending = useMemo(() => enrich(trendingStories ?? []), [trendingStories, tagMap, authorMap, storyNarratorsMap, progressMap]);
+    const enrichedShort    = useMemo(() => enrich(shortStories    ?? []), [shortStories,    tagMap, authorMap, storyNarratorsMap, progressMap]);
 
     // ── Fallback: StoryTag join query for minor tags ───────────────────────────
     // Only runs when primary GSI queries come back empty — covers tags that are
@@ -91,13 +127,20 @@ const taggedTagIds = useMemo(() => {
 const { data: taggedTagMap = {} } = useTagNames(taggedTagIds);
 
 const enrichedTagged = useMemo(() => {
-    return (taggedStories ?? []).map((s: any) => ({
-        ...s,
-        primaryTagName:   taggedTagMap[s.primaryTagId   ?? ''] ?? tagMap[s.primaryTagId   ?? ''] ?? '',
-        secondaryTagName: taggedTagMap[s.secondaryTagId ?? ''] ?? tagMap[s.secondaryTagId ?? ''] ?? '',
-        authorName:       authorMap[s.authorId ?? ''] ?? '',
-    }));
-}, [taggedStories, taggedTagMap, tagMap, authorMap]);
+    return (taggedStories ?? []).map((s: any) => {
+        const progress = progressMap[s.id];
+        return {
+            ...s,
+            primaryTagName:   taggedTagMap[s.primaryTagId   ?? ''] ?? tagMap[s.primaryTagId   ?? ''] ?? '',
+            secondaryTagName: taggedTagMap[s.secondaryTagId ?? ''] ?? tagMap[s.secondaryTagId ?? ''] ?? '',
+            authorName:       authorMap[s.authorId ?? ''] ?? '',
+            narratorDisplay:  formatNarratorDisplay(storyNarratorsMap[s.id]),
+            isNew:            isRecentlyPublished(s.publishedAt),
+            progressStatus:   progress?.status ?? 'none',
+            progressSeconds:  progress?.progressSeconds ?? 0,
+        };
+    });
+}, [taggedStories, taggedTagMap, tagMap, authorMap, storyNarratorsMap, progressMap]);
 
     const totalLoading = isLoading || (primaryEmpty && taggedLoading);
     const totalEmpty   =

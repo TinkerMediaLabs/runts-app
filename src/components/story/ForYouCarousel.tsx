@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, ImageBackground, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Dimensions, ImageBackground, TouchableOpacity, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -26,6 +26,7 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import PinButton from '../common/PinButton';
 
 import { useApp } from '@/context/AppContext';
+import { getDurationDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -37,19 +38,12 @@ const CARD_WIDTH  = width * 0.9;
 const CARD_HEIGHT = height * 0.40;
 const EXPAND_H    = 120;
 const TIMING_CFG  = { duration: 200, easing: Easing.out(Easing.quad) };
+const LISTENS_THRESHOLD = 1000;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function fmtDuration(s: number): string {
-    if (!s) return '';
-    const m = Math.round(s / 60);
-    if (m < 60) return `${m}m`;
-    const h = Math.floor(m / 60);
-    const rem = m % 60;
-    return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
-}
 
 function fmtListens(n: number): string {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -69,18 +63,22 @@ type ItemProps = {
     imageUri:       string;
     audioUri:       string;
     author:         string;
+    narratorDisplay?: string;
     duration:       number;
     numListens:     number;
     avgRating?:     number | null;
     numRatings?:    number | null;
     isPremium?:     boolean;
+    isNew?:         boolean;
+    progressStatus?: ProgressStatus;
+    progressSeconds?: number;
 };
 
 const CarouselItem = ({
     id, title, primaryTagName, secondaryTagName, summary,
-    imageUri, audioUri, author, duration,
+    imageUri, audioUri, author, narratorDisplay, duration,
     numListens, avgRating, numRatings,
-    isPremium,
+    isPremium, isNew, progressStatus = 'none', progressSeconds = 0,
 }: ItemProps) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -102,6 +100,14 @@ const CarouselItem = ({
         expandProgress.value = withTiming(next ? 1 : 0, TIMING_CFG);
     };
 
+    const handleShare = async () => {
+    await Share.share({
+        message: `Check out "${title}" on Runts: https://tinkermedia.net/runts/story/${id}`,
+        url: `https://tinkermedia.net/runts/story/${id}`,
+        title: title ?? 'Runts',
+    });
+};
+
     const expandStyle = useAnimatedStyle(() => ({
         height:  interpolate(expandProgress.value, [0, 1], [0, EXPAND_H]),
         opacity: interpolate(expandProgress.value, [0, 0.3], [0, 1]),
@@ -116,6 +122,8 @@ const CarouselItem = ({
     }));
 
     const hasRating = avgRating != null && avgRating > 0;
+    const showListens = (numListens ?? 0) >= LISTENS_THRESHOLD;
+    const durationDisplay = getDurationDisplay(duration, progressStatus, progressSeconds);
 
     return (
         <View style={styles.itemWrapper}>
@@ -125,16 +133,25 @@ const CarouselItem = ({
                     style={styles.card}
                     imageStyle={styles.cardImage}
                 >
-                    {/* Duration pill — top right */}
+                    {/* NEW badge — top left */}
+                    {isNew && (
+                        <View style={styles.newBadge} pointerEvents="none">
+                            <Text style={styles.newBadgeText}>NEW</Text>
+                        </View>
+                    )}
+
+                    {/* Duration / progress pill — top right */}
                     {duration > 0 && (
                         <View style={styles.durationPill} pointerEvents="none">
                             <FontAwesome5
-                                name={'clock' as any}
+                                name={durationDisplay.icon}
                                 size={9}
-                                color="rgba(255,255,255,0.8)"
+                                color={durationDisplay.color}
                                 iconStyle="solid"
                             />
-                            <Text style={styles.durationText}>{fmtDuration(duration)}</Text>
+                            <Text style={[styles.durationText, { color: durationDisplay.color }]}>
+                                {durationDisplay.text}
+                            </Text>
                         </View>
                     )}
 
@@ -178,7 +195,7 @@ const CarouselItem = ({
                             </Animated.View>
                         </View>
 
-                        {/* Author */}
+                        {/* Author + Narrator */}
                         <View style={styles.metaRow}>
                             <FontAwesome5
                                 name="book-open"
@@ -187,9 +204,21 @@ const CarouselItem = ({
                                 iconStyle="solid"
                             />
                             <Text style={styles.metaText}>{author}</Text>
+                            {narratorDisplay ? (
+                                <>
+                                    <View style={styles.metaDot} />
+                                    <FontAwesome5
+                                        name="microphone"
+                                        size={10}
+                                        color="rgba(255,255,255,0.55)"
+                                        iconStyle="solid"
+                                    />
+                                    <Text style={styles.metaText}>{narratorDisplay}</Text>
+                                </>
+                            ) : null}
                         </View>
 
-                        {/* Stats row: tag · rating · listens */}
+                        {/* Stats row: tags · rating · listens (if threshold met) */}
                         <View style={styles.metaRow}>
                            {primaryTagName ? (
                                 <View style={styles.tagPill}>
@@ -216,14 +245,18 @@ const CarouselItem = ({
                                 </>
                             )}
 
-                            <View style={styles.metaDot} />
-                            <FontAwesome5
-                                name="headphones"
-                                size={10}
-                                color="rgba(255,255,255,0.5)"
-                                iconStyle="solid"
-                            />
-                            <Text style={styles.metaText}>{fmtListens(numListens)}</Text>
+                            {showListens && (
+                                <>
+                                    <View style={styles.metaDot} />
+                                    <FontAwesome5
+                                        name="headphones"
+                                        size={10}
+                                        color="rgba(255,255,255,0.5)"
+                                        iconStyle="solid"
+                                    />
+                                    <Text style={styles.metaText}>{fmtListens(numListens)}</Text>
+                                </>
+                            )}
                         </View>
 
                         {/* Expanded section */}
@@ -245,7 +278,7 @@ const CarouselItem = ({
                                     )}
                                     <View style={styles.iconActions}>
                                         <PinButton storyId={id} size={20} />
-                                        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+                                        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7} onPress={handleShare}>
                                             <FontAwesome name="share" size={18} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>
                                     </View>
@@ -281,11 +314,15 @@ const ForYouCarousel = ({ stories, tagMap }: {
             audioUri={item?.audioUri ?? ''}
             summary={item?.summary ?? ''}
             author={item?.authorName ?? ''}
+            narratorDisplay={item?.narratorDisplay ?? ''}
             duration={item?.duration ?? 0}
             numListens={item?.numListens ?? 0}
             avgRating={item?.avgRating}
             numRatings={item?.numRatings}
             isPremium={item?.isPremium === true}
+            isNew={item?.isNew === true}
+            progressStatus={item?.progressStatus ?? 'none'}
+            progressSeconds={item?.progressSeconds ?? 0}
         />
     );
 
@@ -341,6 +378,26 @@ card: {
         borderRadius: 15,
     },
 
+    // ── NEW badge ──────────────────────────────────────────────────────────────
+    newBadge: {
+        position:       'absolute',
+        top:            12,
+        left:           12,
+        backgroundColor: '#141f1fa5',
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderWidth: 1,
+        borderColor: '#00ffff',
+        zIndex: 2,
+    },
+    newBadgeText: {
+        fontSize:   10,
+        fontWeight: '800',
+        color:      '#fff',
+        letterSpacing: 0.5,
+    },
+
     // ── Duration pill ─────────────────────────────────────────────────────────
     durationPill: {
         position:       'absolute',
@@ -359,7 +416,6 @@ card: {
     durationText: {
         fontSize:   11,
         fontWeight: '600',
-        color:      'rgba(255,255,255,0.85)',
         letterSpacing: 0.3,
     },
 

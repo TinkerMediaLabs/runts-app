@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share } from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useIsLocked }   from '../../hooks/useIsLocked';
 import PaywallModal      from '../../components/common/PaywallModal';
+import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 
 import Animated, {
     useSharedValue,
@@ -45,6 +46,12 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema }   from '../../../amplify/data/resource';
 
 import { Analytics } from '@/lib/analytics';
+
+import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useNarrators } from '../../hooks/queries/useNarrators';
+import { useUniverse } from '../../hooks/queries/useUniverse';
+import { getDurationDisplay, formatNarratorDisplay } from '../../lib/storyDisplay';
+import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
 
 
 
@@ -190,6 +197,43 @@ const StoryScreen = ({ navigation }: any) => {
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: story, isLoading } = useStory(storyID);
     const { data: author } = useAuthor(story?.authorId ?? '');
+
+    const progressMap = useStoryProgressMap();
+    const progress = progressMap[story?.id ?? ''];
+    const { data: narrators = [] } = useNarrators();
+    const { data: universe } = useUniverse(story?.universeId);
+
+    const [storyNarratorNames, setStoryNarratorNames] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (!storyID) return;
+        async function fetchNarrators() {
+            try {
+                const { data: links } = await client.models.StoryNarrator.list({
+                    filter: { storyId: { eq: storyID } },
+                });
+                if (!links?.length) {
+                    setStoryNarratorNames([]);
+                    return;
+                }
+                const names = links
+                    .map((link: any) => narrators.find((n: any) => n.id === link.narratorId)?.name)
+                    .filter(Boolean) as string[];
+                setStoryNarratorNames(names);
+            } catch (e) {
+                console.log('Error fetching story narrators:', e);
+            }
+        }
+        fetchNarrators();
+    }, [storyID, narrators]);
+
+    const narratorDisplay = formatNarratorDisplay(storyNarratorNames);
+    const durationDisplay = getDurationDisplay(
+        story?.duration ?? 0,
+        progress?.status ?? 'none',
+        progress?.progressSeconds ?? 0
+    );
+
     const { data: resolvedImageUri } = useStoryImage(
         story?.imageUri?.startsWith('stories/') ? story.imageUri : null
     );
@@ -292,16 +336,6 @@ const StoryScreen = ({ navigation }: any) => {
             console.log('Error refreshing rating:', e);
         }
     };
-
-    // Star appearance:
-    // - Not finished → dim outlined star (not tappable)
-    // - Finished, no rating → gold outlined star
-    // - Finished + rated → gold solid star
-    const starIcon  = userRating ? 'star' : 'star';
-    const starStyle = userRating ? 'solid' : 'regular';
-    const starColor = hasFinished
-        ? '#C9A84C'
-        : 'rgba(255,255,255,0.3)';
 
     const handleShare = async () => {
         await Share.share({
@@ -446,8 +480,9 @@ const handleDelete = (id: string) => {
             />
 
             {/* ── Sticky header ── */}
-            <Animated.View style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}>
-                <CloseButton navigation={navigation} />
+                {!showRatingModal && (
+                <Animated.View style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}>
+                    <CloseButton navigation={navigation} />
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}
                 </Animated.Text>
@@ -465,6 +500,7 @@ const handleDelete = (id: string) => {
                     <View style={{ width: 30, height: 30, margin: 12 }} />
                 )}
             </Animated.View>
+            )}
             {/* ── Scrollable content ── */}
             <Animated.ScrollView
                 onScroll={scrollHandler}
@@ -477,23 +513,35 @@ const handleDelete = (id: string) => {
                 <Animated.View style={[styles.contentCard, bounceStyle]}>
 
                     {/* Title + author */}
-                    <View style={styles.titleSection}>
-                        <Text style={styles.title}>{story?.title}</Text>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.title}>{story?.title}</Text>
 
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => navigation.navigate('AuthorDetails', { id: story?.authorId })}
-                            style={styles.authorRow}
-                        >
-                            <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
-                            <Text style={styles.author}>{author?.name ?? ''}</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('AuthorDetails', { id: story?.authorId })}
+                        style={styles.authorRow}
+                    >
+                        <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+                        <Text style={styles.author}>{author?.name ?? ''}</Text>
+                    </TouchableOpacity>
+
+                    {narratorDisplay ? (
+                        <View style={[styles.authorRow, { marginTop: 4 }]}>
+                            <FontAwesome5 name="microphone" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+                            <Text style={styles.author}>{narratorDisplay}</Text>
+                        </View>
+                    ) : null}
+                </View>
 
                     {/* Stats row */}
                     <View style={styles.statsRow}>
-                        <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
-                        <StatPill icon="clock"      value={TimeConversion(story?.duration)} />
+                        {story?.licenseType === 'runts_exclusive' && (
+                            <View style={styles.ogPill}>
+                                <Image source={require('../../../assets/images/icon24w.png')} style={styles.ogIcon} />
+                                <Text style={styles.ogPillText}>OG</Text>
+                            </View>
+                        )}
+                        <StatPill icon={durationDisplay.icon} value={durationDisplay.text} color={durationDisplay.color} />
                         {story?.avgRating != null && (
                             <StatPill
                                 icon="star"
@@ -501,6 +549,7 @@ const handleDelete = (id: string) => {
                                 color="#C9A84C"
                             />
                         )}
+                        <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
                     </View>
 
                     {/* Action icons */}
@@ -509,15 +558,23 @@ const handleDelete = (id: string) => {
                             <PinButton storyId={story?.id ?? ''} size={22} />
 
                             {/* Star — gold outlined if finished+unrated, solid if rated, dim if not finished */}
-                            <ActionBtn onPress={() => {
-                                if (hasFinished) setShowRatingModal(true);
-                            }}>
-                                <FontAwesome
-                                    name={starStyle === 'solid' ? 'star' : 'star-o'}
-                                    size={22}
-                                    color={starColor}
-                                />
-                            </ActionBtn>
+                            {/* Personal rating badge — hidden if not finished, "Rate" prompt if finished+unrated, rating value if rated */}
+                                {hasFinished && (
+                                    <TouchableOpacity
+                                        onPress={() => setShowRatingModal(true)}
+                                        activeOpacity={0.7}
+                                        style={styles.personalRatingPill}
+                                    >
+                                        <MaterialDesignIcons
+                                            name={userRating ? 'account-star' : 'account-star-outline'}
+                                            size={24}
+                                            color="#C9A84C"
+                                        />
+                                        <Text style={styles.personalRatingText}>
+                                            {userRating ? userRating.rating : 'Rate'}
+                                        </Text>
+                                    </TouchableOpacity>
+)}
 
                            <TouchableOpacity onPress={handleShare} activeOpacity={0.7}>
                                 <FontAwesome name="share" size={22} color="#fff" />
@@ -536,26 +593,50 @@ const handleDelete = (id: string) => {
                         />
                     </View>
 
+                                       {/* Story Format / Story Tone / POV */}
                     <View style={styles.separator} />
+
+                    {/* Universe / Sequence Number */}
+                    {(universe?.name || story?.sequenceNumber) ? (
+                        <View style={styles.universeRow}>
+                            {universe?.name ? (
+                                <Text style={styles.universeText}>{universe.name}</Text>
+                            ) : null}
+                            {universe?.name && story?.sequenceNumber ? (
+                                <Text style={styles.universeDot}>·</Text>
+                            ) : null}
+                            {story?.sequenceNumber ? (
+                                <Text style={styles.universeText}>Part {story.sequenceNumber}</Text>
+                            ) : null}
+                        </View>
+                    ) : null}
+
+                    {/* Story Format / Story Tone / POV — pills, same style as numListens */}
+                    {(story?.storyFormat || story?.tone || story?.pov) ? (
+                        <View style={styles.statsRow}>
+                            {story?.storyFormat ? (
+                                <StatPill icon="book" value={STORY_FORMATS[story.storyFormat] ?? story.storyFormat} />
+                            ) : null}
+                            {story?.tone ? (
+                                <StatPill icon="theater-masks" value={TONES[story.tone] ?? story.tone} />
+                            ) : null}
+                            {story?.pov ? (
+                                <StatPill icon="eye" value={POV_OPTIONS[story.pov] ?? story.pov} />
+                            ) : null}
+                        </View>
+                    ) : null}
+
+                    <View style={styles.separator} />
+
+                 
 
                     {/* Summary */}
                     {story?.summary ? (
                         <Text style={styles.summary}>{story.summary}</Text>
                     ) : null}
 
-                    {/* Description */}
-                    {story?.description ? (
-                        <Text style={styles.description}>{story.description}</Text>
-                    ) : null}
-
-                    {/* Credit */}
-                    {story?.credit ? (
-                        <Text style={[styles.description, { marginTop: 12, fontStyle: 'italic' }]}>
-                            {story.credit}
-                        </Text>
-                    ) : null}
-
-                    {/* Tags */}
+                     {/* Tags */}
+                                        {/* Tags */}
                     {storyTags.length > 0 && (
                         <View style={styles.tagsSection}>
                             <Text style={styles.sectionLabel}>Tags</Text>
@@ -570,6 +651,36 @@ const handleDelete = (id: string) => {
                                             name: tag.name,
                                         })}
                                     />
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Description */}
+                    {story?.description ? (
+                        <Text style={styles.description}>{story.description}</Text>
+                    ) : null}
+
+                    {/* Credit */}
+                    {story?.credit ? (
+                        <Text style={[styles.description, { marginTop: 12, fontStyle: 'italic' }]}>
+                            {story.credit}
+                        </Text>
+                    ) : null}
+
+                     <View style={[styles.separator, { marginTop: 20, marginBottom: 0 }]} />
+
+                    {/* Content Warnings */}
+                    {(story?.contentWarnings?.length ?? 0) > 0 && (
+                        <View style={styles.tagsSection}>
+                            <Text style={styles.sectionLabel}>Content Warnings</Text>
+                            <View style={styles.tagsWrap}>
+                                {(story?.contentWarnings ?? []).filter(Boolean).map((warning: any) => (                                  
+                                    <View key={warning} style={styles.warningChip}>
+                                        <Text style={styles.warningChipText}>
+                                            {CONTENT_WARNINGS[warning] ?? warning}
+                                        </Text>
+                                    </View>
                                 ))}
                             </View>
                         </View>
@@ -700,9 +811,11 @@ const handleDelete = (id: string) => {
             </Animated.ScrollView>
 
             {/* Back button */}
-            <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
-                <CloseButton navigation={navigation} />
-            </View>
+            {!showRatingModal && (
+                <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
+                    <CloseButton navigation={navigation} />
+                </View>
+            )}
 
             {/* Rating modal — re-rate from story detail */}
             <RatingModal
@@ -845,7 +958,8 @@ const styles = StyleSheet.create({
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: '#2a2a2a',
-        marginVertical: 20,
+        marginBottom: 20
+
     },
 
     summary: {
@@ -862,6 +976,7 @@ const styles = StyleSheet.create({
 
     tagsSection: {
         marginTop: 20,
+        marginBottom: 30
     },
     tagsWrap: {
         flexDirection: 'row',
@@ -886,6 +1001,7 @@ const styles = StyleSheet.create({
     // ── Reactions ─────────────────────────────────────────────────────────────
     reactionsSection: {
         marginTop: 20,
+        marginBottom: 20
     },
     reactionsRow: {
         flexDirection: 'row',
@@ -1063,6 +1179,80 @@ const styles = StyleSheet.create({
     tagChipTextErotic: {
         color: '#ff7c2a',
     },
+    metaLineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+    flexWrap: 'wrap',
+},
+metaLineText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.55)',
+},
+metaLineDot: {
+    color: 'rgba(255,255,255,0.25)',
+    fontSize: 13,
+},
+universeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+},
+universeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'cyan',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+},
+universeDot: {
+    color: 'rgba(0,255,255,0.4)',
+    fontSize: 13,
+},
+warningChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,68,68,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,68,68,0.4)',
+},
+warningChipText: {
+    color: '#ff8888',
+    fontSize: 13,
+},
+personalRatingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+},
+personalRatingText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#C9A84C',
+},
+ogPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,255,255,0.1)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0,255,255,0.3)',
+},
+ogIcon: {
+    width: 14,
+    height: 14,
+},
+ogPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'cyan',
+},
 });
 
 export default StoryScreen;
