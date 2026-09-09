@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
@@ -34,6 +34,26 @@ export function useStoriesByTagNew(tagId: string) {
       if (errors) throw new Error(errors[0].message);
       return data ?? [];
     },
+    enabled: !!tagId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Stories by tag, paginated (for "Browse all" infinite scroll) ───────────
+export function useStoriesByTagPaginated(tagId: string) {
+  return useInfiniteQuery({
+    queryKey: ['stories', 'tag', 'paginated', tagId],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const client = generateClient<Schema>();
+      const { data, errors, nextToken } = await client.models.Story.listStoryByPrimaryTagIdAndPublishedAt(
+        { primaryTagId: tagId },
+        { sortDirection: 'DESC', limit: 10, nextToken: pageParam ?? undefined }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return { items: data ?? [], nextToken: nextToken ?? null };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextToken,
     enabled: !!tagId,
     staleTime: 1000 * 60 * 5,
   });
