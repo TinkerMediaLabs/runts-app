@@ -16,6 +16,16 @@ import ForYouCarousel from '../../components/story/ForYouCarousel';
 import HorizontalList from '../../components/story/HorizontalList';
 import StoryTile from '../../components/story/StoryTile';
 
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
+
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    useAnimatedScrollHandler,
+    interpolate,
+    Extrapolation,
+} from 'react-native-reanimated';
+
 import {
     useStoriesByTagNew,
     useStoriesByTagTrending,
@@ -42,7 +52,29 @@ const GenreHome = ({ navigation }: any) => {
     const insets = useSafeAreaInsets();
     const typo   = useTypography();
 
+    const HERO_HEIGHT = 340;
+    const HEADER_THRESHOLD_START = HERO_HEIGHT - 120;
+    const HEADER_THRESHOLD_END   = HERO_HEIGHT - 60;
+
     const { data: tag } = useTag(tagId);
+
+    const { data: resolvedHeroImageUri } = useStoryImage(tag?.heroImageUri);
+
+    const scrollY = useSharedValue(0);
+
+    const scrollHandler = useAnimatedScrollHandler({
+        onScroll: (e) => { scrollY.value = e.contentOffset.y; },
+    });
+
+    const heroHeaderStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(
+            scrollY.value,
+            [HEADER_THRESHOLD_START, HEADER_THRESHOLD_END],
+            [0, 1],
+            Extrapolation.CLAMP
+        ),
+        backgroundColor: '#111',
+    }));
 
     // ── Primary-tag queries (by primaryTagId GSI) ─────────────────────────────
     const { data: newStories,      isLoading: newLoading }      = useStoriesByTagNew(tagId);
@@ -186,14 +218,32 @@ const GenreHome = ({ navigation }: any) => {
         return (
             <Screen>
                 <StatusBar style="light" />
-                <ScrollView
+
+                {/* Sticky header — fades in as the hero title scrolls out of view */}
+                <Animated.View style={[styles.heroStickyHeader, heroHeaderStyle, { paddingTop: insets.top + 10 }]}>
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={styles.heroStickyBackBtn}
+                        activeOpacity={0.7}
+                    >
+                        <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
+                    </TouchableOpacity>
+                    <Text style={styles.heroStickyTitle} numberOfLines={1}>
+                        {tagName}
+                    </Text>
+                    <View style={{ width: 34 }} />
+                </Animated.View>
+
+                <Animated.ScrollView
                     showsVerticalScrollIndicator={false}
+                    onScroll={scrollHandler}
+                    scrollEventThrottle={16}
                     contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
                 >
                     {/* Hero */}
                     <View style={styles.heroWrapper}>
-                        {tag?.heroImageUri ? (
-                            <Image source={{ uri: tag.heroImageUri }} style={styles.heroImage} resizeMode="cover" />
+                        {resolvedHeroImageUri ? (
+                            <Image source={{ uri: resolvedHeroImageUri }} style={styles.heroImage} resizeMode="cover" />
                         ) : (
                             <View style={[styles.heroImage, { backgroundColor: '#1a1a1a' }]} />
                         )}
@@ -277,7 +327,7 @@ const GenreHome = ({ navigation }: any) => {
                             )}
                         </>
                     )}
-                </ScrollView>
+                 </Animated.ScrollView>
             </Screen>
         );
     }
@@ -486,6 +536,31 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
         paddingHorizontal: spacing.margin,
         paddingBottom: 24,
+        textAlign: 'center',
+    },
+        heroStickyHeader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.margin,
+        paddingBottom: 12,
+        gap: 10,
+    },
+    heroStickyBackBtn: {
+        width: 34,
+        alignItems: 'center',
+    },
+    heroStickyTitle: {
+        flex: 1,
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#fff',
+        textAlign: 'center',
+        textTransform: 'capitalize',
     },
 });
 

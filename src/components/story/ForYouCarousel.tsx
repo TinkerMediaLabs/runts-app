@@ -343,6 +343,9 @@ const ForYouCarousel = ({ stories, tagMap }: {
                     parallaxAdjacentItemScale: 0.8,
                 }}
                 style={{ width }}
+                onConfigurePanGesture={(panGesture) => {
+                    panGesture.activeOffsetX([-10, 10]);
+                }}
             />
         </View>
     );
