@@ -310,8 +310,11 @@ Comment: a
       icon: a.string(),
       imageUri: a.string(),
       tileImageUri: a.string(),
+      heroImageUri: a.string(),
+      useHeroLayout: a.boolean().default(false),
       isErotic: a.boolean().default(false),
       stories: a.hasMany('StoryTag', 'tagId'),
+      
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
