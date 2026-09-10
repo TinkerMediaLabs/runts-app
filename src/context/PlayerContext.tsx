@@ -69,6 +69,7 @@ export const PlayerProvider = ({ children }: any) => {
     const playlistRef      = useRef<any[]>([]);
     const playlistIndexRef = useRef(-1);
     const [hasNextTrack, setHasNextTrack] = useState(false);
+    const [nextTrackInfo, setNextTrackInfo] = useState<any>(null);
 
     const { expand } = usePlayerUI();
     const queryClient = useQueryClient();
@@ -250,7 +251,16 @@ export const PlayerProvider = ({ children }: any) => {
             const playlist = await loadPlaylist();
             const index    = playlist.findIndex((s: any) => s.id === track.id);
             playlistIndexRef.current = index;
-            setHasNextTrack(index >= 0 && index < playlist.length - 1);
+            const hasNext = index >= 0 && index < playlist.length - 1;
+            setHasNextTrack(hasNext);
+            const nextItem = hasNext ? playlist[index + 1] : null;
+            setNextTrackInfo(nextItem ? {
+                id: nextItem.id,
+                title: nextItem.title ?? '',
+                artist: nextItem.authorName ?? '',
+                artwork: nextItem.imageUri ?? '',
+                duration: nextItem.duration ?? 0,
+            } : null);
 
             if (savedSeconds > 0) {
                 setTimeout(() => audioEngine.seek(savedSeconds), 500);
@@ -348,6 +358,7 @@ export const PlayerProvider = ({ children }: any) => {
         playlistRef.current     = [];
         playlistIndexRef.current = -1;
         setHasNextTrack(false);
+        setNextTrackInfo(null);
         await audioEngine.stop();
         setState({
             currentTrack:         null,
@@ -374,6 +385,7 @@ export const PlayerProvider = ({ children }: any) => {
         playlistRef.current     = [];
         playlistIndexRef.current = -1;
         setHasNextTrack(false);
+        setNextTrackInfo(null);
         await audioEngine.stop();
         setState(prev => ({
             ...prev,
@@ -500,6 +512,7 @@ export const PlayerProvider = ({ children }: any) => {
                 sleepMinutesLeft,
                 setSleepTimer,
                 hasNextTrack,
+                nextTrackInfo,
                 playNext,
                 playTrackAt,
             }}

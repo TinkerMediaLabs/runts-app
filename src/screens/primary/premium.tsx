@@ -209,7 +209,7 @@ const PremiumScreen = () => {
     return (
         <View style={{ flex: 1, backgroundColor: '#000' }}>
             <LinearGradient
-                colors={['#0a0a14', '#12121a', '#000']}
+                colors={['#0a0a14', '#0f1112', '#000']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}

@@ -423,6 +423,17 @@
               "properties": {}
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byUserIdAndSortOrder",
+                "queryField": "listUserPinnedStoryByUserIdAndSortOrder",
+                "fields": [
+                  "userId",
+                  "sortOrder"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -770,6 +781,17 @@
                 "fields": [
                   "userId",
                   "storyId"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndRating",
+                "queryField": "listUserRatingByUserIdAndRating",
+                "fields": [
+                  "userId",
+                  "rating"
                 ]
               }
             },
@@ -1682,6 +1704,119 @@
             "sortKeyFieldNames": []
           }
         },
+        "Narrator": {
+          "name": "Narrator",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "profilePicUri": {
+              "name": "profilePicUri",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "bio": {
+              "name": "bio",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "stories": {
+              "name": "stories",
+              "isArray": true,
+              "type": {
+                "model": "StoryNarrator"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true,
+              "association": {
+                "connectionType": "HAS_MANY",
+                "associatedWith": [
+                  "narratorId"
+                ]
+              }
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "Narrators",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "fields": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
         "Story": {
           "name": "Story",
           "fields": {
@@ -1860,6 +1995,64 @@
               "isRequired": false,
               "attributes": []
             },
+            "storyFormat": {
+              "name": "storyFormat",
+              "isArray": false,
+              "type": {
+                "enum": "StoryStoryFormat"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
+            "sequenceNumber": {
+              "name": "sequenceNumber",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "universeId": {
+              "name": "universeId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "pov": {
+              "name": "pov",
+              "isArray": false,
+              "type": {
+                "enum": "StoryPov"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
+            "narrationType": {
+              "name": "narrationType",
+              "isArray": false,
+              "type": {
+                "enum": "StoryNarrationType"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
+            "contentWarnings": {
+              "name": "contentWarnings",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "tone": {
+              "name": "tone",
+              "isArray": false,
+              "type": {
+                "enum": "StoryTone"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
             "author": {
               "name": "author",
               "isArray": false,
@@ -1872,6 +2065,37 @@
                 "connectionType": "BELONGS_TO",
                 "targetNames": [
                   "authorId"
+                ]
+              }
+            },
+            "universe": {
+              "name": "universe",
+              "isArray": false,
+              "type": {
+                "model": "Universe"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "association": {
+                "connectionType": "BELONGS_TO",
+                "targetNames": [
+                  "universeId"
+                ]
+              }
+            },
+            "narrators": {
+              "name": "narrators",
+              "isArray": true,
+              "type": {
+                "model": "StoryNarrator"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true,
+              "association": {
+                "connectionType": "HAS_MANY",
+                "associatedWith": [
+                  "storyId"
                 ]
               }
             },
@@ -2133,6 +2357,17 @@
               }
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byUniverseAndPublishedAt",
+                "queryField": "listStoryByUniverseIdAndPublishedAt",
+                "fields": [
+                  "universeId",
+                  "publishedAt"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -2197,6 +2432,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "storyCount": {
+              "name": "storyCount",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
             "color": {
               "name": "color",
               "isArray": false,
@@ -2222,6 +2464,20 @@
               "name": "tileImageUri",
               "isArray": false,
               "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "heroImageUri": {
+              "name": "heroImageUri",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "useHeroLayout": {
+              "name": "useHeroLayout",
+              "isArray": false,
+              "type": "Boolean",
               "isRequired": false,
               "attributes": []
             },
@@ -2267,6 +2523,105 @@
           },
           "syncable": true,
           "pluralName": "Tags",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "fields": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "Universe": {
+          "name": "Universe",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "stories": {
+              "name": "stories",
+              "isArray": true,
+              "type": {
+                "model": "Story"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true,
+              "association": {
+                "connectionType": "HAS_MANY",
+                "associatedWith": [
+                  "universeId"
+                ]
+              }
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "Universes",
           "attributes": [
             {
               "type": "model",
@@ -2522,6 +2877,118 @@
             "sortKeyFieldNames": []
           }
         },
+        "StoryNarrator": {
+          "name": "StoryNarrator",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "storyId": {
+              "name": "storyId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "narratorId": {
+              "name": "narratorId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "story": {
+              "name": "story",
+              "isArray": false,
+              "type": {
+                "model": "Story"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "association": {
+                "connectionType": "BELONGS_TO",
+                "targetNames": [
+                  "storyId"
+                ]
+              }
+            },
+            "narrator": {
+              "name": "narrator",
+              "isArray": false,
+              "type": {
+                "model": "Narrator"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "association": {
+                "connectionType": "BELONGS_TO",
+                "targetNames": [
+                  "narratorId"
+                ]
+              }
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "StoryNarrators",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
         "StoryTag": {
           "name": "StoryTag",
           "fields": {
@@ -2635,7 +3102,48 @@
           }
         }
       },
-      "enums": {},
+      "enums": {
+        "StoryStoryFormat": {
+          "name": "StoryStoryFormat",
+          "values": [
+            "SHORT_STORY",
+            "NOVELLA",
+            "FLASH_FICTION"
+          ]
+        },
+        "StoryPov": {
+          "name": "StoryPov",
+          "values": [
+            "THIRD_PERSON",
+            "SECOND_PERSON",
+            "FIRST_PERSON",
+            "MULTIPLE_POV"
+          ]
+        },
+        "StoryNarrationType": {
+          "name": "StoryNarrationType",
+          "values": [
+            "AI",
+            "HUMAN",
+            "MIXED"
+          ]
+        },
+        "StoryTone": {
+          "name": "StoryTone",
+          "values": [
+            "FUNNY",
+            "DARK",
+            "SUSPENSEFUL",
+            "WHIMSICAL",
+            "ROMANTIC",
+            "EERIE",
+            "THOUGHT_PROVOKING",
+            "HOPEFUL",
+            "MELANCHOLIC",
+            "ADVENTUROUS"
+          ]
+        }
+      },
       "nonModels": {},
       "mutations": {
         "incrementListenCount": {
@@ -2687,6 +3195,14 @@
             ]
           },
           "authors/*": {
+            "authenticated": [
+              "get",
+              "list",
+              "write",
+              "delete"
+            ]
+          },
+          "narrators/*": {
             "authenticated": [
               "get",
               "list",

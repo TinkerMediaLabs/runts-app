@@ -501,7 +501,7 @@ const SearchScreen = ({ navigation }: any) => {
       withTiming(1, { duration: 160 })
     );
     tabIndicatorX.value = withSpring(index * TAB_WIDTH, {
-      damping: 22,
+      damping: 50,
       stiffness: 200,
     });
     // Re-expand the scrunch when switching tabs
@@ -624,7 +624,7 @@ const filteredTagResults = useMemo(() => {
   return (
     <Screen>
       <LinearGradient
-        colors={['#13192C', '#161616', '#000000']}
+        colors={['#000', '#0f1112', '#000']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ flex: 1 }}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Image, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useStoryNarratorNames } from '@/hooks/queries/useStoryNarratorNames';
-import { formatNarratorDisplay } from '@/lib/storyDisplay';
+import { formatNarratorDisplay, fmtDuration } from '@/lib/storyDisplay';
 
 import Animated, {
   useAnimatedStyle,
@@ -28,30 +28,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+
+import { colors } from '@/theme/colors';
 
 import { usePlayer } from '@/context/PlayerContext';
 import { audioEngine } from '@/features/audio/audioEngine';
 
 import ProgressBar from './ProgressBar';
 import PlayerControls from './PlayerControls';
-import OptionsModal from './OptionsModal';
+import OptionsModal, { OPTIONS_BUTTON_SIZE } from './OptionsModal';
 import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
 import { useTags } from '@/hooks/queries/useTags';
+import { useStoryImage } from '@/hooks/queries/useStoryImage';
 
 import RatingModal from './RatingModal';
 import BookmarkModal    from './BookmarkModal';
 import { useCreateBookmark } from '../../hooks/queries/useBookmarks';
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 70;
+const HERO_HEIGHT_RATIO = 0.46; // hero image takes ~46% of screen height
+const HERO_HEIGHT = SCREEN_HEIGHT * HERO_HEIGHT_RATIO;
+
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 const AnimatedImageBackground = createAnimatedComponent(ImageBackground);
 
@@ -63,22 +68,23 @@ export default function TrackPlayerWidget({ expanded }: any) {
     '#000000',
   ]);
 
-
   const { expand, collapse } = usePlayerUI();
 
-  const { 
-    state, 
-    pause, 
-    resume, 
-    setPlaybackRate, 
-    clearPendingRating, 
-    clearTrack, 
-    sleepMinutesLeft, 
-    setSleepTimer, 
-    hasNextTrack, 
-    playNext 
-  } = usePlayer();  // useProgress with interval 0 returns shared values that update on the
+  const {
+    state,
+    pause,
+    resume,
+    setPlaybackRate,
+    clearPendingRating,
+    clearTrack,
+    sleepMinutesLeft,
+    setSleepTimer,
+    hasNextTrack,
+    nextTrackInfo,
+    playNext,
+  } = usePlayer();
 
+  // useProgress with interval 0 returns shared values that update on the
   // worklet thread — no JS re-renders, no duplicate key spam from the slider.
   const progress = useProgress(0);
 
@@ -102,7 +108,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
         url: `https://tinkermedia.net/runts/story/${track.id}`,
         title: track.title ?? 'Runts',
     });
-};
+  };
 
   const insets = useSafeAreaInsets();
   const { tabBarHeight } = usePlayerUI();
@@ -112,6 +118,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const startY = useSharedValue(0);
   const scrollY = useSharedValue(0);
 
+  // Y-position (within scroll content) after which the floating play button
+  // fades in — set to the bottom of the Up Next tile, or the bottom of the
+  // primary controls section if there's no next track.
+  const floatingThresholdY = useSharedValue(999999);
+
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: currentStory } = useStory(track?.id ?? null);
@@ -119,6 +130,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const { data: narratorNames = [] } = useStoryNarratorNames(currentStory?.id);
   const narratorDisplay = formatNarratorDisplay(narratorNames);
+
+  const { data: resolvedNextImageUri } = useStoryImage(
+    nextTrackInfo?.imageUri?.startsWith('stories/') ? nextTrackInfo.imageUri : null
+  );
+  const nextImageDisplayUri = resolvedNextImageUri ?? nextTrackInfo?.imageUri ?? '';
 
   const storyTags = React.useMemo(() => {
     if (!currentStory || !allTags) return [];
@@ -201,33 +217,45 @@ export default function TrackPlayerWidget({ expanded }: any) {
     ),
   }));
 
-  // ── Controls ──────────────────────────────────────────────────────────────
-  const [onToggle, setOnToggle] = useState(false);
+  // ── Controls — optimistic toggle for instant visual feedback ──────────────
+  // The context's pause()/resume() await the underlying audio engine before
+  // updating state, which introduces a real perceptible delay. We track our
+  // own local "what the user just tapped" state so the icon flips instantly,
+  // while the actual engine call happens in the background — same pattern
+  // PinButton uses for its optimistic update.
+  const [optimisticPlaying, setOptimisticPlaying] = useState(state.isPlaying);
 
-  const toggle = async () => {
-    setOnToggle(v => !v);
-    if (state.isPlaying) {
-      await audioEngine.pause();
-      pause();
-    } else {
-      await audioEngine.resume();
+  useEffect(() => {
+    setOptimisticPlaying(state.isPlaying);
+  }, [state.isPlaying]);
+
+  const toggle = () => {
+    const next = !optimisticPlaying;
+    setOptimisticPlaying(next);
+    if (next) {
       resume();
+    } else {
+      pause();
     }
   };
 
+  // Pause icon stays visible for at least 5s so the user has time to notice
+  // there are controls here, whether the player just opened or playback
+  // just started.
   const heroControlsOpacity = useSharedValue(1);
 
   useEffect(() => {
     if (!track) return;
-    if (state.isPlaying) {
+    if (optimisticPlaying) {
       heroControlsOpacity.value = 1;
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         heroControlsOpacity.value = withTiming(0, { duration: 400 });
-      }, 1200);
+      }, 5000);
+      return () => clearTimeout(timer);
     } else {
       heroControlsOpacity.value = withTiming(1, { duration: 200 });
     }
-  }, [state.isPlaying, track]);
+  }, [optimisticPlaying, track]);
 
   const heroControlsStyle = useAnimatedStyle(() => ({
     opacity: heroControlsOpacity.value,
@@ -261,6 +289,28 @@ export default function TrackPlayerWidget({ expanded }: any) {
     ],
   }));
 
+  // Floating play button — fades in once the user has scrolled past the
+  // Up Next tile (or past the primary controls, if there's no next track).
+    const floatingButtonStyle = useAnimatedStyle(() => {
+      const expandedAmount = interpolate(
+        translateY.value,
+        [0, containerHeight.value - MINI_PLAYER_HEIGHT],
+        [1, 0],
+        Extrapolate.CLAMP
+      );
+      const scrolledPast = interpolate(
+        scrollY.value,
+        [floatingThresholdY.value - 40, floatingThresholdY.value],
+        [0, 1],
+        Extrapolate.CLAMP
+      );
+      const combined = expandedAmount * scrolledPast;
+      return {
+        opacity: combined,
+        transform: [{ scale: interpolate(combined, [0, 1], [0.8, 1]) }],
+      };
+    });
+
   // ── Artwork colors ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!track?.artwork) return;
@@ -270,7 +320,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
       cache: true,
       key: track.id,
     })
-      .then((colors) => {
+      .then(() => {
         if (!isMounted) return;
         setGradientColors(['transparent', 'transparent', '#000']);
       })
@@ -280,6 +330,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const hasTrack = !!track;
   const miniPlayerBottom = tabBarHeight > 0 ? tabBarHeight - 10 : insets.bottom;
+
+  // Minimum height for the info/controls section so hero + this section
+  // always fill at least the full screen, regardless of device size —
+  // any additional content (like a long transcript) simply extends below.
+  const infoSectionMinHeight = Math.max(0, SCREEN_HEIGHT - HERO_HEIGHT - insets.bottom);
 
   return (
     <View style={styles.root}>
@@ -313,7 +368,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
             >
 
               {/* Hero image */}
-              <View style={styles.heroContainer}>
+              <View style={[styles.heroContainer, { height: HERO_HEIGHT }]}>
                 <AnimatedImageBackground
                   source={{ uri: track.artwork }}
                   style={[styles.heroImage, heroImageStyle]}
@@ -322,6 +377,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 >
                   <View style={styles.overlay} />
 
+                  {/* Entire image is tappable to play/pause */}
                   <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={toggle}
@@ -329,7 +385,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   >
                     <Animated.View style={[heroControlsStyle]}>
                       <FontAwesome5
-                        name={state.isPlaying ? 'pause' : 'play'}
+                        name={optimisticPlaying ? 'pause' : 'play'}
                         size={72}
                         color="#fff"
                         opacity={0.5}
@@ -337,31 +393,20 @@ export default function TrackPlayerWidget({ expanded }: any) {
                     </Animated.View>
                   </TouchableOpacity>
 
-                  {/* HEADER — chevron left, pan zone middle, options button right */}
+                  {/* Pan-to-collapse zone + sleep timer pill — scrolls
+                      away with the hero image, distinct from the sticky
+                      chevron/options buttons below */}
                   <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
-                    <TouchableOpacity onPress={collapsePlayer} style={styles.headerbutton}>
-                        <Feather name="chevron-down" size={28} color="#fff" />
-                    </TouchableOpacity>
-
                     <GestureDetector gesture={panGesture}>
                         <View style={styles.heroPanZone} />
                     </GestureDetector>
 
-                    {/* Sleep timer pill — only shown when active */}
                     {sleepMinutesLeft !== null && (
                         <View style={styles.sleepPill}>
                             <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
                         </View>
                     )}
-
-                    <TouchableOpacity
-                        style={styles.headerbutton}
-                        onPress={() => setShowOptions(true)}
-                        activeOpacity={0.7}
-                    >
-                        <Feather name="more-vertical" size={24} color="#fff" />
-                    </TouchableOpacity>
-                </View>
+                  </View>
 
                   <LinearGradient
                     colors={gradientColors}
@@ -378,8 +423,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 locations={[0, 0.4, 1]}
                 style={styles.contentGradient}
               >
-                <View style={styles.content}>
-                  <View style={styles.info}>
+                <View style={[styles.content, { minHeight: infoSectionMinHeight }]}>
+                  <View>
                     <View style={styles.titlecontainer}>
                         <Text style={styles.bigTitle}>{track.title}</Text>
                       <TouchableWithoutFeedback onPress={() => {
@@ -405,9 +450,13 @@ export default function TrackPlayerWidget({ expanded }: any) {
                         collapsePlayer();
                       }
                     }}>
-                      <Text style={[styles.tag, storyTags[0]?.isErotic && { color: '#ff7c2a' }]}>
-                        {storyTags[0]?.name ?? ''}
-                    </Text>
+                      {storyTags[0]?.name ? (
+                        <View style={[styles.genrePill, storyTags[0]?.isErotic && styles.genrePillErotic]}>
+                          <Text style={[styles.genrePillText, storyTags[0]?.isErotic && styles.genrePillTextErotic]}>
+                            {storyTags[0].name}
+                          </Text>
+                        </View>
+                      ) : <View />}
                     </TouchableWithoutFeedback>
 
                       <View style={styles.actions}>
@@ -428,26 +477,67 @@ export default function TrackPlayerWidget({ expanded }: any) {
                     </View>
                   </View>
 
-                  {/* PROGRESS */}
-                  <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'}/>
+                   <PlayerControls
+                        isPlaying={optimisticPlaying}
+                        pause={pause}
+                        resume={resume}
+                        hasNext={false}
+                        onNext={undefined}
+                      />
+
+                  {/* PROGRESS + PRIMARY PLAY BUTTON + UP NEXT */}
+                  <View>
+                    <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'}/>
+
+                    <View
+                      style={styles.controlbox}
+                      onLayout={(e) => {
+                        // Only used as the floating-button threshold when
+                        // there's no Up Next tile below it.
+                        if (!nextTrackInfo) {
+                          floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+                        }
+                      }}
+                    >
+                      {/* <PlayerControls
+                        isPlaying={optimisticPlaying}
+                        pause={pause}
+                        resume={resume}
+                        hasNext={false}
+                        onNext={undefined}
+                      /> */}
+                    </View>
+
+                    {nextTrackInfo ? (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={playNext}
+                        style={styles.upNextCard}
+                        onLayout={(e) => {
+                          floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+                        }}
+                      >
+                        <Text style={styles.upNextLabel}>Up Next</Text>
+                        <View style={styles.upNextRow}>
+                          <Image source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
+                          <View style={{ flex: 1 }}>
+                            <Text numberOfLines={1} style={styles.upNextTitle}>
+                              {nextTrackInfo.title}
+                            </Text>
+                            <Text numberOfLines={1} style={styles.upNextMeta}>
+                              {nextTrackInfo.authorName ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}
+                            </Text>
+                          </View>
+                          <Feather name="skip-forward" size={20} color="#fff" />
+                        </View>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
 
                 </View>
               </LinearGradient>
 
-              <View style={styles.additionalcontent}>
-                <View style={styles.controlbox}>
-                  <PlayerControls
-                    isPlaying={state.isPlaying}
-                    pause={pause}
-                    resume={resume}
-                    hasNext={hasNextTrack}
-                    onNext={playNext}
-                  />
-                </View>
-
-                <View style={{ height: 80 }} />
-
-              </View>
+              <View style={{ height: 40 }} />
 
             {currentStory?.transcript ? (
               <View style={styles.transcriptbox}>
@@ -460,7 +550,20 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
             </AnimatedScrollView>
 
-            {/* Options modal — rendered outside scroll so it overlays everything */}
+            {/* Sticky chevron — collapses player, always visible regardless
+                of scroll position. Matches OptionsModal's button exactly
+                (same size/background) for visual consistency, since both
+                are now genuinely persistent overlays. */}
+            <TouchableOpacity
+              onPress={collapsePlayer}
+              style={[styles.stickyButton, { top: insets.top + 12, left: 20 }]}
+              activeOpacity={0.7}
+            >
+              <Feather name="chevron-down" size={28} color="#fff" />
+            </TouchableOpacity>
+
+            {/* Options modal — rendered outside scroll so it overlays
+                everything; its own trigger button is already persistent */}
             <OptionsModal
               visible={showOptions}
               onOpen={() => setShowOptions(true)}
@@ -478,6 +581,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
               sleepMinutesLeft={sleepMinutesLeft}
               onSleepTimer={(minutes) => setSleepTimer(minutes)}
             />
+
+
 
             <BookmarkModal
               visible={showBookmarkModal}
@@ -497,6 +602,27 @@ export default function TrackPlayerWidget({ expanded }: any) {
         )}
 
       </Animated.View>
+      {/* Floating play/pause — rendered outside the transformed container
+          entirely, since Android has known touch hit-testing issues for
+          absolutely-positioned children nested inside a Reanimated-driven
+          transform. Fades in once Up Next (or the primary controls, if no
+          next track) scrolls out of view, and only while expanded. */}
+      {hasTrack && (
+        <Animated.View
+          style={[styles.floatingButtonWrapper, floatingButtonStyle, { bottom: insets.bottom + 24 }]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity onPress={toggle} activeOpacity={0.8} style={styles.floatingPlayButton}>
+            <FontAwesome5
+                name={optimisticPlaying ? 'pause' : 'play'}
+                size={16}
+                color="#171717"
+                style={!optimisticPlaying ? { marginLeft: 2 } : undefined}
+                iconStyle="solid"
+            />
+        </TouchableOpacity>
+        </Animated.View>
+      )}
 
       {/* MINI PLAYER */}
       {hasTrack && (
@@ -520,7 +646,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
               </View>
               <TouchableOpacity onPress={toggle}>
                 <Feather
-                  name={state.isPlaying ? 'pause' : 'play'}
+                  name={optimisticPlaying ? 'pause' : 'play'}
                   size={22}
                   color="#fff"
                 />
@@ -580,18 +706,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: getStatusBarHeight(),
-  },
   artwork: {
     width: '100%',
     height: 320,
     borderRadius: 20,
-    marginTop: 20,
-  },
-  info: {
     marginTop: 20,
   },
   bigTitle: {
@@ -607,21 +725,14 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 2,
     fontSize: 13,
-},
-  tags: {
-    marginTop: 10,
-  },
-  tag: {
-    color: 'cyan',
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    gap: 20,
   },
   heroContainer: {
     width: '100%',
-    height: 460,
     overflow: 'hidden',
   },
   heroImage: {
@@ -638,7 +749,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
   },
@@ -653,7 +764,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     justifyContent: 'space-between',
-    height: Dimensions.get('window').height * 0.34,
   },
   headerbutton: {
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -662,6 +772,18 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Sticky chevron — matches OptionsModal's own button exactly, so both
+  // persistent header controls look and feel consistent.
+  stickyButton: {
+    position: 'absolute',
+    width: OPTIONS_BUTTON_SIZE,
+    height: OPTIONS_BUTTON_SIZE,
+    borderRadius: OPTIONS_BUTTON_SIZE / 2,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
   },
   gradient: {
     height: 180,
@@ -674,97 +796,130 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  heroButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
   titlecontainer: {
     alignItems: 'center',
     marginBottom: 10,
   },
-  actionbutton: {
-    paddingHorizontal: 16,
-  },
+  actionbutton: {},
   actioncontainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 20,
   },
-  additionalcontent: {
-    marginTop: 40,
-    padding: 0,
+  // Genre pill — replaces the old plain cyan text tag
+  genrePill: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
   },
-  dragHandleContainer: {
-    alignItems: 'center',
-    paddingVertical: 10,
+  genrePillErotic: {
+    backgroundColor: 'rgba(255,124,42,0.12)',
   },
-  dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#888',
+  genrePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.75)',
+    textTransform: 'capitalize',
+  },
+  genrePillTextErotic: {
+    color: '#ff7c2a',
   },
   controlbox: {
-    padding: 20,
-    marginTop: 0,
+    marginTop: 8,
   },
-  tagsbox: {
-    backgroundColor: '#282828a5',
-    marginVertical: 0,
+  // Up Next — replaces the old "second player controls" skip-next button
+  upNextCard: {
+    marginTop: 16,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  upNextLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.4)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  upNextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  upNextThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#222',
+  },
+  upNextTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  upNextMeta: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  // Floating play/pause — appears once Up Next / controls scroll away
+  floatingButtonWrapper: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 15,
+  },
+  floatingPlayButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+},
+  transcriptbox: {
+    marginVertical: 20,
     padding: 20,
     marginHorizontal: 10,
     borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
   },
-  tagsheader: {
-    marginTop: 20,
-    paddingBottom: 20,
-    color: '#000',
+  transcriptheader: {
+    paddingBottom: 16,
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#2a2a2a',
+    marginBottom: 16,
+  },
+  transcript: {
+    color: 'rgba(255,255,255,0.75)',
     fontSize: 24,
-    fontWeight: 'bold',
-    //borderBottomWidth: 0.5,
-    //borderColor: '#000',
+    lineHeight: 40,
   },
-  transcriptbox: {
-  marginVertical: 20,
-  padding: 20,
-  marginHorizontal: 10,
-  borderRadius: 20,
-  backgroundColor: '#1a1a1a',
-  borderWidth: 1,
-  borderColor: '#2a2a2a',
-},
-transcriptheader: {
-  paddingBottom: 16,
-  color: '#fff',
-  fontSize: 20,
-  fontWeight: '700',
-  borderBottomWidth: StyleSheet.hairlineWidth,
-  borderColor: '#2a2a2a',
-  marginBottom: 16,
-},
-transcript: {
-  color: 'rgba(255,255,255,0.75)',
-  fontSize: 24,
-  lineHeight: 40,
-},
-sleepPill: {
-  backgroundColor: 'rgba(0,0,0,0.45)',
-  borderRadius: 12,
-  paddingHorizontal: 10,
-  paddingVertical: 5,
-  borderWidth: 0.5,
-  borderColor: 'rgba(255,255,255,0.2)',
-},
-sleepPillText: {
-  fontSize: 12,
-  color: '#fff',
-  fontWeight: '600',
-},
+  sleepPill: {
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  sleepPillText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
+  },
 });

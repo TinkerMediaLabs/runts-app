@@ -59,12 +59,19 @@ export default function BottomTabNavigator() {
     <BottomTab.Navigator
       initialRouteName="Discover"
       screenOptions={{ 
-          tabBarActiveTintColor: '#fff',
-          tabBarStyle: {
+        tabBarActiveTintColor: '#fff',
+        tabBarShowLabel: false,
+        tabBarIconStyle: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        tabBarStyle: {
             paddingBottom: insets.bottom,
-            height: 60 + insets.bottom,
+            height: 50 + insets.bottom,
+            backgroundColor: '#0a0a0a',
         }
-          }}>
+    }}>
       <BottomTab.Screen
   name="Discover"
   component={HomeNavigator}
@@ -73,8 +80,8 @@ export default function BottomTabNavigator() {
     tabBarIcon: ({ focused, color }) => (
       <Ionicons
         name={focused ? 'sparkles' : 'sparkles-outline'}
-        size={22}
-        style={{ marginBottom: -4 }}
+        size={28}
+        style={{ marginTop: 0 }}
         color={color}
       />
     ),
@@ -89,8 +96,8 @@ export default function BottomTabNavigator() {
     tabBarIcon: ({ focused, color }) => (
       <Ionicons
         name={focused ? 'compass' : 'compass-outline'}
-        size={25}
-        style={{ marginBottom: -4 }}
+        size={31}
+        style={{ marginTop: 0 }}
         color={color}
       />
     ),
@@ -105,8 +112,8 @@ export default function BottomTabNavigator() {
     tabBarIcon: ({ focused, color }) => (
       <Ionicons
         name={focused ? 'library-sharp' : 'library-outline'}
-        size={22}
-        style={{ marginBottom: -4 }}
+        size={28}
+        style={{ marginTop: 0 }}
         color={color}
       />
     ),
@@ -122,8 +129,8 @@ export default function BottomTabNavigator() {
       tabBarIcon: ({ focused, color }) => (
         <MaterialDesignIcons
           name={focused ? 'crown' : 'crown-outline'}
-          size={25}
-          style={{ marginBottom: -4 }}
+          size={31}
+          style={{ marginTop: 0 }}
           color={color}
         />
       ),

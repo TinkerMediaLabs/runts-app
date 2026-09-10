@@ -128,7 +128,7 @@ const HomeScreen = ({ navigation }: any) => {
     return (
         <Screen>
             <LinearGradient
-                colors={['#0a0a14', '#12121a', '#000']}
+                colors={['#000', '#0f1112', '#000']}
                 style={{ flex: 1, minHeight: Dimensions.get('window').height }}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
