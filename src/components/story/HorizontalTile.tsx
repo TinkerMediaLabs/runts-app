@@ -180,7 +180,9 @@ const styles = StyleSheet.create({
         position:       'absolute',
         top:            10,
         left:           10,
-        backgroundColor: 'cyan',
+        backgroundColor: '#141f1fa5',
+        borderWidth: 1,
+        borderColor: '#00ffff',
         borderRadius:   20,
         paddingHorizontal: 7,
         paddingVertical:   3,
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
     newBadgeText: {
         fontSize:   9,
         fontWeight: '800',
-        color:      '#000',
+        color:      '#fff',
         letterSpacing: 0.4,
     },
 

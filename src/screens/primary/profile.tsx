@@ -58,14 +58,11 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
     </TouchableOpacity>
 );
 
-    function formatListenTime(seconds: number): string {
-    if (seconds < 60)    return '0m';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60)    return `${minutes}m`;
+    function formatHoursListened(seconds: number): string {
     const hours = seconds / 3600;
     const rounded = Math.round(hours * 10) / 10;
-    return rounded % 1 === 0 ? `${rounded}h` : `${rounded}h`;
-    }
+    return rounded % 1 === 0 ? `${rounded}` : `${rounded}`;
+}
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -212,6 +209,13 @@ const ProfileScreen = ({ navigation }: any) => {
             description: 'Version, legal, and support',
             onPress: () => navigation.navigate('AboutScreen'),
         },
+        {
+            id: '6',
+            icon: 'user-friends',
+            title: 'Following',
+            description: `${followingCount} author${followingCount !== 1 ? 's' : ''} followed`,
+            onPress: () => navigation.navigate('AuthorFollowing'),
+        },
     ];
 
     useEffect(() => {
@@ -291,31 +295,20 @@ const ProfileScreen = ({ navigation }: any) => {
 
                         {/* Stats row */}
                         <View style={styles.statsRow}>
-                            <TouchableOpacity
-                                style={styles.statItem}
-                                activeOpacity={0.7}
-                                onPress={() => navigation.navigate('AuthorFollowing')}
-                            >
-                                <Text style={styles.statValue}>{followingCount}</Text>
-                                <Text style={styles.statLabel}>Following</Text>
-                            </TouchableOpacity>
-
-                            <View style={styles.statSeparator} />
-
                             <View style={styles.statItem}>
                                 <Text style={styles.statValue}>
                                     {profile?.totalStoriesFinished ?? 0}
                                 </Text>
-                                <Text style={styles.statLabel}>Stories</Text>
+                                <Text style={styles.statLabel}>Stories Completed</Text>
                             </View>
 
                             <View style={styles.statSeparator} />
 
                             <View style={styles.statItem}>
                                 <Text style={styles.statValue}>
-                                    {formatListenTime(profile?.totalListenSeconds ?? 0)}
+                                    {formatHoursListened(profile?.totalListenSeconds ?? 0)}
                                 </Text>
-                                <Text style={styles.statLabel}>Listened</Text>
+                                <Text style={styles.statLabel}>Hours Listened</Text>
                             </View>
                         </View>
 
@@ -323,7 +316,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
                     {/* ── Navigation ── */}
                     <Section title="My Library">
-                        {NAV_TILES.filter(t => ['2', '3'].includes(t.id)).map((tile, i, arr) => (
+                        {NAV_TILES.filter(t => ['2', '3', '6'].includes(t.id)).map((tile, i, arr) => (
                             <React.Fragment key={tile.id}>
                                 <NavRow {...tile} />
                                 {i < arr.length - 1 && <RowDivider />}
