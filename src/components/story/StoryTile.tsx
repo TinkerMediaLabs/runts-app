@@ -129,6 +129,25 @@ const StoryTile = ({
                         <View style={styles.textBlock}>
                             <Text style={styles.title} numberOfLines={2}>{title}</Text>
 
+                             {/* Universe / Sequence Number */}
+                            {(universe?.name || sequenceNumber) ? (
+                                <View style={styles.universeRow}>
+
+                                     {sequenceNumber ? (
+                                        <Text style={styles.universeText}>Part {sequenceNumber}</Text>
+                                    ) : null}
+
+                                    {universe?.name && sequenceNumber ? (
+                                        <Text style={styles.universeDot}>·</Text>
+                                    ) : null}
+            
+                                     {universe?.name ? (
+                                        <Text style={styles.universeText}>{universe.name} UNIVERSE</Text>
+                                    ) : null}
+                                   
+                                </View>
+                            ) : null}
+
                             <View style={styles.metaRow}>
                                 <FontAwesome5 name="book-open" size={11} color="#ffffff50" iconStyle="solid" />
                                 <Text style={styles.author} numberOfLines={1}>{author}</Text>
@@ -206,21 +225,6 @@ const StoryTile = ({
                                     )}
                                 </View>
                             </TouchableWithoutFeedback>
-
-                            {/* Universe / Sequence Number */}
-                            {(universe?.name || sequenceNumber) ? (
-                                <View style={styles.universeRow}>
-                                    {universe?.name ? (
-                                        <Text style={styles.universeText}>{universe.name}</Text>
-                                    ) : null}
-                                    {universe?.name && sequenceNumber ? (
-                                        <Text style={styles.universeDot}>·</Text>
-                                    ) : null}
-                                    {sequenceNumber ? (
-                                        <Text style={styles.universeText}>Part {sequenceNumber}</Text>
-                                    ) : null}
-                                </View>
-                            ) : null}
 
                             {/* Summary */}
                             {summary ? (
@@ -382,9 +386,9 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     universeText: {
-        fontSize: 13,
+        fontSize: 10.5,
         fontWeight: '700',
-        color: 'cyan',
+        color: '#ffffffa5',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },

@@ -46,12 +46,13 @@ const PlayButtonV2 = ({ id, duration, author, imageUri, audioUri, title, isPremi
             <View style={styles.pill}>
                 <FontAwesome5
                     name="play"
-                    color="#ffffff"
+                    color="#00ffffa6"
                     size={10}
-                    style={{ marginRight: 2 }}
+                    style={{ marginRight: 10 }}
                     iconStyle="solid"
                 />
-                <Text style={styles.time}>{TimeConversion(duration)}</Text>
+                {/* <Text style={styles.time}>{TimeConversion(duration)}</Text> */}
+                <Text style={styles.time}>PLAY</Text>
             </View>
         </TouchableOpacity>
     );
@@ -62,14 +63,14 @@ const styles = StyleSheet.create({
         flexDirection:     'row',
         alignItems:        'center',
         borderRadius:      30,
-        paddingVertical:   2,
+        paddingVertical:   6,
         paddingHorizontal: 10,
-        backgroundColor:   'rgba(54,54,54,0.65)',
+        backgroundColor:   '#0027271a',
         borderWidth:       0.5,
-        borderColor:       'rgba(255,255,255,0.65)',
+        borderColor:       '#00ffffa6',
     },
     time: {
-        color:    '#fff',
+        color:    '#00ffffa6',
         fontSize: 12,
     },
 });

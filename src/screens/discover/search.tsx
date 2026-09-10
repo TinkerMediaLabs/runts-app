@@ -624,7 +624,7 @@ const filteredTagResults = useMemo(() => {
   return (
     <Screen>
       <LinearGradient
-        colors={['#13192C', '#161616', '#000000']}
+        colors={['#000', '#0f1112', '#000']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ flex: 1 }}

@@ -246,10 +246,10 @@ const CreatorProfile = () => {
                 ListHeaderComponent={
                     <Animated.View style={[styles.header, headerStyle, { paddingTop: insets.top + 60 }]}>
 
-                        <LinearGradient
-                            colors={['#1a1a2e', '#12121a', '#111']}
+                       <LinearGradient
+                            colors={['#000', '#000', '#000']}
                             start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
+                            end={{ x: 0, y: 1 }}
                             style={StyleSheet.absoluteFill}
                             pointerEvents="none"
                         />
@@ -269,7 +269,6 @@ const CreatorProfile = () => {
                         {/* Stats */}
                         <View style={styles.statsRow}>
                             <StatPill icon="book-open" label={`${authorStories.length} ${authorStories.length === 1 ? 'Story' : 'Stories'}`} />
-                            <StatPill icon="headphones" label={`${authorStories.reduce((sum, s) => sum + (s.numListens ?? 0), 0)} Listens`} />
                         </View>
 
                         {/* Follow button */}
@@ -313,7 +312,7 @@ const styles = StyleSheet.create({
 
     root: {
         flex: 1,
-        backgroundColor: '#111',
+        backgroundColor: '#000',
     },
 
     topBar: {
