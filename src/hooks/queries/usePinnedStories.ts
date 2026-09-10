@@ -18,22 +18,21 @@ export function usePinnedStories() {
         queryFn: async () => {
       const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
-            const { data, errors } = await client.models.UserPinnedStory.list({
-                filter: { userId: { eq: userId } },
-            });
+            const { data, errors } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+                { userId },
+                { sortDirection: 'ASC' }
+            );
             if (errors) throw new Error(errors[0].message);
 
-            const sorted = [...(data ?? [])].sort(
-                (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-            );
+            const sorted = data ?? [];
 
             // Fetch story data to check isErotic — needed for filtering
             const storyResults = await Promise.all(
-                sorted.map(r => client.models.Story.get({ id: r.storyId }))
+                sorted.map((r : any) => client.models.Story.get({ id: r.storyId }))
             );
 
             // Show erotic pinned stories only when both eroticEnabled AND eroticInPlaylist
-            return sorted.filter((_, i) => {
+            return sorted.filter((_: any, i: number) => {
                 const story = storyResults[i]?.data;
                 if (story?.isErotic !== 'true') return true;  // non-erotic always shown
                 if (!eroticEnabled)    return false;           // erotic disabled
@@ -52,11 +51,12 @@ export function usePinnedStoryIds() {
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      const { data, errors } = await client.models.UserPinnedStory.list({
-        filter: { userId: { eq: userId } },
-      });
+     const { data, errors } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+          { userId },
+          {}
+      );
       if (errors) throw new Error(errors[0].message);
-      return new Set((data ?? []).map(p => p.storyId));
+      return new Set((data ?? []).map((p : any) => p.storyId));
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -71,9 +71,10 @@ export function usePinStory() {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
-      const { data: existing } = await client.models.UserPinnedStory.list({
-        filter: { userId: { eq: userId } },
-      });
+      const { data: existing } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+          { userId },
+          {}
+      );
       const sortOrder = (existing ?? []).length;
 
       const { data, errors } = await client.models.UserPinnedStory.create({
@@ -136,14 +137,11 @@ export function useUnpinStory() {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
-      const { data: existing } = await client.models.UserPinnedStory.list({
-        filter: {
-          and: [
-            { userId:  { eq: userId  } },
-            { storyId: { eq: storyId } },
-          ],
-        },
-      });
+      const { data: allPinned } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+          { userId },
+          {}
+      );
+      const existing = (allPinned ?? []).filter((p: any) => p.storyId === storyId);
 
       if (!existing?.length) return;
 
