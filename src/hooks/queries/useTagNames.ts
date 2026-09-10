@@ -6,7 +6,7 @@ import type { Schema } from '../../../amplify/data/resource';
 async function fetchTag(id: string) {
   const client = generateClient<Schema>();
   const { data } = await client.models.Tag.get({ id });
-  return { id, name: data?.name ?? '' };
+  return { ...data, id, name: data?.name ?? '' };
 }
 
 // ─── Single tag, individually cached ──────────────────────────────────────

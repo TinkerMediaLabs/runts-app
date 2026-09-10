@@ -169,11 +169,12 @@ export async function syncDownloads(): Promise<void> {
     const { userId } = await getCurrentUser();
     const client = generateClient<Schema>();
 
-    const { data: pinnedRecords } = await client.models.UserPinnedStory.list({
-      filter: { userId: { eq: userId } },
-    });
+    const { data: pinnedRecords } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+        { userId },
+        {}
+    );
 
-    const pinnedIds     = new Set((pinnedRecords ?? []).map(p => p.storyId));
+    const pinnedIds     = new Set((pinnedRecords ?? []).map((p : any) => p.storyId));
     const downloads     = await getDownloads();
     const downloadedIds = new Set(downloads.map(d => d.storyId));
 
@@ -183,7 +184,7 @@ export async function syncDownloads(): Promise<void> {
 
     // Download pinned stories not yet downloaded
     const toDownload = (pinnedRecords ?? []).filter(
-      p => p.storyId && !downloadedIds.has(p.storyId)
+      (p : any) => p.storyId && !downloadedIds.has(p.storyId)
     );
 
     for (const record of toDownload) {

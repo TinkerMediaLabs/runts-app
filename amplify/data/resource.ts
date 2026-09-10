@@ -40,6 +40,9 @@ const schema = a.schema({
       story: a.belongsTo('Story', 'storyId'),
       user: a.belongsTo('User', 'userId'),
     })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['sortOrder']).name('byUserIdAndSortOrder'),
+    ])
     .authorization(allow => [allow.owner()]),
 
   // ── UserFinishedStory (join table) ────────────────────────────────────────
@@ -80,6 +83,7 @@ const schema = a.schema({
     .secondaryIndexes(index => [
       // Look up "has this user rated this story?" in O(1)
       index('userId').sortKeys(['storyId']).name('byUserAndStory'),
+      index('userId').sortKeys(['rating']).name('byUserAndRating'),
     ])
     .authorization(allow => [
       allow.owner(),

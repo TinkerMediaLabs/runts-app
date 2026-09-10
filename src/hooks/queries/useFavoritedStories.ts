@@ -32,23 +32,19 @@ export function useFavoritedStories(threshold: number) {
       const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
 
-            const { data: ratings } = await client.models.UserRating.list({
-                filter: {
-                    and: [
-                        { userId: { eq: userId } },
-                        { rating: { ge: threshold } },
-                    ],
-                },
-            });
+            const { data: ratings } = await (client.models.UserRating as any).listUserRatingByUserAndRating(
+                { userId, rating: { ge: threshold } },
+                { sortDirection: 'DESC' }
+            );
 
             if (!ratings?.length) return [];
 
             const storyResults = await Promise.all(
-                ratings.map(r => client.models.Story.get({ id: r.storyId }))
+                ratings.map((r : any) => client.models.Story.get({ id: r.storyId }))
             );
 
             return storyResults
-                .map(r => r.data)
+                .map((r : any) => r.data)
                 .filter(Boolean)
                 .filter(story => {
                     // Hide erotic favorites when erotic content is disabled
@@ -57,7 +53,7 @@ export function useFavoritedStories(threshold: number) {
                 })
                 .map(story => ({
                     ...story,
-                    userRating: ratings.find(r => r.storyId === story!.id)?.rating ?? 0,
+                    userRating: ratings.find((r : any) => r.storyId === story!.id)?.rating ?? 0,
                 }))
                 .sort((a, b) => b.userRating - a.userRating);
         },

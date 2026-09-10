@@ -15,11 +15,8 @@ export function useEroticStories() {
         queryKey: ['eroticStories'],
 queryFn: async () => {
       const client = generateClient<Schema>();
-    const { data: allData } = await client.models.Story.list();
-console.log('total stories in table:', allData?.length);
-console.log('erotic in table:', allData?.filter(s => s.isErotic === 'true')?.length);
     try {
-        let allStories: any[] = [];
+    let allStories: any[] = [];
         let nextToken: string | null = null;
 
         do {
@@ -37,7 +34,6 @@ console.log('erotic in table:', allData?.filter(s => s.isErotic === 'true')?.len
         } while (nextToken);
 
         const filtered = allStories.filter(s => s.isErotic === 'true');
-        console.log('total fetched:', allStories.length, 'erotic:', filtered.length);
         return filtered;
     } catch (err) {
         console.error('useEroticStories queryFn error:', err);

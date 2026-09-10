@@ -14,9 +14,10 @@ export function useIsFollowing(authorId: string) {
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      const { data } = await client.models.UserFollowedAuthor.list({
-        filter: { and: [{ userId: { eq: userId } }, { authorId: { eq: authorId } }] },
-      });
+      const { data } = await (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserAndAuthor(
+          { userId, authorId },
+          {}
+      );
       return { isFollowing: !!data?.length, recordId: data?.[0]?.id ?? null };
     },
     enabled: !!authorId,
@@ -31,9 +32,10 @@ export function useFollowingCount() {
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      const { data } = await client.models.UserFollowedAuthor.list({
-        filter: { userId: { eq: userId } },
-      });
+      const { data } = await (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserAndAuthor(
+          { userId },
+          {}
+      );
       return data?.length ?? 0;
     },
     staleTime: 1000 * 60,

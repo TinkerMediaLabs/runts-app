@@ -11,13 +11,12 @@ export function useComments(storyId: string) {
     queryKey: ['comments', storyId],
     queryFn: async () => {
       const client = generateClient<Schema>();
-      const { data } = await client.models.Comment.list({
-        filter: { storyId: { eq: storyId } },
-      });
-      return (data ?? []).sort((a, b) =>
-        new Date(a.createdAt ?? '').getTime() - new Date(b.createdAt ?? '').getTime()
+      const { data } = await (client.models.Comment as any).listCommentByStoryAndCreatedAt(
+          { storyId },
+          { sortDirection: 'ASC' }
       );
-    },
+      return data ?? [];
+          },
     enabled: !!storyId,
     staleTime: 1000 * 60,
   });
