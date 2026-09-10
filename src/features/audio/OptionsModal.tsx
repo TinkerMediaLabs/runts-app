@@ -18,12 +18,21 @@ import Feather from '@expo/vector-icons/Feather';
 // ---------------------------------------------------------------------------
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const MODAL_WIDTH  = SCREEN_WIDTH * 0.8;
+const MODAL_WIDTH  = SCREEN_WIDTH * 0.82;
 
 // Must match heroHeader paddingHorizontal and headerbutton size in TrackPlayer
-const BUTTON_SIZE      = 40;
+export const OPTIONS_BUTTON_SIZE  = 40;
 const BUTTON_RIGHT     = 20; // heroHeader paddingHorizontal
 const BUTTON_EXTRA_TOP = 12; // extra offset below insets.top in heroHeader
+
+const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
+const SLEEP_OPTIONS = [
+  { label: 'Off', minutes: null },
+  { label: '15m', minutes: 15 },
+  { label: '30m', minutes: 30 },
+  { label: '45m', minutes: 45 },
+  { label: '60m', minutes: 60 },
+];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,16 +54,16 @@ interface OptionsModalProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function OptionsModal({ 
-  visible, 
-  onOpen, 
-  onClose, 
-  insetsTop, 
-  playbackRate, 
-  onRateChange, 
+export default function OptionsModal({
+  visible,
+  onOpen,
+  onClose,
+  insetsTop,
+  playbackRate,
+  onRateChange,
   onDismiss,
   sleepMinutesLeft,
-  onSleepTimer 
+  onSleepTimer,
 }: OptionsModalProps) {
 
   const progress = useSharedValue(0); // 0 = closed, 1 = open
@@ -90,12 +99,6 @@ export default function OptionsModal({
     opacity: progress.value * 0.6,
   }));
 
-  // Scale from top-right corner.
-  // Pivot = top-right of card = (MODAL_WIDTH/2, -cardHeight/2) from card centre.
-  // Since we don't know height, we use scaleX/scaleY + translateX to keep the
-  // right edge pinned. The top edge is pinned by the absolute `top` position.
-  // translateX = (MODAL_WIDTH / 2) * (1 - scale) pushes the card rightward as
-  // it shrinks so the right edge stays at BUTTON_RIGHT.
   const cardStyle = useAnimatedStyle(() => {
     const scale = progress.value;
     const tx = (MODAL_WIDTH / 2) * (1 - scale);
@@ -110,7 +113,6 @@ export default function OptionsModal({
     };
   });
 
-  // Button icon: more-vertical fades/rotates out, X fades/rotates in
   const menuIconStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.35], [1, 0]),
     transform: [{ rotate: `${interpolate(progress.value, [0, 1], [0, 45])}deg` }],
@@ -121,6 +123,14 @@ export default function OptionsModal({
     transform: [{ rotate: `${interpolate(progress.value, [0, 1], [-45, 0])}deg` }],
     position: 'absolute',
   }));
+
+  // Sleep timer "active" chip: highlight the option matching the value that
+  // was set (mirrors the previous logic — active while minutesLeft is within
+  // that option's ceiling and the timer is running).
+  const isSleepActive = (minutes: number | null) =>
+    minutes === null
+      ? sleepMinutesLeft === null
+      : sleepMinutesLeft !== null && minutes >= sleepMinutesLeft;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -142,67 +152,55 @@ export default function OptionsModal({
           ]}
         >
           <Text style={styles.sectionTitle}>Playback Speed</Text>
-
-          {[0.75, 1, 1.25, 1.5, 2].map((speed, index) => {
-            const isActive = playbackRate === speed;
-            return (
-              <React.Fragment key={speed}>
-                {index > 0 && <View style={styles.divider} />}
+          <View style={styles.chipRow}>
+            {SPEEDS.map(speed => {
+              const isActive = playbackRate === speed;
+              return (
                 <TouchableOpacity
-                  style={styles.option}
-                  activeOpacity={0.6}
+                  key={speed}
+                  style={[styles.chip, isActive && styles.chipActive]}
+                  activeOpacity={0.7}
                   onPress={() => onRateChange(speed)}
                 >
-                  <Text style={[styles.optionLabel, isActive && styles.optionLabelActive]}>
+                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                     {speed}x
                   </Text>
-                  {isActive && <Feather name="check" size={16} color="cyan" />}
                 </TouchableOpacity>
-              </React.Fragment>
-            );
-          })}
+              );
+            })}
+          </View>
 
-          {/* Sleep timer section */}
-          <View style={[styles.divider, { marginHorizontal: 0, marginVertical: 8 }]} />
+          <View style={styles.divider} />
+
           <Text style={styles.sectionTitle}>Sleep Timer</Text>
-
-          {[
-            { label: 'Off',    minutes: null },
-            { label: '15 min', minutes: 15  },
-            { label: '30 min', minutes: 30  },
-            { label: '45 min', minutes: 45  },
-            { label: '60 min', minutes: 60  },
-          ].map(({ label, minutes }, index) => {
-            const isActive = minutes === null
-              ? sleepMinutesLeft === null
-              : sleepMinutesLeft !== null && minutes >= sleepMinutesLeft; // active if this was the set value
-            return (
-              <React.Fragment key={label}>
-                {index > 0 && <View style={styles.divider} />}
+          <View style={styles.chipRow}>
+            {SLEEP_OPTIONS.map(({ label, minutes }) => {
+              const isActive = isSleepActive(minutes);
+              return (
                 <TouchableOpacity
-                  style={styles.option}
-                  activeOpacity={0.6}
+                  key={label}
+                  style={[styles.chip, isActive && styles.chipActive]}
+                  activeOpacity={0.7}
                   onPress={() => { onSleepTimer(minutes); onClose(); }}
                 >
-                  <Text style={[styles.optionLabel, isActive && styles.optionLabelActive]}>
+                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                     {label}
                   </Text>
-                  {isActive && <Feather name="check" size={16} color="cyan" />}
                 </TouchableOpacity>
-              </React.Fragment>
-            );
-          })}
+              );
+            })}
+          </View>
 
-          {/* Dismiss player */}
           <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.option}
-              activeOpacity={0.6}
-              onPress={onDismiss}
-            >
-              <Text style={[styles.optionLabel, { color: '#ff6b6b' }]}>Close Player</Text>
-              <Feather name="x-circle" size={16} color="#ff6b6b" />
-            </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.dismissRow}
+            activeOpacity={0.6}
+            onPress={onDismiss}
+          >
+            <Feather name="x-circle" size={16} color="#ff6b6b" />
+            <Text style={styles.dismissText}>Close Player</Text>
+          </TouchableOpacity>
 
         </Animated.View>
       )}
@@ -213,7 +211,6 @@ export default function OptionsModal({
         style={[styles.button, { top: buttonTop, right: BUTTON_RIGHT }]}
         onPress={visible ? onClose : onOpen}
         activeOpacity={0.7}
-        //pointerEvents="auto"
       >
         <Animated.View style={menuIconStyle}>
           <Feather name="more-vertical" size={24} color="#fff" />
@@ -239,9 +236,9 @@ const styles = StyleSheet.create({
 
   button: {
     position: 'absolute',
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
+    width: OPTIONS_BUTTON_SIZE,
+    height: OPTIONS_BUTTON_SIZE,
+    borderRadius: OPTIONS_BUTTON_SIZE / 2,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -251,8 +248,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: '#000000',
     borderRadius: 16,
-    paddingTop: BUTTON_SIZE + 8, // push content below where the button sits on top
-    paddingBottom: 12,
+    paddingTop: OPTIONS_BUTTON_SIZE + 8,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
@@ -266,35 +264,54 @@ const styles = StyleSheet.create({
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    marginHorizontal: 20,
+    marginVertical: 14,
   },
 
-  option: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-
-  optionLabel: {
-    color: '#fff',
-    fontSize: 16,
-  },
-
-  optionLabelActive: {
-    color: 'cyan',
-    fontWeight: '600',
-  },
   sectionTitle: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    paddingHorizontal: 20,
-    marginBottom: 8,
-    marginTop: 4,
+    marginBottom: 10,
+  },
+
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  chipActive: {
+    backgroundColor: 'rgba(0,255,255,0.12)',
+    borderColor: 'cyan',
+  },
+  chipText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  chipTextActive: {
+    color: 'cyan',
+  },
+
+  dismissRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+  },
+  dismissText: {
+    color: '#ff6b6b',
+    fontSize: 14,
+    fontWeight: '600',
   },
 
 });

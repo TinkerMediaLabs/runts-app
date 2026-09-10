@@ -220,7 +220,10 @@ const GenreHome = ({ navigation }: any) => {
                 <StatusBar style="light" />
 
                 {/* Sticky header — fades in as the hero title scrolls out of view */}
-                <Animated.View style={[styles.heroStickyHeader, heroHeaderStyle, { paddingTop: insets.top + 10 }]}>
+                <Animated.View
+                    style={[styles.heroStickyHeader, heroHeaderStyle, { paddingTop: insets.top + 10 }]}
+                    pointerEvents="box-none"
+                >
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
                         style={styles.heroStickyBackBtn}

@@ -501,7 +501,7 @@ const SearchScreen = ({ navigation }: any) => {
       withTiming(1, { duration: 160 })
     );
     tabIndicatorX.value = withSpring(index * TAB_WIDTH, {
-      damping: 22,
+      damping: 50,
       stiffness: 200,
     });
     // Re-expand the scrunch when switching tabs
