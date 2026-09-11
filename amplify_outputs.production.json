@@ -2474,6 +2474,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "description": {
+              "name": "description",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "useHeroLayout": {
               "name": "useHeroLayout",
               "isArray": false,
