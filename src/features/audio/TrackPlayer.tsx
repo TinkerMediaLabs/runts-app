@@ -133,10 +133,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const narratorDisplay = formatNarratorDisplay(narratorNames);
 
   const { data: resolvedNextImageUri } = useStoryImage(
-    nextTrackInfo?.imageUri?.startsWith('stories/') ? nextTrackInfo.imageUri : null
-  );
-  const nextImageDisplayUri = resolvedNextImageUri ?? nextTrackInfo?.imageUri ?? '';
-
+    nextTrackInfo?.artwork?.startsWith('stories/') ? nextTrackInfo.artwork : null  );
+  const nextImageDisplayUri = resolvedNextImageUri ?? nextTrackInfo?.artwork ?? '';
   const storyTags = React.useMemo(() => {
     if (!currentStory || !allTags) return [];
     const tagIds = new Set([
@@ -492,56 +490,50 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       />
 
                   {/* PROGRESS + PRIMARY PLAY BUTTON + UP NEXT */}
-                  <View>
+                  <View
+                    style={styles.controlbox}
+                    onLayout={(e) => {
+                      // Only used as the floating-button threshold when
+                      // there's no Up Next tile below it.
+                      if (!nextTrackInfo) {
+                        floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+                      }
+                    }}
+                  >
                     <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'}/>
-
-                    <View
-                      style={styles.controlbox}
-                      onLayout={(e) => {
-                        // Only used as the floating-button threshold when
-                        // there's no Up Next tile below it.
-                        if (!nextTrackInfo) {
-                          floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-                        }
-                      }}
-                    >
-                      {/* <PlayerControls
-                        isPlaying={optimisticPlaying}
-                        pause={pause}
-                        resume={resume}
-                        hasNext={false}
-                        onNext={undefined}
-                      /> */}
-                    </View>
-
-                    {nextTrackInfo ? (
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={playNext}
-                        style={styles.upNextCard}
-                        onLayout={(e) => {
-                          floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-                        }}
-                      >
-                        <Text style={styles.upNextLabel}>Up Next</Text>
-                        <View style={styles.upNextRow}>
-                          <Image source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
-                          <View style={{ flex: 1 }}>
-                            <Text numberOfLines={1} style={styles.upNextTitle}>
-                              {nextTrackInfo.title}
-                            </Text>
-                            <Text numberOfLines={1} style={styles.upNextMeta}>
-                              {nextTrackInfo.authorName ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}
-                            </Text>
-                          </View>
-                          <Feather name="skip-forward" size={20} color="#fff" />
-                        </View>
-                      </TouchableOpacity>
-                    ) : null}
+                 
                   </View>
 
                 </View>
               </LinearGradient>
+
+              {/* Up Next — deliberately placed BELOW the one-screen info
+                  section, as purely scroll-revealed content, so it never
+                  pushes the primary controls up from the bottom of the
+                  screen regardless of device height. */}
+              {nextTrackInfo ? (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={playNext}
+                  style={[styles.upNextCard, { marginHorizontal: 20, marginTop: 40 }]}
+                  onLayout={(e) => {
+                    floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+                  }}
+                >
+                  <Text style={styles.upNextLabel}>Up Next</Text>
+                  <View style={styles.upNextRow}>
+                    <Image source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
+                    <View style={{ flex: 1 }}>
+                      <Text numberOfLines={1} style={styles.upNextTitle}>
+                        {nextTrackInfo.title}
+                      </Text>
+                      <Text numberOfLines={1} style={styles.upNextMeta}>
+                        {nextTrackInfo.artist ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}                      </Text>
+                    </View>
+                    <Feather name="skip-forward" size={20} color="#fff" />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
 
               <View style={{ height: 40 }} />
 
