@@ -29,6 +29,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -632,14 +633,15 @@ export default function TrackPlayerWidget({ expanded }: any) {
       {/* MINI PLAYER */}
       {hasTrack && (
         <Animated.View
-          style={[
-            styles.mini,
-            miniStyle,
-            { bottom: miniPlayerBottom },
-          ]}
+            style={[
+                styles.mini,
+                miniStyle,
+                { bottom: miniPlayerBottom },
+            ]}
         >
-          <TouchableWithoutFeedback onPress={expandPlayer}>
-            <View style={styles.miniInner}>
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+            <TouchableWithoutFeedback onPress={expandPlayer}>
+                    <View style={styles.miniInner}>
               <Image source={{ uri: track.artwork }} style={styles.miniImage} />
               <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={styles.title}>
@@ -687,25 +689,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-  mini: {
+mini: {
     position: 'absolute',
-    height: 70,
-    left: 0,
-    right: 0,
-    backgroundColor: '#003f3f',
+    height: 64,
+    left: 16,
+    right: 16,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'cyan',
     justifyContent: 'center',
+    overflow: 'hidden',
     pointerEvents: 'auto',
-  },
+},
   miniInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingLeft: 10,
+      paddingRight:20,
+      gap: 10,
   },
   miniImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 10,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
   },
   expanded: {
     ...StyleSheet.absoluteFillObject,
