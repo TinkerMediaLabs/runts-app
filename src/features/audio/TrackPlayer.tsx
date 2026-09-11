@@ -639,8 +639,9 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 { bottom: miniPlayerBottom },
             ]}
         >
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-            <TouchableWithoutFeedback onPress={expandPlayer}>
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={styles.miniTint} pointerEvents="none" />            
+              <TouchableWithoutFeedback onPress={expandPlayer}>
                     <View style={styles.miniInner}>
               <Image source={{ uri: track.artwork }} style={styles.miniImage} />
               <View style={{ flex: 1 }}>
@@ -713,6 +714,10 @@ mini: {
       height: 44,
       borderRadius: 22,
   },
+  miniTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+},
   expanded: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
