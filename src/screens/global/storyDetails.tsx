@@ -19,6 +19,8 @@ import Animated, {
     interpolateColor,
     Extrapolation,
     useAnimatedScrollHandler,
+    useAnimatedReaction,
+    runOnJS,
     withSpring,
     withTiming,
     Easing,
@@ -393,6 +395,17 @@ const handleDelete = (id: string) => {
     // ── Scroll animation ──────────────────────────────────────────────────────
     const scrollY = useSharedValue(0);
 
+    const [headerInteractive, setHeaderInteractive] = useState(false);
+
+    useAnimatedReaction(
+        () => scrollY.value >= HEADER_THRESHOLD_END,
+        (isFullyVisible, wasFullyVisible) => {
+            if (isFullyVisible !== wasFullyVisible) {
+                runOnJS(setHeaderInteractive)(isFullyVisible);
+            }
+        }
+    );
+
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (e) => { scrollY.value = e.contentOffset.y; },
     });
@@ -481,7 +494,10 @@ const handleDelete = (id: string) => {
 
             {/* ── Sticky header ── */}
                 {!showRatingModal && (
-                <Animated.View style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}>
+                <Animated.View
+                    style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}
+                    pointerEvents={headerInteractive ? 'auto' : 'none'}
+                >
                     <CloseButton navigation={navigation} />
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}

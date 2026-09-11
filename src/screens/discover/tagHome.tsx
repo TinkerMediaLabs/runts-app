@@ -41,6 +41,32 @@ import { useNarrators } from '../../hooks/queries/useNarrators';
 import { useStoryNarratorLinks } from '../../hooks/queries/useStoryNarratorLinks';
 import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
 
+    const BrowseAllStoryTile = ({ item }: { item: any }) => {
+        const { data: resolvedImageUri } = useStoryImage(
+            item.imageUri?.startsWith('stories/') ? item.imageUri : null
+        );
+        const displayImageUri = resolvedImageUri ?? item.imageUri ?? '';
+
+        return (
+            <StoryTile
+                id={item.id}
+                title={item.title}
+                primaryTag={item.primaryTagName}
+                secondaryTag={item.secondaryTagName}
+                summary={item.summary}
+                imageUri={displayImageUri}
+                audioUri={item.audioUri}
+                author={item.authorName}
+                duration={item.duration}
+                licenseType={item.licenseType}
+                universeId={item.universeId}
+                sequenceNumber={item.sequenceNumber}
+                isPremium={item.isPremium}
+            />
+        );
+    };
+
+
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -417,23 +443,7 @@ const GenreHome = ({ navigation }: any) => {
                     <FlatList
                         data={enrichedBrowseAll}
                         keyExtractor={(item: any) => item.id}
-                        renderItem={({ item }) => (
-                            <StoryTile
-                                id={item.id}
-                                title={item.title}
-                                primaryTag={item.primaryTagName}
-                                secondaryTag={item.secondaryTagName}
-                                summary={item.summary}
-                                imageUri={item.imageUri}
-                                audioUri={item.audioUri}
-                                author={item.authorName}
-                                duration={item.duration}
-                                licenseType={item.licenseType}
-                                universeId={item.universeId}
-                                sequenceNumber={item.sequenceNumber}
-                                isPremium={item.isPremium}
-                            />
-                        )}
+                        renderItem={({ item }) => <BrowseAllStoryTile item={item} />}
                         ListHeaderComponent={ListingHeader}
                         onEndReached={() => { if (canLoadMore) loadMore(); }}
                         onEndReachedThreshold={0.5}

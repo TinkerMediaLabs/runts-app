@@ -315,6 +315,7 @@ Comment: a
       imageUri: a.string(),
       tileImageUri: a.string(),
       heroImageUri: a.string(),
+      description: a.string(),
       useHeroLayout: a.boolean().default(false),
       isErotic: a.boolean().default(false),
       stories: a.hasMany('StoryTag', 'tagId'),
