@@ -279,7 +279,7 @@ const CarouselItem = ({
                                     <View style={styles.iconActions}>
                                         <PinButton storyId={id} size={20} />
                                         <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7} onPress={handleShare}>
-                                            <FontAwesome name="share" size={18} color="rgba(255,255,255,0.7)" />
+                                            <FontAwesome name="share" size={20} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>
                                     </View>
                                 </View>

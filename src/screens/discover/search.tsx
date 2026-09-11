@@ -933,7 +933,7 @@ tabCountActive: {
 
   filterBar: {
     paddingHorizontal: spacing.margin,
-    gap: 8,
+    gap: 4,
     flexDirection: 'row',
     alignItems: 'center',
   },

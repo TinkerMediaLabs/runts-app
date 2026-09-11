@@ -368,53 +368,58 @@ export default function TrackPlayerWidget({ expanded }: any) {
             >
 
               {/* Hero image */}
+
               <View style={[styles.heroContainer, { height: HERO_HEIGHT }]}>
-                <AnimatedImageBackground
-                  source={{ uri: track.artwork }}
-                  style={[styles.heroImage, heroImageStyle]}
-                  resizeMode="cover"
-                  fadeDuration={0}
-                >
-                  <View style={styles.overlay} />
-
-                  {/* Entire image is tappable to play/pause */}
-                  <TouchableOpacity
-                    activeOpacity={0.9}
-                    onPress={toggle}
-                    style={styles.heroTouch}
+                  <AnimatedImageBackground
+                      source={{ uri: track.artwork }}
+                      style={[styles.heroImage, heroImageStyle]}
+                      resizeMode="cover"
+                      fadeDuration={0}
                   >
-                    <Animated.View style={[heroControlsStyle]}>
-                      <FontAwesome5
-                        name={optimisticPlaying ? 'pause' : 'play'}
-                        size={72}
-                        color="#fff"
-                        opacity={0.5}
+                      <View style={styles.overlay} />
+
+                      {/* Pan-to-collapse zone + sleep timer pill — scrolls
+                          away with the hero image, distinct from the sticky
+                          chevron/options buttons below */}
+                      <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
+                          <GestureDetector gesture={panGesture}>
+                              <View style={styles.heroPanZone} />
+                          </GestureDetector>
+
+                          {sleepMinutesLeft !== null && (
+                              <View style={styles.sleepPill}>
+                                  <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
+                              </View>
+                          )}
+                      </View>
+
+                      <LinearGradient
+                          colors={gradientColors}
+                          locations={[0, 0.6, 1]}
+                          style={styles.gradient}
                       />
-                    </Animated.View>
+
+                  </AnimatedImageBackground>
+
+                  {/* Entire image is tappable to play/pause — kept OUTSIDE the
+                      Reanimated-transformed AnimatedImageBackground, since Android has
+                      known touch hit-testing issues for absolutely-positioned children
+                      nested inside a transformed parent (same issue we hit with the
+                      floating play button). */}
+                  <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={toggle}
+                      style={styles.heroTouch}
+                  >
+                      <Animated.View style={[heroControlsStyle]}>
+                          <FontAwesome5
+                              name={optimisticPlaying ? 'pause' : 'play'}
+                              size={72}
+                              color="#fff"
+                              opacity={0.5}
+                          />
+                      </Animated.View>
                   </TouchableOpacity>
-
-                  {/* Pan-to-collapse zone + sleep timer pill — scrolls
-                      away with the hero image, distinct from the sticky
-                      chevron/options buttons below */}
-                  <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
-                    <GestureDetector gesture={panGesture}>
-                        <View style={styles.heroPanZone} />
-                    </GestureDetector>
-
-                    {sleepMinutesLeft !== null && (
-                        <View style={styles.sleepPill}>
-                            <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
-                        </View>
-                    )}
-                  </View>
-
-                  <LinearGradient
-                    colors={gradientColors}
-                    locations={[0, 0.6, 1]}
-                    style={styles.gradient}
-                  />
-
-                </AnimatedImageBackground>
               </View>
 
               {/* INFO */}
