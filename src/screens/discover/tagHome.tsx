@@ -443,7 +443,23 @@ const GenreHome = ({ navigation }: any) => {
                     <FlatList
                         data={enrichedBrowseAll}
                         keyExtractor={(item: any) => item.id}
-                        renderItem={({ item }) => <BrowseAllStoryTile item={item} />}
+                        renderItem={({ item }) => (
+                <StoryTile
+                    id={item.id}
+                    title={item.title}
+                    primaryTag={item.primaryTagName}
+                    secondaryTag={item.secondaryTagName}
+                    summary={item.summary}
+                    imageUri={item.imageUri}
+                    audioUri={item.audioUri}
+                    author={item.authorName}
+                    duration={item.duration}
+                    licenseType={item.licenseType}
+                    universeId={item.universeId}
+                    sequenceNumber={item.sequenceNumber}
+                    isPremium={item.isPremium}
+                />
+            )}
                         ListHeaderComponent={ListingHeader}
                         onEndReached={() => { if (canLoadMore) loadMore(); }}
                         onEndReachedThreshold={0.5}
