@@ -52,8 +52,9 @@ import { Analytics } from '@/lib/analytics';
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
 import { useNarrators } from '../../hooks/queries/useNarrators';
 import { useUniverse } from '../../hooks/queries/useUniverse';
-import { getDurationDisplay, formatNarratorDisplay } from '../../lib/storyDisplay';
+import { getDurationDisplay, formatNarratorDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
 import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
+
 
 
 
@@ -613,8 +614,15 @@ const handleDelete = (id: string) => {
                     <View style={styles.separator} />
 
                     {/* Universe / Sequence Number */}
-                    {(universe?.name || story?.sequenceNumber) ? (
+                                        {/* Universe / Sequence Number */}
+                    {(universe?.name || story?.sequenceNumber || getSpiceDisplay(story?.spiceRating)) ? (
                         <View style={styles.universeRow}>
+                            {getSpiceDisplay(story?.spiceRating) ? (
+                                <Text style={styles.universeText}>{getSpiceDisplay(story?.spiceRating)}</Text>
+                            ) : null}
+                            {getSpiceDisplay(story?.spiceRating) && (universe?.name || story?.sequenceNumber) ? (
+                                <Text style={styles.universeDot}>·</Text>
+                            ) : null}
                             {universe?.name ? (
                                 <Text style={styles.universeText}>{universe.name}</Text>
                             ) : null}

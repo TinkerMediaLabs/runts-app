@@ -41,3 +41,11 @@ export function getDurationDisplay(duration: number, progressStatus: ProgressSta
   }
   return { text: fmtDuration(duration), color: 'rgba(255,255,255,0.85)', icon: 'clock' as const };
 }
+
+
+// Pepper display for a story's spice rating — number of peppers matches
+// the rating (1-5). Returns '' when there's no rating to show.
+export function getSpiceDisplay(spiceRating: number | null | undefined): string {
+  if (!spiceRating || spiceRating < 1) return '';
+  return '🌶️'.repeat(spiceRating);
+}

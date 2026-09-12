@@ -26,7 +26,7 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import PinButton from '../common/PinButton';
 
 import { useApp } from '@/context/AppContext';
-import { getDurationDisplay, type ProgressStatus } from '../../lib/storyDisplay';
+import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -68,6 +68,7 @@ type ItemProps = {
     numListens:     number;
     avgRating?:     number | null;
     numRatings?:    number | null;
+    spiceRating?:   number | null;
     isPremium?:     boolean;
     isNew?:         boolean;
     progressStatus?: ProgressStatus;
@@ -77,7 +78,7 @@ type ItemProps = {
 const CarouselItem = ({
     id, title, primaryTagName, secondaryTagName, summary,
     imageUri, audioUri, author, narratorDisplay, duration,
-    numListens, avgRating, numRatings,
+    numListens, avgRating, numRatings, spiceRating,
     isPremium, isNew, progressStatus = 'none', progressSeconds = 0,
 }: ItemProps) => {
 
@@ -245,6 +246,13 @@ const CarouselItem = ({
                                 </>
                             )}
 
+                            {getSpiceDisplay(spiceRating) ? (
+                                <>
+                                    <View style={styles.metaDot} />
+                                    <Text style={styles.metaText}>{getSpiceDisplay(spiceRating)}</Text>
+                                </>
+                            ) : null}
+
                             {showListens && (
                                 <>
                                     <View style={styles.metaDot} />
@@ -318,6 +326,7 @@ const ForYouCarousel = ({ stories, tagMap }: {
             duration={item?.duration ?? 0}
             numListens={item?.numListens ?? 0}
             avgRating={item?.avgRating}
+            spiceRating={item?.spiceRating}
             numRatings={item?.numRatings}
             isPremium={item?.isPremium === true}
             isNew={item?.isNew === true}

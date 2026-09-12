@@ -14,8 +14,7 @@ import LoadingItem from '../common/LoadingItem';
 import { spacing } from '../../theme/spacing';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
-import { getDurationDisplay, type ProgressStatus } from '../../lib/storyDisplay';
-
+import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
@@ -32,6 +31,7 @@ const HorzStoryTile = ({
     id,
     duration,
     avgRating,
+    spiceRating,
     author,
     isNew,
     progressStatus = 'none',
@@ -116,6 +116,9 @@ const HorzStoryTile = ({
                         {/* Tags */}
                         {(primaryTagName || secondaryTagName) ? (
                             <View style={styles.tagRow}>
+                                 {getSpiceDisplay(spiceRating) ? (
+                                    <Text style={styles.tagPillText}>{getSpiceDisplay(spiceRating)}</Text>
+                                ) : null}
                                 {primaryTagName ? (
                                     <View style={styles.tagPill}>
                                         <Text style={styles.tagPillText}>{primaryTagName}</Text>

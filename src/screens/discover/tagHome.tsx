@@ -59,6 +59,7 @@ import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDispl
                 author={item.authorName}
                 duration={item.duration}
                 licenseType={item.licenseType}
+                spiceRating={item.spiceRating}
                 universeId={item.universeId}
                 sequenceNumber={item.sequenceNumber}
                 isPremium={item.isPremium}
@@ -455,6 +456,7 @@ const GenreHome = ({ navigation }: any) => {
                     author={item.authorName}
                     duration={item.duration}
                     licenseType={item.licenseType}
+                    spiceRating={item.spiceRating}
                     universeId={item.universeId}
                     sequenceNumber={item.sequenceNumber}
                     isPremium={item.isPremium}

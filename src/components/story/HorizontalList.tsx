@@ -57,6 +57,7 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
             summary={item.summary}
             description={item.description}
             duration={item.duration}
+            spiceRating={item.spiceRating}
             numListens={item.numListens}
             credit={item.credit}
             nsfw={item.nsfw}
