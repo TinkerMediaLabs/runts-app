@@ -5,7 +5,7 @@ import { Text } from '@/components/common/AppText';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import AntDesign from '@react-native-vector-icons/ant-design';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Animated, {
   useSharedValue,
@@ -18,6 +18,7 @@ import Animated, {
 import ForYouCarousel from '@/components/story/ForYouCarousel';
 import HorizontalList from '@/components/story/HorizontalList';
 import EroticContinueListening from '@/components/erotic/EroticContinueListening';
+import HorizontalTagList from '@/components/story/HorizontalTagList';
 
 import { useEroticStories } from '@/hooks/queries/useEroticStories';
 import { useTags, usePrimaryTags } from '@/hooks/queries/useTags';
@@ -221,13 +222,14 @@ const headerTitleStyle = useAnimatedStyle(() => ({
 
       {/* Sticky header — shrinks slightly on scroll */}
       <Animated.View style={[styles.header, headerPaddingStyle]}>          
+        
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           activeOpacity={0.7}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <AntDesign name="left" size={20} color="#fff" />
+          <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
         </TouchableOpacity>
 
         <Animated.Text style={[styles.headerTitle, headerTitleStyle]}>
@@ -292,31 +294,32 @@ const headerTitleStyle = useAnimatedStyle(() => ({
           onScroll={onScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 100 }}
         >
           {primaryEroticTags.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Genres</Text>
-              <View style={styles.genreGrid}>
-                {primaryEroticTags.map((tag: any) => (
-                  <GenreGridTile key={tag.id} tag={tag} navigation={navigation} />
-                ))}
-              </View>
+            </View>
+          )}
+          {primaryEroticTags.length > 0 && (
+            <View style={{ marginBottom: 20 }}>
+              <HorizontalTagList tags={primaryEroticTags} />
             </View>
           )}
 
           {additionalEroticTags.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Tags</Text>
-              <View style={styles.tagPillRow}>
+              <View style={styles.genreGrid}>
                 {additionalEroticTags.map((tag: any) => (
-                  <TagPill key={tag.id} tag={tag} navigation={navigation} />
+                  <GenreGridTile key={tag.id} tag={tag} navigation={navigation} />
                 ))}
               </View>
             </View>
           )}
         </Animated.ScrollView>
       )}
+      
     </View>
   );
 };
@@ -383,6 +386,7 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
     paddingHorizontal: 20,
+    marginTop: 20
   },
   sectionTitle: {
     fontSize: 13,
@@ -402,9 +406,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,124,42,0.25)',
-    backgroundColor: 'rgba(255,124,42,0.06)',
+    //backgroundColor: 'rgba(255,124,42,0.06)',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 6,
     marginBottom: 12,
   },
   genreGridTileName: {
