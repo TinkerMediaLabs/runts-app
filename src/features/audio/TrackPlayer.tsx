@@ -29,6 +29,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -132,10 +133,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const narratorDisplay = formatNarratorDisplay(narratorNames);
 
   const { data: resolvedNextImageUri } = useStoryImage(
-    nextTrackInfo?.imageUri?.startsWith('stories/') ? nextTrackInfo.imageUri : null
-  );
-  const nextImageDisplayUri = resolvedNextImageUri ?? nextTrackInfo?.imageUri ?? '';
-
+    nextTrackInfo?.artwork?.startsWith('stories/') ? nextTrackInfo.artwork : null  );
+  const nextImageDisplayUri = resolvedNextImageUri ?? nextTrackInfo?.artwork ?? '';
   const storyTags = React.useMemo(() => {
     if (!currentStory || !allTags) return [];
     const tagIds = new Set([
@@ -491,56 +490,50 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       />
 
                   {/* PROGRESS + PRIMARY PLAY BUTTON + UP NEXT */}
-                  <View>
+                  <View
+                    style={styles.controlbox}
+                    onLayout={(e) => {
+                      // Only used as the floating-button threshold when
+                      // there's no Up Next tile below it.
+                      if (!nextTrackInfo) {
+                        floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+                      }
+                    }}
+                  >
                     <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'}/>
-
-                    <View
-                      style={styles.controlbox}
-                      onLayout={(e) => {
-                        // Only used as the floating-button threshold when
-                        // there's no Up Next tile below it.
-                        if (!nextTrackInfo) {
-                          floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-                        }
-                      }}
-                    >
-                      {/* <PlayerControls
-                        isPlaying={optimisticPlaying}
-                        pause={pause}
-                        resume={resume}
-                        hasNext={false}
-                        onNext={undefined}
-                      /> */}
-                    </View>
-
-                    {nextTrackInfo ? (
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={playNext}
-                        style={styles.upNextCard}
-                        onLayout={(e) => {
-                          floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-                        }}
-                      >
-                        <Text style={styles.upNextLabel}>Up Next</Text>
-                        <View style={styles.upNextRow}>
-                          <Image source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
-                          <View style={{ flex: 1 }}>
-                            <Text numberOfLines={1} style={styles.upNextTitle}>
-                              {nextTrackInfo.title}
-                            </Text>
-                            <Text numberOfLines={1} style={styles.upNextMeta}>
-                              {nextTrackInfo.authorName ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}
-                            </Text>
-                          </View>
-                          <Feather name="skip-forward" size={20} color="#fff" />
-                        </View>
-                      </TouchableOpacity>
-                    ) : null}
+                 
                   </View>
 
                 </View>
               </LinearGradient>
+
+              {/* Up Next — deliberately placed BELOW the one-screen info
+                  section, as purely scroll-revealed content, so it never
+                  pushes the primary controls up from the bottom of the
+                  screen regardless of device height. */}
+              {nextTrackInfo ? (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={playNext}
+                  style={[styles.upNextCard, { marginHorizontal: 20, marginTop: 40 }]}
+                  onLayout={(e) => {
+                    floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+                  }}
+                >
+                  <Text style={styles.upNextLabel}>Up Next</Text>
+                  <View style={styles.upNextRow}>
+                    <Image source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
+                    <View style={{ flex: 1 }}>
+                      <Text numberOfLines={1} style={styles.upNextTitle}>
+                        {nextTrackInfo.title}
+                      </Text>
+                      <Text numberOfLines={1} style={styles.upNextMeta}>
+                        {nextTrackInfo.artist ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}                      </Text>
+                    </View>
+                    <Feather name="skip-forward" size={20} color="#fff" />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
 
               <View style={{ height: 40 }} />
 
@@ -632,14 +625,16 @@ export default function TrackPlayerWidget({ expanded }: any) {
       {/* MINI PLAYER */}
       {hasTrack && (
         <Animated.View
-          style={[
-            styles.mini,
-            miniStyle,
-            { bottom: miniPlayerBottom },
-          ]}
+            style={[
+                styles.mini,
+                miniStyle,
+                { bottom: miniPlayerBottom },
+            ]}
         >
-          <TouchableWithoutFeedback onPress={expandPlayer}>
-            <View style={styles.miniInner}>
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={styles.miniTint} pointerEvents="none" />            
+              <TouchableWithoutFeedback onPress={expandPlayer}>
+                    <View style={styles.miniInner}>
               <Image source={{ uri: track.artwork }} style={styles.miniImage} />
               <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={styles.title}>
@@ -687,26 +682,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-  mini: {
+mini: {
     position: 'absolute',
-    height: 70,
-    left: 0,
-    right: 0,
-    backgroundColor: '#003f3f',
+    height: 64,
+    left: 16,
+    right: 16,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'cyan',
     justifyContent: 'center',
+    overflow: 'hidden',
     pointerEvents: 'auto',
-  },
+},
   miniInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingLeft: 10,
+      paddingRight:20,
+      gap: 10,
   },
   miniImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 10,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
   },
+  miniTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+},
   expanded: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',

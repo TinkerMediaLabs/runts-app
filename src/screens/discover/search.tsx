@@ -17,7 +17,9 @@ import Animated, {
   withSequence,
   interpolate,
   Extrapolation,
+  runOnJS,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -221,33 +223,86 @@ const FilterChip = ({
 );
 
 // ---------------------------------------------------------------------------
+// SwipeableSheet — shared bottom-sheet shell with swipe-down-to-close,
+// used by SortSheet, LengthSheet, and GenreSheet.
+// ---------------------------------------------------------------------------
+
+const SwipeableSheet = ({
+  visible,
+  onClose,
+  paddingBottom,
+  children,
+  extraStyle,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  paddingBottom: number;
+  children: React.ReactNode;
+  extraStyle?: any;
+}) => {
+  const translateY = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) translateY.value = 0;
+  }, [visible]);
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      if (e.translationY > 0) {
+        translateY.value = e.translationY;
+      }
+    })
+    .onEnd((e) => {
+      if (e.translationY > 100 || e.velocityY > 800) {
+        translateY.value = withTiming(600, { duration: 200 }, (finished) => {
+          if (finished) runOnJS(onClose)();
+        });
+      } else {
+        translateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.sheetBackdrop} />
+        </TouchableWithoutFeedback>
+        <Animated.View style={[styles.sheet, extraStyle, { paddingBottom }, sheetStyle]}>
+          <GestureDetector gesture={panGesture}>
+            <View style={styles.sheetHandleArea}>
+              <View style={styles.sheetHandle} />
+            </View>
+          </GestureDetector>
+          {children}
+        </Animated.View>
+      </GestureHandlerRootView>
+    </Modal>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // SortSheet
 // ---------------------------------------------------------------------------
 
-const SortSheet = ({
-  visible,
-  current,
-  onSelect,
-  onClose,
-}: {
-  visible: boolean;
-  current: SortOption;
-  onSelect: (s: SortOption) => void;
-  onClose: () => void;
-}) => {
-  const insets = useSafeAreaInsets();
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.sheetBackdrop} />
-      </TouchableWithoutFeedback>
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
-        <View style={styles.sheetHandle} />
+  const SortSheet = ({
+    visible,
+    current,
+    onSelect,
+    onClose,
+  }: {
+    visible: boolean;
+    current: SortOption;
+    onSelect: (s: SortOption) => void;
+    onClose: () => void;
+  }) => {
+    const insets = useSafeAreaInsets();
+    return (
+      <SwipeableSheet visible={visible} onClose={onClose} paddingBottom={insets.bottom + 20}>
         <Text style={styles.sheetTitle}>Sort Stories</Text>
         {SORT_OPTIONS.map(opt => (
           <TouchableOpacity
@@ -275,39 +330,28 @@ const SortSheet = ({
             )}
           </TouchableOpacity>
         ))}
-      </View>
-    </Modal>
-  );
-};
+      </SwipeableSheet>
+    );
+  };
 
 // ---------------------------------------------------------------------------
 // LengthSheet
 // ---------------------------------------------------------------------------
 
-const LengthSheet = ({
-  visible,
-  current,
-  onSelect,
-  onClose,
-}: {
-  visible: boolean;
-  current: DurationFilter;
-  onSelect: (d: DurationFilter) => void;
-  onClose: () => void;
-}) => {
-  const insets = useSafeAreaInsets();
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.sheetBackdrop} />
-      </TouchableWithoutFeedback>
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
-        <View style={styles.sheetHandle} />
+  const LengthSheet = ({
+    visible,
+    current,
+    onSelect,
+    onClose,
+  }: {
+    visible: boolean;
+    current: DurationFilter;
+    onSelect: (d: DurationFilter) => void;
+    onClose: () => void;
+  }) => {
+    const insets = useSafeAreaInsets();
+    return (
+      <SwipeableSheet visible={visible} onClose={onClose} paddingBottom={insets.bottom + 20}>
         <Text style={styles.sheetTitle}>Story Length</Text>
         {DURATION_OPTIONS.map(opt => (
           <TouchableOpacity
@@ -327,10 +371,9 @@ const LengthSheet = ({
             )}
           </TouchableOpacity>
         ))}
-      </View>
-    </Modal>
-  );
-};
+      </SwipeableSheet>
+    );
+  };
 
 // ---------------------------------------------------------------------------
 // GenreSheet
@@ -351,55 +394,49 @@ const GenreSheet = ({
 }) => {
   const insets = useSafeAreaInsets();
   return (
-    <Modal
+    <SwipeableSheet
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+      onClose={onClose}
+      paddingBottom={insets.bottom + 20}
+      extraStyle={styles.sheetHalf}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.sheetBackdrop} />
-      </TouchableWithoutFeedback>
-      <View style={[styles.sheet, styles.sheetHalf, { paddingBottom: insets.bottom + 20 }]}>
-        <View style={styles.sheetHandle} />
-        <Text style={styles.sheetTitle}>Genre</Text>
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <Text style={styles.sheetTitle}>Genre</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => { onSelect(null); onClose(); }}
+          style={styles.sheetOption}
+        >
+          <Text style={[
+            styles.sheetOptionText,
+            current === null && styles.sheetOptionTextActive,
+          ]}>
+            All Genres
+          </Text>
+          {current === null && (
+            <FontAwesome name={'check' as any} size={14} color="cyan" />
+          )}
+        </TouchableOpacity>
+        {tags.map(tag => (
           <TouchableOpacity
+            key={tag.id}
             activeOpacity={0.7}
-            onPress={() => { onSelect(null); onClose(); }}
+            onPress={() => { onSelect(tag.id); onClose(); }}
             style={styles.sheetOption}
           >
             <Text style={[
               styles.sheetOptionText,
-              current === null && styles.sheetOptionTextActive,
+              current === tag.id && styles.sheetOptionTextActive,
             ]}>
-              All Genres
+              {tag.name}
             </Text>
-            {current === null && (
+            {current === tag.id && (
               <FontAwesome name={'check' as any} size={14} color="cyan" />
             )}
           </TouchableOpacity>
-          {tags.map(tag => (
-            <TouchableOpacity
-              key={tag.id}
-              activeOpacity={0.7}
-              onPress={() => { onSelect(tag.id); onClose(); }}
-              style={styles.sheetOption}
-            >
-              <Text style={[
-                styles.sheetOptionText,
-                current === tag.id && styles.sheetOptionTextActive,
-              ]}>
-                {tag.name}
-              </Text>
-              {current === tag.id && (
-                <FontAwesome name={'check' as any} size={14} color="cyan" />
-              )}
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    </Modal>
+        ))}
+      </ScrollView>
+    </SwipeableSheet>
   );
 };
 
@@ -1048,13 +1085,15 @@ tabCountActive: {
   sheetHalf: {
     maxHeight: '50%',
 },
+  sheetHandleArea: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
   sheetHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    alignSelf: 'center',
-    marginBottom: 20,
   },
   sheetTitle: {
     fontSize: 18,
