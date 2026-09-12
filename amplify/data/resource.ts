@@ -251,6 +251,7 @@ Comment: a
       live: a.string(),
       isErotic: a.string().default('false'),
       transcript: a.string(),
+      spiceRating: a.integer(),
       publishedAt: a.string(),
       publishedYear: a.integer(), 
       // Aggregates — written by Lambdas, read by app
