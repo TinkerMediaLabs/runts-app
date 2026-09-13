@@ -615,6 +615,7 @@ const handleDelete = (id: string) => {
 
                     {/* Universe / Sequence Number */}
                                         {/* Universe / Sequence Number */}
+                                        
                     {(universe?.name || story?.sequenceNumber || getSpiceDisplay(story?.spiceRating)) ? (
                         <View style={styles.universeRow}>
                             {getSpiceDisplay(story?.spiceRating) ? (
