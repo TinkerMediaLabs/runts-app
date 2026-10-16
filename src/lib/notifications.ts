@@ -99,9 +99,8 @@ async function registerToken(userId: string): Promise<void> {
         const client = generateClient<Schema>();
 
         // Check if a record already exists for this user
-        const { data: existing_records } = await (client.models as any).UserDevice.list({
-            filter: { userId: { eq: userId } },
-        });
+        const { data: existing_records } = await (client.models as any).UserDevice.listUserDeviceByUserId(
+            { userId }, { limit: 50 });
 
         if (existing_records && existing_records.length > 0) {
             // Update existing record
@@ -139,9 +138,8 @@ async function unregisterToken(userId: string): Promise<void> {
     try {
         const client = generateClient<Schema>();
 
-        const { data: records } = await (client.models as any).UserDevice.list({
-            filter: { userId: { eq: userId } },
-        });
+        const { data: records } = await (client.models as any).UserDevice.listUserDeviceByUserId(
+            { userId }, { limit: 50 });
 
         for (const record of records ?? []) {
             await (client.models as any).UserDevice.delete({ id: record.id });

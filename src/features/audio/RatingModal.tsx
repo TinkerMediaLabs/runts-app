@@ -123,17 +123,15 @@ export default function RatingModal({
     try {
       const { userId } = await getCurrentUser();
 
-      const { data: ratings } = await client.models.UserRating.list({
-        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
-      });
+      const { data: ratings } = await (client.models.UserRating as any).listUserRatingByUserIdAndStoryId(
+        { userId, storyId: { eq: storyId } }, { limit: 1 });
       if (ratings?.length) {
         setExistingRatingId(ratings[0].id);
         setSelectedRating(ratings[0].rating);
       }
 
-      const { data: reactions } = await client.models.UserReaction.list({
-        filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
-      });
+      const { data: reactions } = await (client.models.UserReaction as any).listUserReactionByUserIdAndStoryId(
+        { userId, storyId: { eq: storyId } }, { limit: 1 });
       if (reactions?.length) {
         setExistingReactionId(reactions[0].id);
         setSelectedReaction(reactions[0].reaction ?? null);

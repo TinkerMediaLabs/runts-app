@@ -2,21 +2,46 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
+// SCALE NOTE: AppSync returns ONE page (default 100 rows) per call. Every hook below that feeds a
+// horizontal strip asks for an explicit `limit` (top-N is the intended product behaviour). Anything
+// that must show "all" uses the *Paginated infinite hooks.
+const STRIP_LIMIT = 20;
 
 
-// ─── All live stories sorted by newest ───────────────────────────────────────
-export function useStories() {
+
+// ─── Newest live stories (first STRIP_LIMIT only — NOT the whole catalog) ────
+// Callers that need more must use useStoriesPaginated().
+export function useStories(limit: number = STRIP_LIMIT) {
   return useQuery({
-    queryKey: ['stories'],
+    queryKey: ['stories', limit],
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByLiveAndPublishedAt(
         { live: 'true' },
-        { sortDirection: 'DESC' }
+        { sortDirection: 'DESC', limit }
       );
       if (errors) throw new Error(errors[0].message);
       return data;
     },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── All live stories, paginated (infinite scroll / load-more) ───────────────
+export function useStoriesPaginated(pageSize: number = 20) {
+  return useInfiniteQuery({
+    queryKey: ['stories', 'paginated', pageSize],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const client = generateClient<Schema>();
+      const { data, errors, nextToken } = await client.models.Story.listStoryByLiveAndPublishedAt(
+        { live: 'true' },
+        { sortDirection: 'DESC', limit: pageSize, nextToken: pageParam ?? undefined }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return { items: data ?? [], nextToken: nextToken ?? null };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextToken,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -29,7 +54,7 @@ export function useStoriesByTagNew(tagId: string) {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndPublishedAt(
         { primaryTagId: tagId },
-        { sortDirection: 'DESC' }
+        { sortDirection: 'DESC', limit: STRIP_LIMIT }
       );
       if (errors) throw new Error(errors[0].message);
       return data ?? [];
@@ -67,7 +92,7 @@ export function useStoriesByTagTrending(tagId: string) {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndNumListens(
         { primaryTagId: tagId },
-        { sortDirection: 'DESC' }
+        { sortDirection: 'DESC', limit: STRIP_LIMIT }
       );
       if (errors) throw new Error(errors[0].message);
       return data ?? [];
@@ -77,29 +102,28 @@ export function useStoriesByTagTrending(tagId: string) {
   });
 }
 
-export function useStoriesByStoryTag(tagId: string) {
-    return useQuery({
-        queryKey: ['stories', 'storyTag', tagId],
-        queryFn: async () => {
-      const client = generateClient<Schema>();
-            const { data: links } = await client.models.StoryTag.list({
-                filter: { tagId: { eq: tagId } },
-            });
-            if (!links?.length) return [];
-
-            const results = await Promise.all(
-                links.map((st: any) => client.models.Story.get({ id: st.storyId }))
-            );
-
-            return results
+// Stories carrying a tag via the StoryTag join table — paginated: index byTagId (page of links),
+// then batched Story.get for that page only. `useInfiniteQuery` result: pages[].items.
+// NOTE: join order is by link id, not publishedAt; sort within the page if you need recency.
+export function useStoriesByStoryTag(tagId: string, pageSize: number = 20) {
+    return useInfiniteQuery({
+        queryKey: ['stories', 'storyTag', tagId, pageSize],
+        queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+            const client = generateClient<Schema>();
+            const { data: links, nextToken, errors } = await (client.models.StoryTag as any).listStoryTagByTagId(
+                { tagId }, { limit: pageSize, nextToken: pageParam ?? undefined });
+            if (errors) throw new Error(errors[0].message);
+            const results = await Promise.all((links ?? []).map((st: any) => client.models.Story.get({ id: st.storyId })));
+            const items = results
                 .map(r => r.data)
                 .filter(Boolean)
                 .filter((s: any) => s.live === 'true')
                 .sort((a: any, b: any) =>
-                    new Date(b.publishedAt ?? 0).getTime() -
-                    new Date(a.publishedAt ?? 0).getTime()
-                );
+                    new Date(b.publishedAt ?? 0).getTime() - new Date(a.publishedAt ?? 0).getTime());
+            return { items, nextToken: (nextToken ?? null) as string | null };
         },
+        initialPageParam: null as string | null,
+        getNextPageParam: (lastPage) => lastPage.nextToken,
         enabled: !!tagId,
         staleTime: 1000 * 60 * 5,
     });
@@ -111,13 +135,14 @@ export function useStoriesByTagShort(tagId: string, maxDuration: number = 1200) 
     queryKey: ['stories', 'tag', 'short', tagId],
     queryFn: async () => {
       const client = generateClient<Schema>();
+      // Duration is the index sort key, so the threshold is a key condition (server-side range),
+      // not a post-fetch filter.
       const { data, errors } = await client.models.Story.listStoryByPrimaryTagIdAndDuration(
-        { primaryTagId: tagId },
-        { sortDirection: 'ASC' }
+        { primaryTagId: tagId, duration: { le: maxDuration } },
+        { sortDirection: 'ASC', limit: STRIP_LIMIT }
       );
       if (errors) throw new Error(errors[0].message);
-      // Filter client-side for duration under threshold
-      return (data ?? []).filter(s => (s.duration ?? 0) <= maxDuration);
+      return data ?? [];
     },
     enabled: !!tagId,
     staleTime: 1000 * 60 * 5,
@@ -132,7 +157,7 @@ export function useTrendingStories() {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByLiveAndNumListens(
         { live: 'true' },
-        { sortDirection: 'DESC' }
+        { sortDirection: 'DESC', limit: STRIP_LIMIT }
       );
       if (errors) throw new Error(errors[0].message);
       return data ?? [];
@@ -149,11 +174,31 @@ export function useStoriesByAuthor(authorId: string) {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.Story.listStoryByAuthorIdAndPublishedAt(
         { authorId },
-        { sortDirection: 'DESC' }
+        { sortDirection: 'DESC', limit: 100 }
       );
       if (errors) throw new Error(errors[0].message);
       return data ?? [];
     },
+    enabled: !!authorId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ─── Stories by author, paginated (use this wherever ALL of an author's stories are shown) ──
+export function useStoriesByAuthorPaginated(authorId: string, pageSize: number = 20) {
+  return useInfiniteQuery({
+    queryKey: ['stories', 'author', 'paginated', authorId, pageSize],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const client = generateClient<Schema>();
+      const { data, errors, nextToken } = await client.models.Story.listStoryByAuthorIdAndPublishedAt(
+        { authorId },
+        { sortDirection: 'DESC', limit: pageSize, nextToken: pageParam ?? undefined }
+      );
+      if (errors) throw new Error(errors[0].message);
+      return { items: data ?? [], nextToken: nextToken ?? null };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextToken,
     enabled: !!authorId,
     staleTime: 1000 * 60 * 5,
   });

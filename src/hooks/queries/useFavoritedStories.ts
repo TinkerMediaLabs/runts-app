@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
+import { fetchAllPages } from '../../lib/paginate';
 import { useApp } from '@/context/AppContext';
 
 
@@ -32,10 +33,10 @@ export function useFavoritedStories(threshold: number) {
       const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
 
-            const { data: ratings } = await (client.models.UserRating as any).listUserRatingByUserAndRating(
-                { userId, rating: { ge: threshold } },
-                { sortDirection: 'DESC' }
-            );
+            const ratings = await fetchAllPages<any>(token =>
+                (client.models.UserRating as any).listUserRatingByUserIdAndRating(
+                    { userId, rating: { ge: threshold } },
+                    { sortDirection: 'DESC', limit: 100, nextToken: token }));
 
             if (!ratings?.length) return [];
 

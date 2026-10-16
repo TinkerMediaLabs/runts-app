@@ -42,6 +42,7 @@ const schema = a.schema({
     })
     .secondaryIndexes(index => [
       index('userId').sortKeys(['sortOrder']).name('byUserIdAndSortOrder'),
+      index('userId').sortKeys(['storyId']).name('byUserAndStory'),
     ])
     .authorization(allow => [allow.owner()]),
 
@@ -54,6 +55,10 @@ const schema = a.schema({
       story: a.belongsTo('Story', 'storyId'),
       user: a.belongsTo('User', 'userId'),
     })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['finishedAt']).name('byUserAndFinishedAt'),
+      index('userId').sortKeys(['storyId']).name('byUserAndStory'),
+    ])
     .authorization(allow => [allow.owner()]),
 
   // ── UserInProgressStory (join table) ──────────────────────────────────────
@@ -66,6 +71,10 @@ const schema = a.schema({
       story: a.belongsTo('Story', 'storyId'),
       user: a.belongsTo('User', 'userId'),
     })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['lastListenedAt']).name('byUserAndLastListened'),
+      index('userId').sortKeys(['storyId']).name('byUserAndStory'),
+    ])
     .authorization(allow => [allow.owner()]),
 
   // ── UserRating ────────────────────────────────────────────────────────────
@@ -147,6 +156,10 @@ Comment: a
       story: a.belongsTo('Story', 'storyId'),
       user: a.belongsTo('User', 'userId'),
     })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['favoritedAt']).name('byUserAndFavoritedAt'),
+      index('userId').sortKeys(['storyId']).name('byUserAndStory'),
+    ])
     .authorization(allow => [allow.owner()]),
 
   // ── UserFollowedAuthor ────────────────────────────────────────────────────
@@ -204,6 +217,8 @@ Comment: a
     .model({
       id: a.id().required(),
       name: a.string().required(),
+      nameLower: a.string(),   // lowercase name — sort key for byName index
+      searchPk: a.string(),    // constant 'ALL' — partition key for byName index
       profilePicUri: a.string(),
       bio: a.string(),
       publisherId: a.string(),
@@ -211,6 +226,9 @@ Comment: a
       publisher: a.belongsTo('Publisher', 'publisherId'),
       stories: a.hasMany('Story', 'authorId'),
     })
+    .secondaryIndexes(index => [
+      index('searchPk').sortKeys(['nameLower']).name('byName'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
@@ -221,10 +239,15 @@ Comment: a
     .model({
       id: a.id().required(),
       name: a.string().required(),
+      nameLower: a.string(),   // lowercase name — sort key for byName index
+      searchPk: a.string(),    // constant 'ALL' — partition key for byName index
       profilePicUri: a.string(),
       bio: a.string(),
       stories: a.hasMany('StoryNarrator', 'narratorId'),
     })
+    .secondaryIndexes(index => [
+      index('searchPk').sortKeys(['nameLower']).name('byName'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
@@ -240,6 +263,8 @@ Comment: a
       licenseType: a.string(),    // 'public_domain' | 'runts_exclusive' | 'licensed' | 'other'
       isPremium:   a.boolean().default(false),
       title: a.string().required(),
+      titleLower: a.string(),   // lowercase title — sort key for title-prefix search
+      narratorNames: a.string().array(),   // denormalized by the CMS on save (no join at read time)
       audioUri: a.string(),
       summary: a.string(),
       description: a.string(),
@@ -292,6 +317,9 @@ Comment: a
     .secondaryIndexes(index => [
       index('live').sortKeys(['publishedAt']).name('byLiveAndPublishedAt'),
       index('live').sortKeys(['numListens']).name('byLiveAndListens'),
+      index('live').sortKeys(['duration']).name('byLiveAndDuration'),
+      index('live').sortKeys(['titleLower']).name('byLiveAndTitle'),
+      index('isErotic').sortKeys(['publishedAt']).name('byEroticAndPublishedAt'),
       index('primaryTagId').sortKeys(['publishedAt']).name('byTagAndPublishedAt'),
       index('primaryTagId').sortKeys(['numListens']).name('byTagAndListens'),
       index('primaryTagId').sortKeys(['duration']).name('byTagAndDuration'),
@@ -303,11 +331,27 @@ Comment: a
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
+  // ── StoryStats ────────────────────────────────────────────────────────────
+  // Single row (id 'GLOBAL') maintained by story-stats-aggregator; CMS reads it for chip counts.
+  StoryStats: a
+    .model({
+      id: a.id().required(),
+      live: a.integer().default(0),
+      draft: a.integer().default(0),
+      erotic: a.integer().default(0),
+    })
+    .authorization(allow => [
+      allow.group('admin').to(['read']),
+    ]),
+
   // ── Tag ───────────────────────────────────────────────────────────────────
   Tag: a
     .model({
       id: a.id().required(),
       name: a.string().required(),
+      nameLower: a.string(),
+      searchPk: a.string(),     // 'REGULAR' | 'EROTIC' (partition per erotic flag)
+      primaryFlag: a.string(),  // 'true' | 'false' mirror of isPrimary (index keys must be strings)
       isPrimary: a.boolean(),
       isPremiumGenre: a.boolean().default(false),
       storyCount: a.integer().default(0),
@@ -322,6 +366,10 @@ Comment: a
       stories: a.hasMany('StoryTag', 'tagId'),
       
     })
+    .secondaryIndexes(index => [
+      index('searchPk').sortKeys(['nameLower']).name('byName'),
+      index('primaryFlag').sortKeys(['nameLower']).name('byPrimaryAndName'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
@@ -332,8 +380,13 @@ Comment: a
     .model({
       id: a.id().required(),
       name: a.string().required(),
+      nameLower: a.string(),   // lowercase name — sort key for byName index
+      searchPk: a.string(),    // constant 'ALL' — partition key for byName index
       stories: a.hasMany('Story', 'universeId'),
     })
+    .secondaryIndexes(index => [
+      index('searchPk').sortKeys(['nameLower']).name('byName'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
@@ -363,6 +416,9 @@ Comment: a
     platform:  a.string().required(),  // 'ios' | 'android'
     updatedAt: a.datetime(),
   })
+  .secondaryIndexes(index => [
+    index('userId').name('byUserId'),
+  ])
   .authorization(allow => [
       allow.owner(),
   ]),
@@ -375,6 +431,10 @@ Comment: a
       story: a.belongsTo('Story', 'storyId'),
       narrator: a.belongsTo('Narrator', 'narratorId'),
     })
+    .secondaryIndexes(index => [
+      index('storyId').name('byStoryId'),
+      index('narratorId').name('byNarratorId'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
@@ -388,6 +448,10 @@ Comment: a
       story: a.belongsTo('Story', 'storyId'),
       tag: a.belongsTo('Tag', 'tagId'),
     })
+    .secondaryIndexes(index => [
+      index('storyId').name('byStoryId'),
+      index('tagId').name('byTagId'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),

@@ -67,6 +67,7 @@ export function useSearchStories({
       const client = generateClient<Schema>();
       let data: any[] = [];
       let nextToken: string | null | undefined;
+      const q = normalise(query);
 
       try {
         if (tagId) {
@@ -96,6 +97,16 @@ export function useSearchStories({
           }
           // Enforce live filter (tag GSI doesn't partition by live)
           data = data.filter((s: any) => s.live === 'true');
+        } else if (q.length >= 2 && sortBy === 'newest') {
+          // Title-prefix search runs on the byLiveAndTitle index (server-side), so matches are found
+          // across the whole catalog instead of only within the page that happened to load.
+          // Substring / summary / description search needs a dedicated search service (see handoff).
+          const res = await (client.models.Story as any).listStoryByLiveAndTitleLower(
+            { live: 'true', titleLower: { beginsWith: q } },
+            { limit: SEARCH_PAGE_SIZE, nextToken: pageParam }
+          );
+          data = res.data ?? [];
+          nextToken = res.nextToken;
         } else {
           // Live-scoped GSI — partition by live = "true"
           if (sortBy === 'popular') {
@@ -106,12 +117,12 @@ export function useSearchStories({
             data = res.data ?? [];
             nextToken = res.nextToken;
           } else if (sortBy === 'shortest') {
-            // No GSI for shortest without tag — use newest GSI and sort client-side
-            const res = await (client.models.Story as any).listStoryByLiveAndPublishedAt(
+            // byLiveAndDuration index: truly globally shortest-first, paginated server-side
+            const res = await (client.models.Story as any).listStoryByLiveAndDuration(
               { live: 'true' },
-              { sortDirection: 'DESC', limit: SEARCH_PAGE_SIZE, nextToken: pageParam }
+              { sortDirection: 'ASC', limit: SEARCH_PAGE_SIZE, nextToken: pageParam }
             );
-            data = (res.data ?? []).sort((a: any, b: any) => (a.duration ?? 0) - (b.duration ?? 0));
+            data = res.data ?? [];
             nextToken = res.nextToken;
           } else {
             // newest
@@ -124,20 +135,14 @@ export function useSearchStories({
           }
         }
       } catch (err) {
-        // Fallback: plain list with live filter if GSI methods aren't available
-        console.warn('GSI method unavailable, falling back to list:', err);
-        const res = await client.models.Story.list({
-          filter: { live: { eq: 'true' } },
-          limit: SEARCH_PAGE_SIZE,
-          nextToken: pageParam,
-        });
-        data = res.data ?? [];
-        nextToken = res.nextToken;
+        // No unindexed fallback on purpose (a filtered list() silently drops rows at scale).
+        throw err;
       }
 
       // Apply text query + duration filter client-side
+      const serverTitleSearch = !tagId && q.length >= 2 && sortBy === 'newest';
       const filtered = data.filter((s: any) =>
-        storyMatchesQuery(s, query) &&
+        (serverTitleSearch || storyMatchesQuery(s, query)) &&
         matchesDuration(s, duration)
       );
 
@@ -168,21 +173,14 @@ export function useSearchAuthors({
     queryKey: ['searchAuthors', query],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       const client = generateClient<Schema>();
-      const { data, nextToken } = await client.models.Author.list({
+      const q = normalise(query);
+      // byName index: prefix match on nameLower, server-side + paginated.
+      const key = q.length >= 2 ? { searchPk: 'ALL', nameLower: { beginsWith: q } } : { searchPk: 'ALL' };
+      const { data, nextToken } = await (client.models.Author as any).listAuthorBySearchPkAndNameLower(key, {
         limit: SEARCH_PAGE_SIZE,
         nextToken: pageParam,
       });
-
-      let items = data ?? [];
-      if (query && query.length >= 2) {
-        const q = normalise(query);
-        items = items.filter((a: any) =>
-          normalise(a.name).includes(q) ||
-          normalise(a.bio ?? '').includes(q)
-        );
-      }
-
-      return { items, nextToken: nextToken ?? null };
+      return { items: (data ?? []) as any[], nextToken: (nextToken ?? null) as string | null };
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
@@ -191,38 +189,35 @@ export function useSearchAuthors({
   });
 }
 
-// ---------------------------------------------------------------------------
-// Tags — paginated (mirrors Stories pattern), client-side text filter
-// per page. Same reasoning as Authors above — don't assume a small,
-// fixed set forever.
-// ---------------------------------------------------------------------------
+// Tags live in two partitions (REGULAR then EROTIC). Pages are walked REGULAR first, then EROTIC.
+type TagPage = { part: 'REGULAR' | 'EROTIC'; token?: string };
 
 export function useSearchTags({
   query,
   enabled,
+  includeErotic = true,
 }: {
   query: string;
   enabled: boolean;
+  includeErotic?: boolean;
 }) {
   return useInfiniteQuery({
-    queryKey: ['searchTags', query],
-    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+    queryKey: ['searchTags', query, includeErotic],
+    queryFn: async ({ pageParam }: { pageParam: TagPage }) => {
       const client = generateClient<Schema>();
-      const { data, nextToken } = await client.models.Tag.list({
+      const q = normalise(query);
+      const key = (searchPk: string) =>
+        q.length >= 2 ? { searchPk, nameLower: { beginsWith: q } } : { searchPk };
+      const { data, nextToken } = await (client.models.Tag as any).listTagBySearchPkAndNameLower(key(pageParam.part), {
         limit: SEARCH_PAGE_SIZE,
-        nextToken: pageParam,
+        nextToken: pageParam.token,
       });
-
-      let items = data ?? [];
-      if (query && query.length >= 2) {
-        const q = normalise(query);
-        items = items.filter((t: any) => normalise(t.name).includes(q));
-      }
-
-      return { items, nextToken: nextToken ?? null };
+      let next: TagPage | null = nextToken ? { part: pageParam.part, token: nextToken } : null;
+      if (!next && pageParam.part === 'REGULAR' && includeErotic) next = { part: 'EROTIC' };
+      return { items: (data ?? []) as any[], next };
     },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
+    initialPageParam: { part: 'REGULAR' } as TagPage,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     enabled,
     staleTime: 1000 * 60 * 5,
   });

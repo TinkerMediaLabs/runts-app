@@ -37,8 +37,6 @@ import { useTagNames, useTag } from '../../hooks/queries/useTagNames';
 import { useAuthors } from '../../hooks/queries/useAuthors';
 
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
-import { useNarrators } from '../../hooks/queries/useNarrators';
-import { useStoryNarratorLinks } from '../../hooks/queries/useStoryNarratorLinks';
 import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
 
     const BrowseAllStoryTile = ({ item }: { item: any }) => {
@@ -111,28 +109,8 @@ const GenreHome = ({ navigation }: any) => {
     const { data: authors } = useAuthors();
 
     const progressMap = useStoryProgressMap();
-    const { data: narrators = [] } = useNarrators();
-    const { data: storyNarratorLinks = [] } = useStoryNarratorLinks();
 
-    const narratorNameMap = useMemo(() => {
-        const m: Record<string, string> = {};
-        narrators.forEach((n: any) => {
-            if (n.id && n.name) m[n.id] = n.name;
-        });
-        return m;
-    }, [narrators]);
 
-    const storyNarratorsMap = useMemo(() => {
-        const m: Record<string, string[]> = {};
-        storyNarratorLinks.forEach((link: any) => {
-            if (!link.storyId || !link.narratorId) return;
-            const name = narratorNameMap[link.narratorId];
-            if (!name) return;
-            if (!m[link.storyId]) m[link.storyId] = [];
-            m[link.storyId].push(name);
-        });
-        return m;
-    }, [storyNarratorLinks, narratorNameMap]);
 
     const isLoading = newLoading || trendingLoading || shortLoading;
 
@@ -158,7 +136,12 @@ const GenreHome = ({ navigation }: any) => {
         infiniteData.pages[0]?.items.length === 0 &&
         !infiniteData.pages[0]?.nextToken;
 
-    const { data: fallbackAllStories } = useStoriesByStoryTag(primaryTotallyEmpty ? tagId : '');
+    // StoryTag-join fallback is now index-backed + paginated (pages of 20 links).
+    const fallbackQuery = useStoriesByStoryTag(primaryTotallyEmpty ? tagId : '');
+    const fallbackAllStories = useMemo(
+        () => (fallbackQuery.data?.pages ?? []).flatMap((p: any) => p.items),
+        [fallbackQuery.data]
+    );
     const [fallbackVisibleCount, setFallbackVisibleCount] = useState(10);
 
     const usingFallback = primaryTotallyEmpty;
@@ -167,7 +150,7 @@ const GenreHome = ({ navigation }: any) => {
         : primaryPaginatedStories;
 
     const canLoadMore = usingFallback
-        ? fallbackVisibleCount < (fallbackAllStories?.length ?? 0)
+        ? fallbackVisibleCount < fallbackAllStories.length || !!fallbackQuery.hasNextPage
         : !!hasNextPage;
 
     const loadingMore = usingFallback ? false : isFetchingNextPage;
@@ -175,6 +158,9 @@ const GenreHome = ({ navigation }: any) => {
     const loadMore = () => {
         if (usingFallback) {
             setFallbackVisibleCount(c => c + 10);
+            if (fallbackVisibleCount + 10 >= fallbackAllStories.length && fallbackQuery.hasNextPage) {
+                fallbackQuery.fetchNextPage();
+            }
         } else if (hasNextPage) {
             fetchNextPage();
         }
@@ -209,17 +195,17 @@ const GenreHome = ({ navigation }: any) => {
                 primaryTagName:   tagMap[s.primaryTagId   ?? ''] ?? '',
                 secondaryTagName: tagMap[s.secondaryTagId ?? ''] ?? '',
                 authorName:       authorMap[s.authorId    ?? ''] ?? '',
-                narratorDisplay:  formatNarratorDisplay(storyNarratorsMap[s.id]),
+                narratorDisplay:  formatNarratorDisplay((s.narratorNames ?? undefined) as string[] | undefined),
                 isNew:            isRecentlyPublished(s.publishedAt),
                 progressStatus:   progress?.status ?? 'none',
                 progressSeconds:  progress?.progressSeconds ?? 0,
             };
         });
 
-    const enrichedNew      = useMemo(() => enrich(newStories      ?? []), [newStories,      tagMap, authorMap, storyNarratorsMap, progressMap]);
-    const enrichedTrending = useMemo(() => enrich(trendingStories ?? []), [trendingStories, tagMap, authorMap, storyNarratorsMap, progressMap]);
-    const enrichedShort    = useMemo(() => enrich(shortStories    ?? []), [shortStories,    tagMap, authorMap, storyNarratorsMap, progressMap]);
-    const enrichedBrowseAll = useMemo(() => enrich(browseAllStoriesRaw), [browseAllStoriesRaw, tagMap, authorMap, storyNarratorsMap, progressMap]);
+    const enrichedNew      = useMemo(() => enrich(newStories      ?? []), [newStories,      tagMap, authorMap, progressMap]);
+    const enrichedTrending = useMemo(() => enrich(trendingStories ?? []), [trendingStories, tagMap, authorMap, progressMap]);
+    const enrichedShort    = useMemo(() => enrich(shortStories    ?? []), [shortStories,    tagMap, authorMap, progressMap]);
+    const enrichedBrowseAll = useMemo(() => enrich(browseAllStoriesRaw), [browseAllStoriesRaw, tagMap, authorMap, progressMap]);
 
     // ── Fallback: StoryTag join query for minor tags (horizontal sections) ────
     const primaryEmpty =
@@ -228,10 +214,14 @@ const GenreHome = ({ navigation }: any) => {
         enrichedTrending.length === 0 &&
         enrichedShort.length    === 0;
 
-    const { data: taggedStories, isLoading: taggedLoading } =
-        useStoriesByStoryTag(primaryEmpty ? tagId : '');
+    const taggedQuery = useStoriesByStoryTag(primaryEmpty ? tagId : '');
+    const taggedLoading = taggedQuery.isLoading;
+    const taggedStories = useMemo(
+        () => (taggedQuery.data?.pages ?? []).flatMap((p: any) => p.items),
+        [taggedQuery.data]
+    );
 
-    const enrichedTagged = useMemo(() => enrich(taggedStories ?? []), [taggedStories, tagMap, authorMap, storyNarratorsMap, progressMap]);
+    const enrichedTagged = useMemo(() => enrich(taggedStories ?? []), [taggedStories, tagMap, authorMap, progressMap]);
 
     const totalLoading = isLoading || (primaryEmpty && taggedLoading);
     const totalEmpty   =

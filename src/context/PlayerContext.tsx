@@ -13,6 +13,8 @@ import { useApp } from '@/context/AppContext';
 import { navigate } from '@/navigation/RootNavigator';
 
 import { Analytics } from '@/lib/analytics';
+import { findFinished, findPinned, findInProgress } from '@/lib/userStoryLookups';
+import { fetchAllPages } from '@/lib/paginate';
 
 const client = generateClient<Schema>();
 
@@ -108,10 +110,8 @@ export const PlayerProvider = ({ children }: any) => {
             const { userId } = await getCurrentUser();
 
             // ── Mark as finished (first time only) ───────────────────────────
-            const { data: existingFinished } = await client.models.UserFinishedStory.list({
-                filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
-            });
-            const isFirstCompletion = !existingFinished?.length;
+            const existingFinished = await findFinished(userId, storyId);
+            const isFirstCompletion = !existingFinished.length;
             if (isFirstCompletion) {
                 await client.models.UserFinishedStory.create({
                     userId,
@@ -142,20 +142,12 @@ export const PlayerProvider = ({ children }: any) => {
             }
 
             // ── Remove from pinned ────────────────────────────────────────────
-            const { data: pinned } = await client.models.UserPinnedStory.list({
-                filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
-            });
-            if (pinned?.length) {
-                await client.models.UserPinnedStory.delete({ id: pinned[0].id });
-            }
+            const pinned = await findPinned(userId, storyId);
+            for (const p of pinned) await client.models.UserPinnedStory.delete({ id: p.id });
 
             // ── Remove from in-progress ───────────────────────────────────────
-            const { data: inProgress } = await client.models.UserInProgressStory.list({
-                filter: { and: [{ userId: { eq: userId } }, { storyId: { eq: storyId } }] },
-            });
-            if (inProgress?.length) {
-                await client.models.UserInProgressStory.delete({ id: inProgress[0].id });
-            }
+            const inProgress = await findInProgress(userId, storyId);
+            for (const p of inProgress) await client.models.UserInProgressStory.delete({ id: p.id });
 
             // ── Invalidate caches ─────────────────────────────────────────────
             queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
@@ -431,12 +423,10 @@ export const PlayerProvider = ({ children }: any) => {
     const loadPlaylist = async (): Promise<any[]> => {
         try {
             const { userId } = await getCurrentUser();
-            const { data: pinnedRecords } = await client.models.UserPinnedStory.list({
-                filter: { userId: { eq: userId } },
-            });
-            const sorted = (pinnedRecords ?? [])
-                .filter(r => !!r.storyId)
-                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+            const pinnedRecords = await fetchAllPages<any>(token =>
+                (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+                    { userId }, { sortDirection: 'ASC', limit: 100, nextToken: token }));
+            const sorted = pinnedRecords.filter((r: any) => !!r.storyId);
 
             const storyResults = await Promise.all(
                 sorted.map(r => client.models.Story.get({ id: r.storyId }))

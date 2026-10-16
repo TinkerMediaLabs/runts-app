@@ -25,8 +25,6 @@ import { useTags, usePrimaryTags } from '@/hooks/queries/useTags';
 import { useAuthors } from '@/hooks/queries/useAuthors';
 import { useTagNames } from '@/hooks/queries/useTagNames';
 import { useStoryProgressMap } from '@/hooks/queries/useStoryProgressMap';
-import { useNarrators } from '@/hooks/queries/useNarrators';
-import { useStoryNarratorLinks } from '@/hooks/queries/useStoryNarratorLinks';
 import { isRecentlyPublished, formatNarratorDisplay } from '@/lib/storyDisplay';
 
 const EROTIC_ORANGE = '#ff7c2a';
@@ -105,28 +103,8 @@ const EroticHomeScreen = () => {
   const { data: tagMap = {} } = useTagNames(allTagIds);
 
   const progressMap = useStoryProgressMap();
-  const { data: narrators = [] } = useNarrators();
-  const { data: storyNarratorLinks = [] } = useStoryNarratorLinks();
 
-  const narratorNameMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    narrators.forEach((n: any) => {
-      if (n.id && n.name) m[n.id] = n.name;
-    });
-    return m;
-  }, [narrators]);
 
-  const storyNarratorsMap = useMemo(() => {
-    const m: Record<string, string[]> = {};
-    storyNarratorLinks.forEach((link: any) => {
-      if (!link.storyId || !link.narratorId) return;
-      const name = narratorNameMap[link.narratorId];
-      if (!name) return;
-      if (!m[link.storyId]) m[link.storyId] = [];
-      m[link.storyId].push(name);
-    });
-    return m;
-  }, [storyNarratorLinks, narratorNameMap]);
 
   const enrichedStories = useMemo(() => {
     if (!eroticStories) return [];
@@ -139,13 +117,13 @@ const EroticHomeScreen = () => {
           primaryTagName:   s.primaryTagId   ? tagMap[s.primaryTagId]   ?? '' : '',
           secondaryTagName: s.secondaryTagId ? tagMap[s.secondaryTagId] ?? '' : '',
           authorName:       s.authorId       ? authorMap[s.authorId]    ?? '' : '',
-          narratorDisplay:  formatNarratorDisplay(storyNarratorsMap[s.id]),
+          narratorDisplay:  formatNarratorDisplay((s.narratorNames ?? undefined) as string[] | undefined),
           isNew:            isRecentlyPublished(s.publishedAt),
           progressStatus:   progress?.status ?? 'none',
           progressSeconds:  progress?.progressSeconds ?? 0,
         };
       });
-  }, [eroticStories, tagMap, authorMap, storyNarratorsMap, progressMap]);
+  }, [eroticStories, tagMap, authorMap, progressMap]);
 
   // "New" — already sorted newest-first by the underlying GSI query
   const newStories = useMemo(() => enrichedStories.slice(0, 10), [enrichedStories]);

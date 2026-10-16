@@ -50,7 +50,9 @@ import type { Schema }   from '../../../amplify/data/resource';
 import { Analytics } from '@/lib/analytics';
 
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
-import { useNarrators } from '../../hooks/queries/useNarrators';
+import { useStoryNarratorNames } from '../../hooks/queries/useStoryNarratorNames';
+import { fetchAllPages } from '../../lib/paginate';
+import { findFinished } from '../../lib/userStoryLookups';
 import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, formatNarratorDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
 import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
@@ -203,32 +205,10 @@ const StoryScreen = ({ navigation }: any) => {
 
     const progressMap = useStoryProgressMap();
     const progress = progressMap[story?.id ?? ''];
-    const { data: narrators = [] } = useNarrators();
     const { data: universe } = useUniverse(story?.universeId);
 
-    const [storyNarratorNames, setStoryNarratorNames] = useState<string[]>([]);
-
-    useEffect(() => {
-        if (!storyID) return;
-        async function fetchNarrators() {
-            try {
-                const { data: links } = await client.models.StoryNarrator.list({
-                    filter: { storyId: { eq: storyID } },
-                });
-                if (!links?.length) {
-                    setStoryNarratorNames([]);
-                    return;
-                }
-                const names = links
-                    .map((link: any) => narrators.find((n: any) => n.id === link.narratorId)?.name)
-                    .filter(Boolean) as string[];
-                setStoryNarratorNames(names);
-            } catch (e) {
-                console.log('Error fetching story narrators:', e);
-            }
-        }
-        fetchNarrators();
-    }, [storyID, narrators]);
+    // Per-story, index-backed (byStoryId) — never loads the Narrator table.
+    const { data: storyNarratorNames = [] } = useStoryNarratorNames(storyID);
 
     const narratorDisplay = formatNarratorDisplay(storyNarratorNames);
     const durationDisplay = getDurationDisplay(
@@ -254,9 +234,9 @@ const StoryScreen = ({ navigation }: any) => {
         if (!storyID) return;
         async function fetchTags() {
             try {
-                const { data: storyTagLinks } = await client.models.StoryTag.list({
-                    filter: { storyId: { eq: storyID } },
-                });
+                const storyTagLinks = await fetchAllPages<any>(token =>
+                    (client.models.StoryTag as any).listStoryTagByStoryId(
+                        { storyId: storyID }, { limit: 50, nextToken: token }));
 
                 if (storyTagLinks?.length) {
                     // StoryTag records exist — use them
@@ -292,25 +272,18 @@ const StoryScreen = ({ navigation }: any) => {
         async function fetchUserData() {
             try {
                 const [finishedRes, ratingRes, reactionsRes] = await Promise.all([
-                    client.models.UserFinishedStory.list({
-                        filter: { and: [{ userId: { eq: userId ?? undefined} }, { storyId: { eq: storyID } }] },
-                    }),
-                    client.models.UserRating.list({
-                        filter: { and: [{ userId: { eq: userId ?? undefined} }, { storyId: { eq: storyID } }] },
-                    }),
-                    client.models.StoryReactionCount.list({
-                        filter: { storyId: { eq: storyID } },
-                    }),
+                    findFinished(userId as string, storyID),
+                    (client.models.UserRating as any).listUserRatingByUserIdAndStoryId(
+                        { userId, storyId: { eq: storyID } }, { limit: 1 }),
+                    // Top reactions: index sorted by count, take the top 4 server-side.
+                    (client.models.StoryReactionCount as any).listStoryReactionCountByStoryIdAndCount(
+                        { storyId: storyID }, { sortDirection: 'DESC', limit: 4 }),
                 ]);
 
-                setHasFinished(!!finishedRes.data?.length);
+                setHasFinished(!!finishedRes.length);
                 setUserRating(ratingRes.data?.[0] ?? null);
 
-                const sorted = (reactionsRes.data ?? [])
-                    .filter(r => (r.count ?? 0) > 0)
-                    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
-                    .slice(0, 4);
-                setTopReactions(sorted);
+                setTopReactions((reactionsRes.data ?? []).filter((r: any) => (r.count ?? 0) > 0));
             } catch (e) {
                 console.log('Error fetching user data:', e);
             }
@@ -322,19 +295,13 @@ const StoryScreen = ({ navigation }: any) => {
     const handleRatingModalClose = async () => {
         setShowRatingModal(false);
         try {
-            const { data: ratings } = await client.models.UserRating.list({
-                filter: { and: [{ userId: { eq: userId ?? undefined} }, { storyId: { eq: storyID } }] },
-            });
+            const { data: ratings } = await (client.models.UserRating as any).listUserRatingByUserIdAndStoryId(
+                { userId, storyId: { eq: storyID } }, { limit: 1 });
             setUserRating(ratings?.[0] ?? null);
 
-            const { data: reactions } = await client.models.StoryReactionCount.list({
-                filter: { storyId: { eq: storyID } },
-            });
-            const sorted = (reactions ?? [])
-                .filter(r => (r.count ?? 0) > 0)
-                .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
-                .slice(0, 4);
-            setTopReactions(sorted);
+            const { data: reactions } = await (client.models.StoryReactionCount as any).listStoryReactionCountByStoryIdAndCount(
+                { storyId: storyID }, { sortDirection: 'DESC', limit: 4 });
+            setTopReactions((reactions ?? []).filter((r: any) => (r.count ?? 0) > 0));
         } catch (e) {
             console.log('Error refreshing rating:', e);
         }

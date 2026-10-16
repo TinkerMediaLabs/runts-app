@@ -5,6 +5,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 
+import { fetchAllPages } from '../../lib/paginate';
 import {
   getOfflineEnabled,
   getDownloads,
@@ -169,10 +170,9 @@ export async function syncDownloads(): Promise<void> {
     const { userId } = await getCurrentUser();
     const client = generateClient<Schema>();
 
-    const { data: pinnedRecords } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-        { userId },
-        {}
-    );
+    const pinnedRecords = await fetchAllPages<any>(token =>
+        (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+            { userId }, { limit: 100, nextToken: token }));
 
     const pinnedIds     = new Set((pinnedRecords ?? []).map((p : any) => p.storyId));
     const downloads     = await getDownloads();
