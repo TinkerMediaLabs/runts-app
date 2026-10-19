@@ -1,6 +1,7 @@
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
+import { fetchAllPages } from '../../lib/paginate';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 
@@ -11,11 +12,10 @@ export function useComments(storyId: string) {
     queryKey: ['comments', storyId],
     queryFn: async () => {
       const client = generateClient<Schema>();
-      const { data } = await (client.models.Comment as any).listCommentByStoryAndCreatedAt(
-          { storyId },
-          { sortDirection: 'ASC' }
-      );
-      return data ?? [];
+      // INTERIM: all pages (no silent 100-row cap). Needs a load-more UI before stories reach 1000s of comments.
+      return fetchAllPages<any>(token =>
+          (client.models.Comment as any).listCommentByStoryIdAndCreatedAt(
+              { storyId }, { sortDirection: 'ASC', limit: 100, nextToken: token }));
           },
     enabled: !!storyId,
     staleTime: 1000 * 60,

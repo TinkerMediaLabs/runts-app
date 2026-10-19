@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
+import { fetchAllPages } from '../../lib/paginate';
 import { Analytics } from '@/lib/analytics';
 
 
@@ -14,9 +15,10 @@ export function useIsFollowing(authorId: string) {
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      const { data } = await (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserAndAuthor(
-          { userId, authorId },
-          {}
+      // (userId, authorId) lookup on the index; sort-key condition must be a predicate object.
+      const { data } = await (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserIdAndAuthorId(
+          { userId, authorId: { eq: authorId } },
+          { limit: 10 }
       );
       return { isFollowing: !!data?.length, recordId: data?.[0]?.id ?? null };
     },
@@ -32,11 +34,11 @@ export function useFollowingCount() {
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      const { data } = await (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserAndAuthor(
-          { userId },
-          {}
-      );
-      return data?.length ?? 0;
+      // Count across ALL pages (per-user bounded). TODO: move to an aggregate on User.
+      const rows = await fetchAllPages<any>(token =>
+          (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserIdAndAuthorId(
+              { userId }, { limit: 500, nextToken: token }));
+      return rows.length;
     },
     staleTime: 1000 * 60,
   });

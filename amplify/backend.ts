@@ -7,6 +7,7 @@ import { ratingAggregator } from './functions/rating-aggregator/resource';
 import { reactionAggregator } from './functions/reaction-aggregator/resource';
 import { commentCounter } from './functions/comment-counter/resource';
 import { tagCountAggregator } from './functions/tag-count-aggregator/resource';
+import { storyStatsAggregator } from './functions/story-stats-aggregator/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -20,6 +21,7 @@ const backend = defineBackend({
   reactionAggregator,
   commentCounter,
   tagCountAggregator,
+  storyStatsAggregator,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -30,6 +32,7 @@ const faveTable          = backend.data.resources.tables['UserFavoritedStory'];
 const reactionCountTable = backend.data.resources.tables['StoryReactionCount'];
 const tagTable       = backend.data.resources.tables['Tag'];
 const storyTagTable  = backend.data.resources.tables['StoryTag'];
+const storyStatsTable = backend.data.resources.tables['StoryStats'];
 
 // ── increment-listens ─────────────────────────────────────────────────────
 const incrementListensFn = backend.incrementListens.resources.lambda as lambda.Function;
@@ -77,6 +80,17 @@ tagCountAggregatorFn.addEnvironment('TAG_TABLE_NAME', tagTable.tableName);
 tagTable.grantReadWriteData(tagCountAggregatorFn);
 storyTagTable.grantStreamRead(tagCountAggregatorFn);
 tagCountAggregatorFn.addEventSource(new DynamoEventSource(storyTagTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 2,
+}));
+
+// ── story-stats-aggregator ────────────────────────────────────────────────
+const storyStatsAggregatorFn = backend.storyStatsAggregator.resources.lambda as lambda.Function;
+storyStatsAggregatorFn.addEnvironment('STORY_STATS_TABLE_NAME', storyStatsTable.tableName);
+storyStatsTable.grantReadWriteData(storyStatsAggregatorFn);
+storyTable.grantStreamRead(storyStatsAggregatorFn);
+storyStatsAggregatorFn.addEventSource(new DynamoEventSource(storyTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,

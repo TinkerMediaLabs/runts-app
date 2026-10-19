@@ -1932,6 +1932,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "spiceRating": {
+              "name": "spiceRating",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
             "publishedAt": {
               "name": "publishedAt",
               "isArray": false,

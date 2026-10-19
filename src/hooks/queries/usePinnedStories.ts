@@ -6,8 +6,16 @@ import { getOfflineEnabled } from '../../lib/offlineStorage';
 import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
+import { fetchAllPages } from '../../lib/paginate';
+import { findPinned } from '../../lib/userStoryLookups';
 
-
+// All of a user's pins, ordered by sortOrder, fully paginated (index query).
+async function fetchAllPins(userId: string): Promise<any[]> {
+  const client = generateClient<Schema>();
+  return fetchAllPages<any>(token =>
+    (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+      { userId }, { sortDirection: 'ASC', limit: 100, nextToken: token }));
+}
 
 // ─── Fetch all pinned stories for current user ────────────────────────────
 export function usePinnedStories() {
@@ -16,27 +24,20 @@ export function usePinnedStories() {
     return useQuery({
         queryKey: ['pinnedStories', eroticEnabled, eroticInPlaylist],
         queryFn: async () => {
-      const client = generateClient<Schema>();
+            const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
-            const { data, errors } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-                { userId },
-                { sortDirection: 'ASC' }
-            );
-            if (errors) throw new Error(errors[0].message);
-
-            const sorted = data ?? [];
+            const sorted = await fetchAllPins(userId);
 
             // Fetch story data to check isErotic — needed for filtering
             const storyResults = await Promise.all(
                 sorted.map((r : any) => client.models.Story.get({ id: r.storyId }))
             );
 
-            // Show erotic pinned stories only when both eroticEnabled AND eroticInPlaylist
             return sorted.filter((_: any, i: number) => {
                 const story = storyResults[i]?.data;
-                if (story?.isErotic !== 'true') return true;  // non-erotic always shown
-                if (!eroticEnabled)    return false;           // erotic disabled
-                if (!eroticInPlaylist) return false;           // erotic excluded from playlist
+                if (story?.isErotic !== 'true') return true;
+                if (!eroticEnabled)    return false;
+                if (!eroticInPlaylist) return false;
                 return true;
             });
         },
@@ -49,14 +50,9 @@ export function usePinnedStoryIds() {
   return useQuery({
     queryKey: ['pinnedStoryIds'],
     queryFn: async () => {
-      const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-     const { data, errors } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-          { userId },
-          {}
-      );
-      if (errors) throw new Error(errors[0].message);
-      return new Set((data ?? []).map((p : any) => p.storyId));
+      const pins = await fetchAllPins(userId);
+      return new Set(pins.map((p: any) => p.storyId));
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -71,12 +67,17 @@ export function usePinStory() {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
-      const { data: existing } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-          { userId },
-          {}
-      );
-      const sortOrder = (existing ?? []).length;
+      // Already pinned? (index lookup, no table read) — makes pin idempotent.
+      const already = await findPinned(userId, storyId);
+      if (already.length) return already[0];
 
+      // Next sortOrder = (highest existing sortOrder) + 1 — ONE row via DESC index query,
+      // not "count the list" (which broke past one page and could collide).
+      const { data: top } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+          { userId }, { sortDirection: 'DESC', limit: 1 });
+      const sortOrder = (top?.[0]?.sortOrder ?? -1) + 1;
+
+      // sortOrder MUST always be set: the index is sparse and rows without it are invisible.
       const { data, errors } = await client.models.UserPinnedStory.create({
         userId,
         storyId,
@@ -137,18 +138,12 @@ export function useUnpinStory() {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
 
-      const { data: allPinned } = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-          { userId },
-          {}
-      );
-      const existing = (allPinned ?? []).filter((p: any) => p.storyId === storyId);
-
-      if (!existing?.length) return;
-
-      const { errors } = await client.models.UserPinnedStory.delete({
-        id: existing[0].id,
-      });
-      if (errors) throw new Error(errors[0].message);
+      // Index lookup by (userId, storyId) — no list-everything-then-filter.
+      const existing = await findPinned(userId, storyId);
+      for (const row of existing) {
+        const { errors } = await client.models.UserPinnedStory.delete({ id: row.id });
+        if (errors) throw new Error(errors[0].message);
+      }
     },
     onMutate: async (storyId: string) => {
       await queryClient.cancelQueries({ queryKey: ['pinnedStoryIds'] });
@@ -170,7 +165,6 @@ export function useUnpinStory() {
     onSuccess: (_, storyId) => {
       Analytics.storyUnpinned({ storyId });
 
-      // Delete local download in background — non-blocking
       deleteDownload(storyId).catch(err =>
         console.warn('Unpin delete download error:', err)
       );

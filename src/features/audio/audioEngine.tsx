@@ -1,4 +1,4 @@
-import TrackPlayer from '@rntp/player';
+import TrackPlayer, { Event } from '@rntp/player';
 import { getUrl } from 'aws-amplify/storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getLocalFilePath } from '../../lib/offlineStorage';
@@ -37,14 +37,17 @@ async function resolveAudioUrl(url: string): Promise<string> {
   }
 
   try {
-    const { url: signedUrl } = await getUrl({
+    const { url: signedUrl, expiresAt } = await getUrl({
       path: url,
       options: { expiresIn: SIGNED_URL_EXPIRY_SECONDS },
     });
     const resolved = signedUrl.toString();
+    // Amplify caps the URL lifetime at the signing credentials' expiry (usually ~1h), so trust the
+    // returned expiresAt, not the requested 6h. Refresh 2 minutes early.
+    const realExpiry = expiresAt ? expiresAt.getTime() : now + 15 * 60 * 1000;
     signedUrlCache.set(url, {
       url:       resolved,
-      expiresAt: now + (SIGNED_URL_EXPIRY_SECONDS - 60) * 1000,
+      expiresAt: realExpiry - 2 * 60 * 1000,
     });
     return resolved;
   } catch (networkError) {
@@ -67,6 +70,48 @@ async function resolveAudioUrl(url: string): Promise<string> {
 class AudioEngine {
 
   private currentTrack: Track | null = null;
+  private lastRecoveryAt = 0;
+  private errorSub: { remove: () => void } | null = null;
+
+  constructor() {
+    this.attachErrorRecovery();
+  }
+
+  /**
+   * Signed S3 URLs are capped at the lifetime of the login credentials (~1h), so a long listen can
+   * outlive the URL the player is holding. On a playback error, fetch a fresh URL and resume from
+   * the same position. Limited to one attempt per 30s so a genuinely bad file cannot loop.
+   * (Proper fix for launch: long-lived signed CloudFront URLs — see handoff "Future work".)
+   */
+  private attachErrorRecovery() {
+    try {
+      this.errorSub = (TrackPlayer as any).addEventListener(Event.PlaybackError, async (e: any) => {
+        const track = this.currentTrack;
+        if (!track || e?.code === 'renderer') return;
+        const now = Date.now();
+        if (now - this.lastRecoveryAt < 30_000) return;
+        this.lastRecoveryAt = now;
+        try {
+          const position = this.getCurrentPosition();
+          signedUrlCache.delete(track.url);
+          const freshUrl = await resolveAudioUrl(track.url);
+          await TrackPlayer.setMediaItems([{
+            url:     freshUrl,
+            title:   track.title,
+            artwork: track.artwork,
+            artist:  track.artist,
+          } as any]);
+          if (position > 0) await TrackPlayer.seekTo(position);
+          await TrackPlayer.play();
+          console.log('audioEngine: recovered from playback error at', position);
+        } catch (err) {
+          console.error('audioEngine: playback recovery failed', err);
+        }
+      });
+    } catch (err) {
+      console.error('audioEngine: could not attach error recovery', err);
+    }
+  }
 
 async play(track: Track) {
   try {

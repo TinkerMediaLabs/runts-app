@@ -20,7 +20,8 @@ import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
 import { useUniverse } from '../../hooks/queries/useUniverse';
-import { getDurationDisplay } from '../../lib/storyDisplay';
+import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
+
 
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
@@ -38,6 +39,7 @@ const StoryTile = ({
     id,
     licenseType,
     universeId,
+    spiceRating,
     sequenceNumber,
     reorderEnabled = false,
     drag,
@@ -226,6 +228,11 @@ const StoryTile = ({
                                 </View>
                             </TouchableWithoutFeedback>
 
+                              {/* Spice rating */}
+                            {getSpiceDisplay(spiceRating) ? (
+                                <Text style={styles.spiceRating}>{getSpiceDisplay(spiceRating)}</Text>
+                            ) : null}
+
                             {/* Summary */}
                             {summary ? (
                                 <Text style={styles.summary} numberOfLines={3}>{summary}</Text>
@@ -400,6 +407,10 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#ffffffa5',
         lineHeight: 20,
+    },
+    spiceRating: {
+        fontSize: 13,
+        marginBottom: 4,
     },
     actions: {
         flexDirection: 'row',

@@ -3,6 +3,8 @@
 # Deploys the publish-to-production Lambda and API Gateway
 # Run from project root: bash scripts/deploy-publish-lambda.sh
 
+# ⚠️ FIRST-TIME SETUP ONLY. Re-running this generates a NEW API key and overwrites the Lambda env, which breaks the CMS
+# Publish button, and its IAM policy block below is outdated. To change the Lambda later use scripts/update-publish-lambda.sh.
 set -e
 
 REGION="us-east-2"

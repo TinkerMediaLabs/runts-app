@@ -24,8 +24,6 @@ import { usePrimaryTags } from '../../hooks/queries/useTags';
 import { useTagNames } from '../../hooks/queries/useTagNames';
 
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
-import { useNarrators } from '../../hooks/queries/useNarrators';
-import { useStoryNarratorLinks } from '../../hooks/queries/useStoryNarratorLinks';
 import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
 
 const HomeScreen = ({ navigation }: any) => {
@@ -83,28 +81,8 @@ const HomeScreen = ({ navigation }: any) => {
     }, [tags]);
 
     const progressMap = useStoryProgressMap();
-    const { data: narrators = [] } = useNarrators();
-    const { data: storyNarratorLinks = [] } = useStoryNarratorLinks();
 
-    const narratorNameMap = React.useMemo(() => {
-        const m: Record<string, string> = {};
-        narrators.forEach((n: any) => {
-            if (n.id && n.name) m[n.id] = n.name;
-        });
-        return m;
-    }, [narrators]);
 
-    const storyNarratorsMap = React.useMemo(() => {
-        const m: Record<string, string[]> = {};
-        storyNarratorLinks.forEach((link: any) => {
-            if (!link.storyId || !link.narratorId) return;
-            const name = narratorNameMap[link.narratorId];
-            if (!name) return;
-            if (!m[link.storyId]) m[link.storyId] = [];
-            m[link.storyId].push(name);
-        });
-        return m;
-    }, [storyNarratorLinks, narratorNameMap]);
 
         const enrichedStories = React.useMemo(() => {
         if (!stories) return [];
@@ -117,13 +95,13 @@ const HomeScreen = ({ navigation }: any) => {
                     primaryTagName:   story.primaryTagId   ? tagMap[story.primaryTagId]   ?? '' : '',
                     secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
                     authorName:       story.authorId       ? authorMap[story.authorId]    ?? '' : '',
-                    narratorDisplay:  formatNarratorDisplay(storyNarratorsMap[story.id]),
+                    narratorDisplay:  formatNarratorDisplay((story.narratorNames ?? undefined) as string[] | undefined),
                     isNew:            isRecentlyPublished(story.publishedAt),
                     progressStatus:   progress?.status ?? 'none',
                     progressSeconds:  progress?.progressSeconds ?? 0,
                 };
             });
-    }, [stories, tagMap, authorMap, storyNarratorsMap, progressMap]);
+    }, [stories, tagMap, authorMap, progressMap]);
 
     return (
         <Screen>
