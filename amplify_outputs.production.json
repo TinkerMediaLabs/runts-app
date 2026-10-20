@@ -434,6 +434,17 @@
               }
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndStory",
+                "queryField": "listUserPinnedStoryByUserIdAndStoryId",
+                "fields": [
+                  "userId",
+                  "storyId"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -543,6 +554,28 @@
             {
               "type": "model",
               "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndFinishedAt",
+                "queryField": "listUserFinishedStoryByUserIdAndFinishedAt",
+                "fields": [
+                  "userId",
+                  "finishedAt"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndStory",
+                "queryField": "listUserFinishedStoryByUserIdAndStoryId",
+                "fields": [
+                  "userId",
+                  "storyId"
+                ]
+              }
             },
             {
               "type": "auth",
@@ -661,6 +694,28 @@
             {
               "type": "model",
               "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndLastListened",
+                "queryField": "listUserInProgressStoryByUserIdAndLastListenedAt",
+                "fields": [
+                  "userId",
+                  "lastListenedAt"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndStory",
+                "queryField": "listUserInProgressStoryByUserIdAndStoryId",
+                "fields": [
+                  "userId",
+                  "storyId"
+                ]
+              }
             },
             {
               "type": "auth",
@@ -1175,6 +1230,28 @@
               "properties": {}
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndFavoritedAt",
+                "queryField": "listUserFavoritedStoryByUserIdAndFavoritedAt",
+                "fields": [
+                  "userId",
+                  "favoritedAt"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byUserAndStory",
+                "queryField": "listUserFavoritedStoryByUserIdAndStoryId",
+                "fields": [
+                  "userId",
+                  "storyId"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -1578,6 +1655,20 @@
               "isRequired": true,
               "attributes": []
             },
+            "nameLower": {
+              "name": "nameLower",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "searchPk": {
+              "name": "searchPk",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "profilePicUri": {
               "name": "profilePicUri",
               "isArray": false,
@@ -1671,6 +1762,17 @@
               }
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byName",
+                "queryField": "listAuthorBySearchPkAndNameLower",
+                "fields": [
+                  "searchPk",
+                  "nameLower"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -1719,6 +1821,20 @@
               "isArray": false,
               "type": "String",
               "isRequired": true,
+              "attributes": []
+            },
+            "nameLower": {
+              "name": "nameLower",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "searchPk": {
+              "name": "searchPk",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
               "attributes": []
             },
             "profilePicUri": {
@@ -1780,6 +1896,17 @@
               "properties": {
                 "fields": [
                   "id"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byName",
+                "queryField": "listNarratorBySearchPkAndNameLower",
+                "fields": [
+                  "searchPk",
+                  "nameLower"
                 ]
               }
             },
@@ -1854,6 +1981,21 @@
               "type": "String",
               "isRequired": true,
               "attributes": []
+            },
+            "titleLower": {
+              "name": "titleLower",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "narratorNames": {
+              "name": "narratorNames",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
             },
             "audioUri": {
               "name": "audioUri",
@@ -2322,6 +2464,39 @@
             {
               "type": "key",
               "properties": {
+                "name": "byLiveAndDuration",
+                "queryField": "listStoryByLiveAndDuration",
+                "fields": [
+                  "live",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byLiveAndTitle",
+                "queryField": "listStoryByLiveAndTitleLower",
+                "fields": [
+                  "live",
+                  "titleLower"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byEroticAndPublishedAt",
+                "queryField": "listStoryByIsEroticAndPublishedAt",
+                "fields": [
+                  "isErotic",
+                  "publishedAt"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
                 "name": "byAuthorAndPublishedAt",
                 "queryField": "listStoryByAuthorIdAndPublishedAt",
                 "fields": [
@@ -2408,6 +2583,94 @@
             "sortKeyFieldNames": []
           }
         },
+        "StoryStats": {
+          "name": "StoryStats",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "live": {
+              "name": "live",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "draft": {
+              "name": "draft",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "erotic": {
+              "name": "erotic",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "StoryStats",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "fields": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
         "Tag": {
           "name": "Tag",
           "fields": {
@@ -2423,6 +2686,27 @@
               "isArray": false,
               "type": "String",
               "isRequired": true,
+              "attributes": []
+            },
+            "nameLower": {
+              "name": "nameLower",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "searchPk": {
+              "name": "searchPk",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "primaryFlag": {
+              "name": "primaryFlag",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
               "attributes": []
             },
             "isPrimary": {
@@ -2551,6 +2835,28 @@
               }
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byName",
+                "queryField": "listTagBySearchPkAndNameLower",
+                "fields": [
+                  "searchPk",
+                  "nameLower"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byPrimaryAndName",
+                "queryField": "listTagByPrimaryFlagAndNameLower",
+                "fields": [
+                  "primaryFlag",
+                  "nameLower"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -2601,6 +2907,20 @@
               "isRequired": true,
               "attributes": []
             },
+            "nameLower": {
+              "name": "nameLower",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "searchPk": {
+              "name": "searchPk",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "stories": {
               "name": "stories",
               "isArray": true,
@@ -2646,6 +2966,17 @@
               "properties": {
                 "fields": [
                   "id"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byName",
+                "queryField": "listUniverseBySearchPkAndNameLower",
+                "fields": [
+                  "searchPk",
+                  "nameLower"
                 ]
               }
             },
@@ -2866,6 +3197,16 @@
               "properties": {}
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byUserId",
+                "queryField": "listUserDeviceByUserId",
+                "fields": [
+                  "userId"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -2968,6 +3309,26 @@
             {
               "type": "model",
               "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byStoryId",
+                "queryField": "listStoryNarratorByStoryId",
+                "fields": [
+                  "storyId"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byNarratorId",
+                "queryField": "listStoryNarratorByNarratorId",
+                "fields": [
+                  "narratorId"
+                ]
+              }
             },
             {
               "type": "auth",
@@ -3080,6 +3441,26 @@
             {
               "type": "model",
               "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byStoryId",
+                "queryField": "listStoryTagByStoryId",
+                "fields": [
+                  "storyId"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byTagId",
+                "queryField": "listStoryTagByTagId",
+                "fields": [
+                  "tagId"
+                ]
+              }
             },
             {
               "type": "auth",
