@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
@@ -6,54 +6,52 @@ import { getOfflineEnabled } from '../../lib/offlineStorage';
 import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
-import { fetchAllPages } from '../../lib/paginate';
 import { findPinned } from '../../lib/userStoryLookups';
 
-// All of a user's pins, ordered by sortOrder, fully paginated (index query).
-async function fetchAllPins(userId: string): Promise<any[]> {
-  const client = generateClient<Schema>();
-  return fetchAllPages<any>(token =>
-    (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-      { userId }, { sortDirection: 'ASC', limit: 100, nextToken: token }));
-}
+const PINS_PAGE_SIZE = 30;
 
-// ─── Fetch all pinned stories for current user ────────────────────────────
+// Pinned stories, ordered by sortOrder, 30 per page (index query) + a Story get for just that
+// page to apply the erotic filters. The list screen loads more on scroll.
 export function usePinnedStories() {
     const { eroticEnabled, eroticInPlaylist } = useApp();
 
-    return useQuery({
+    return useInfiniteQuery({
         queryKey: ['pinnedStories', eroticEnabled, eroticInPlaylist],
-        queryFn: async () => {
+        queryFn: async ({ pageParam }: { pageParam: string | null }) => {
             const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
-            const sorted = await fetchAllPins(userId);
+            const res: any = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+                { userId }, { sortDirection: 'ASC', limit: PINS_PAGE_SIZE, nextToken: pageParam ?? undefined });
+            if (res.errors?.length) throw new Error(res.errors[0].message);
+            const rows: any[] = res.data ?? [];
 
-            // Fetch story data to check isErotic — needed for filtering
             const storyResults = await Promise.all(
-                sorted.map((r : any) => client.models.Story.get({ id: r.storyId }))
+                rows.map((r: any) => client.models.Story.get({ id: r.storyId }))
             );
-
-            return sorted.filter((_: any, i: number) => {
+            const items = rows.filter((_: any, i: number) => {
                 const story = storyResults[i]?.data;
                 if (story?.isErotic !== 'true') return true;
                 if (!eroticEnabled)    return false;
                 if (!eroticInPlaylist) return false;
                 return true;
             });
+            return { items, nextToken: (res.nextToken ?? null) as string | null };
         },
+        initialPageParam: null as string | null,
+        getNextPageParam: (last) => last.nextToken,
         staleTime: 1000 * 60 * 5,
     });
 }
 
-// ─── Fetch just the pinned story IDs for fast lookup ─────────────────────
-export function usePinnedStoryIds() {
+// ─── Is THIS story pinned? One index lookup, cached per story ─────────────
+export function useIsPinned(storyId: string) {
   return useQuery({
-    queryKey: ['pinnedStoryIds'],
+    queryKey: ['isPinned', storyId],
     queryFn: async () => {
       const { userId } = await getCurrentUser();
-      const pins = await fetchAllPins(userId);
-      return new Set(pins.map((p: any) => p.storyId));
+      return (await findPinned(userId, storyId)).length > 0;
     },
+    enabled: !!storyId,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -88,20 +86,14 @@ export function usePinStory() {
       return data;
     },
     onMutate: async (storyId: string) => {
-      await queryClient.cancelQueries({ queryKey: ['pinnedStoryIds'] });
-      const previous = queryClient.getQueryData<Set<string>>(['pinnedStoryIds']);
-
-      queryClient.setQueryData<Set<string>>(['pinnedStoryIds'], (old) => {
-        const next = new Set(old ?? []);
-        next.add(storyId);
-        return next;
-      });
-
+      await queryClient.cancelQueries({ queryKey: ['isPinned', storyId] });
+      const previous = queryClient.getQueryData<boolean>(['isPinned', storyId]);
+      queryClient.setQueryData<boolean>(['isPinned', storyId], true);
       return { previous };
     },
-    onError: (_err, _storyId, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['pinnedStoryIds'], context.previous);
+    onError: (_err, storyId, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(['isPinned', storyId], context.previous);
       }
     },
     onSuccess: (_, storyId) => {
@@ -122,9 +114,9 @@ export function usePinStory() {
         });
       });
     },
-    onSettled: () => {
+    onSettled: (_d, _e, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+      queryClient.invalidateQueries({ queryKey: ['isPinned', storyId] });
     },
   });
 }
@@ -146,20 +138,14 @@ export function useUnpinStory() {
       }
     },
     onMutate: async (storyId: string) => {
-      await queryClient.cancelQueries({ queryKey: ['pinnedStoryIds'] });
-      const previous = queryClient.getQueryData<Set<string>>(['pinnedStoryIds']);
-
-      queryClient.setQueryData<Set<string>>(['pinnedStoryIds'], (old) => {
-        const next = new Set(old ?? []);
-        next.delete(storyId);
-        return next;
-      });
-
+      await queryClient.cancelQueries({ queryKey: ['isPinned', storyId] });
+      const previous = queryClient.getQueryData<boolean>(['isPinned', storyId]);
+      queryClient.setQueryData<boolean>(['isPinned', storyId], false);
       return { previous };
     },
-    onError: (_err, _storyId, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['pinnedStoryIds'], context.previous);
+    onError: (_err, storyId, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(['isPinned', storyId], context.previous);
       }
     },
     onSuccess: (_, storyId) => {
@@ -169,9 +155,9 @@ export function useUnpinStory() {
         console.warn('Unpin delete download error:', err)
       );
     },
-    onSettled: () => {
+    onSettled: (_d, _e, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-      queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+      queryClient.invalidateQueries({ queryKey: ['isPinned', storyId] });
     },
   });
 }

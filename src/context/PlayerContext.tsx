@@ -152,7 +152,8 @@ export const PlayerProvider = ({ children }: any) => {
             // ── Invalidate caches ─────────────────────────────────────────────
             queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
             queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-            queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+            queryClient.invalidateQueries({ queryKey: ['isPinned'] });
+            queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
             queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
             queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
 
@@ -190,6 +191,7 @@ export const PlayerProvider = ({ children }: any) => {
                 const position = audioEngine.getCurrentPosition();
                 if (position > 0) {
                     await upsertInProgressStory(storyId, position);
+                    queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
                     queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
                     queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
                 }
@@ -302,6 +304,7 @@ export const PlayerProvider = ({ children }: any) => {
                 const position = audioEngine.getCurrentPosition();
                 if (position > 0) {
                     await upsertInProgressStory(currentTrackRef.current.id, position);
+                    queryClient.invalidateQueries({ queryKey: ['storyProgress', currentTrackRef.current.id] });
                     queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
                     queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
                 }

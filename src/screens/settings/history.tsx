@@ -8,7 +8,7 @@ import MenuHeader from '../../components/common/MenuHeader';
 import StoryTile from '../../components/story/StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useFinishedStories } from '../../hooks/queries/useFinishedStories';
-import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
+import { useAuthor } from '../../hooks/queries/useAuthors';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { spacing } from '../../theme/spacing';
@@ -22,10 +22,8 @@ const client = generateClient<Schema>();
 
 const HistoryStoryTile = ({
     item,
-    authorMap,
 }: {
     item: any;
-    authorMap: Record<string, string>;
 }) => {
     const [story, setStory] = useState<any>(null);
 
@@ -49,6 +47,8 @@ const HistoryStoryTile = ({
     const { data: primaryTagData }   = useTag(story?.primaryTagId);
     const { data: secondaryTagData } = useTag(story?.secondaryTagId);
 
+    const { data: authorData } = useAuthor(story?.authorId ?? '');
+
     if (!story) return null;
 
     return (
@@ -59,7 +59,7 @@ const HistoryStoryTile = ({
             secondaryTag={secondaryTagData?.name ?? ''}
             audioUri={story.audioUri ?? ''}
             summary={story.summary ?? ''}
-            author={authorMap[story.authorId ?? ''] ?? ''}
+            author={authorData?.name ?? ''}
             description={story.description ?? ''}
             duration={story.duration ?? 0}
             id={story.id}
@@ -79,9 +79,9 @@ const History = ({ navigation }: any) => {
 
     const { userId } = useApp();
 
-    const { data: finishedStories, isLoading, refetch } = useFinishedStories();
+    const { data: finishedPages, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useFinishedStories();
+    const finishedStories = useMemo(() => finishedPages?.pages.flatMap(p => p.items) ?? [], [finishedPages]);
     const [isFetching, setIsFetching] = useState(false);
-    const { data: authorMap = {} } = useAuthorNames((finishedStories ?? []).map((s: any) => s.authorId));
 
 
     const onRefresh = async () => {
@@ -93,7 +93,6 @@ const History = ({ navigation }: any) => {
     const renderItem = ({ item }: any) => (
         <HistoryStoryTile
             item={item}
-            authorMap={authorMap}
         />
     );
 
@@ -108,7 +107,9 @@ const History = ({ navigation }: any) => {
                     </View>
                 ) : (
                     <FlatList
-                        data={finishedStories ?? []}
+                        data={finishedStories}
+                        onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+                        onEndReachedThreshold={0.5}
                         keyExtractor={item => item.id}
                         renderItem={renderItem}
                         showsVerticalScrollIndicator={false}
@@ -128,7 +129,11 @@ const History = ({ navigation }: any) => {
                                 </Text>
                             </View>
                         }
-                        ListFooterComponent={<View style={{ height: 100 }} />}
+                        ListFooterComponent={
+                            <View style={{ height: 100, paddingTop: 16 }}>
+                                {isFetchingNextPage ? <ActivityIndicator color="cyan" /> : null}
+                            </View>
+                        }
                     />
                 )}
             </View>

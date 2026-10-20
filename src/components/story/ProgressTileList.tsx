@@ -3,11 +3,12 @@ import { View, FlatList, Dimensions, RefreshControl, ActivityIndicator, StyleShe
 import { Text } from '@/components/common/AppText';
 
 import ProgressTile from './ProgressTile';
-import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
+import { useInProgressStoriesPaginated } from '../../hooks/queries/useInProgressStories';
 
 const StoryTileList = () => {
 
-    const { data: inProgressStories, isLoading, refetch } = useInProgressStories();
+    const { data: pages, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInProgressStoriesPaginated();
+    const inProgressStories = useMemo(() => pages?.pages.flatMap(p => p.items) ?? [], [pages]);
     const [isFetching, setIsFetching] = useState(false);
 
     const onRefresh = async () => {
@@ -25,7 +26,9 @@ const StoryTileList = () => {
     return (
         <View style={{ width: Dimensions.get('window').width, flex: 1 }}>
             <FlatList
-                data={inProgressStories ?? []}
+                data={inProgressStories}
+                onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+                onEndReachedThreshold={0.5}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 maxToRenderPerBatch={20}
@@ -39,7 +42,11 @@ const StoryTileList = () => {
                 }
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
-                ListFooterComponent={<View style={{ height: 100 }} />}
+                ListFooterComponent={
+                    <View style={{ height: 100, paddingTop: 16 }}>
+                        {isFetchingNextPage ? <ActivityIndicator size="small" color="cyan" /> : null}
+                    </View>
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         {isLoading ? (

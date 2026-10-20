@@ -73,7 +73,7 @@ const HomeScreen = ({ navigation }: any) => {
         return tags.filter(t => !t.isErotic).slice(0, 4);  // ← add erotic filter
     }, [tags]);
 
-    const progressMap = useStoryProgressMap();
+    const progressMap = useStoryProgressMap(stories?.map(s => s.id) ?? []);
 
 
 

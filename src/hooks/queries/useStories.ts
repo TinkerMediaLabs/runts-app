@@ -218,3 +218,25 @@ export function useStory(id: string) {
     staleTime: 1000 * 60 * 5,
   });
 }
+
+// ─── Live stories whose title starts with a letter (Browse by Title), paged ──────────────────
+// Server-side on the byLiveAndTitle index, so any letter works across the whole catalog.
+// Length filtering is applied by the caller (the index has no duration sort key).
+export function useStoriesByTitleLetterPaginated(letter: string, pageSize: number = 30) {
+  return useInfiniteQuery({
+    queryKey: ['stories', 'titleLetter', letter, pageSize],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const client = generateClient<Schema>();
+      const res: any = await (client.models.Story as any).listStoryByLiveAndTitleLower(
+        { live: 'true', titleLower: { beginsWith: letter.toLowerCase() } },
+        { limit: pageSize, nextToken: pageParam ?? undefined }
+      );
+      if (res.errors?.length) throw new Error(res.errors[0].message);
+      return { items: (res.data ?? []) as any[], nextToken: (res.nextToken ?? null) as string | null };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextToken,
+    enabled: !!letter,
+    staleTime: 1000 * 60 * 5,
+  });
+}

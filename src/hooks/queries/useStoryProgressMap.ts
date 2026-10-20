@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { useInProgressStories } from './useInProgressStories';
-import { useFinishedStories } from './useFinishedStories';
+import { useQuery, useQueries } from '@tanstack/react-query';
+import { getCurrentUser } from 'aws-amplify/auth';
+import { findFinished, findInProgress } from '../../lib/userStoryLookups';
 
 export type StoryProgressStatus = 'none' | 'in_progress' | 'completed';
 
@@ -9,28 +10,43 @@ export interface StoryProgressInfo {
   progressSeconds?: number;
 }
 
-// Builds a storyId -> progress info lookup from the CURRENT USER's own
-// in-progress and finished records — both hooks are already scoped to just
-// this user's activity (bounded, small), never a scan of the full story
-// catalog. Each card then does an O(1) in-memory lookup, no per-card
-// network calls.
-export function useStoryProgressMap() {
-  const { data: inProgress } = useInProgressStories();
-  const { data: finished } = useFinishedStories();
+// Per-story progress via two index lookups (byUserAndStory), cached under ['storyProgress', id].
+// Cost depends on how many stories are on screen, not on how much the user has ever listened to.
+async function fetchProgress(storyId: string): Promise<StoryProgressInfo> {
+  const { userId } = await getCurrentUser();
+  const [finished, inProgress] = await Promise.all([findFinished(userId, storyId), findInProgress(userId, storyId)]);
+  // Finished takes priority if a story somehow has both records
+  if (finished.length) return { status: 'completed' };
+  if (inProgress.length) return { status: 'in_progress', progressSeconds: (inProgress[0] as any).progressSeconds ?? 0 };
+  return { status: 'none' };
+}
 
-  const map = useMemo(() => {
+export function useStoryProgress(storyId: string | null | undefined) {
+  const { data } = useQuery({
+    queryKey: ['storyProgress', storyId],
+    queryFn: () => fetchProgress(storyId as string),
+    enabled: !!storyId,
+    staleTime: 1000 * 60 * 2,
+  });
+  return data;
+}
+
+// storyId -> progress info for the stories a screen shows. Shares cache entries with useStoryProgress.
+export function useStoryProgressMap(storyIds: (string | null | undefined)[]) {
+  const ids = useMemo(
+    () => Array.from(new Set(storyIds.filter((id): id is string => !!id))),
+    [storyIds.join(',')] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const results = useQueries({
+    queries: ids.map(id => ({
+      queryKey: ['storyProgress', id],
+      queryFn: () => fetchProgress(id),
+      staleTime: 1000 * 60 * 2,
+    })),
+  });
+  return useMemo(() => {
     const m: Record<string, StoryProgressInfo> = {};
-    (finished ?? []).forEach((f: any) => {
-      if (f.storyId) m[f.storyId] = { status: 'completed' };
-    });
-    (inProgress ?? []).forEach((p: any) => {
-      // Finished takes priority if a story somehow has both records
-      if (p.storyId && !m[p.storyId]) {
-        m[p.storyId] = { status: 'in_progress', progressSeconds: p.progressSeconds ?? 0 };
-      }
-    });
+    results.forEach((r, i) => { if (r.data) m[ids[i]] = r.data; });
     return m;
-  }, [inProgress, finished]);
-
-  return map;
+  }, [results, ids]);
 }

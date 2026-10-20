@@ -107,7 +107,6 @@ const GenreHome = ({ navigation }: any) => {
     const { data: shortStories,    isLoading: shortLoading }    = useStoriesByTagShort(tagId);
 
 
-    const progressMap = useStoryProgressMap();
 
 
 
@@ -179,6 +178,10 @@ const GenreHome = ({ navigation }: any) => {
     const { data: tagMap = {} } = useTagNames(primaryTagIds);
     const { data: authorMap = {} } = useAuthorNames([...(newStories ?? []), ...(trendingStories ?? []), ...(shortStories ?? []), ...(browseAllStoriesRaw ?? [])].map((s: any) => s.authorId));
 
+
+    const progressMap = useStoryProgressMap(
+        [...(newStories ?? []), ...(trendingStories ?? []), ...(shortStories ?? []), ...(browseAllStoriesRaw ?? [])].map((s: any) => s.id)
+    );
 
     const enrich = (stories: any[]) =>
         stories.map(s => {
