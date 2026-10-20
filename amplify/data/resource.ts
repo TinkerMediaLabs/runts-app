@@ -266,6 +266,7 @@ Comment: a
       isPremium:   a.boolean().default(false),
       title: a.string().required(),
       titleLower: a.string(),   // lowercase title — sort key for title-prefix search
+      liveTagId: a.string(),    // = primaryTagId while live==='true', otherwise absent (sparse). Maintained by tag-index-sync.
       narratorNames: a.string().array(),   // denormalized by the CMS on save (no join at read time)
       audioUri: a.string(),
       summary: a.string(),
@@ -322,9 +323,9 @@ Comment: a
       index('live').sortKeys(['duration']).name('byLiveAndDuration'),
       index('live').sortKeys(['titleLower']).name('byLiveAndTitle'),
       index('isErotic').sortKeys(['publishedAt']).name('byEroticAndPublishedAt'),
-      index('primaryTagId').sortKeys(['publishedAt']).name('byTagAndPublishedAt'),
-      index('primaryTagId').sortKeys(['numListens']).name('byTagAndListens'),
-      index('primaryTagId').sortKeys(['duration']).name('byTagAndDuration'),
+      index('liveTagId').sortKeys(['publishedAt']).name('byLiveTagAndPublishedAt'),
+      index('liveTagId').sortKeys(['numListens']).name('byLiveTagAndListens'),
+      index('liveTagId').sortKeys(['duration']).name('byLiveTagAndDuration'),
       index('authorId').sortKeys(['publishedAt']).name('byAuthorAndPublishedAt'),
       index('universeId').sortKeys(['publishedAt']).name('byUniverseAndPublishedAt'),
     ])
@@ -447,12 +448,15 @@ Comment: a
     .model({
       storyId: a.string().required(),
       tagId: a.string().required(),
+      liveTagId: a.string(),      // = tagId while the story is live, otherwise absent (sparse). Maintained by tag-index-sync.
+      publishedAt: a.datetime(),  // copy of Story.publishedAt (sort key for the live-tag index)
       story: a.belongsTo('Story', 'storyId'),
       tag: a.belongsTo('Tag', 'tagId'),
     })
     .secondaryIndexes(index => [
       index('storyId').name('byStoryId'),
       index('tagId').name('byTagId'),
+      index('liveTagId').sortKeys(['publishedAt']).name('byLiveTagAndPublishedAt'),
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
