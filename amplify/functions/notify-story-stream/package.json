@@ -1,0 +1,9 @@
+{
+  "name": "notify-story-stream",
+  "version": "1.0.0",
+  "description": "Queues a notification when a story goes live",
+  "main": "handler.js",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.0.0"
+  }
+}

@@ -5,6 +5,7 @@
   "main": "handler.js",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/client-sqs": "^3.0.0",
     "@aws-sdk/util-dynamodb": "^3.0.0"
   }
 }
