@@ -34,7 +34,7 @@ import {
     useStoriesByTagPaginated,
 } from '../../hooks/queries/useStories';
 import { useTagNames, useTag } from '../../hooks/queries/useTagNames';
-import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
 import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
@@ -106,7 +106,6 @@ const GenreHome = ({ navigation }: any) => {
     const { data: trendingStories, isLoading: trendingLoading } = useStoriesByTagTrending(tagId);
     const { data: shortStories,    isLoading: shortLoading }    = useStoriesByTagShort(tagId);
 
-    const { data: authors } = useAuthors();
 
     const progressMap = useStoryProgressMap();
 
@@ -178,14 +177,8 @@ const GenreHome = ({ navigation }: any) => {
     }, [newStories, trendingStories, shortStories, browseAllStoriesRaw]);
 
     const { data: tagMap = {} } = useTagNames(primaryTagIds);
+    const { data: authorMap = {} } = useAuthorNames([...(newStories ?? []), ...(trendingStories ?? []), ...(shortStories ?? []), ...(browseAllStoriesRaw ?? [])].map((s: any) => s.authorId));
 
-    const authorMap = useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, author) => {
-            if (author.id && author.name) acc[author.id] = author.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
     const enrich = (stories: any[]) =>
         stories.map(s => {

@@ -46,7 +46,7 @@ import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
-import { useTags } from '@/hooks/queries/useTags';
+import { useTag } from '@/hooks/queries/useTagNames';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
 
 import RatingModal from './RatingModal';
@@ -127,7 +127,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: currentStory } = useStory(track?.id ?? null);
-  const { data: allTags } = useTags();
+  const { data: primaryTagData }   = useTag(currentStory?.primaryTagId);
+  const { data: secondaryTagData } = useTag(currentStory?.secondaryTagId);
 
   const { data: narratorNames = [] } = useStoryNarratorNames(currentStory?.id);
   const narratorDisplay = formatNarratorDisplay(narratorNames);
@@ -135,14 +136,10 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const { data: resolvedNextImageUri } = useStoryImage(
     nextTrackInfo?.artwork?.startsWith('stories/') ? nextTrackInfo.artwork : null  );
   const nextImageDisplayUri = resolvedNextImageUri ?? nextTrackInfo?.artwork ?? '';
-  const storyTags = React.useMemo(() => {
-    if (!currentStory || !allTags) return [];
-    const tagIds = new Set([
-      currentStory.primaryTagId,
-      currentStory.secondaryTagId,
-    ].filter(Boolean));
-    return allTags.filter(t => tagIds.has(t.id));
-  }, [currentStory, allTags]);
+  const storyTags = React.useMemo(
+    () => [primaryTagData, secondaryTagData].filter((t: any) => !!t && !!t.name) as any[],
+    [primaryTagData, secondaryTagData]
+  );
 
   // ── Expand / Collapse ─────────────────────────────────────────────────────
   const expandPlayer = () => {

@@ -18,7 +18,7 @@ import useOnPlay from '@/components/functions/OnPlay';
 import { spacing } from '../../theme/spacing';
 import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
-import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useAuthor } from '../../hooks/queries/useAuthors';
 
 const client = generateClient<Schema>();
 
@@ -38,10 +38,8 @@ const MAX_CARDS     = 4;
 
 const ProgressCard = ({
     inProgressRecord,
-    authorMap,
 }: {
     inProgressRecord: any;
-    authorMap: Record<string, string>;
 }) => {
     const onPlay = useOnPlay();
     const [story, setStory] = useState<any>(null);
@@ -69,7 +67,8 @@ const ProgressCard = ({
     const percent         = Math.min(100, Math.round((progressSeconds / duration) * 100));
     const secsLeft        = Math.max(0, duration - progressSeconds);
     const minsLeft        = Math.max(0, Math.floor(secsLeft / 60));
-    const authorName      = authorMap[story?.authorId ?? ''] ?? '';
+    const { data: authorData } = useAuthor(story?.authorId ?? '');
+    const authorName      = authorData?.name ?? '';
 
     // All hooks above early return
     const barProgress = useSharedValue(0);
@@ -141,16 +140,7 @@ const ProgressCard = ({
 const ContinueListening = () => {
 
     const { data: inProgressStories, isLoading } = useInProgressStories();
-    const { data: authors } = useAuthors();
     const [activeIndex, setActiveIndex] = useState(0);
-
-    const authorMap = useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, author) => {
-            if (author.id && author.name) acc[author.id] = author.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
     const recentStories = useMemo(() => {
         return (inProgressStories ?? []).slice(0, MAX_CARDS);
@@ -175,7 +165,6 @@ const ContinueListening = () => {
                 renderItem={({ item }) => (
                     <ProgressCard
                         inProgressRecord={item}
-                        authorMap={authorMap}
                     />
                 )}
                 horizontal

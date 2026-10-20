@@ -13,7 +13,7 @@ import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
 import { useApp } from '@/context/AppContext';
-import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 
 import ForYouCarousel from '../../components/story/ForYouCarousel';
 import HorizontalList from '../../components/story/HorizontalList';
@@ -32,15 +32,7 @@ const HomeScreen = ({ navigation }: any) => {
     const styles = useStyles();
     const typo = useTypography();
 
-    const { data: authors } = useAuthors();
 
-    const authorMap = React.useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, author) => {
-            if (author.id && author.name) acc[author.id] = author.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
     const { data: stories, isLoading: storiesLoading } = useStories();
     const { data: tags, isLoading: tagsLoading } = usePrimaryTags();
@@ -74,6 +66,7 @@ const HomeScreen = ({ navigation }: any) => {
     }, [stories]);
 
     const { data: tagMap } = useTagNames(allTagIds);
+    const { data: authorMap = {} } = useAuthorNames(stories?.map(s => s.authorId) ?? []);
 
     const topTags = React.useMemo(() => {
         if (!tags) return [];

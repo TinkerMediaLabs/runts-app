@@ -18,7 +18,7 @@ import StoryTile     from '../../components/story/StoryTile';
 import LetterBrowser, { LengthFilter } from '../../components/story/LetterBrowser';
 
 import { useStories }    from '../../hooks/queries/useStories';
-import { useAuthors }    from '../../hooks/queries/useAuthors';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames }       from '../../hooks/queries/useTagNames';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
@@ -140,14 +140,6 @@ const BrowseByTitle = ({ navigation }: any) => {
         refetch,
     } = useStories();
 
-    const { data: authors } = useAuthors();
-    const authorMap = useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, a) => {
-            if (a.id && a.name) acc[a.id] = a.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
 
     // ── Filter stories by letter + duration ───────────────────────────────────
@@ -171,6 +163,7 @@ const BrowseByTitle = ({ navigation }: any) => {
     }, [filteredStories]);
 
     const { data: tagMap = {} } = useTagNames(allTagIds);
+    const { data: authorMap = {} } = useAuthorNames((filteredStories ?? []).map((s: any) => s.authorId));
 
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleLetterSelect = (letter: string, index: number) => {

@@ -4,21 +4,11 @@ import { Text } from '@/components/common/AppText';
 
 import ProgressTile from './ProgressTile';
 import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
-import { useAuthors } from '../../hooks/queries/useAuthors';
 
 const StoryTileList = () => {
 
     const { data: inProgressStories, isLoading, refetch } = useInProgressStories();
-    const { data: authors } = useAuthors();
     const [isFetching, setIsFetching] = useState(false);
-
-    const authorMap = useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, author) => {
-            if (author.id && author.name) acc[author.id] = author.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
     const onRefresh = async () => {
         setIsFetching(true);
@@ -29,7 +19,6 @@ const StoryTileList = () => {
     const renderItem = ({ item }: any) => (
         <ProgressTile
             inProgressRecord={item}
-            authorMap={authorMap}
         />
     );
 

@@ -323,7 +323,14 @@ const [editingComment, setEditingComment] = useState<{ id: string; content: stri
 const [postAnonymously, setPostAnonymously] = useState(false);
 const focus = useRef<TextInput>(null);
 
-const { data: comments, isLoading: commentsLoading } = useComments(storyID);
+const {
+  data: commentPages,
+  isLoading: commentsLoading,
+  hasNextPage: hasMoreComments,
+  fetchNextPage: fetchMoreComments,
+  isFetchingNextPage: loadingMoreComments,
+} = useComments(storyID);
+const comments = React.useMemo(() => commentPages?.pages.flatMap(p => p.items) ?? [], [commentPages]);
 const { mutate: postComment,   isPending: posting   } = usePostComment();
 const { mutate: updateComment, isPending: updating  } = useUpdateComment();
 const { mutate: deleteComment                        } = useDeleteComment();
@@ -784,7 +791,20 @@ const handleDelete = (id: string) => {
           No comments yet. Be the first!
         </Text>
       }
-      ListFooterComponent={<View style={{ height: 40 }} />}
+      ListFooterComponent={
+        <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+          {hasMoreComments ? (
+            loadingMoreComments ? (
+              <ActivityIndicator color="cyan" />
+            ) : (
+              <TouchableOpacity onPress={() => fetchMoreComments()} activeOpacity={0.7}>
+                <Text style={{ color: 'cyan', fontSize: 14 }}>Load more comments</Text>
+              </TouchableOpacity>
+            )
+          ) : null}
+          <View style={{ height: 40 }} />
+        </View>
+      }
     />
   )
 ) : (
