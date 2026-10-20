@@ -191,7 +191,9 @@ echo "Stream ARN: $STREAM_ARN"
 
 # ── 8. Create pipe: DynamoDB Stream → SQS ────────────────────────────────────
 # We use a Lambda as a stream processor that writes to SQS
-# Create a second Lambda (stream-to-sqs) that reads stream and writes to SQS
+# Create a second Lambda (stream-to-sqs) that reads stream and writes to SQS.
+# NOTE: the maintained source is amplify/functions/notify-story-stream/handler.ts; redeploy code
+# changes with scripts/update-notify-stream-lambda.sh. The inline copy below is only for first-time setup.
 
 STREAM_PROCESSOR="runts-notify-story-stream"
 
