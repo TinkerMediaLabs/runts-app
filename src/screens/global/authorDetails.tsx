@@ -22,9 +22,9 @@ import StoryTile   from '../../components/story/StoryTile';
 import SocialBlock from '../../components/story/SocialBlock';
 
 import { useAuthor } from '../../hooks/queries/useAuthors';
-import { useStories } from '../../hooks/queries/useStories';
+import { useStoriesByAuthorPaginated } from '../../hooks/queries/useStories';
+import { useTagNames } from '../../hooks/queries/useTagNames';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
-import { useTags } from '../../hooks/queries/useTags';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
 import {
@@ -112,27 +112,28 @@ const CreatorProfile = () => {
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: author, isLoading: authorLoading } = useAuthor(id);
     const { data: authorImageUrl } = useAuthorImage(author?.profilePicUri);
-    const { data: allStories, isLoading: storiesLoading } = useStories();
-    const { data: tags } = useTags();
+    const {
+        data: storyPages,
+        isLoading: storiesLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useStoriesByAuthorPaginated(id, 30);
+    const allStories = useMemo(() => storyPages?.pages.flatMap(p => p.items) ?? [], [storyPages]);
 
     // Filter stories by this author
     const authorStories = useMemo(() => {
         if (!allStories) return [];
         return allStories.filter(s =>
             s.authorId === id &&
-            s.live &&
+            s.live === 'true' &&
             (eroticEnabled || s.isErotic !== 'true')
         );
     }, [allStories, id, eroticEnabled]);
 
-    // Build tag lookup map
-    const tagMap = useMemo(() => {
-        if (!tags) return {};
-        return tags.reduce((acc: Record<string, string>, tag) => {
-            if (tag.id && tag.name) acc[tag.id] = tag.name;
-            return acc;
-        }, {});
-    }, [tags]);
+    const { data: tagMap = {} } = useTagNames(
+        authorStories.flatMap((s: any) => [s.primaryTagId, s.secondaryTagId])
+    );
 
     const isLoading = authorLoading || storiesLoading;
 
@@ -230,6 +231,8 @@ const CreatorProfile = () => {
             <AnimatedFlatList
                 data={authorStories}
                 renderItem={renderItem}
+                onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+                onEndReachedThreshold={0.5}
                 keyExtractor={(item: any) => item.id}
                 onScroll={scrollHandler}
                 scrollEventThrottle={16}
@@ -268,7 +271,7 @@ const CreatorProfile = () => {
 
                         {/* Stats */}
                         <View style={styles.statsRow}>
-                            <StatPill icon="book-open" label={`${authorStories.length} ${authorStories.length === 1 ? 'Story' : 'Stories'}`} />
+                            <StatPill icon="book-open" label={`${authorStories.length}${hasNextPage ? '+' : ''} ${authorStories.length === 1 ? 'Story' : 'Stories'}`} />
                         </View>
 
                         {/* Follow button */}

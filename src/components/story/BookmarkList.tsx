@@ -6,8 +6,8 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import BookmarkTile        from './BookmarkTile';
 import { useBookmarks }    from '../../hooks/queries/useBookmarks';
-import { useAuthors }      from '../../hooks/queries/useAuthors';
-import { useTags }         from '../../hooks/queries/useTags';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
+import { useTagNames } from '../../hooks/queries/useTagNames';
 import { usePlayer }       from '../../context/PlayerContext';
 import { useStoryImage }   from '../../hooks/queries/useStoryImage';
 
@@ -37,26 +37,12 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
     isRefetching,
   } = useBookmarks();
 
-  const { data: authors } = useAuthors();
-  const { data: tags }    = useTags();
-
-  const authorMap = useMemo(() => {
-    if (!authors) return {};
-    return authors.reduce((acc: Record<string, string>, a) => {
-      if (a.id && a.name) acc[a.id] = a.name;
-      return acc;
-    }, {});
-  }, [authors]);
-
-  const tagMap = useMemo(() => {
-    if (!tags) return {};
-    return tags.reduce((acc: Record<string, string>, t) => {
-      if (t.id && t.name) acc[t.id] = t.name;
-      return acc;
-    }, {});
-  }, [tags]);
-
   const items = data?.pages.flatMap(p => p.items) ?? [];
+
+  const { data: authorMap = {} } = useAuthorNames(items.map((i: any) => i.story?.authorId));
+  const { data: tagMap = {} } = useTagNames(
+    items.flatMap((i: any) => [i.story?.primaryTagId, i.story?.secondaryTagId])
+  );
 
   const handlePlay = (storyId: string, positionSeconds: number) => {
     // Find the story from our loaded items

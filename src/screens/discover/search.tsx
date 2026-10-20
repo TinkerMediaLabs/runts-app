@@ -31,7 +31,7 @@ import StoryTile   from '../../components/story/StoryTile';
 import SearchInput from '../../components/common/SearchInput';
 
 import { useStoryImage }  from '../../hooks/queries/useStoryImage';
-import { useAuthors }     from '../../hooks/queries/useAuthors';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 import { useTagNames } from '../../hooks/queries/useTagNames';
 import {
@@ -570,16 +570,8 @@ const SearchScreen = ({ navigation }: any) => {
   const [showGenreSheet, setShowGenreSheet] = useState(false);
 
   // ── Supporting data ───────────────────────────────────────────────────────
-  const { data: authors }     = useAuthors();
   const { data: primaryTags } = usePrimaryTags();
 
-  const authorMap = useMemo(() => {
-    if (!authors) return {};
-    return authors.reduce((acc: Record<string, string>, a) => {
-      if (a.id && a.name) acc[a.id] = a.name;
-      return acc;
-    }, {});
-  }, [authors]);
 
 
   // ── Search queries (lazy per tab) ─────────────────────────────────────────
@@ -631,6 +623,7 @@ const storyItems = useMemo(() => {
   }, [storyItems]);
 
   const { data: tagMap = {} } = useTagNames(allTagIds);
+  const { data: authorMap = {} } = useAuthorNames(storyItems.map((s: any) => s.authorId));
 
 const authorResults = useMemo(() => {
     return authorData?.pages.flatMap(p => p.items) ?? [];

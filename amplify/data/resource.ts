@@ -26,6 +26,7 @@ const schema = a.schema({
       followedAuthors: a.hasMany('UserFollowedAuthor', 'userId'),
       totalListenSeconds: a.integer(),
       totalStoriesFinished: a.integer(), 
+      followedAuthorCount: a.integer(),   // maintained by follow-count-aggregator (stream on UserFollowedAuthor)
       bookmarks: a.hasMany('UserBookmark', 'userId'),
     })
     .authorization(allow => [allow.owner()]),

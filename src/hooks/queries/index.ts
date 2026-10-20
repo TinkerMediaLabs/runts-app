@@ -7,8 +7,8 @@ export {
   useTrendingStories,
   useStoriesByAuthor,
 } from './useStories';
-export { useTags, usePrimaryTags } from './useTags';
-export { useAuthor, useAuthors } from './useAuthors';
+export { usePrimaryTags } from './useTags';
+export { useAuthor } from './useAuthors';
 export { useStoryImage } from './useStoryImage';
 export {
   useInProgressStories,

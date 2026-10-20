@@ -27,20 +27,19 @@ export function useIsFollowing(authorId: string) {
   });
 }
 
-// ── Following count (for profile screen stat) ─────────────────────────────
+// ── Following count (profile stat) ────────────────────────────────────────
+// Reads the aggregate User.followedAuthorCount (kept by follow-count-aggregator) - one get,
+// no matter how many authors the user follows.
 export function useFollowingCount() {
   return useQuery({
     queryKey: ['followingCount'],
     queryFn: async () => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      // Count across ALL pages (per-user bounded). TODO: move to an aggregate on User.
-      const rows = await fetchAllPages<any>(token =>
-          (client.models.UserFollowedAuthor as any).listUserFollowedAuthorByUserIdAndAuthorId(
-              { userId }, { limit: 500, nextToken: token }));
-      return rows.length;
+      const { data } = await client.models.User.get({ id: userId });
+      return (data as any)?.followedAuthorCount ?? 0;
     },
-    staleTime: 1000 * 60,
+    staleTime: 0,
   });
 }
 

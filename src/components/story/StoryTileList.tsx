@@ -13,7 +13,7 @@ import StoryTile from './StoryTile';
 import { useApp } from '@/context/AppContext';
 import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
-import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useTag } from '../../hooks/queries/useTagNames';
 
 const client = generateClient<Schema>();
@@ -28,13 +28,11 @@ type StoryTileListProps = {
 // ---------------------------------------------------------------------------
 const PinnedStoryTile = ({
     item,
-    authorMap,
     reorderEnabled,
     drag,
     isActive,
 }: {
     item: any;
-    authorMap: Record<string, string>;
     reorderEnabled: boolean;
     drag?: () => void;
     isActive?: boolean;
@@ -61,6 +59,8 @@ const PinnedStoryTile = ({
     const { data: primaryTagData }   = useTag(story?.primaryTagId);
     const { data: secondaryTagData } = useTag(story?.secondaryTagId);
 
+    const { data: authorData } = useAuthor(story?.authorId ?? '');
+
     if (!story) return null;
 
     return (
@@ -71,7 +71,7 @@ const PinnedStoryTile = ({
             secondaryTag={secondaryTagData?.name ?? ''}
             audioUri={story.audioUri ?? ''}
             summary={story.summary ?? ''}
-            author={authorMap[story.authorId ?? ''] ?? ''}
+            author={authorData?.name ?? ''}
             description={story.description ?? ''}
             duration={story.duration ?? 0}
             id={story.id}
@@ -96,7 +96,6 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
     const { userId } = useApp();
 
     const { data: pinnedStories, isLoading, refetch } = usePinnedStories();
-    const { data: authors } = useAuthors();
 
     const [isFetching, setIsFetching] = useState(false);
     const [localData, setLocalData]   = useState<any[]>([]);
@@ -107,15 +106,6 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
             setLocalData(pinnedStories);
         }
     }, [pinnedStories]);
-
-    // Build author lookup map
-    const authorMap = useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, author) => {
-            if (author.id && author.name) acc[author.id] = author.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
     const onRefresh = async () => {
         setIsFetching(true);
@@ -145,7 +135,6 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         <ScaleDecorator activeScale={1.02}>
             <PinnedStoryTile
                 item={item}
-                authorMap={authorMap}
                 reorderEnabled={reorderEnabled}
                 drag={drag}
                 isActive={isActive}

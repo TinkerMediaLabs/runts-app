@@ -12,7 +12,7 @@ import {
   DEFAULT_THRESHOLD,
 } from '../../hooks/queries/useFavoritedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
-import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames }    from '../../hooks/queries/useTagNames';
 
 // ---------------------------------------------------------------------------
@@ -60,15 +60,6 @@ export default function FavoritesList({ tabBarHeight }: { tabBarHeight: number }
   const [threshold,   setThreshold]   = useState(DEFAULT_THRESHOLD);
   const [isFetching,  setIsFetching]  = useState(false);
 
-  const { data: authors } = useAuthors();
-
-  const authorMap = React.useMemo(() => {
-    if (!authors) return {};
-    return authors.reduce((acc: Record<string, string>, a) => {
-      if (a.id && a.name) acc[a.id] = a.name;
-      return acc;
-    }, {});
-  }, [authors]);
 
 
   // Re-read threshold whenever the tab comes into focus
@@ -80,10 +71,22 @@ export default function FavoritesList({ tabBarHeight }: { tabBarHeight: number }
   );
 
   const {
-    data: stories,
+    data,
     isLoading,
     refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useFavoritedStories(threshold);
+
+  const stories = React.useMemo(() => data?.pages.flatMap(p => p.items) ?? [], [data]);
+
+  // A page can come back short (e.g. erotic favorites hidden) - keep pulling until the list can scroll.
+  React.useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && stories.length < 10) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, stories.length, fetchNextPage]);
+
+  const { data: authorMap = {} } = useAuthorNames(stories.map((s: any) => s.authorId));
 
   const allTagIds = React.useMemo(() => {
     if (!stories) return [];
@@ -108,7 +111,10 @@ const { data: tagMap = {} } = useTagNames(allTagIds);
 
   return (
     <FlatList
-      data={stories ?? []}
+      data={stories}
+      onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} /> : null}
     keyExtractor={item => item.id ?? item.userRating.toString()}      renderItem={({ item }) => (
         <FavoriteStoryRow story={item} authorMap={authorMap} tagMap={tagMap} />
       )}

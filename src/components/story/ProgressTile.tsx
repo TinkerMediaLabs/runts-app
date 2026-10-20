@@ -16,6 +16,7 @@ import type { Schema } from '../../../amplify/data/resource';
 
 import StoryTile from './StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
+import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useDeleteInProgressStory } from '../../hooks/queries/useInProgressStories';
 
 import { useTag } from '../../hooks/queries/useTagNames';
@@ -25,10 +26,8 @@ const { width } = Dimensions.get('window');
 
 const ProgressTile = ({
     inProgressRecord,
-    authorMap,
 }: {
     inProgressRecord: any;
-    authorMap: Record<string, string>;
 }) => {
     const [story, setStory] = useState<any>(null);
     const { mutate: deleteInProgress } = useDeleteInProgressStory();
@@ -52,6 +51,8 @@ const ProgressTile = ({
 
     const { data: primaryTagData }   = useTag(story?.primaryTagId);
     const { data: secondaryTagData } = useTag(story?.secondaryTagId);
+
+    const { data: authorData } = useAuthor(story?.authorId ?? '');
 
     // Derived values — safe when story is null
     const progressSeconds = inProgressRecord.progressSeconds ?? 0;
@@ -85,7 +86,7 @@ const ProgressTile = ({
                 secondaryTag={secondaryTagData?.name ?? ''}
                 audioUri={story.audioUri ?? ''}
                 summary={story.summary ?? ''}
-                author={authorMap[story.authorId ?? ''] ?? ''}
+                author={authorData?.name ?? ''}
                 description={story.description ?? ''}
                 duration={story.duration ?? 0}
                 id={story.id}

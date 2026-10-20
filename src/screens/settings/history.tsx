@@ -8,7 +8,7 @@ import MenuHeader from '../../components/common/MenuHeader';
 import StoryTile from '../../components/story/StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useFinishedStories } from '../../hooks/queries/useFinishedStories';
-import { useAuthors } from '../../hooks/queries/useAuthors';
+import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { spacing } from '../../theme/spacing';
@@ -80,16 +80,9 @@ const History = ({ navigation }: any) => {
     const { userId } = useApp();
 
     const { data: finishedStories, isLoading, refetch } = useFinishedStories();
-    const { data: authors } = useAuthors();
     const [isFetching, setIsFetching] = useState(false);
+    const { data: authorMap = {} } = useAuthorNames((finishedStories ?? []).map((s: any) => s.authorId));
 
-    const authorMap = useMemo(() => {
-        if (!authors) return {};
-        return authors.reduce((acc: Record<string, string>, author) => {
-            if (author.id && author.name) acc[author.id] = author.name;
-            return acc;
-        }, {});
-    }, [authors]);
 
     const onRefresh = async () => {
         setIsFetching(true);

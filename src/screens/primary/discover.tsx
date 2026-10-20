@@ -14,7 +14,7 @@ import SearchBar              from '../../components/common/SearchBar';
 import PopularTagsList        from '../../components/story/PopularTagsList';
 import LoadingItem            from '../../components/common/LoadingItem';
 
-import { useTags, usePrimaryTags } from '../../hooks/queries/useTags';
+import { useMinorTagPool, usePrimaryTags } from '../../hooks/queries/useTags';
 import { useApp }                  from '@/context/AppContext';
 
 const { width } = Dimensions.get('window');
@@ -27,7 +27,7 @@ const { width } = Dimensions.get('window');
 
 const BrowseScreen = ({ navigation }: any) => {
 
-    const { data: allTags,     isLoading: tagsLoading    } = useTags();
+    const { data: allTags,     isLoading: tagsLoading    } = useMinorTagPool();
     const { data: primaryTags, isLoading: primaryLoading } = usePrimaryTags();
     const { eroticEnabled } = useApp();
 

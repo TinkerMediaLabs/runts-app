@@ -21,8 +21,8 @@ import EroticContinueListening from '@/components/erotic/EroticContinueListening
 import HorizontalTagList from '@/components/story/HorizontalTagList';
 
 import { useEroticStories } from '@/hooks/queries/useEroticStories';
-import { useTags, usePrimaryTags } from '@/hooks/queries/useTags';
-import { useAuthors } from '@/hooks/queries/useAuthors';
+import { useAdditionalEroticTags, usePrimaryTags } from '@/hooks/queries/useTags';
+import { useAuthorNames } from '@/hooks/queries/useAuthorNames';
 import { useTagNames } from '@/hooks/queries/useTagNames';
 import { useStoryProgressMap } from '@/hooks/queries/useStoryProgressMap';
 import { isRecentlyPublished, formatNarratorDisplay } from '@/lib/storyDisplay';
@@ -83,17 +83,9 @@ const EroticHomeScreen = () => {
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: eroticStories } = useEroticStories();
-  const { data: allTags } = useTags();
+  const { data: additionalTags } = useAdditionalEroticTags();
   const { data: primaryTags } = usePrimaryTags();
-  const { data: authors } = useAuthors();
 
-  const authorMap = useMemo(() => {
-    if (!authors) return {};
-    return authors.reduce((acc: Record<string, string>, a: any) => {
-      if (a.id && a.name) acc[a.id] = a.name;
-      return acc;
-    }, {});
-  }, [authors]);
 
   const allTagIds = useMemo(() => {
     if (!eroticStories) return [];
@@ -101,6 +93,7 @@ const EroticHomeScreen = () => {
   }, [eroticStories]);
 
   const { data: tagMap = {} } = useTagNames(allTagIds);
+    const { data: authorMap = {} } = useAuthorNames((eroticStories ?? []).map((s: any) => s.authorId));
 
   const progressMap = useStoryProgressMap();
 
@@ -142,10 +135,9 @@ const EroticHomeScreen = () => {
 
   // Additional (non-primary) erotic tags — alphabetical
   const additionalEroticTags = useMemo(() => {
-    return (allTags ?? [])
-      .filter((t: any) => t.isErotic && !t.isPrimary)
+    return [...(additionalTags ?? [])]
       .sort((a: any, b: any) => (a.name ?? '').localeCompare(b.name ?? ''));
-  }, [allTags]);
+  }, [additionalTags]);
 
   // ── Sticky header shrink animation ───────────────────────────────────────
   const onScroll = useAnimatedScrollHandler({

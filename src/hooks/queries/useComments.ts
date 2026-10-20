@@ -1,22 +1,27 @@
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
-import { fetchAllPages } from '../../lib/paginate';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 
 
-// ── Fetch comments for a story, sorted oldest first ───────────────────────
+// ── Comments for a story: newest first, paged (Load more) ─────────────────
+const COMMENTS_PAGE_SIZE = 20;
+
 export function useComments(storyId: string) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['comments', storyId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const client = generateClient<Schema>();
-      // INTERIM: all pages (no silent 100-row cap). Needs a load-more UI before stories reach 1000s of comments.
-      return fetchAllPages<any>(token =>
-          (client.models.Comment as any).listCommentByStoryIdAndCreatedAt(
-              { storyId }, { sortDirection: 'ASC', limit: 100, nextToken: token }));
-          },
+      const res: any = await (client.models.Comment as any).listCommentByStoryIdAndCreatedAt(
+        { storyId },
+        { sortDirection: 'DESC', limit: COMMENTS_PAGE_SIZE, nextToken: pageParam ?? undefined }
+      );
+      if (res.errors?.length) throw new Error(res.errors[0].message);
+      return { items: (res.data ?? []) as any[], nextToken: (res.nextToken ?? null) as string | null };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextToken,
     enabled: !!storyId,
     staleTime: 1000 * 60,
   });

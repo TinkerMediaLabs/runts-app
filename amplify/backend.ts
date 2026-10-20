@@ -8,6 +8,7 @@ import { reactionAggregator } from './functions/reaction-aggregator/resource';
 import { commentCounter } from './functions/comment-counter/resource';
 import { tagCountAggregator } from './functions/tag-count-aggregator/resource';
 import { storyStatsAggregator } from './functions/story-stats-aggregator/resource';
+import { followCountAggregator } from './functions/follow-count-aggregator/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -22,6 +23,7 @@ const backend = defineBackend({
   commentCounter,
   tagCountAggregator,
   storyStatsAggregator,
+  followCountAggregator,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -33,6 +35,8 @@ const reactionCountTable = backend.data.resources.tables['StoryReactionCount'];
 const tagTable       = backend.data.resources.tables['Tag'];
 const storyTagTable  = backend.data.resources.tables['StoryTag'];
 const storyStatsTable = backend.data.resources.tables['StoryStats'];
+const userTable        = backend.data.resources.tables['User'];
+const followTable      = backend.data.resources.tables['UserFollowedAuthor'];
 
 // ── increment-listens ─────────────────────────────────────────────────────
 const incrementListensFn = backend.incrementListens.resources.lambda as lambda.Function;
@@ -91,6 +95,17 @@ storyStatsAggregatorFn.addEnvironment('STORY_STATS_TABLE_NAME', storyStatsTable.
 storyStatsTable.grantReadWriteData(storyStatsAggregatorFn);
 storyTable.grantStreamRead(storyStatsAggregatorFn);
 storyStatsAggregatorFn.addEventSource(new DynamoEventSource(storyTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 2,
+}));
+
+// ── follow-count-aggregator ───────────────────────────────────────────────
+const followCountAggregatorFn = backend.followCountAggregator.resources.lambda as lambda.Function;
+followCountAggregatorFn.addEnvironment('USER_TABLE_NAME', userTable.tableName);
+userTable.grantReadWriteData(followCountAggregatorFn);
+followTable.grantStreamRead(followCountAggregatorFn);
+followCountAggregatorFn.addEventSource(new DynamoEventSource(followTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
