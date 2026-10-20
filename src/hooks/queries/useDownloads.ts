@@ -5,7 +5,9 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 
-import { fetchAllPages } from '../../lib/paginate';
+import { findPinned } from '../../lib/userStoryLookups';
+
+const DOWNLOAD_SYNC_LIMIT = 50;
 import {
   getOfflineEnabled,
   getDownloads,
@@ -170,16 +172,20 @@ export async function syncDownloads(): Promise<void> {
     const { userId } = await getCurrentUser();
     const client = generateClient<Schema>();
 
-    const pinnedRecords = await fetchAllPages<any>(token =>
-        (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-            { userId }, { limit: 100, nextToken: token }));
+    // Auto-download only the first DOWNLOAD_SYNC_LIMIT pins (top of the list = what the user
+    // will listen to next). A user can have thousands of pins; downloads are limited by device
+    // storage anyway, and pinning a story downloads it at pin time.
+    const pinsRes: any = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+        { userId }, { sortDirection: 'ASC', limit: DOWNLOAD_SYNC_LIMIT });
+    const pinnedRecords: any[] = pinsRes.data ?? [];
 
-    const pinnedIds     = new Set((pinnedRecords ?? []).map((p : any) => p.storyId));
     const downloads     = await getDownloads();
     const downloadedIds = new Set(downloads.map(d => d.storyId));
 
-    // Delete downloads for stories no longer pinned
-    const orphans = downloads.filter(d => !pinnedIds.has(d.storyId));
+    // Delete downloads for stories no longer pinned. Checked per download with an index lookup
+    // (downloads are bounded by device storage), so pins beyond the sync window are never deleted.
+    const pinnedFlags = await Promise.all(downloads.map(async d => (await findPinned(userId, d.storyId)).length > 0));
+    const orphans = downloads.filter((_d, i) => !pinnedFlags[i]);
     await Promise.all(orphans.map(d => deleteDownload(d.storyId)));
 
     // Download pinned stories not yet downloaded

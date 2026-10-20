@@ -1,4 +1,4 @@
-import { DynamoDBClient, UpdateItemCommand, ScanCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, QueryCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { randomUUID } from 'crypto';
@@ -41,18 +41,26 @@ async function processRecord(record: DynamoDBRecord) {
   }
 }
 
+// Look up the (storyId, reactionType) row via the byStoryAndCount index (partition = storyId).
+// A story has at most a handful of reaction types, so this reads a handful of rows - never the table.
 async function findReactionCount(storyId: string, reactionType: string) {
-  console.log('findReactionCount:', storyId, reactionType);
-  const { Items } = await dynamo.send(new ScanCommand({
-    TableName: REACTION_COUNT_TABLE,
-    FilterExpression: 'storyId = :sid AND reactionType = :rt',
-    ExpressionAttributeValues: {
-      ':sid': { S: storyId },
-      ':rt':  { S: reactionType },
-    },
-  }));
-  console.log('findReactionCount results:', Items?.length ?? 0);
-  return Items && Items.length > 0 ? unmarshall(Items[0]) : null;
+  let lastKey: any;
+  do {
+    const res: any = await dynamo.send(new QueryCommand({
+      TableName: REACTION_COUNT_TABLE,
+      IndexName: 'byStoryAndCount',
+      KeyConditionExpression: 'storyId = :sid',
+      FilterExpression: 'reactionType = :rt',
+      ExpressionAttributeValues: {
+        ':sid': { S: storyId },
+        ':rt':  { S: reactionType },
+      },
+      ExclusiveStartKey: lastKey,
+    }));
+    if (res.Items && res.Items.length > 0) return unmarshall(res.Items[0]);
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+  return null;
 }
 
 async function adjustCount(storyId: string, reactionType: string, delta: number) {

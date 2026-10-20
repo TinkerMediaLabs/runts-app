@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import AntDesign from '@react-native-vector-icons/ant-design';
-import { usePinnedStoryIds, useTogglePin } from '../../hooks/queries/usePinnedStories';
+import { useIsPinned, useTogglePin } from '../../hooks/queries/usePinnedStories';
 
 type PinButtonProps = {
   storyId: string;
@@ -17,10 +17,10 @@ const PinButton = ({
   inactiveColor = 'rgba(255,255,255,0.75)',
 }: PinButtonProps) => {
 
-  const { data: pinnedIds } = usePinnedStoryIds();
+  const { data: isPinnedData } = useIsPinned(storyId);
   const { toggle } = useTogglePin();
 
-  const isPinned = pinnedIds?.has(storyId) ?? false;
+  const isPinned = isPinnedData ?? false;
 
   return (
     <TouchableOpacity

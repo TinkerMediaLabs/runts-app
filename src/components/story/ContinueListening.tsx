@@ -139,7 +139,7 @@ const ProgressCard = ({
 
 const ContinueListening = () => {
 
-    const { data: inProgressStories, isLoading } = useInProgressStories();
+    const { data: inProgressStories, isLoading } = useInProgressStories(MAX_CARDS);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const recentStories = useMemo(() => {

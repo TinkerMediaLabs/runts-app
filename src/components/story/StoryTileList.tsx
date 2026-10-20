@@ -95,7 +95,8 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     const { userId } = useApp();
 
-    const { data: pinnedStories, isLoading, refetch } = usePinnedStories();
+    const { data: pinnedPages, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = usePinnedStories();
+    const pinnedStories = useMemo(() => pinnedPages?.pages.flatMap(p => p.items), [pinnedPages]);
 
     const [isFetching, setIsFetching] = useState(false);
     const [localData, setLocalData]   = useState<any[]>([]);
@@ -115,14 +116,17 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     // Update sort order in DynamoDB after drag reorder
     const onDragEnd = async ({ data: reordered }: { data: any[] }) => {
-        setLocalData(reordered);
-        // Update sortOrder for each item
+        // Only the loaded pins are reordered, so hand the SAME set of sortOrder values back out in
+        // the new order. Unloaded pins keep their values, so global order stays consistent.
+        const orders = localData.map(i => i.sortOrder ?? 0).sort((a, b) => a - b);
+        const next = reordered.map((item, index) => ({ ...item, sortOrder: orders[index] ?? index }));
+        setLocalData(next);
         try {
             await Promise.all(
-                reordered.map((item, index) =>
+                next.map(item =>
                     client.models.UserPinnedStory.update({
                         id: item.id,
-                        sortOrder: index,
+                        sortOrder: item.sortOrder,
                     })
                 )
             );
@@ -162,6 +166,8 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
             <DraggableFlatList
                 data={localData}
                 onDragEnd={onDragEnd}
+                onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+                onEndReachedThreshold={0.5}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 refreshControl={

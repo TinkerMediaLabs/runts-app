@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet, Dimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -17,7 +17,7 @@ import MenuHeader    from '@/components/common/MenuHeader';
 import StoryTile     from '../../components/story/StoryTile';
 import LetterBrowser, { LengthFilter } from '../../components/story/LetterBrowser';
 
-import { useStories }    from '../../hooks/queries/useStories';
+import { useStoriesByTitleLetterPaginated } from '../../hooks/queries/useStories';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames }       from '../../hooks/queries/useTagNames';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
@@ -134,28 +134,33 @@ const BrowseByTitle = ({ navigation }: any) => {
 
     // ── Real data ─────────────────────────────────────────────────────────────
     const {
-        data:        allStories,
-        isLoading:   storiesLoading,
+        data:               storyPages,
+        isLoading:          storiesLoading,
         isRefetching,
         refetch,
-    } = useStories();
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useStoriesByTitleLetterPaginated(selectedLetter);
 
+    const allStories = useMemo(() => storyPages?.pages.flatMap(p => p.items) ?? [], [storyPages]);
 
-
-    // ── Filter stories by letter + duration ───────────────────────────────────
+    // ── Filter by duration (letter is handled server-side) ───────────────────
     // LetterBrowser expresses duration in milliseconds; Story.duration is in
-    // seconds — multiply by 1000 before comparing.
+    // seconds - multiply by 1000 before comparing.
     const filteredStories = useMemo(() => {
-        if (!allStories) return [];
-        return allStories.filter(story => {
-            if (story.live !== 'true') return false;
-            if (!story.title?.toLowerCase().startsWith(selectedLetter)) return false;
+        return allStories.filter((story: any) => {
             const durationMs = (story.duration ?? 0) * 1000;
             if (durationMs < startingTime) return false;
             if (durationMs > endingTime)   return false;
             return true;
         });
-    }, [allStories, selectedLetter, startingTime, endingTime]);
+    }, [allStories, startingTime, endingTime]);
+
+    // A length filter can leave a page nearly empty - keep pulling until the list can scroll.
+    useEffect(() => {
+        if (hasNextPage && !isFetchingNextPage && filteredStories.length < 10) fetchNextPage();
+    }, [hasNextPage, isFetchingNextPage, filteredStories.length, fetchNextPage]);
 
         const allTagIds = useMemo(() => {
         if (!filteredStories) return [];
@@ -215,6 +220,8 @@ const BrowseByTitle = ({ navigation }: any) => {
                         />
                     )}
                     keyExtractor={(item: any) => item.id}
+                    onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+                    onEndReachedThreshold={0.5}
                     showsVerticalScrollIndicator={false}
                     maxToRenderPerBatch={10}
                     initialNumToRender={10}
@@ -250,7 +257,11 @@ const BrowseByTitle = ({ navigation }: any) => {
                             )}
                         </View>
                     }
-                    ListFooterComponent={<View style={{ height: 120 }} />}
+                    ListFooterComponent={
+                        <View style={{ height: 120, paddingTop: 16 }}>
+                            {isFetchingNextPage ? <ActivityIndicator size="small" color="cyan" /> : null}
+                        </View>
+                    }
                 />
 
             </View>

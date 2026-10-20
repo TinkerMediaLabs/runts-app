@@ -14,7 +14,6 @@ import { navigate } from '@/navigation/RootNavigator';
 
 import { Analytics } from '@/lib/analytics';
 import { findFinished, findPinned, findInProgress } from '@/lib/userStoryLookups';
-import { fetchAllPages } from '@/lib/paginate';
 
 const client = generateClient<Schema>();
 
@@ -152,12 +151,13 @@ export const PlayerProvider = ({ children }: any) => {
             // ── Invalidate caches ─────────────────────────────────────────────
             queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
             queryClient.invalidateQueries({ queryKey: ['pinnedStories'] });
-            queryClient.invalidateQueries({ queryKey: ['pinnedStoryIds'] });
+            queryClient.invalidateQueries({ queryKey: ['isPinned'] });
+            queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
             queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
             queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
 
             // ── Autoplay next in playlist or stop ─────────────────────────────
-            const updatedPlaylist = await loadPlaylist();
+            const updatedPlaylist = await loadPlaylist(storyId);
             const autoplay        = await getAutoplayEnabled();
 
             if (
@@ -190,6 +190,7 @@ export const PlayerProvider = ({ children }: any) => {
                 const position = audioEngine.getCurrentPosition();
                 if (position > 0) {
                     await upsertInProgressStory(storyId, position);
+                    queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
                     queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
                     queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
                 }
@@ -240,7 +241,7 @@ export const PlayerProvider = ({ children }: any) => {
 
             await audioEngine.play(track);
 
-            const playlist = await loadPlaylist();
+            const playlist = await loadPlaylist(track.id);
             const index    = playlist.findIndex((s: any) => s.id === track.id);
             playlistIndexRef.current = index;
             const hasNext = index >= 0 && index < playlist.length - 1;
@@ -302,6 +303,7 @@ export const PlayerProvider = ({ children }: any) => {
                 const position = audioEngine.getCurrentPosition();
                 if (position > 0) {
                     await upsertInProgressStory(currentTrackRef.current.id, position);
+                    queryClient.invalidateQueries({ queryKey: ['storyProgress', currentTrackRef.current.id] });
                     queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
                     queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
                 }
@@ -420,16 +422,26 @@ export const PlayerProvider = ({ children }: any) => {
     };
 
     // ── Playlist — filters erotic based on current settings ───────────────────
-    const loadPlaylist = async (): Promise<any[]> => {
+    // A WINDOW of the pinned list: the given track and the next pins after it (by sortOrder).
+    // Never loads all pins, so it stays cheap with thousands. The track must be pinned to have a
+    // "next"; otherwise the playlist is empty (same result as before: no next track).
+    const PLAYLIST_WINDOW = 25;
+    const loadPlaylist = async (trackId: string): Promise<any[]> => {
         try {
             const { userId } = await getCurrentUser();
-            const pinnedRecords = await fetchAllPages<any>(token =>
-                (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
-                    { userId }, { sortDirection: 'ASC', limit: 100, nextToken: token }));
-            const sorted = pinnedRecords.filter((r: any) => !!r.storyId);
+            const mine = await findPinned(userId, trackId);
+            if (!mine.length) {
+                playlistRef.current = [];
+                return [];
+            }
+            const anchor = (mine[0] as any).sortOrder ?? 0;
+            const res: any = await (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
+                { userId, sortOrder: { ge: anchor } },
+                { sortDirection: 'ASC', limit: PLAYLIST_WINDOW });
+            const sorted = (res.data ?? []).filter((r: any) => !!r.storyId);
 
             const storyResults = await Promise.all(
-                sorted.map(r => client.models.Story.get({ id: r.storyId }))
+                sorted.map((r: any) => client.models.Story.get({ id: r.storyId }))
             );
             const stories = storyResults.map(r => r.data).filter(Boolean);
 

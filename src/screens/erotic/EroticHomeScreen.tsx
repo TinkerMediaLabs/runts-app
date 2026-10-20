@@ -95,7 +95,7 @@ const EroticHomeScreen = () => {
   const { data: tagMap = {} } = useTagNames(allTagIds);
     const { data: authorMap = {} } = useAuthorNames((eroticStories ?? []).map((s: any) => s.authorId));
 
-  const progressMap = useStoryProgressMap();
+  const progressMap = useStoryProgressMap((eroticStories ?? []).map((s: any) => s.id));
 
 
 

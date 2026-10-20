@@ -49,7 +49,7 @@ import type { Schema }   from '../../../amplify/data/resource';
 
 import { Analytics } from '@/lib/analytics';
 
-import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useStoryProgress } from '../../hooks/queries/useStoryProgressMap';
 import { useStoryNarratorNames } from '../../hooks/queries/useStoryNarratorNames';
 import { fetchAllPages } from '../../lib/paginate';
 import { findFinished } from '../../lib/userStoryLookups';
@@ -203,8 +203,7 @@ const StoryScreen = ({ navigation }: any) => {
     const { data: story, isLoading } = useStory(storyID);
     const { data: author } = useAuthor(story?.authorId ?? '');
 
-    const progressMap = useStoryProgressMap();
-    const progress = progressMap[story?.id ?? ''];
+    const progress = useStoryProgress(story?.id);
     const { data: universe } = useUniverse(story?.universeId);
 
     // Per-story, index-backed (byStoryId) — never loads the Narrator table.

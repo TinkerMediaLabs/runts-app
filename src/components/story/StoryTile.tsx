@@ -18,7 +18,7 @@ import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
-import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
+import { useStoryProgress } from '../../hooks/queries/useStoryProgressMap';
 import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
 
@@ -50,8 +50,7 @@ const StoryTile = ({
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-    const progressMap = useStoryProgressMap();
-    const progress = progressMap[id];
+    const progress = useStoryProgress(id);
     const durationDisplay = getDurationDisplay(
         duration ?? 0,
         progress?.status ?? 'none',

@@ -1,23 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { fetchAllPages } from '../../lib/paginate';
 import { findFinished } from '../../lib/userStoryLookups';
 
-// Index byUserAndFinishedAt, newest first, fully paginated.
-// NOTE: a user's finished list is bounded per user (not per table), but it can still
-// reach 1000s — if a screen renders this directly, switch it to load-more paging.
+// Index byUserAndFinishedAt, newest first, 20 per page (History screen loads more on scroll).
 export function useFinishedStories() {
-  return useQuery({
-    queryKey: ['finishedStories'],
-    queryFn: async () => {
+  return useInfiniteQuery({
+    queryKey: ['finishedStories', 'paged'],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      return fetchAllPages<any>(token =>
-        client.models.UserFinishedStory.listUserFinishedStoryByUserIdAndFinishedAt(
-          { userId }, { sortDirection: 'DESC', limit: 100, nextToken: token }) as any);
+      const res: any = await (client.models.UserFinishedStory as any).listUserFinishedStoryByUserIdAndFinishedAt(
+        { userId }, { sortDirection: 'DESC', limit: 20, nextToken: pageParam ?? undefined });
+      if (res.errors?.length) throw new Error(res.errors[0].message);
+      return { items: (res.data ?? []) as any[], nextToken: (res.nextToken ?? null) as string | null };
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextToken,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -36,6 +36,9 @@ export function useMarkFinished() {
       if (errors) throw new Error(errors[0].message);
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['finishedStories'] }),
+    onSuccess: (_d, storyId) => {
+      queryClient.invalidateQueries({ queryKey: ['finishedStories'] });
+      queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
+    },
   });
 }
