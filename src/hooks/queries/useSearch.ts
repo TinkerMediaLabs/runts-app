@@ -71,32 +71,30 @@ export function useSearchStories({
 
       try {
         if (tagId) {
-          // Tag-scoped GSI — partition by primaryTagId
+          // Tag-scoped GSI - partition liveTagId (live stories only, sparse)
           if (sortBy === 'popular') {
-            const res = await (client.models.Story as any).listStoryByPrimaryTagIdAndNumListens(
-              { primaryTagId: tagId },
+            const res = await (client.models.Story as any).listStoryByLiveTagIdAndNumListens(
+              { liveTagId: tagId },
               { sortDirection: 'DESC', limit: SEARCH_PAGE_SIZE, nextToken: pageParam }
             );
             data = res.data ?? [];
             nextToken = res.nextToken;
           } else if (sortBy === 'shortest') {
-            const res = await (client.models.Story as any).listStoryByPrimaryTagIdAndDuration(
-              { primaryTagId: tagId },
+            const res = await (client.models.Story as any).listStoryByLiveTagIdAndDuration(
+              { liveTagId: tagId },
               { sortDirection: 'ASC', limit: SEARCH_PAGE_SIZE, nextToken: pageParam }
             );
             data = res.data ?? [];
             nextToken = res.nextToken;
           } else {
             // newest
-            const res = await (client.models.Story as any).listStoryByPrimaryTagIdAndPublishedAt(
-              { primaryTagId: tagId },
+            const res = await (client.models.Story as any).listStoryByLiveTagIdAndPublishedAt(
+              { liveTagId: tagId },
               { sortDirection: 'DESC', limit: SEARCH_PAGE_SIZE, nextToken: pageParam }
             );
             data = res.data ?? [];
             nextToken = res.nextToken;
           }
-          // Enforce live filter (tag GSI doesn't partition by live)
-          data = data.filter((s: any) => s.live === 'true');
         } else if (q.length >= 2 && sortBy === 'newest') {
           // Title-prefix search runs on the byLiveAndTitle index (server-side), so matches are found
           // across the whole catalog instead of only within the page that happened to load.

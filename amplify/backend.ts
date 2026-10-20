@@ -9,7 +9,9 @@ import { commentCounter } from './functions/comment-counter/resource';
 import { tagCountAggregator } from './functions/tag-count-aggregator/resource';
 import { storyStatsAggregator } from './functions/story-stats-aggregator/resource';
 import { followCountAggregator } from './functions/follow-count-aggregator/resource';
+import { tagIndexSync } from './functions/tag-index-sync/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
@@ -24,6 +26,7 @@ const backend = defineBackend({
   tagCountAggregator,
   storyStatsAggregator,
   followCountAggregator,
+  tagIndexSync,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -36,6 +39,7 @@ const tagTable       = backend.data.resources.tables['Tag'];
 const storyTagTable  = backend.data.resources.tables['StoryTag'];
 const storyStatsTable = backend.data.resources.tables['StoryStats'];
 const userTable        = backend.data.resources.tables['User'];
+const storyNarratorTable = backend.data.resources.tables['StoryNarrator'];
 const followTable      = backend.data.resources.tables['UserFollowedAuthor'];
 
 // ── increment-listens ─────────────────────────────────────────────────────
@@ -109,4 +113,37 @@ followCountAggregatorFn.addEventSource(new DynamoEventSource(followTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+}));
+
+// ── tag-index-sync ────────────────────────────────────────────────────────
+const tagIndexSyncFn = backend.tagIndexSync.resources.lambda as lambda.Function;
+tagIndexSyncFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+tagIndexSyncFn.addEnvironment('STORYTAG_TABLE_NAME', storyTagTable.tableName);
+tagIndexSyncFn.addEnvironment('STORYNARRATOR_TABLE_NAME', storyNarratorTable.tableName);
+storyNarratorTable.grantReadWriteData(tagIndexSyncFn);
+storyTable.grantReadWriteData(tagIndexSyncFn);
+storyTagTable.grantReadWriteData(tagIndexSyncFn);
+storyTable.grantStreamRead(tagIndexSyncFn);
+storyTagTable.grantStreamRead(tagIndexSyncFn);
+tagIndexSyncFn.addEventSource(new DynamoEventSource(storyTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 2,
+}));
+tagIndexSyncFn.addEventSource(new DynamoEventSource(storyTagTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 2,
+}));
+
+// ── index query permissions ───────────────────────────────────────────────
+// grantReadWriteData on these table handles does not cover their GSIs, so Lambdas that Query an
+// index need it granted explicitly.
+tagIndexSyncFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [`${storyTagTable.tableArn}/index/*`, `${storyNarratorTable.tableArn}/index/*`],
+}));
+reactionAggregatorFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [`${reactionCountTable.tableArn}/index/*`],
 }));
