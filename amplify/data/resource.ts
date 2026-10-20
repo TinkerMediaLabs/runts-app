@@ -174,6 +174,7 @@ Comment: a
     .secondaryIndexes(index => [
       index('userId').sortKeys(['authorId']).name('byUserAndAuthor'),
       index('userId').sortKeys(['followedAt']).name('byUserAndFollowedAt'),  // ← add
+      index('authorId').name('byAuthorId'),   // followers of an author (notify-new-story)
     ])
     .authorization(allow => [allow.owner()]),
 

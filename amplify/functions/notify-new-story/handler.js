@@ -24,29 +24,47 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-async function getFollowers(authorId) {
-    const result = await dynamo.send(new client_dynamodb_1.ScanCommand({
+// One page of follower user ids via the UserFollowedAuthor byAuthorId index (never a table scan).
+async function getFollowersPage(authorId, startKey) {
+    const result = await dynamo.send(new client_dynamodb_1.QueryCommand({
         TableName: table('UserFollowedAuthor'),
-        FilterExpression: 'authorId = :aid',
+        IndexName: 'byAuthorId',
+        KeyConditionExpression: 'authorId = :aid',
         ExpressionAttributeValues: { ':aid': { S: authorId } },
+        ExclusiveStartKey: startKey,
+        Limit: 200,
     }));
-    return (result.Items ?? [])
-        .map(i => (0, util_dynamodb_1.unmarshall)(i).userId)
-        .filter(Boolean);
+    return {
+        userIds: (result.Items ?? []).map((i) => (0, util_dynamodb_1.unmarshall)(i).userId).filter(Boolean),
+        lastKey: result.LastEvaluatedKey,
+    };
 }
+// Push tokens for a set of users via the UserDevice byUserId index, a few users at a time.
 async function getPushTokens(userIds) {
     const tokens = [];
-    for (const userId of userIds) {
-        const result = await dynamo.send(new client_dynamodb_1.ScanCommand({
-            TableName: table('UserDevice'),
-            FilterExpression: 'userId = :uid',
-            ExpressionAttributeValues: { ':uid': { S: userId } },
+    const CONCURRENCY = 10;
+    for (let i = 0; i < userIds.length; i += CONCURRENCY) {
+        const results = await Promise.all(userIds.slice(i, i + CONCURRENCY).map(async (userId) => {
+            const found = [];
+            let lastKey;
+            do {
+                const res = await dynamo.send(new client_dynamodb_1.QueryCommand({
+                    TableName: table('UserDevice'),
+                    IndexName: 'byUserId',
+                    KeyConditionExpression: 'userId = :uid',
+                    ExpressionAttributeValues: { ':uid': { S: userId } },
+                    ExclusiveStartKey: lastKey,
+                }));
+                for (const it of res.Items ?? []) {
+                    const item = (0, util_dynamodb_1.unmarshall)(it);
+                    if (item.pushToken)
+                        found.push(item.pushToken);
+                }
+                lastKey = res.LastEvaluatedKey;
+            } while (lastKey);
+            return found;
         }));
-        const items = (result.Items ?? []).map(i => (0, util_dynamodb_1.unmarshall)(i));
-        items.forEach(item => {
-            if (item.pushToken)
-                tokens.push(item.pushToken);
-        });
+        results.forEach(r => tokens.push(...r));
     }
     return tokens;
 }
@@ -101,17 +119,6 @@ const handler = async (event) => {
         }
         const storyTitle = title ?? 'New Story';
         console.log(`[notify-new-story] Processing story: "${storyTitle}" (${storyId})`);
-        const followerIds = await getFollowers(authorId);
-        if (followerIds.length === 0) {
-            console.log('[notify-new-story] No followers found');
-            continue;
-        }
-        console.log(`[notify-new-story] Found ${followerIds.length} follower(s)`);
-        const tokens = await getPushTokens(followerIds);
-        if (tokens.length === 0) {
-            console.log('[notify-new-story] No push tokens found');
-            continue;
-        }
         let authorName = 'an author you follow';
         try {
             const authorResult = await dynamo.send(new client_dynamodb_1.GetItemCommand({
@@ -128,7 +135,22 @@ const handler = async (event) => {
         catch (err) {
             console.log('[notify-new-story] Author lookup failed:', err);
         }
-        await sendPushNotifications(tokens, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
+        // Walk followers page by page: look up their tokens and push immediately, so memory stays
+        // flat no matter how many followers the author has.
+        let lastKey;
+        let followerCount = 0;
+        let deviceCount = 0;
+        do {
+            const page = await getFollowersPage(authorId, lastKey);
+            lastKey = page.lastKey;
+            followerCount += page.userIds.length;
+            if (page.userIds.length === 0)
+                continue;
+            const tokens = await getPushTokens(page.userIds);
+            deviceCount += tokens.length;
+            await sendPushNotifications(tokens, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
+        } while (lastKey);
+        console.log(`[notify-new-story] ${followerCount} follower(s), ${deviceCount} device(s) notified`);
     }
 };
 exports.handler = handler;
