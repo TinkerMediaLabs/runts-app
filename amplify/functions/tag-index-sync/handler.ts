@@ -1,4 +1,4 @@
-import { DynamoDBClient, UpdateItemCommand, GetItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, GetItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
@@ -8,11 +8,14 @@ import { unmarshall } from '@aws-sdk/util-dynamodb';
 //                        simply not in it, so tag pages never need to filter drafts out).
 //   StoryTag.liveTagId = tagId while the story is live, otherwise removed.
 //   StoryTag.publishedAt = the story's publishedAt (sort key).
+// Also: when a Story is DELETED, its StoryTag and StoryNarrator link rows are deleted too (the CMS delete only
+// removes the Story row). Deleting StoryTag rows lets tag-count-aggregator decrement the tag counts.
 // Sources: Story stream (INSERT/MODIFY) and StoryTag stream (INSERT only). Every write is skipped when the
 // value is already right, so the MODIFY events our own writes cause end the chain immediately.
 const dynamo = new DynamoDBClient({});
 const STORY_TABLE = process.env.STORY_TABLE_NAME!;
 const STORYTAG_TABLE = process.env.STORYTAG_TABLE_NAME!;
+const STORYNARRATOR_TABLE = process.env.STORYNARRATOR_TABLE_NAME!;
 
 const isCondFail = (e: any) => e?.name === 'ConditionalCheckFailedException';
 
@@ -46,8 +49,31 @@ async function syncStoryTagRow(link: any, story: any) {
   await setOrRemove(STORYTAG_TABLE, { id: { S: link.id } }, { liveTagId: wantLive, publishedAt: wantPub });
 }
 
+async function deleteLinks(table: string, storyId: string) {
+  let lastKey: any;
+  do {
+    const res: any = await dynamo.send(new QueryCommand({
+      TableName: table, IndexName: 'byStoryId',
+      KeyConditionExpression: 'storyId = :s', ExpressionAttributeValues: { ':s': { S: storyId } },
+      ExclusiveStartKey: lastKey,
+    }));
+    for (const it of res.Items ?? []) {
+      await dynamo.send(new DeleteItemCommand({ TableName: table, Key: { id: it.id } }));
+    }
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+}
+
 async function handleStory(record: DynamoDBRecord) {
-  if (record.eventName === 'REMOVE' || !record.dynamodb?.NewImage) return;
+  if (record.eventName === 'REMOVE') {
+    const gone: any = record.dynamodb?.OldImage ? unmarshall(record.dynamodb.OldImage as any) : null;
+    if (gone?.id) {
+      await deleteLinks(STORYTAG_TABLE, gone.id);
+      await deleteLinks(STORYNARRATOR_TABLE, gone.id);
+    }
+    return;
+  }
+  if (!record.dynamodb?.NewImage) return;
   const story: any = unmarshall(record.dynamodb.NewImage as any);
   const old: any = record.dynamodb.OldImage ? unmarshall(record.dynamodb.OldImage as any) : null;
 

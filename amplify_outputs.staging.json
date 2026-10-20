@@ -256,6 +256,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "followedAuthorCount": {
+              "name": "followedAuthorCount",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
             "bookmarks": {
               "name": "bookmarks",
               "isArray": true,
@@ -1370,6 +1377,16 @@
               }
             },
             {
+              "type": "key",
+              "properties": {
+                "name": "byAuthorId",
+                "queryField": "listUserFollowedAuthorByAuthorId",
+                "fields": [
+                  "authorId"
+                ]
+              }
+            },
+            {
               "type": "auth",
               "properties": {
                 "rules": [
@@ -1989,6 +2006,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "liveTagId": {
+              "name": "liveTagId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "narratorNames": {
               "name": "narratorNames",
               "isArray": true,
@@ -2442,6 +2466,39 @@
             {
               "type": "key",
               "properties": {
+                "name": "byLiveTagAndPublishedAt",
+                "queryField": "listStoryByLiveTagIdAndPublishedAt",
+                "fields": [
+                  "liveTagId",
+                  "publishedAt"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byLiveTagAndListens",
+                "queryField": "listStoryByLiveTagIdAndNumListens",
+                "fields": [
+                  "liveTagId",
+                  "numListens"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byLiveTagAndDuration",
+                "queryField": "listStoryByLiveTagIdAndDuration",
+                "fields": [
+                  "liveTagId",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
                 "name": "byLiveAndPublishedAt",
                 "queryField": "listStoryByLiveAndPublishedAt",
                 "fields": [
@@ -2502,39 +2559,6 @@
                 "fields": [
                   "authorId",
                   "publishedAt"
-                ]
-              }
-            },
-            {
-              "type": "key",
-              "properties": {
-                "name": "byTagAndPublishedAt",
-                "queryField": "listStoryByPrimaryTagIdAndPublishedAt",
-                "fields": [
-                  "primaryTagId",
-                  "publishedAt"
-                ]
-              }
-            },
-            {
-              "type": "key",
-              "properties": {
-                "name": "byTagAndListens",
-                "queryField": "listStoryByPrimaryTagIdAndNumListens",
-                "fields": [
-                  "primaryTagId",
-                  "numListens"
-                ]
-              }
-            },
-            {
-              "type": "key",
-              "properties": {
-                "name": "byTagAndDuration",
-                "queryField": "listStoryByPrimaryTagIdAndDuration",
-                "fields": [
-                  "primaryTagId",
-                  "duration"
                 ]
               }
             },
@@ -3388,6 +3412,20 @@
               "isRequired": true,
               "attributes": []
             },
+            "liveTagId": {
+              "name": "liveTagId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "publishedAt": {
+              "name": "publishedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
             "story": {
               "name": "story",
               "isArray": false,
@@ -3459,6 +3497,17 @@
                 "queryField": "listStoryTagByTagId",
                 "fields": [
                   "tagId"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byLiveTagAndPublishedAt",
+                "queryField": "listStoryTagByLiveTagIdAndPublishedAt",
+                "fields": [
+                  "liveTagId",
+                  "publishedAt"
                 ]
               }
             },

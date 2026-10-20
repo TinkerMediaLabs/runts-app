@@ -39,6 +39,7 @@ const tagTable       = backend.data.resources.tables['Tag'];
 const storyTagTable  = backend.data.resources.tables['StoryTag'];
 const storyStatsTable = backend.data.resources.tables['StoryStats'];
 const userTable        = backend.data.resources.tables['User'];
+const storyNarratorTable = backend.data.resources.tables['StoryNarrator'];
 const followTable      = backend.data.resources.tables['UserFollowedAuthor'];
 
 // ── increment-listens ─────────────────────────────────────────────────────
@@ -118,6 +119,8 @@ followCountAggregatorFn.addEventSource(new DynamoEventSource(followTable, {
 const tagIndexSyncFn = backend.tagIndexSync.resources.lambda as lambda.Function;
 tagIndexSyncFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
 tagIndexSyncFn.addEnvironment('STORYTAG_TABLE_NAME', storyTagTable.tableName);
+tagIndexSyncFn.addEnvironment('STORYNARRATOR_TABLE_NAME', storyNarratorTable.tableName);
+storyNarratorTable.grantReadWriteData(tagIndexSyncFn);
 storyTable.grantReadWriteData(tagIndexSyncFn);
 storyTagTable.grantReadWriteData(tagIndexSyncFn);
 storyTable.grantStreamRead(tagIndexSyncFn);
@@ -138,7 +141,7 @@ tagIndexSyncFn.addEventSource(new DynamoEventSource(storyTagTable, {
 // index need it granted explicitly.
 tagIndexSyncFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query'],
-  resources: [`${storyTagTable.tableArn}/index/*`],
+  resources: [`${storyTagTable.tableArn}/index/*`, `${storyNarratorTable.tableArn}/index/*`],
 }));
 reactionAggregatorFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query'],
