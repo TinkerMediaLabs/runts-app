@@ -15,11 +15,17 @@
 import { SQSHandler } from 'aws-lambda';
 import { DynamoDBClient, QueryCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 
 const REGION      = 'us-east-2';
 const PROD_API_ID = 'nzvkuznrzjfc5kud3vfik5j7ey';
 
 const dynamo = new DynamoDBClient({ region: REGION });
+const sqs    = new SQSClient({ region: REGION });
+
+// Stop starting new follower pages when less than this much run time is left, and hand the rest
+// to a continuation message instead, so a big follower list is never cut off mid-way by a timeout.
+const TIME_MARGIN_MS = 60_000;
 
 const table = (model: string) => `${model}-${PROD_API_ID}-NONE`;
 
@@ -108,9 +114,9 @@ async function sendPushNotifications(
 // Handler
 // ---------------------------------------------------------------------------
 
-export const handler: SQSHandler = async (event) => {
+export const handler: SQSHandler = async (event, context) => {
     for (const record of event.Records) {
-        let message: { storyId?: string; authorId?: string; title?: string; isErotic?: string };
+        let message: { storyId?: string; authorId?: string; title?: string; isErotic?: string; cursor?: string };
         try {
             message = JSON.parse(record.body);
         } catch (err) {
@@ -118,7 +124,7 @@ export const handler: SQSHandler = async (event) => {
             continue;
         }
 
-        const { storyId, authorId, title, isErotic } = message;
+        const { storyId, authorId, title, isErotic, cursor } = message;
 
         if (isErotic === 'true') {
             console.log('[notify-new-story] Skipping erotic story:', storyId);
@@ -154,7 +160,7 @@ export const handler: SQSHandler = async (event) => {
             }
         // Walk followers page by page: look up their tokens and push immediately, so memory stays
         // flat no matter how many followers the author has.
-        let lastKey: any;
+        let lastKey: any = cursor ? JSON.parse(cursor) : undefined;
         let followerCount = 0;
         let deviceCount = 0;
         do {
@@ -170,6 +176,16 @@ export const handler: SQSHandler = async (event) => {
                 `"${storyTitle}" is now available to listen`,
                 storyId,
             );
+            if (lastKey && context.getRemainingTimeInMillis() < TIME_MARGIN_MS) {
+                const [, , , region, account, queueName] = record.eventSourceARN.split(':');
+                await sqs.send(new SendMessageCommand({
+                    QueueUrl:     `https://sqs.${region}.amazonaws.com/${account}/${queueName}`,
+                    DelaySeconds: 0,
+                    MessageBody:  JSON.stringify({ storyId, authorId, title, isErotic, cursor: JSON.stringify(lastKey) }),
+                }));
+                console.log('[notify-new-story] Time budget reached, continuation queued for', storyId);
+                break;
+            }
         } while (lastKey);
         console.log(`[notify-new-story] ${followerCount} follower(s), ${deviceCount} device(s) notified`);
     }

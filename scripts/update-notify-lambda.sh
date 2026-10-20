@@ -45,4 +45,10 @@ echo "IAM policy updated."
 grep -q "byAuthorId" $LAMBDA_DIR/handler.js || { echo "Compile did not produce the new handler - stopping."; exit 1; }
 ( cd $LAMBDA_DIR && rm -f /tmp/notify-lambda.zip && zip -qr /tmp/notify-lambda.zip . -x "*.ts" -x "tsconfig*" )
 aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb:///tmp/notify-lambda.zip --region $REGION --query '[FunctionName,LastModified,CodeSize]' --output text
-echo "Done. Lambda code updated."
+aws lambda wait function-updated --function-name $FUNCTION_NAME --region $REGION
+aws lambda update-function-configuration --function-name $FUNCTION_NAME --timeout 300 --region $REGION --query '[FunctionName,Timeout]' --output text
+QUEUE_URL=$(aws sqs get-queue-url --queue-name $QUEUE_NAME --region $REGION --query QueueUrl --output text)
+aws sqs set-queue-attributes --queue-url "$QUEUE_URL" --attributes VisibilityTimeout=1800 --region $REGION
+MAPPING_UUID=$(aws lambda list-event-source-mappings --function-name $FUNCTION_NAME --region $REGION --query 'EventSourceMappings[0].UUID' --output text)
+aws lambda update-event-source-mapping --uuid "$MAPPING_UUID" --batch-size 1 --region $REGION --query '[UUID,BatchSize]' --output text
+echo "Done. Lambda code, timeout (300s), queue visibility (1800s) and batch size (1) updated."
