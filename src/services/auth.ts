@@ -210,7 +210,7 @@ export async function getOrCreateUser() {
     // Not a social user or no data available
   }
 
-  const { data: newUser } = await client.models.User.create({
+  const { data: newUser, errors: createErrors } = await client.models.User.create({
     id: userId,
     type: 'user',
     name,
@@ -221,5 +221,8 @@ export async function getOrCreateUser() {
     onboardingComplete: false,
   });
 
+  if (createErrors?.length) {
+    console.warn('Creating the User row was rejected:', createErrors[0].message);
+  }
   return newUser;
 }

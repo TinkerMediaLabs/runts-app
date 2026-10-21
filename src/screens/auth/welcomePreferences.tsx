@@ -22,6 +22,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '../../context/AppContext';
+import { unwrap } from '@/lib/amplifyResult';
 
 // ---------------------------------------------------------------------------
 // Genre chip
@@ -112,11 +113,11 @@ const WelcomePreferences = ({ navigation, route }: any) => {
             const { userId } = await getCurrentUser();
             const birthdate = route?.params?.birthdate ?? null;
 
-            await client.models.User.update({
+            unwrap(await client.models.User.update({
                 id: userId,
                 birthdate,
                 onboardingComplete: true,
-            });
+            }), 'Save your preferences');
 
             await refreshAuth();
         } catch (e: any) {

@@ -23,6 +23,7 @@ import {
 } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
+import { unwrap } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -378,10 +379,10 @@ const AccountScreen = ({ navigation }: any) => {
 
             // Also update DynamoDB
             if (userId) {
-                await client.models.User.update({
+                unwrap(await client.models.User.update({
                     id: userId,
                     name: name.trim(),
-                });
+                }), 'Update name');
             }
 
             // Update local AppContext state

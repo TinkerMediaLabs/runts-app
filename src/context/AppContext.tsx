@@ -26,6 +26,7 @@ import {
 import { Analytics } from '../lib/analytics';
 import { PurchasesService } from '../lib/purchases';
 import { Notifications } from '../lib/notifications';
+import { unwrap } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
 
@@ -178,7 +179,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (!userId) return;
         try {
             // Store the S3 path in DynamoDB
-            await client.models.User.update({ id: userId, profilePicUri: uri });
+            unwrap(await client.models.User.update({ id: userId, profilePicUri: uri }), 'Update profile picture');
 
             // Resolve to a signed URL for immediate display in this session
             let displayUri = uri;

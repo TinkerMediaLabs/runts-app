@@ -14,6 +14,7 @@ import { navigate } from '@/navigation/RootNavigator';
 
 import { Analytics } from '@/lib/analytics';
 import { findFinished, findPinned, findInProgress } from '@/lib/userStoryLookups';
+import { unwrap, warnOnErrors } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
 
@@ -112,11 +113,11 @@ export const PlayerProvider = ({ children }: any) => {
             const existingFinished = await findFinished(userId, storyId);
             const isFirstCompletion = !existingFinished.length;
             if (isFirstCompletion) {
-                await client.models.UserFinishedStory.create({
+                unwrap(await client.models.UserFinishedStory.create({
                     userId,
                     storyId,
                     finishedAt: new Date().toISOString(),
-                });
+                }), 'Mark story finished');
                 setState(prev => ({
                     ...prev,
                     pendingRatingStoryId: storyId,
@@ -129,11 +130,11 @@ export const PlayerProvider = ({ children }: any) => {
                         client.models.Story.get({ id: storyId }),
                         client.models.User.get({ id: userId }),
                     ]);
-                    await client.models.User.update({
+                    unwrap(await client.models.User.update({
                         id:                   userId,
                         totalStoriesFinished: (user?.totalStoriesFinished ?? 0) + 1,
                         totalListenSeconds:   (user?.totalListenSeconds   ?? 0) + (story?.duration ?? 0),
-                    });
+                    }), 'Update listening stats');
                     await refreshProfile();
                 } catch (err) {
                     console.warn('Profile stats update error:', err);
@@ -142,11 +143,11 @@ export const PlayerProvider = ({ children }: any) => {
 
             // ── Remove from pinned ────────────────────────────────────────────
             const pinned = await findPinned(userId, storyId);
-            for (const p of pinned) await client.models.UserPinnedStory.delete({ id: p.id });
+            for (const p of pinned) warnOnErrors(await client.models.UserPinnedStory.delete({ id: p.id }), 'Unpin finished story');
 
             // ── Remove from in-progress ───────────────────────────────────────
             const inProgress = await findInProgress(userId, storyId);
-            for (const p of inProgress) await client.models.UserInProgressStory.delete({ id: p.id });
+            for (const p of inProgress) warnOnErrors(await client.models.UserInProgressStory.delete({ id: p.id }), 'Clear finished story progress');
 
             // ── Invalidate caches ─────────────────────────────────────────────
             queryClient.invalidateQueries({ queryKey: ['finishedStories'] });

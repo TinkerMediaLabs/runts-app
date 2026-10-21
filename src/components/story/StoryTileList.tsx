@@ -15,6 +15,7 @@ import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useTag } from '../../hooks/queries/useTagNames';
+import { unwrap } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
 
@@ -123,11 +124,11 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         setLocalData(next);
         try {
             await Promise.all(
-                next.map(item =>
-                    client.models.UserPinnedStory.update({
+                next.map(async item =>
+                    unwrap(await client.models.UserPinnedStory.update({
                         id: item.id,
                         sortOrder: item.sortOrder,
-                    })
+                    }), 'Reorder pins')
                 )
             );
         } catch (e) {

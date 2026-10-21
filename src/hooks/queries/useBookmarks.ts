@@ -4,6 +4,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
+import { unwrap } from '@/lib/amplifyResult';
 
 
 const PAGE_SIZE = 20;
@@ -111,7 +112,7 @@ export function useDeleteBookmark() {
     return useMutation({
         mutationFn: async (bookmarkId: string) => {
       const client = generateClient<Schema>();
-            return client.models.UserBookmark.delete({ id: bookmarkId });
+            return unwrap(await client.models.UserBookmark.delete({ id: bookmarkId }), 'Delete bookmark');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
