@@ -44,9 +44,8 @@ async function getFollowersPage(authorId, startKey) {
         lastKey: result.LastEvaluatedKey,
     };
 }
-// Push tokens for a set of users via the UserDevice byUserId index, a few users at a time.
-async function getPushTokens(userIds) {
-    const tokens = [];
+async function getDevices(userIds) {
+    const devices = [];
     const CONCURRENCY = 10;
     for (let i = 0; i < userIds.length; i += CONCURRENCY) {
         const results = await Promise.all(userIds.slice(i, i + CONCURRENCY).map(async (userId) => {
@@ -62,20 +61,40 @@ async function getPushTokens(userIds) {
                 }));
                 for (const it of res.Items ?? []) {
                     const item = (0, util_dynamodb_1.unmarshall)(it);
-                    if (item.pushToken)
-                        found.push(item.pushToken);
+                    if (item.pushToken && item.id)
+                        found.push({ id: item.id, token: item.pushToken });
                 }
                 lastKey = res.LastEvaluatedKey;
             } while (lastKey);
             return found;
         }));
-        results.forEach(r => tokens.push(...r));
+        results.forEach(r => devices.push(...r));
     }
-    return tokens;
+    return devices;
 }
-async function sendPushNotifications(tokens, title, body, storyId) {
-    if (tokens.length === 0)
-        return;
+// Expo reports tokens that no longer exist (app uninstalled, token revoked) as DeviceNotRegistered.
+// Delete those rows so we stop pushing to them on every new story.
+async function removeDeviceRows(ids) {
+    for (const id of ids) {
+        try {
+            await dynamo.send(new client_dynamodb_1.DeleteItemCommand({ TableName: table('UserDevice'), Key: { id: { S: id } } }));
+        }
+        catch (err) {
+            console.log('[notify-new-story] Failed to delete dead device row:', id, err);
+        }
+    }
+}
+async function sendPushNotifications(devices, title, body, storyId) {
+    if (devices.length === 0)
+        return 0;
+    // One push per distinct token (a phone shared by two accounts can appear twice).
+    const idsByToken = new Map();
+    for (const d of devices) {
+        const ids = idsByToken.get(d.token) ?? [];
+        ids.push(d.id);
+        idsByToken.set(d.token, ids);
+    }
+    const tokens = Array.from(idsByToken.keys());
     const BATCH_SIZE = 100;
     for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
         const batch = tokens.slice(i, i + BATCH_SIZE);
@@ -93,8 +112,20 @@ async function sendPushNotifications(tokens, title, body, storyId) {
         });
         const json = await res.json().catch(() => null);
         console.log('[notify-new-story] Expo push response:', JSON.stringify(json));
+        // Tickets come back in the same order as the messages we sent.
+        const dead = [];
+        (json?.data ?? []).forEach((ticket, idx) => {
+            if (ticket?.status === 'error' && ticket?.details?.error === 'DeviceNotRegistered') {
+                dead.push(...(idsByToken.get(batch[idx]) ?? []));
+            }
+        });
+        if (dead.length > 0) {
+            await removeDeviceRows(dead);
+            console.log(`[notify-new-story] Removed ${dead.length} dead device row(s)`);
+        }
     }
     console.log(`[notify-new-story] Sent to ${tokens.length} device(s)`);
+    return tokens.length;
 }
 // ---------------------------------------------------------------------------
 // Handler
@@ -151,9 +182,8 @@ const handler = async (event, context) => {
             followerCount += page.userIds.length;
             if (page.userIds.length === 0)
                 continue;
-            const tokens = await getPushTokens(page.userIds);
-            deviceCount += tokens.length;
-            await sendPushNotifications(tokens, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
+            const devices = await getDevices(page.userIds);
+            deviceCount += await sendPushNotifications(devices, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
             if (lastKey && context.getRemainingTimeInMillis() < TIME_MARGIN_MS) {
                 const [, , , region, account, queueName] = record.eventSourceARN.split(':');
                 await sqs.send(new client_sqs_1.SendMessageCommand({

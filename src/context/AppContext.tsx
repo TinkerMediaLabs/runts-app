@@ -211,6 +211,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = async () => {
         try {
+            // Stop pushes for this account reaching this phone (a different account may sign in next).
+            if (userId) await Notifications.unregisterToken(userId);
             await signOut();
             queryClient.clear();
             Analytics.reset();

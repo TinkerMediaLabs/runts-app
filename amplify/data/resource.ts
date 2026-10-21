@@ -139,6 +139,7 @@ Comment: a
   })
   .secondaryIndexes(index => [
     index('storyId').sortKeys(['createdAt']).name('byStoryAndCreatedAt'),
+    index('userId').sortKeys(['createdAt']).name('byUserAndCreatedAt'),   // account cleanup (user-cleanup)
   ])
   .authorization(allow => [
     allow.owner(),
