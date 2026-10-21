@@ -112,7 +112,8 @@ async function syncLinks(model, fk, storyId, stagingLinks, log) {
     let created = 0;
     for (const [targetId, link] of wanted) {
         if (seen.has(targetId)) continue;
-        const res = await createIfNotExists(prod(model), link);
+        const { liveTagId: _l, ...linkFields } = link;   // production's tag-index-sync sets this
+        const res = await createIfNotExists(prod(model), linkFields);
         if (res === 'created') created++;
     }
     log.push(`${model}: ${wanted.size} link(s) in sync (${created} created, ${deleted} removed)`);
@@ -215,9 +216,21 @@ exports.handler = async (event) => {
         if (story.imageUri) await copyS3Asset(story.imageUri);
         if (story.audioUri) await copyS3Asset(story.audioUri);
 
-        // 8. Story (always a draft in production)
-        await upsertItem(prod('Story'), { ...story, live: 'false' });
-        log.push('Story upserted to production (live: false)');
+        // 8. Story (always a draft in production).
+        // Counters (listens, ratings, comments) belong to production: keep the existing values on a
+        // re-publish and start new stories at zero instead of carrying staging test numbers across.
+        // liveTagId is maintained by production's tag-index-sync, never copied from staging.
+        const existingProd = await getItem(prod('Story'), storyId);
+        const { liveTagId: _liveTagId, ...storyFields } = story;
+        await upsertItem(prod('Story'), {
+            ...storyFields,
+            live: 'false',
+            numListens:  existingProd?.numListens  ?? 0,
+            numRatings:  existingProd?.numRatings  ?? 0,
+            numComments: existingProd?.numComments ?? 0,
+            avgRating:   existingProd?.avgRating,
+        });
+        log.push(`Story upserted to production (live: false${existingProd ? ', production counters kept' : ''})`);
 
         // 9. Links mirror staging exactly (removed tags/narrators and duplicates are cleaned up)
         await syncLinks('StoryTag', 'tagId', storyId, storyTagLinks, log);
