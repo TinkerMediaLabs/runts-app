@@ -79,13 +79,18 @@ export function useCreateBookmark() {
         }) => {
       const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
-            return client.models.UserBookmark.create({
+            const res = await client.models.UserBookmark.create({
                 userId,
                 storyId,
-                positionSeconds,
+                positionSeconds: Math.max(0, Math.floor(positionSeconds)),
                 name:      name.trim() || 'My Bookmark',
                 createdAt: new Date().toISOString(),
             });
+            // Amplify returns validation / auth failures in `errors` instead of throwing.
+            if (res.errors?.length || !res.data) {
+                throw new Error(res.errors?.[0]?.message ?? 'Bookmark was not saved');
+            }
+            return res;
         },
        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });

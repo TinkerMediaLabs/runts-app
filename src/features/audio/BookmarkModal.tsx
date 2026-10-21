@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Alert, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
@@ -57,6 +57,9 @@ export default function BookmarkModal({
     try {
       await onConfirm(name.trim() || 'My Bookmark');
       onClose();
+    } catch (err) {
+      console.warn('Bookmark save failed:', err);
+      Alert.alert('Could not save bookmark', 'Please try again.');
     } finally {
       setIsSubmitting(false);
     }

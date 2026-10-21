@@ -98,7 +98,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const handleBookmarkPress = () => {
     const pos = audioEngine.getCurrentPosition();
-    setBookmarkPosition(Math.max(0, pos - 8));
+    setBookmarkPosition(Math.max(0, Math.floor(pos - 8)));   // positionSeconds is an integer in the schema
     setShowBookmarkModal(true);
   };
 
