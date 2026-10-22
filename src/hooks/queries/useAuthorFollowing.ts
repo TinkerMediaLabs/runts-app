@@ -5,6 +5,7 @@ import type { Schema } from '../../../amplify/data/resource';
 import { fetchAllPages } from '../../lib/paginate';
 import { Analytics } from '@/lib/analytics';
 import { unwrap } from '@/lib/amplifyResult';
+import { showChip } from '@/lib/chip';
 
 
 const PAGE_SIZE = 20;
@@ -72,9 +73,12 @@ export function useFollowAuthor() {
       if (context?.previous) {
         queryClient.setQueryData(['isFollowing', authorId], context.previous);
       }
+      showChip("Couldn't follow author. Please try again.", 'error');
     },
     onSuccess: (_, authorId) => {
       Analytics.authorFollowed(authorId);
+      const cached = queryClient.getQueryData<{ name?: string }>(['authorName', authorId]);
+      showChip(cached?.name ? `Now following ${cached.name}` : 'Author followed');
     },
     onSettled: (_data, _err, authorId) => {
       queryClient.invalidateQueries({ queryKey: ['isFollowing', authorId] });
@@ -107,9 +111,11 @@ export function useUnfollowAuthor() {
       if (context?.previous) {
         queryClient.setQueryData(['isFollowing', authorId], context.previous);
       }
+      showChip("Couldn't unfollow author. Please try again.", 'error');
     },
     onSuccess: (_, { authorId }) => {
       Analytics.authorUnfollowed(authorId);
+      showChip('Author unfollowed');
     },
     onSettled: (_data, _err, { authorId }) => {
       queryClient.invalidateQueries({ queryKey: ['isFollowing', authorId] });
