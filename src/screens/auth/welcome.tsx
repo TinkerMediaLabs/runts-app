@@ -105,6 +105,9 @@ const Welcome = ({ navigation }: any) => {
                     <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>
                         Select your birthdate to continue
                     </Text>
+                    <Text style={{ color: "#ffffff99", fontSize: 13, textAlign: "center", marginTop: 8, paddingHorizontal: 30, lineHeight: 18 }}>
+                        We ask for your birthdate to confirm you're 18 or older before showing mature content. It's private and never shown to other listeners.
+                    </Text>
 
                     <TouchableOpacity
                         onPress={() => setPickerVisible(true)}

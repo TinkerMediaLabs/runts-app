@@ -141,6 +141,14 @@ export const PlayerProvider = ({ children }: any) => {
                 }
             }
 
+            // ── Find the next pinned story BEFORE unpinning this one ─────────
+            // The playlist window is built from this story's pin, so it must be
+            // loaded while the pin still exists.
+            const playlistBefore = await loadPlaylist(storyId);
+            const finishedIndex  = playlistBefore.findIndex((s: any) => s.id === storyId);
+            if (finishedIndex >= 0) playlistIndexRef.current = finishedIndex;
+            const hasNextToPlay  = finishedIndex >= 0 && finishedIndex < playlistBefore.length - 1;
+
             // ── Remove from pinned ────────────────────────────────────────────
             const pinned = await findPinned(userId, storyId);
             for (const p of pinned) warnOnErrors(await client.models.UserPinnedStory.delete({ id: p.id }), 'Unpin finished story');
@@ -158,20 +166,10 @@ export const PlayerProvider = ({ children }: any) => {
             queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
 
             // ── Autoplay next in playlist or stop ─────────────────────────────
-            const updatedPlaylist = await loadPlaylist(storyId);
-            const autoplay        = await getAutoplayEnabled();
+            const autoplay = await getAutoplayEnabled();
 
-            if (
-                autoplay &&
-                playlistIndexRef.current >= 0 &&
-                playlistIndexRef.current < updatedPlaylist.length - 1
-            ) {
-                const nextStory = updatedPlaylist[playlistIndexRef.current];
-                if (nextStory) {
-                    await playNext();
-                } else {
-                    await closePlayerAfterCompletion();
-                }
+            if (autoplay && hasNextToPlay) {
+                await playNext();
             } else {
                 await closePlayerAfterCompletion();
             }
@@ -331,7 +329,9 @@ export const PlayerProvider = ({ children }: any) => {
             pendingRatingTitle:   null,
             pendingRatingArtwork: null,
         }));
-        if (finishedStoryId) {
+        // Only jump to the finished story's page when nothing is playing. When
+        // autoplay moved on to the next story, leave the player alone.
+        if (finishedStoryId && !currentTrackRef.current) {
             navigate('StoryScreen', { storyID: finishedStoryId });
         }
     };

@@ -383,8 +383,19 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           </GestureDetector>
 
                           {sleepMinutesLeft !== null && (
-                              <View style={styles.sleepPill}>
-                                  <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
+                              <View
+                                  pointerEvents="none"
+                                  style={{
+                                      position: 'absolute',
+                                      top: insets.top + 14,
+                                      left: 0,
+                                      right: 0,
+                                      alignItems: 'center',
+                                  }}
+                              >
+                                  <View style={styles.sleepPill}>
+                                      <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
+                                  </View>
                               </View>
                           )}
                       </View>

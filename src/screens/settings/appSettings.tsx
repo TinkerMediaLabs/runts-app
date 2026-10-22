@@ -369,7 +369,6 @@ const AppSettings = ({ navigation }: any) => {
     const [pinSetupVisible, setPinSetupVisible] = useState(false);
 
     // ── Content settings ──────────────────────────────────────────────────────
-    const [nsfwEnabled,     setNsfwEnabled]     = useState(false);
     const [autoPlay,        setAutoPlay]        = useState(false);
     const [downloadOnWifi,  setDownloadOnWifi]  = useState(true);
 
@@ -502,14 +501,6 @@ const AppSettings = ({ navigation }: any) => {
 
                     {/* ── Content ── */}
                     <Section title="Content">
-                        <ToggleRow
-                            icon="fire"
-                            label="Mature Content"
-                            description="Show stories marked as NSFW"
-                            value={nsfwEnabled}
-                            onChange={setNsfwEnabled}
-                        />
-                        <RowDivider />
                         <ToggleRow
                             icon="play-circle"
                             label="Autoplay Playlist"
