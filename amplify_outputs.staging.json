@@ -2780,6 +2780,100 @@
             "sortKeyFieldNames": []
           }
         },
+        "EroticPin": {
+          "name": "EroticPin",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "hash": {
+              "name": "hash",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "salt": {
+              "name": "salt",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "failedAttempts": {
+              "name": "failedAttempts",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "lockedUntil": {
+              "name": "lockedUntil",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "EroticPins",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "fields": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
         "ListenDedupe": {
           "name": "ListenDedupe",
           "fields": {
@@ -3747,7 +3841,48 @@
           ]
         }
       },
-      "nonModels": {},
+      "nonModels": {
+        "EroticPinResult": {
+          "name": "EroticPinResult",
+          "fields": {
+            "ok": {
+              "name": "ok",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": true,
+              "attributes": []
+            },
+            "pinSet": {
+              "name": "pinSet",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": true,
+              "attributes": []
+            },
+            "error": {
+              "name": "error",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "attemptsLeft": {
+              "name": "attemptsLeft",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "lockedUntil": {
+              "name": "lockedUntil",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
+        }
+      },
       "mutations": {
         "incrementListenCount": {
           "name": "incrementListenCount",
@@ -3760,6 +3895,34 @@
               "isArray": false,
               "type": "String",
               "isRequired": true
+            }
+          }
+        },
+        "manageEroticPin": {
+          "name": "manageEroticPin",
+          "isArray": false,
+          "type": {
+            "nonModel": "EroticPinResult"
+          },
+          "isRequired": false,
+          "arguments": {
+            "action": {
+              "name": "action",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "pin": {
+              "name": "pin",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "newPin": {
+              "name": "newPin",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
             }
           }
         }
