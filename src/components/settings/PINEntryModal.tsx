@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Modal, StyleSheet, Linking, Animated, Dimension
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
+import { pinErrorMessage } from '@/lib/eroticPin';
 
 const { width } = Dimensions.get('window');
 const SUPPORT_EMAIL = 'mailto:admin@tinkermedia.net';
@@ -15,6 +16,9 @@ type Props = {
     visible:   boolean;
     onSuccess: () => void;   // called after correct PIN — parent closes modal
     onCancel:  () => void;
+    // 'unlock' (default): unlocks the erotic settings for this session.
+    // 'remove': a correct PIN removes the PIN lock from the account.
+    mode?:     'unlock' | 'remove';
 };
 
 // ---------------------------------------------------------------------------
@@ -36,11 +40,12 @@ const PINDots = ({ length }: { length: number }) => (
 // Component
 // ---------------------------------------------------------------------------
 
-const PINEntryModal = ({ visible, onSuccess, onCancel }: Props) => {
-    const { verifyEroticPin, unlockEroticForSession } = useApp();
+const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props) => {
+    const { verifyEroticPin, removeEroticPin, unlockEroticForSession } = useApp();
 
     const [pin,   setPin]   = useState('');
     const [error, setError] = useState('');
+    const [busy,  setBusy]  = useState(false);
 
     const inputRef   = useRef<TextInput>(null);
     const shakeAnim  = useRef(new Animated.Value(0)).current;
@@ -65,20 +70,27 @@ const PINEntryModal = ({ visible, onSuccess, onCancel }: Props) => {
     };
 
     const handleChange = async (value: string) => {
+        if (busy) return;
+
         // Only allow digits
         const digits = value.replace(/\D/g, '').slice(0, 4);
         setPin(digits);
         setError('');
 
         if (digits.length === 4) {
-            const correct = await verifyEroticPin(digits);
-            if (correct) {
-                unlockEroticForSession();
+            setBusy(true);
+            const result = mode === 'remove'
+                ? await removeEroticPin(digits)
+                : await verifyEroticPin(digits);
+            setBusy(false);
+
+            if (result.ok) {
+                if (mode === 'unlock') unlockEroticForSession();
                 setPin('');
                 onSuccess();
             } else {
                 shake();
-                setError('Incorrect PIN. Try again.');
+                setError(pinErrorMessage(result));
                 setPin('');
                 setTimeout(() => inputRef.current?.focus(), 50);
             }
@@ -107,7 +119,9 @@ const PINEntryModal = ({ visible, onSuccess, onCancel }: Props) => {
                 >
                     <Text style={styles.title}>Enter PIN</Text>
                     <Text style={styles.subtitle}>
-                        Enter your PIN to access erotic content settings.
+                        {mode === 'remove'
+                            ? 'Enter your PIN to remove the lock.'
+                            : 'Enter your PIN to access erotic content settings.'}
                     </Text>
 
                     {/* Tapping the dot area re-focuses the hidden input */}

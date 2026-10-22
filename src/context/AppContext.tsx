@@ -16,12 +16,12 @@ import { syncDownloads } from '../hooks/queries/useDownloads';
 import {
     loadAllEroticSettings,
     saveEroticEnabled,
-    saveEroticPin,
-    removeEroticPin,
     saveEroticInPlaylist,
     clearAllEroticSettings,
-    getEroticPin,
+    purgeLegacyEroticPin,
 } from '../lib/eroticSettings';
+import { callEroticPin, PinResult } from '../lib/eroticPin';
+import { showChip } from '../lib/chip';
 
 import { Analytics } from '../lib/analytics';
 import { PurchasesService } from '../lib/purchases';
@@ -66,10 +66,11 @@ type AppContextType = {
     eroticUnlockedThisSession: boolean;
     eroticInPlaylist: boolean;
     setEroticEnabled: (value: boolean) => Promise<void>;
-    setEroticPin: (pin: string) => Promise<void>;
-    removeEroticPin: () => Promise<void>;
-    verifyEroticPin: (pin: string) => Promise<boolean>;
+    setEroticPin: (pin: string) => Promise<PinResult>;
+    removeEroticPin: (pin: string) => Promise<PinResult>;
+    verifyEroticPin: (pin: string) => Promise<PinResult>;
     unlockEroticForSession: () => void;
+    lockEroticSession: () => void;
     setEroticInPlaylist: (value: boolean) => Promise<void>;
 };
 
@@ -114,9 +115,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // Load persisted erotic settings from AsyncStorage on mount
     useEffect(() => {
+        purgeLegacyEroticPin();
         loadAllEroticSettings().then(settings => {
             setEroticEnabledState(settings.enabled);
-            setEroticPinEnabledState(settings.pinEnabled);
             setEroticInPlaylistState(settings.inPlaylist);
         });
     }, []);
@@ -145,6 +146,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             if (underAge) {
                 setEroticEnabledState(false);
             }
+
+            // Is an account PIN set? (Display only; turning erotic ON re-checks with the server.)
+            callEroticPin({ action: 'status' }).then(r => {
+                if (r.error !== 'server_error') setEroticPinEnabledState(r.pinSet);
+            });
 
             setUserId(user.userId);
             setIsAuthenticated(true);
@@ -224,6 +230,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setProfile(null);
             // Session unlock resets on sign-out
             setEroticUnlockedThisSession(false);
+            setEroticPinEnabledState(false);
         } catch (err) {
             console.error('Logout error:', err);
         }
@@ -236,40 +243,58 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (value && isUnderAge) return;
 
         if (!value) {
-            // Disabling — wipe all erotic settings including PIN
+            // Disabling keeps the account PIN, so it can't be turned back on without it.
             await clearAllEroticSettings();
             setEroticEnabledState(false);
-            setEroticPinEnabledState(false);
             setEroticInPlaylistState(false);
-            setEroticUnlockedThisSession(false);
             Analytics.eroticDisabled();
-        } else {
-            await saveEroticEnabled(true);
-            setEroticEnabledState(true);
-            Analytics.eroticEnabled(); 
+            return;
         }
+
+        // Enabling: ask the server whether a PIN is set right now, so a stale or missing local
+        // value (reinstall, another phone) can never bypass the lock. If we can't tell, refuse.
+        const status = await callEroticPin({ action: 'status' });
+        if (status.error === 'server_error') {
+            showChip("Couldn't check the PIN lock. Check your connection and try again.", 'error');
+            return;
+        }
+        setEroticPinEnabledState(status.pinSet);
+        if (status.pinSet && !eroticUnlockedThisSession) {
+            showChip('Enter your PIN to turn this on.', 'error');
+            return;
+        }
+        await saveEroticEnabled(true);
+        setEroticEnabledState(true);
+        Analytics.eroticEnabled();
     };
 
-    const handleSetEroticPin = async (pin: string) => {
-        await saveEroticPin(pin);
-        // saveEroticPin saves the PIN value; also mark PIN as enabled
-        const { saveEroticPinEnabled } = await import('../lib/eroticSettings');
-        await saveEroticPinEnabled(true);
-        setEroticPinEnabledState(true);
+    const handleSetEroticPin = async (pin: string): Promise<PinResult> => {
+        const result = await callEroticPin({ action: 'set', newPin: pin });
+        if (result.ok) {
+            setEroticPinEnabledState(true);
+            setEroticUnlockedThisSession(true);   // they just chose it, so don't lock them out of the screen
+        }
+        return result;
     };
 
-    const handleRemoveEroticPin = async () => {
-        await removeEroticPin();
-        setEroticPinEnabledState(false);
+    const handleRemoveEroticPin = async (pin: string): Promise<PinResult> => {
+        const result = await callEroticPin({ action: 'remove', pin });
+        if (result.ok) {
+            setEroticPinEnabledState(false);
+            setEroticUnlockedThisSession(false);
+        }
+        return result;
     };
 
-    const handleVerifyEroticPin = async (pin: string): Promise<boolean> => {
-        const stored = await getEroticPin();
-        return stored !== null && stored === pin;
-    };
+    const handleVerifyEroticPin = (pin: string): Promise<PinResult> =>
+        callEroticPin({ action: 'verify', pin });
 
     const handleUnlockEroticForSession = () => {
         setEroticUnlockedThisSession(true);
+    };
+
+    const handleLockEroticSession = () => {
+        setEroticUnlockedThisSession(false);
     };
 
     const handleSetEroticInPlaylist = async (value: boolean) => {
@@ -299,6 +324,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     setIsNewUser(false);
                     setProfile(null);
                     setEroticUnlockedThisSession(false);
+                    setEroticPinEnabledState(false);
                     break;
             }
         });
@@ -341,6 +367,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 removeEroticPin:        handleRemoveEroticPin,
                 verifyEroticPin:        handleVerifyEroticPin,
                 unlockEroticForSession: handleUnlockEroticForSession,
+                lockEroticSession:      handleLockEroticSession,
                 setEroticInPlaylist:    handleSetEroticInPlaylist,
             }}
         >

@@ -1,24 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ---------------------------------------------------------------------------
-// Keys
+// Local (per-phone) erotic content preferences.
+// The PIN is NOT stored here any more: it lives on the account and is checked
+// by the server (see lib/eroticPin.ts).
 // ---------------------------------------------------------------------------
 
 const KEYS = {
     enabled:    '@runts/erotic_enabled',
-    pinEnabled: '@runts/erotic_pin_enabled',
-    pin:        '@runts/erotic_pin',
     inPlaylist: '@runts/erotic_in_playlist',
 } as const;
 
-// ---------------------------------------------------------------------------
-// Erotic Enabled
-// ---------------------------------------------------------------------------
+// Keys used by the old on-device PIN. Removed on startup so no plain-text PIN is left on the phone.
+const LEGACY_PIN_KEYS = ['@runts/erotic_pin_enabled', '@runts/erotic_pin'];
+
+export async function purgeLegacyEroticPin(): Promise<void> {
+    try {
+        await AsyncStorage.multiRemove(LEGACY_PIN_KEYS);
+    } catch {
+        // Non-fatal
+    }
+}
 
 export async function getEroticEnabled(): Promise<boolean> {
     try {
-        const val = await AsyncStorage.getItem(KEYS.enabled);
-        return val === 'true';
+        return (await AsyncStorage.getItem(KEYS.enabled)) === 'true';
     } catch {
         return false;
     }
@@ -32,63 +38,9 @@ export async function saveEroticEnabled(value: boolean): Promise<void> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// PIN Enabled
-// ---------------------------------------------------------------------------
-
-export async function getEroticPinEnabled(): Promise<boolean> {
-    try {
-        const val = await AsyncStorage.getItem(KEYS.pinEnabled);
-        return val === 'true';
-    } catch {
-        return false;
-    }
-}
-
-export async function saveEroticPinEnabled(value: boolean): Promise<void> {
-    try {
-        await AsyncStorage.setItem(KEYS.pinEnabled, value ? 'true' : 'false');
-    } catch {
-        // Non-fatal
-    }
-}
-
-// ---------------------------------------------------------------------------
-// PIN Value
-// ---------------------------------------------------------------------------
-
-export async function getEroticPin(): Promise<string | null> {
-    try {
-        return await AsyncStorage.getItem(KEYS.pin);
-    } catch {
-        return null;
-    }
-}
-
-export async function saveEroticPin(pin: string): Promise<void> {
-    try {
-        await AsyncStorage.setItem(KEYS.pin, pin);
-    } catch {
-        // Non-fatal
-    }
-}
-
-export async function removeEroticPin(): Promise<void> {
-    try {
-        await AsyncStorage.multiRemove([KEYS.pin, KEYS.pinEnabled]);
-    } catch {
-        // Non-fatal
-    }
-}
-
-// ---------------------------------------------------------------------------
-// In Playlist
-// ---------------------------------------------------------------------------
-
 export async function getEroticInPlaylist(): Promise<boolean> {
     try {
-        const val = await AsyncStorage.getItem(KEYS.inPlaylist);
-        return val === 'true';
+        return (await AsyncStorage.getItem(KEYS.inPlaylist)) === 'true';
     } catch {
         return false;
     }
@@ -102,53 +54,29 @@ export async function saveEroticInPlaylist(value: boolean): Promise<void> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Clear all erotic settings — called when erotic is disabled
-// Resets everything including PIN so user starts fresh if they re-enable
-// ---------------------------------------------------------------------------
-
+// Called when erotic content is switched off. The account PIN is deliberately kept.
 export async function clearAllEroticSettings(): Promise<void> {
     try {
-        await AsyncStorage.multiRemove([
-            KEYS.enabled,
-            KEYS.pinEnabled,
-            KEYS.pin,
-            KEYS.inPlaylist,
-        ]);
+        await AsyncStorage.multiRemove([KEYS.enabled, KEYS.inPlaylist]);
     } catch {
         // Non-fatal
     }
 }
 
-// ---------------------------------------------------------------------------
-// Load all settings in one call — used by AppContext on startup
-// ---------------------------------------------------------------------------
-
 export type EroticSettings = {
     enabled:    boolean;
-    pinEnabled: boolean;
-    pin:        string | null;
     inPlaylist: boolean;
 };
 
 export async function loadAllEroticSettings(): Promise<EroticSettings> {
     try {
-        const results = await AsyncStorage.multiGet([
-            KEYS.enabled,
-            KEYS.pinEnabled,
-            KEYS.pin,
-            KEYS.inPlaylist,
-        ]);
-
+        const results = await AsyncStorage.multiGet([KEYS.enabled, KEYS.inPlaylist]);
         const map = Object.fromEntries(results.map(([k, v]) => [k, v]));
-
         return {
             enabled:    map[KEYS.enabled]    === 'true',
-            pinEnabled: map[KEYS.pinEnabled] === 'true',
-            pin:        map[KEYS.pin]        ?? null,
             inPlaylist: map[KEYS.inPlaylist] === 'true',
         };
     } catch {
-        return { enabled: false, pinEnabled: false, pin: null, inPlaylist: false };
+        return { enabled: false, inPlaylist: false };
     }
 }

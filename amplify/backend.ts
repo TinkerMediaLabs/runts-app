@@ -12,6 +12,7 @@ import { followCountAggregator } from './functions/follow-count-aggregator/resou
 import { tagIndexSync } from './functions/tag-index-sync/resource';
 import { listensAggregator } from './functions/listens-aggregator/resource';
 import { userCleanup } from './functions/user-cleanup/resource';
+import { eroticPin } from './functions/erotic-pin/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -33,6 +34,7 @@ const backend = defineBackend({
   tagIndexSync,
   listensAggregator,
   userCleanup,
+  eroticPin,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -49,6 +51,7 @@ const storyNarratorTable = backend.data.resources.tables['StoryNarrator'];
 const followTable      = backend.data.resources.tables['UserFollowedAuthor'];
 const listenBufferTable = backend.data.resources.tables['StoryListenBuffer'];
 const listenDedupeTable = backend.data.resources.tables['ListenDedupe'];
+const eroticPinTable    = backend.data.resources.tables['EroticPin'];
 
 // ── stream failure queue ──────────────────────────────────────────────────
 // Stream records that still fail after their retries land here (kept 14 days) instead of being
@@ -58,6 +61,11 @@ const streamFailureQueue = new sqs.Queue(streamFailureStack, 'StreamFailureQueue
   retentionPeriod: Duration.days(14),
 });
 const onFailure = new SqsDlq(streamFailureQueue);
+
+// ── erotic-pin ────────────────────────────────────────────────────────────
+const eroticPinFn = backend.eroticPin.resources.lambda as lambda.Function;
+eroticPinFn.addEnvironment('EROTIC_PIN_TABLE_NAME', eroticPinTable.tableName);
+eroticPinTable.grantReadWriteData(eroticPinFn);
 
 // ── increment-listens ─────────────────────────────────────────────────────
 const incrementListensFn = backend.incrementListens.resources.lambda as lambda.Function;
@@ -221,6 +229,8 @@ const cleanupTargets: { model: string; index: string }[] = [
 userCleanupFn.addEnvironment('CLEANUP_TARGETS', Stack.of(userCleanupFn).toJsonString(
   cleanupTargets.map(t => ({ table: backend.data.resources.tables[t.model].tableName, index: t.index })),
 ));
+userCleanupFn.addEnvironment('EROTIC_PIN_TABLE_NAME', eroticPinTable.tableName);
+eroticPinTable.grantWriteData(userCleanupFn);
 userCleanupFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query', 'dynamodb:BatchWriteItem', 'dynamodb:DeleteItem'],
   resources: cleanupTargets.flatMap(t => {

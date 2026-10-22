@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Platfo
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
+import { pinErrorMessage } from '@/lib/eroticPin';
 
 const { width } = Dimensions.get('window');
 
@@ -44,6 +45,7 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
     const [firstPin,   setFirstPin]   = useState('');
     const [pin,        setPin]        = useState('');
     const [error,      setError]      = useState('');
+    const [busy,       setBusy]       = useState(false);
 
     const inputRef  = useRef<TextInput>(null);
     const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -70,6 +72,7 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
     };
 
     const handleChange = async (value: string) => {
+        if (busy) return;
         const digits = value.replace(/\D/g, '').slice(0, 4);
         setPin(digits);
         setError('');
@@ -85,9 +88,20 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
         } else {
             // Confirm step — check match
             if (digits === firstPin) {
-                await setEroticPin(digits);
-                setPin('');
-                onSuccess();
+                setBusy(true);
+                const result = await setEroticPin(digits);
+                setBusy(false);
+                if (result.ok) {
+                    setPin('');
+                    onSuccess();
+                } else {
+                    shake();
+                    setError(pinErrorMessage(result));
+                    setPin('');
+                    setFirstPin('');
+                    setStep('enter');
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                }
             } else {
                 shake();
                 setError("PINs don't match. Start over.");
@@ -101,7 +115,7 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
 
     const stepTitle    = step === 'enter' ? 'Create PIN'  : 'Confirm PIN';
     const stepSubtitle = step === 'enter'
-        ? 'Choose a 4-digit PIN to lock erotic content settings.'
+        ? 'Choose a 4-digit PIN. It will be needed to turn erotic content on, on any device signed in to this account.'
         : 'Enter your PIN again to confirm.';
 
     return (
