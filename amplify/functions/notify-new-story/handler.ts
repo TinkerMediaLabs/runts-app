@@ -13,7 +13,7 @@
  */
 
 import { SQSHandler } from 'aws-lambda';
-import { DynamoDBClient, QueryCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand, GetItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 
@@ -51,13 +51,15 @@ async function getFollowersPage(authorId: string, startKey?: any): Promise<{ use
     };
 }
 
-// Push tokens for a set of users via the UserDevice byUserId index, a few users at a time.
-async function getPushTokens(userIds: string[]): Promise<string[]> {
-    const tokens: string[] = [];
+// Devices (row id + push token) for a set of users via the UserDevice byUserId index, a few users at
+// a time. Rows are returned as-is; sendPushNotifications de-duplicates by token.
+type Device = { id: string; token: string };
+async function getDevices(userIds: string[]): Promise<Device[]> {
+    const devices: Device[] = [];
     const CONCURRENCY = 10;
     for (let i = 0; i < userIds.length; i += CONCURRENCY) {
         const results = await Promise.all(userIds.slice(i, i + CONCURRENCY).map(async (userId) => {
-            const found: string[] = [];
+            const found: Device[] = [];
             let lastKey: any;
             do {
                 const res: any = await dynamo.send(new QueryCommand({
@@ -69,24 +71,45 @@ async function getPushTokens(userIds: string[]): Promise<string[]> {
                 }));
                 for (const it of res.Items ?? []) {
                     const item = unmarshall(it);
-                    if (item.pushToken) found.push(item.pushToken);
+                    if (item.pushToken && item.id) found.push({ id: item.id, token: item.pushToken });
                 }
                 lastKey = res.LastEvaluatedKey;
             } while (lastKey);
             return found;
         }));
-        results.forEach(r => tokens.push(...r));
+        results.forEach(r => devices.push(...r));
     }
-    return tokens;
+    return devices;
+}
+
+// Expo reports tokens that no longer exist (app uninstalled, token revoked) as DeviceNotRegistered.
+// Delete those rows so we stop pushing to them on every new story.
+async function removeDeviceRows(ids: string[]): Promise<void> {
+    for (const id of ids) {
+        try {
+            await dynamo.send(new DeleteItemCommand({ TableName: table('UserDevice'), Key: { id: { S: id } } }));
+        } catch (err) {
+            console.log('[notify-new-story] Failed to delete dead device row:', id, err);
+        }
+    }
 }
 
 async function sendPushNotifications(
-    tokens:  string[],
+    devices: Device[],
     title:   string,
     body:    string,
     storyId: string,
-): Promise<void> {
-    if (tokens.length === 0) return;
+): Promise<number> {
+    if (devices.length === 0) return 0;
+
+    // One push per distinct token (a phone shared by two accounts can appear twice).
+    const idsByToken = new Map<string, string[]>();
+    for (const d of devices) {
+        const ids = idsByToken.get(d.token) ?? [];
+        ids.push(d.id);
+        idsByToken.set(d.token, ids);
+    }
+    const tokens = Array.from(idsByToken.keys());
 
     const BATCH_SIZE = 100;
     for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
@@ -104,10 +127,23 @@ async function sendPushNotifications(
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(messages),
         });
-        const json = await res.json().catch(() => null);
+        const json: any = await res.json().catch(() => null);
         console.log('[notify-new-story] Expo push response:', JSON.stringify(json));
+
+        // Tickets come back in the same order as the messages we sent.
+        const dead: string[] = [];
+        (json?.data ?? []).forEach((ticket: any, idx: number) => {
+            if (ticket?.status === 'error' && ticket?.details?.error === 'DeviceNotRegistered') {
+                dead.push(...(idsByToken.get(batch[idx]) ?? []));
+            }
+        });
+        if (dead.length > 0) {
+            await removeDeviceRows(dead);
+            console.log(`[notify-new-story] Removed ${dead.length} dead device row(s)`);
+        }
     }
     console.log(`[notify-new-story] Sent to ${tokens.length} device(s)`);
+    return tokens.length;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,10 +204,9 @@ export const handler: SQSHandler = async (event, context) => {
             lastKey = page.lastKey;
             followerCount += page.userIds.length;
             if (page.userIds.length === 0) continue;
-            const tokens = await getPushTokens(page.userIds);
-            deviceCount += tokens.length;
-            await sendPushNotifications(
-                tokens,
+            const devices = await getDevices(page.userIds);
+            deviceCount += await sendPushNotifications(
+                devices,
                 `New story from ${authorName}`,
                 `"${storyTitle}" is now available to listen`,
                 storyId,

@@ -10,10 +10,14 @@ import { tagCountAggregator } from './functions/tag-count-aggregator/resource';
 import { storyStatsAggregator } from './functions/story-stats-aggregator/resource';
 import { followCountAggregator } from './functions/follow-count-aggregator/resource';
 import { tagIndexSync } from './functions/tag-index-sync/resource';
+import { listensAggregator } from './functions/listens-aggregator/resource';
+import { userCleanup } from './functions/user-cleanup/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
-import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Duration, Stack } from 'aws-cdk-lib';
 
 const backend = defineBackend({
   auth,
@@ -27,6 +31,8 @@ const backend = defineBackend({
   storyStatsAggregator,
   followCountAggregator,
   tagIndexSync,
+  listensAggregator,
+  userCleanup,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -41,11 +47,43 @@ const storyStatsTable = backend.data.resources.tables['StoryStats'];
 const userTable        = backend.data.resources.tables['User'];
 const storyNarratorTable = backend.data.resources.tables['StoryNarrator'];
 const followTable      = backend.data.resources.tables['UserFollowedAuthor'];
+const listenBufferTable = backend.data.resources.tables['StoryListenBuffer'];
+const listenDedupeTable = backend.data.resources.tables['ListenDedupe'];
+
+// ── stream failure queue ──────────────────────────────────────────────────
+// Stream records that still fail after their retries land here (kept 14 days) instead of being
+// silently dropped, so aggregator drift can be seen and replayed.
+const streamFailureStack = backend.createStack('StreamFailures');
+const streamFailureQueue = new sqs.Queue(streamFailureStack, 'StreamFailureQueue', {
+  retentionPeriod: Duration.days(14),
+});
+const onFailure = new SqsDlq(streamFailureQueue);
 
 // ── increment-listens ─────────────────────────────────────────────────────
 const incrementListensFn = backend.incrementListens.resources.lambda as lambda.Function;
-incrementListensFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
-storyTable.grantReadWriteData(incrementListensFn);
+incrementListensFn.addEnvironment('LISTEN_BUFFER_TABLE_NAME', listenBufferTable.tableName);
+incrementListensFn.addEnvironment('LISTEN_DEDUPE_TABLE_NAME', listenDedupeTable.tableName);
+listenBufferTable.grantReadWriteData(incrementListensFn);
+listenDedupeTable.grantReadWriteData(incrementListensFn);
+// Dedupe rows expire on their own (TTL attribute `expiresAt`, epoch seconds).
+backend.data.resources.cfnResources.amplifyDynamoDbTables['ListenDedupe'].timeToLiveAttribute = {
+  attributeName: 'expiresAt',
+  enabled: true,
+};
+
+// ── listens-aggregator ────────────────────────────────────────────────────
+const listensAggregatorFn = backend.listensAggregator.resources.lambda as lambda.Function;
+listensAggregatorFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+storyTable.grantReadWriteData(listensAggregatorFn);
+listenBufferTable.grantStreamRead(listensAggregatorFn);
+listensAggregatorFn.addEventSource(new DynamoEventSource(listenBufferTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 100,
+  maxBatchingWindow: Duration.seconds(60),
+  retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
+}));
 
 // ── rating-aggregator ─────────────────────────────────────────────────────
 const ratingAggregatorFn = backend.ratingAggregator.resources.lambda as lambda.Function;
@@ -58,6 +96,8 @@ ratingAggregatorFn.addEventSource(new DynamoEventSource(ratingTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── reaction-aggregator ───────────────────────────────────────────────────
@@ -69,6 +109,8 @@ reactionAggregatorFn.addEventSource(new DynamoEventSource(reactionTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── comment-counter ───────────────────────────────────────────────────────
@@ -80,6 +122,8 @@ commentCounterFn.addEventSource(new DynamoEventSource(commentTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── tag-count-aggregator ──────────────────────────────────────────────────
@@ -91,6 +135,8 @@ tagCountAggregatorFn.addEventSource(new DynamoEventSource(storyTagTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── story-stats-aggregator ────────────────────────────────────────────────
@@ -102,6 +148,8 @@ storyStatsAggregatorFn.addEventSource(new DynamoEventSource(storyTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── follow-count-aggregator ───────────────────────────────────────────────
@@ -113,6 +161,8 @@ followCountAggregatorFn.addEventSource(new DynamoEventSource(followTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── tag-index-sync ────────────────────────────────────────────────────────
@@ -129,11 +179,15 @@ tagIndexSyncFn.addEventSource(new DynamoEventSource(storyTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 tagIndexSyncFn.addEventSource(new DynamoEventSource(storyTagTable, {
   startingPosition: StartingPosition.LATEST,
   batchSize: 10,
   retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
 }));
 
 // ── index query permissions ───────────────────────────────────────────────
@@ -146,4 +200,40 @@ tagIndexSyncFn.addToRolePolicy(new iam.PolicyStatement({
 reactionAggregatorFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query'],
   resources: [`${reactionCountTable.tableArn}/index/*`],
+}));
+
+// ── user-cleanup ──────────────────────────────────────────────────────────
+// Account deletion only removes the User row from the app; this Lambda (fired by that row's REMOVE
+// stream record) deletes everything the user owned, reading each table through its userId index.
+const userCleanupFn = backend.userCleanup.resources.lambda as lambda.Function;
+const cleanupTargets: { model: string; index: string }[] = [
+  { model: 'UserPinnedStory',     index: 'byUserAndStory' },
+  { model: 'UserFinishedStory',   index: 'byUserAndStory' },
+  { model: 'UserInProgressStory', index: 'byUserAndStory' },
+  { model: 'UserRating',          index: 'byUserAndStory' },
+  { model: 'UserReaction',        index: 'byUserAndStory' },
+  { model: 'UserFavoritedStory',  index: 'byUserAndStory' },
+  { model: 'UserFollowedAuthor',  index: 'byUserAndAuthor' },
+  { model: 'UserBookmark',        index: 'byUserAndCreatedAt' },
+  { model: 'UserDevice',          index: 'byUserId' },
+  { model: 'Comment',             index: 'byUserAndCreatedAt' },
+];
+userCleanupFn.addEnvironment('CLEANUP_TARGETS', Stack.of(userCleanupFn).toJsonString(
+  cleanupTargets.map(t => ({ table: backend.data.resources.tables[t.model].tableName, index: t.index })),
+));
+userCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query', 'dynamodb:BatchWriteItem', 'dynamodb:DeleteItem'],
+  resources: cleanupTargets.flatMap(t => {
+    const arn = backend.data.resources.tables[t.model].tableArn;
+    return [arn, `${arn}/index/*`];
+  }),
+}));
+userTable.grantStreamRead(userCleanupFn);
+userCleanupFn.addEventSource(new DynamoEventSource(userTable, {
+  startingPosition: StartingPosition.LATEST,
+  batchSize: 1,
+  retryAttempts: 2,
+  bisectBatchOnError: true,
+  onFailure,
+  filters: [lambda.FilterCriteria.filter({ eventName: lambda.FilterRule.isEqual('REMOVE') })],
 }));

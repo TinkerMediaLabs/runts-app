@@ -139,6 +139,7 @@ Comment: a
   })
   .secondaryIndexes(index => [
     index('storyId').sortKeys(['createdAt']).name('byStoryAndCreatedAt'),
+    index('userId').sortKeys(['createdAt']).name('byUserAndCreatedAt'),   // account cleanup (user-cleanup)
   ])
   .authorization(allow => [
     allow.owner(),
@@ -342,6 +343,30 @@ Comment: a
       live: a.integer().default(0),
       draft: a.integer().default(0),
       erotic: a.integer().default(0),
+    })
+    .authorization(allow => [
+      allow.group('admin').to(['read']),
+    ]),
+
+  // ── StoryListenBuffer ─────────────────────────────────────────────────────
+  // One row per story (id = storyId). increment-listens bumps `count`; listens-aggregator folds the
+  // stream into Story.numListens in batches so plays never write the Story row directly.
+  StoryListenBuffer: a
+    .model({
+      id: a.id().required(),
+      count: a.integer().default(0),
+    })
+    .authorization(allow => [
+      allow.group('admin').to(['read']),
+    ]),
+
+  // ── ListenDedupe ──────────────────────────────────────────────────────────
+  // id = `${userId}#${storyId}`; expiresAt (epoch seconds) is the table TTL attribute. Limits a
+  // user to one counted listen per story per hour.
+  ListenDedupe: a
+    .model({
+      id: a.id().required(),
+      expiresAt: a.integer(),
     })
     .authorization(allow => [
       allow.group('admin').to(['read']),

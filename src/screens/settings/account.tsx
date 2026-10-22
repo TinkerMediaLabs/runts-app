@@ -23,6 +23,7 @@ import {
 } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
+import { unwrap } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -378,10 +379,10 @@ const AccountScreen = ({ navigation }: any) => {
 
             // Also update DynamoDB
             if (userId) {
-                await client.models.User.update({
+                unwrap(await client.models.User.update({
                     id: userId,
                     name: name.trim(),
-                });
+                }), 'Update name');
             }
 
             // Update local AppContext state
@@ -530,6 +531,12 @@ const AccountScreen = ({ navigation }: any) => {
     setIsLoading(true);
     setError('');
     try {
+        // The delete-user API only accepts a signed-in Cognito ID token, so get it before touching any data.
+        const idToken = isSocialUser ? (await fetchAuthSession()).tokens?.idToken?.toString() : undefined;
+        if (isSocialUser && !idToken) {
+            throw new Error('Please sign in again before deleting your account.');
+        }
+
         if (userId) {
             await client.models.User.delete({ id: userId });
         }
@@ -543,11 +550,8 @@ const AccountScreen = ({ navigation }: any) => {
 
             const response = await fetch(DELETE_USER_API_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userPoolId,
-                    username: cognitoUsername,
-                }),
+                headers: { 'Content-Type': 'application/json', Authorization: idToken! },
+                body: JSON.stringify({}),   // the server deletes the account named in the verified token
             });
 
             const rawText = await response.text();

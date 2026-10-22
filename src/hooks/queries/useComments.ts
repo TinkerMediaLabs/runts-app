@@ -2,6 +2,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { unwrap } from '@/lib/amplifyResult';
 
 
 
@@ -42,7 +43,7 @@ export function usePostComment() {
     }) => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      return client.models.Comment.create({ userId, storyId, content, userName });
+      return unwrap(await client.models.Comment.create({ userId, storyId, content, userName }), 'Post comment');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });
@@ -64,7 +65,7 @@ export function useUpdateComment() {
       storyId: string;
     }) => {
       const client = generateClient<Schema>();
-      return client.models.Comment.update({ id, content });
+      return unwrap(await client.models.Comment.update({ id, content }), 'Edit comment');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });
@@ -78,7 +79,7 @@ export function useDeleteComment() {
   return useMutation({
     mutationFn: async ({ id }: { id: string; storyId: string }) => {
       const client = generateClient<Schema>();
-      return client.models.Comment.delete({ id });
+      return unwrap(await client.models.Comment.delete({ id }), 'Delete comment');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });

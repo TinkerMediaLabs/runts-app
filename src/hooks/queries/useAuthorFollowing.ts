@@ -4,6 +4,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { fetchAllPages } from '../../lib/paginate';
 import { Analytics } from '@/lib/analytics';
+import { unwrap } from '@/lib/amplifyResult';
 
 
 const PAGE_SIZE = 20;
@@ -50,11 +51,11 @@ export function useFollowAuthor() {
     mutationFn: async (authorId: string) => {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
-      return client.models.UserFollowedAuthor.create({
+      return unwrap(await client.models.UserFollowedAuthor.create({
         userId,
         authorId,
         followedAt: new Date().toISOString(),
-      });
+      }), 'Follow');
     },
     onMutate: async (authorId: string) => {
       await queryClient.cancelQueries({ queryKey: ['isFollowing', authorId] });
@@ -89,7 +90,7 @@ export function useUnfollowAuthor() {
   return useMutation({
     mutationFn: async ({ recordId }: { recordId: string; authorId: string }) => {
       const client = generateClient<Schema>();
-      return client.models.UserFollowedAuthor.delete({ id: recordId });
+      return unwrap(await client.models.UserFollowedAuthor.delete({ id: recordId }), 'Unfollow');
     },
     onMutate: async ({ authorId }: { recordId: string; authorId: string }) => {
       await queryClient.cancelQueries({ queryKey: ['isFollowing', authorId] });

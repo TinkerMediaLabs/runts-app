@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRef } from 'react';
-import { View, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Alert, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,7 @@ import { usePlayerUI } from '@/context/PlayerUIContext';
 import { useApp } from '@/context/AppContext';
 
 import { Analytics } from '@/lib/analytics';
+import { unwrap } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -151,39 +152,53 @@ const handleSubmit = async () => {
   setIsSubmitting(true);
   try {
     const { userId } = await getCurrentUser();
-    const ops: Promise<any>[] = [];
+    // Each save is attempted on its own. Whatever saved is remembered (so retrying the rest never
+    // creates a duplicate rating, reaction or comment); anything rejected is reported to the user.
+    const failures: string[] = [];
+    const run = async (label: string, op: () => Promise<any>, onSaved?: (row: any) => void) => {
+      try {
+        onSaved?.(unwrap(await op(), label));
+      } catch (err) {
+        console.warn('RatingModal save failed:', err);
+        failures.push(label);
+      }
+    };
 
     // Rating — upsert
     if (selectedRating !== null) {
-      ops.push(
-        existingRatingId
-          ? client.models.UserRating.update({ id: existingRatingId, rating: selectedRating })
-          : client.models.UserRating.create({ userId, storyId, rating: selectedRating })
-      );
+      await run('rating', () => existingRatingId
+        ? client.models.UserRating.update({ id: existingRatingId, rating: selectedRating })
+        : client.models.UserRating.create({ userId, storyId, rating: selectedRating }),
+        (row) => { if (row?.id) setExistingRatingId(row.id); });
     }
 
     // Reaction — upsert
     if (selectedReaction !== null) {
-      ops.push(
-        existingReactionId
-          ? client.models.UserReaction.update({ id: existingReactionId, reaction: selectedReaction })
-          : client.models.UserReaction.create({ userId, storyId, reaction: selectedReaction })
-      );
+      await run('reaction', () => existingReactionId
+        ? client.models.UserReaction.update({ id: existingReactionId, reaction: selectedReaction })
+        : client.models.UserReaction.create({ userId, storyId, reaction: selectedReaction }),
+        (row) => { if (row?.id) setExistingReactionId(row.id); });
     }
 
     // Comment — always new
     if (comment.trim()) {
-      ops.push(
-        client.models.Comment.create({
+      await run('comment', () => client.models.Comment.create({
           userId,
           storyId,
           content: comment.trim(),
           userName: postAnonymously ? 'Anonymous' : (profile?.name ?? 'Anonymous'),
-        })
-      );
+        }),
+        () => setComment(''));
     }
 
-    await Promise.all(ops);
+    if (failures.length > 0) {
+      Alert.alert(
+        'Not everything was saved',
+        `Your ${failures.join(' and ')} could not be saved. Please try again.`,
+      );
+      queryClient.invalidateQueries({ queryKey: ['story', storyId] });
+      return;
+    }
 
     // Track analytics events
     if (selectedRating !== null) {

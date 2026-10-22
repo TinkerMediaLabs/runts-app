@@ -3,6 +3,7 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { findInProgress } from '../../lib/userStoryLookups';
+import { unwrap } from '@/lib/amplifyResult';
 
 const IN_PROGRESS_PAGE = 20;
 
@@ -55,17 +56,17 @@ export async function upsertInProgressStory(storyId: string, progressSeconds: nu
   const client = generateClient<Schema>();
   const existing = await findInProgress(userId, storyId);
   if (existing.length) {
-    await client.models.UserInProgressStory.update({
+    unwrap(await client.models.UserInProgressStory.update({
       id: existing[0].id,
       progressSeconds: Math.floor(progressSeconds),
       lastListenedAt: new Date().toISOString(),
-    });
+    }), 'Save progress');
   } else {
-    await client.models.UserInProgressStory.create({
+    unwrap(await client.models.UserInProgressStory.create({
       userId, storyId,
       progressSeconds: Math.floor(progressSeconds),
       lastListenedAt: new Date().toISOString(),
-    });
+    }), 'Save progress');
   }
 }
 
@@ -76,7 +77,7 @@ export function useDeleteInProgressStory() {
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
       const existing = await findInProgress(userId, storyId);
-      for (const row of existing) await client.models.UserInProgressStory.delete({ id: row.id });
+      for (const row of existing) unwrap(await client.models.UserInProgressStory.delete({ id: row.id }), 'Remove from in-progress');
     },
     onSuccess: (_d, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });

@@ -4,6 +4,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
+import { unwrap } from '@/lib/amplifyResult';
 
 
 const PAGE_SIZE = 20;
@@ -79,13 +80,18 @@ export function useCreateBookmark() {
         }) => {
       const client = generateClient<Schema>();
             const { userId } = await getCurrentUser();
-            return client.models.UserBookmark.create({
+            const res = await client.models.UserBookmark.create({
                 userId,
                 storyId,
-                positionSeconds,
+                positionSeconds: Math.max(0, Math.floor(positionSeconds)),
                 name:      name.trim() || 'My Bookmark',
                 createdAt: new Date().toISOString(),
             });
+            // Amplify returns validation / auth failures in `errors` instead of throwing.
+            if (res.errors?.length || !res.data) {
+                throw new Error(res.errors?.[0]?.message ?? 'Bookmark was not saved');
+            }
+            return res;
         },
        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
@@ -106,7 +112,7 @@ export function useDeleteBookmark() {
     return useMutation({
         mutationFn: async (bookmarkId: string) => {
       const client = generateClient<Schema>();
-            return client.models.UserBookmark.delete({ id: bookmarkId });
+            return unwrap(await client.models.UserBookmark.delete({ id: bookmarkId }), 'Delete bookmark');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
