@@ -119,6 +119,57 @@ async function syncLinks(model, fk, storyId, stagingLinks, log) {
     log.push(`${model}: ${wanted.size} link(s) in sync (${created} created, ${deleted} removed)`);
 }
 
+// Picture-book scenes for a story, in time order (byStoryAndStart index; at most ~60 per story).
+// A table that does not exist yet (production before the scenes schema is deployed) counts as "no scenes".
+async function scenesForStory(table, storyId) {
+    const items = [];
+    let lastKey;
+    try {
+        do {
+            const res = await dynamo.send(new QueryCommand({
+                TableName: table,
+                IndexName: 'byStoryAndStart',
+                KeyConditionExpression: 'storyId = :s',
+                ExpressionAttributeValues: marshall({ ':s': storyId }),
+                ExclusiveStartKey: lastKey,
+            }));
+            items.push(...(res.Items || []).map(i => unmarshall(i)));
+            lastKey = res.LastEvaluatedKey;
+        } while (lastKey);
+    } catch (err) {
+        if (err.name === 'ResourceNotFoundException') {
+            console.warn(`${table}: table not found, treating as no scenes`);
+            return { items: [], missing: true };
+        }
+        throw err;
+    }
+    return { items, missing: false };
+}
+
+// Make production's scenes for this story exactly match staging's: copy images, upsert rows, delete the rest.
+async function syncScenes(storyId, log) {
+    const staged = await scenesForStory(stg('StoryScene'), storyId);
+    if (staged.items.length === 0) {
+        const prodScenes = await scenesForStory(prod('StoryScene'), storyId);
+        for (const row of prodScenes.items) await deleteItem(prod('StoryScene'), row.id);
+        if (prodScenes.items.length) log.push(`Scenes: removed ${prodScenes.items.length} (none in staging)`);
+        return;
+    }
+    const prodScenes = await scenesForStory(prod('StoryScene'), storyId);
+    if (prodScenes.missing) throw new Error('Production has no StoryScene table yet. Deploy the production schema first.');
+    const keep = new Set(staged.items.map(r => r.id));
+    let removed = 0;
+    for (const row of prodScenes.items) {
+        if (!keep.has(row.id)) { await deleteItem(prod('StoryScene'), row.id); removed++; }
+    }
+    let copied = 0;
+    for (const row of staged.items) {
+        if (await copyS3Asset(row.imageUri)) copied++;
+        await upsertItem(prod('StoryScene'), row);
+    }
+    log.push(`Scenes: ${staged.items.length} in sync (${copied} image(s) copied, ${removed} removed)`);
+}
+
 // ── S3 helper ───────────────────────────────────────────────────────────────
 
 async function copyS3Asset(key) {
@@ -235,6 +286,9 @@ exports.handler = async (event) => {
         // 9. Links mirror staging exactly (removed tags/narrators and duplicates are cleaned up)
         await syncLinks('StoryTag', 'tagId', storyId, storyTagLinks, log);
         await syncLinks('StoryNarrator', 'narratorId', storyId, storyNarratorLinks, log);
+
+        // 10. Picture-book scenes mirror staging exactly (rows, images, removed scenes)
+        await syncScenes(storyId, log);
 
         return {
             statusCode: 200,

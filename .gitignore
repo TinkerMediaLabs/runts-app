@@ -46,3 +46,6 @@ amplify_outputs.json
 amplify_outputs.dev.json
 amplifyconfiguration*
 scripts/publish-lambda/node_modules
+
+scripts/__pycache__/
+scripts/*.zip

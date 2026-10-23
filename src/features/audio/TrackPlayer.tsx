@@ -46,6 +46,8 @@ import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
+import { useStoryScenes } from '@/hooks/queries/useStoryScenes';
+import SceneHero, { announceScene } from '@/features/audio/SceneHero';
 import { useTag } from '@/hooks/queries/useTagNames';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
 
@@ -127,6 +129,9 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: currentStory } = useStory(track?.id ?? null);
+  // Picture-book scenes (only queried when the story has any)
+  const { data: scenes = [] } = useStoryScenes(currentStory?.id, (currentStory as any)?.sceneCount);
+  const hasScenes = scenes.length > 0;
   const { data: primaryTagData }   = useTag(currentStory?.primaryTagId);
   const { data: secondaryTagData } = useTag(currentStory?.secondaryTagId);
 
@@ -372,7 +377,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       resizeMode="cover"
                       fadeDuration={0}
                   >
-                      <View style={styles.overlay} />
+                      {hasScenes && <SceneHero scenes={scenes} onSceneChange={announceScene} />}
+                      <View style={[styles.overlay, hasScenes && { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
 
                       {/* Pan-to-collapse zone + sleep timer pill — scrolls
                           away with the hero image, distinct from the sticky

@@ -18,7 +18,9 @@ import {
   removeDownloadRecord,
   ensureAudioDir,
   localPathForStory,
+  sceneDirForStory,
   STORAGE_LIMIT_BYTES,
+  type DownloadScene,
   type DownloadRecord,
 } from '../../lib/offlineStorage';
 
@@ -106,14 +108,30 @@ export async function downloadStory(story: {
       return { success: false, reason: 'storage_limit' };
     }
 
-    await addOrUpdateDownload({
+    const completeRecord = {
       storyId:      story.id,
       audioUri:     story.audioUri,
       localPath,
       fileSize,
       downloadedAt: new Date().toISOString(),
-      status:       'complete',
-    });
+      status:       'complete' as const,
+    };
+    await addOrUpdateDownload(completeRecord);
+
+    // Picture-book scenes: best effort. The story is already playable offline; scenes are saved on top
+    // when they fit under the storage limit. A failed image just falls back to the online image.
+    try {
+      const sceneResult = await downloadScenes(story.id, currentSize + fileSize);
+      if (sceneResult.scenes.length > 0) {
+        await addOrUpdateDownload({
+          ...completeRecord,
+          fileSize: fileSize + sceneResult.bytes,
+          scenes:   sceneResult.scenes,
+        });
+      }
+    } catch (sceneErr) {
+      console.warn('downloadScenes error:', sceneErr);
+    }
 
     return { success: true };
 
@@ -132,7 +150,48 @@ export async function downloadStory(story: {
 }
 
 /**
- * Deletes the local audio file and removes the download record.
+ * Downloads a story's picture-book scene images (if it has any) into the story's scene folder.
+ * Returns the saved scenes and their total bytes. Skips images that would pass the storage limit.
+ */
+async function downloadScenes(storyId: string, usedBytes: number): Promise<{ scenes: DownloadScene[]; bytes: number }> {
+  const client = generateClient<Schema>();
+  const { data: story } = await client.models.Story.get({ id: storyId });
+  if (!story || (story.sceneCount ?? 0) <= 0) return { scenes: [], bytes: 0 };
+
+  const res: any = await (client.models.StoryScene as any).listStorySceneByStoryIdAndStartSeconds(
+    { storyId }, { sortDirection: 'ASC', limit: 100 });
+  const rows: any[] = res.data ?? [];
+  if (rows.length === 0) return { scenes: [], bytes: 0 };
+
+  const dir = sceneDirForStory(storyId);
+  await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+
+  const scenes: DownloadScene[] = [];
+  let bytes = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      const { url } = await getUrl({ path: row.imageUri, options: { expiresIn: 3600 } });
+      const dest = `${dir}${i}.jpg`;
+      const out = await FileSystem.downloadAsync(url.toString(), dest);
+      if (out.status !== 200) { await FileSystem.deleteAsync(dest, { idempotent: true }); continue; }
+      const info = await FileSystem.getInfoAsync(dest);
+      const size = (info as any).size ?? 0;
+      if (usedBytes + bytes + size > STORAGE_LIMIT_BYTES) {
+        await FileSystem.deleteAsync(dest, { idempotent: true });
+        break;
+      }
+      bytes += size;
+      scenes.push({ startSeconds: row.startSeconds, imageUri: row.imageUri, localPath: dest, altText: row.altText ?? '' });
+    } catch (err) {
+      console.warn('scene image download failed:', err);
+    }
+  }
+  return { scenes, bytes };
+}
+
+/**
+ * Deletes the local audio file (and any scene images) and removes the download record.
  */
 export async function deleteDownload(storyId: string): Promise<void> {
   const records = await getDownloads();
@@ -140,6 +199,7 @@ export async function deleteDownload(storyId: string): Promise<void> {
   if (record?.localPath) {
     await FileSystem.deleteAsync(record.localPath, { idempotent: true });
   }
+  await FileSystem.deleteAsync(sceneDirForStory(storyId), { idempotent: true });
   await removeDownloadRecord(storyId);
 }
 
@@ -149,7 +209,10 @@ export async function deleteDownload(storyId: string): Promise<void> {
 export async function clearAllDownloads(): Promise<void> {
   const records = await getDownloads();
   await Promise.all(
-    records.map(r => FileSystem.deleteAsync(r.localPath, { idempotent: true }))
+    records.flatMap(r => [
+      FileSystem.deleteAsync(r.localPath, { idempotent: true }),
+      FileSystem.deleteAsync(sceneDirForStory(r.storyId), { idempotent: true }),
+    ])
   );
   await saveDownloads([]);
 }
