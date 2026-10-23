@@ -1,5 +1,6 @@
 import { incrementListens } from '../functions/increment-listens/resource';
 import { eroticPin } from '../functions/erotic-pin/resource';
+import { uploadUrl } from '../functions/upload-url/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -528,6 +529,16 @@ Comment: a
     .returns(a.ref('EroticPinResult'))
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(eroticPin)),
+  // CMS uploads go through a short-lived link only admins can request (see functions/upload-url).
+  getUploadUrl: a
+    .mutation()
+    .arguments({
+      key: a.string().required(),
+      contentType: a.string().required(),
+    })
+    .returns(a.string())
+    .authorization(allow => [allow.group('admin')])
+    .handler(a.handler.function(uploadUrl)),
 });
 
 
