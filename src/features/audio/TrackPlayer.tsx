@@ -48,6 +48,7 @@ import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
 import { useStoryScenes } from '@/hooks/queries/useStoryScenes';
 import SceneHero, { announceScene } from '@/features/audio/SceneHero';
+import PlaybackGlow from '@/features/audio/PlaybackGlow';
 import { useTag } from '@/hooks/queries/useTagNames';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
 
@@ -415,6 +416,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           locations={[0, 0.6, 1]}
                           style={styles.gradient}
                       />
+                      <PlaybackGlow active={optimisticPlaying} />
 
                   </AnimatedImageBackground>
 

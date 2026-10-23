@@ -38,6 +38,7 @@ import PlayButtonV3 from '../../components/common/PlayButtonV3';
 import PinButton    from '../../components/common/PinButton';
 import RatingModal  from '../../features/audio/RatingModal';
 import MoreLikeThis from '../../components/story/MoreLikeThis';
+import Reveal from '../../components/common/Reveal';
 
 import { spacing } from '../../theme/spacing';
 import { useApp }  from '@/context/AppContext';
@@ -513,6 +514,7 @@ const handleDelete = (id: string) => {
 
                 <Animated.View style={[styles.contentCard, bounceStyle]}>
 
+                    <Reveal index={0}>
                     {/* Title + author */}
                   <View style={styles.titleSection}>
                     <Text style={styles.title}>{story?.title}</Text>
@@ -537,6 +539,9 @@ const handleDelete = (id: string) => {
                     ) : null}
                 </View>
 
+                    </Reveal>
+
+                    <Reveal index={1}>
                     {/* Stats row */}
                     <View style={styles.statsRow}>
                         {story?.licenseType === 'runts_exclusive' && (
@@ -556,6 +561,9 @@ const handleDelete = (id: string) => {
                         <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
                     </View>
 
+                    </Reveal>
+
+                    <Reveal index={2}>
                     {/* Action icons */}
                     <View style={styles.actionsRow}>
                         <View style={styles.actionsLeft}>
@@ -599,6 +607,8 @@ const handleDelete = (id: string) => {
                             isPremium={story?.isPremium}
                         />
                     </View>
+
+                    </Reveal>
 
                                        {/* Story Format / Story Tone / POV */}
                     <View style={styles.separator} />
