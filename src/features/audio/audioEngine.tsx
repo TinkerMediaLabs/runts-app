@@ -130,7 +130,6 @@ async play(track: Track) {
       await TrackPlayer.play();
       return;
     }
-    this.currentTrack = track;
     const resolvedUrl = await resolveAudioUrl(track.url);
     console.log('audioEngine.play: resolvedUrl =', resolvedUrl);  // ← add
 
@@ -143,6 +142,7 @@ async play(track: Track) {
       artwork: track.artwork,
       artist:  track.artist,
     } as any]);
+    this.currentTrack = track;
     await TrackPlayer.play();
     console.log('audioEngine.play: play() called successfully');  // ← add
   } catch (error) {
