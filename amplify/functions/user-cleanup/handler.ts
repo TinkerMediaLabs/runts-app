@@ -1,4 +1,4 @@
-import { DynamoDBClient, QueryCommand, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand, BatchWriteItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamEvent } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
@@ -57,6 +57,12 @@ export const handler = async (event: DynamoDBStreamEvent) => {
     let total = 0;
     for (const t of TARGETS) {
       total += await cleanTarget(userId, t);
+    }
+
+    // The account-level erotic PIN is keyed by the user id itself (no userId index), so delete it directly.
+    const pinTable = process.env.EROTIC_PIN_TABLE_NAME;
+    if (pinTable) {
+      await dynamo.send(new DeleteItemCommand({ TableName: pinTable, Key: { id: { S: userId } } }));
     }
     console.log(`user-cleanup: removed ${total} row(s) for deleted user ${userId}`);
   }

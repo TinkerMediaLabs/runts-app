@@ -249,9 +249,11 @@ const OptionPill = ({
 const EroticSection = ({
     onOpenPinEntry,
     onOpenPinSetup,
+    onOpenPinRemove,
 }: {
     onOpenPinEntry: () => void;
     onOpenPinSetup: () => void;
+    onOpenPinRemove: () => void;
 }) => {
     const {
         isUnderAge,
@@ -260,7 +262,6 @@ const EroticSection = ({
         eroticUnlockedThisSession,
         eroticInPlaylist,
         setEroticEnabled,
-        removeEroticPin,
         setEroticInPlaylist,
     } = useApp();
 
@@ -283,7 +284,7 @@ const EroticSection = ({
                         <View style={{ flex: 1 }}>
                             <Text style={styles.rowLabel}>Locked</Text>
                             <Text style={styles.rowDescription}>
-                                Enter your PIN to manage erotic content settings
+                                Enter your PIN to change erotic content settings
                             </Text>
                         </View>
                     </View>
@@ -311,18 +312,16 @@ const EroticSection = ({
                 iconColor={EROTIC_ORANGE}
             />
 
-            {/* PIN and playlist options — only visible when erotic is enabled */}
-            {eroticEnabled && (
+            {/* PIN lock — available whether erotic content is on or off, so a parent can lock it OFF */}
+            {!isUnderAge && (
                 <>
                     <RowDivider />
-
-                    {/* Lock with PIN */}
                     {eroticPinEnabled ? (
                         <ActionRow
                             icon="lock"
                             label="Remove PIN"
-                            description="Settings will no longer require a PIN"
-                            onPress={removeEroticPin}
+                            description="Erotic content will no longer need a PIN to turn on"
+                            onPress={onOpenPinRemove}
                             iconColor={EROTIC_ORANGE}
                             destructive
                         />
@@ -330,12 +329,17 @@ const EroticSection = ({
                         <ActionRow
                             icon="lock-open"
                             label="Lock with PIN"
-                            description="Require a PIN to change these settings"
+                            description="Require a PIN to turn erotic content on. Handy if someone else uses your account."
                             onPress={onOpenPinSetup}
                             iconColor={EROTIC_ORANGE}
                         />
                     )}
+                </>
+            )}
 
+            {/* Playlist option — only when erotic is enabled */}
+            {eroticEnabled && (
+                <>
                     <RowDivider />
 
                     {/* Include in playlist */}
@@ -367,9 +371,9 @@ const AppSettings = ({ navigation }: any) => {
     // ── Erotic PIN modal state ────────────────────────────────────────────────
     const [pinEntryVisible, setPinEntryVisible] = useState(false);
     const [pinSetupVisible, setPinSetupVisible] = useState(false);
+    const [pinRemoveVisible, setPinRemoveVisible] = useState(false);
 
     // ── Content settings ──────────────────────────────────────────────────────
-    const [nsfwEnabled,     setNsfwEnabled]     = useState(false);
     const [autoPlay,        setAutoPlay]        = useState(false);
     const [downloadOnWifi,  setDownloadOnWifi]  = useState(true);
 
@@ -390,7 +394,10 @@ const AppSettings = ({ navigation }: any) => {
     // ── Appearance ────────────────────────────────────────────────────────────
     const [reducedMotion, setReducedMotion] = useState(false);
 
-    const { userId } = useApp();
+    const { userId, lockEroticSession } = useApp();
+
+    // Leaving this screen re-locks the erotic settings, so a phone a parent just unlocked is not left open.
+    useEffect(() => () => lockEroticSession(), []);   // eslint-disable-line react-hooks/exhaustive-deps
 
     const PLAYBACK_SPEEDS: PlaybackSpeed[] = [0.75, 1, 1.25, 1.5, 2];
     const AUDIO_QUALITIES: AudioQuality[]  = ['Low', 'Standard', 'High'];
@@ -503,14 +510,6 @@ const AppSettings = ({ navigation }: any) => {
                     {/* ── Content ── */}
                     <Section title="Content">
                         <ToggleRow
-                            icon="fire"
-                            label="Mature Content"
-                            description="Show stories marked as NSFW"
-                            value={nsfwEnabled}
-                            onChange={setNsfwEnabled}
-                        />
-                        <RowDivider />
-                        <ToggleRow
                             icon="play-circle"
                             label="Autoplay Playlist"
                             description="Automatically play the next pinned story when one finishes"
@@ -523,6 +522,7 @@ const AppSettings = ({ navigation }: any) => {
                     <EroticSection
                         onOpenPinEntry={() => setPinEntryVisible(true)}
                         onOpenPinSetup={() => setPinSetupVisible(true)}
+                        onOpenPinRemove={() => setPinRemoveVisible(true)}
                     />
 
                     {/* ── Playback ── */}
@@ -567,6 +567,14 @@ const AppSettings = ({ navigation }: any) => {
                 visible={pinEntryVisible}
                 onSuccess={() => setPinEntryVisible(false)}
                 onCancel={() => setPinEntryVisible(false)}
+            />
+
+            {/* ── PIN remove modal (a correct PIN removes the lock) ── */}
+            <PINEntryModal
+                mode="remove"
+                visible={pinRemoveVisible}
+                onSuccess={() => setPinRemoveVisible(false)}
+                onCancel={() => setPinRemoveVisible(false)}
             />
 
             {/* ── PIN setup modal (creates a new PIN) ── */}

@@ -6,6 +6,7 @@ import { getOfflineEnabled } from '../../lib/offlineStorage';
 import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
+import { showChip } from '@/lib/chip';
 import { findPinned } from '../../lib/userStoryLookups';
 
 const PINS_PAGE_SIZE = 30;
@@ -95,9 +96,11 @@ export function usePinStory() {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(['isPinned', storyId], context.previous);
       }
+      showChip("Couldn't pin story. Please try again.", 'error');
     },
     onSuccess: (_, storyId) => {
       Analytics.storyPinned({ storyId });
+      showChip('Story pinned to playlist');
 
       // Trigger download in background — non-blocking
       getOfflineEnabled().then(enabled => {
@@ -147,9 +150,11 @@ export function useUnpinStory() {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(['isPinned', storyId], context.previous);
       }
+      showChip("Couldn't remove story. Please try again.", 'error');
     },
     onSuccess: (_, storyId) => {
       Analytics.storyUnpinned({ storyId });
+      showChip('Story removed from playlist');
 
       deleteDownload(storyId).catch(err =>
         console.warn('Unpin delete download error:', err)

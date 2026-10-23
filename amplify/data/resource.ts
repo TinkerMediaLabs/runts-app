@@ -1,4 +1,5 @@
 import { incrementListens } from '../functions/increment-listens/resource';
+import { eroticPin } from '../functions/erotic-pin/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -360,6 +361,30 @@ Comment: a
       allow.group('admin').to(['read']),
     ]),
 
+  // ── EroticPin ─────────────────────────────────────────────────────────────
+  // id = userId. Holds the salted PIN hash and the wrong-guess counter for the account-level erotic
+  // content PIN. Only the erotic-pin Lambda reads or writes it (raw DynamoDB); no app user can.
+  EroticPin: a
+    .model({
+      id: a.id().required(),
+      hash: a.string(),
+      salt: a.string(),
+      failedAttempts: a.integer(),
+      lockedUntil: a.integer(),
+      updatedAt: a.integer(),
+    })
+    .authorization(allow => [
+      allow.group('admin').to(['read']),
+    ]),
+
+  EroticPinResult: a.customType({
+    ok: a.boolean().required(),
+    pinSet: a.boolean().required(),
+    error: a.string(),
+    attemptsLeft: a.integer(),
+    lockedUntil: a.integer(),
+  }),
+
   // ── ListenDedupe ──────────────────────────────────────────────────────────
   // id = `${userId}#${storyId}`; expiresAt (epoch seconds) is the table TTL attribute. Limits a
   // user to one counted listen per story per hour.
@@ -493,6 +518,16 @@ Comment: a
     .returns(a.boolean())
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(incrementListens)),
+  manageEroticPin: a
+    .mutation()
+    .arguments({
+      action: a.string().required(),   // 'status' | 'verify' | 'set' | 'remove'
+      pin: a.string(),
+      newPin: a.string(),
+    })
+    .returns(a.ref('EroticPinResult'))
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(eroticPin)),
 });
 
 
