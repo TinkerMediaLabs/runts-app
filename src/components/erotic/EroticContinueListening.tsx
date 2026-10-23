@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     tileRemaining: {
-        fontSize: 10,
+        fontSize: 12,
         color:    'rgba(255,124,42,0.8)',
     },
 });

@@ -878,11 +878,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 10,
         marginLeft: 4,
     },
@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     },
     rowValue: {
         fontSize: 14,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
     divider: {
         height: StyleSheet.hairlineWidth,
@@ -954,7 +954,7 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         color: '#00ffff',
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
     },
 
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
     },
     sheetNote: {
         fontSize: 13,
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         lineHeight: 20,
         marginBottom: 20,
     },
@@ -1007,7 +1007,7 @@ const styles = StyleSheet.create({
     fieldLabel: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         letterSpacing: 0.5,
         marginBottom: 8,
     },
@@ -1061,7 +1061,7 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     cancelText: {
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 14,
     },
 
@@ -1114,14 +1114,14 @@ const styles = StyleSheet.create({
     infoBannerText: {
         flex: 1,
         fontSize: 13,
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         lineHeight: 19,
     },
 
     // ── Footer ────────────────────────────────────────────────────────────────
     version: {
         textAlign: 'center',
-        color: '#ffffff25',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 12,
         marginTop: 40,
     },

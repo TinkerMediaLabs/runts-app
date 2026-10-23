@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   charCount: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.25)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'right',
     marginBottom: 16,
   },

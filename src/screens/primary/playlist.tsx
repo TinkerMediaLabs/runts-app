@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     },
     reorderHintText: {
         fontSize: 12,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
 
     tabBar: {
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     tabLabel: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#ffffff40',
+        color: 'rgba(255,255,255,0.55)',
     },
     tabLabelActive: {
         color: '#fff',
@@ -266,12 +266,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#ffffff30',
+        color: 'rgba(255,255,255,0.55)',
         textAlign: 'center',
         lineHeight: 20,
     },

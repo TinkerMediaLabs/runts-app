@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.55)',
     letterSpacing: 0.3,
   },
   tabLabelActive: {
@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
   tabCount: {
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 16,
 },
 tabCountActive: {
@@ -1034,7 +1034,7 @@ tabCountActive: {
   },
   authorBio: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 17,
   },
   emptyState: {
@@ -1047,12 +1047,12 @@ tabCountActive: {
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
   },
   emptySub: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.25)',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
     lineHeight: 19,
   },
@@ -1138,7 +1138,7 @@ genreTileName: {
 },
 genreTileCount: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.55)',
 },
 });
 

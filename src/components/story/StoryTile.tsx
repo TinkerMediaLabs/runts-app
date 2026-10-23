@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
     },
     tagPillText: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         color: 'rgba(255,255,255,0.75)',
         textTransform: 'capitalize',
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     universeText: {
-        fontSize: 10.5,
+        fontSize: 12.5,
         fontWeight: '700',
         color: '#ffffffa5',
         textTransform: 'uppercase',

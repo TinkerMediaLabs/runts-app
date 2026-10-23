@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     metaText: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.55)',
     },
     deleteBtn: {
         padding: 4,

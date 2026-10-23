@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,255,255,0.2)',
   },
   genreChipText: {
-    fontSize: 11,
+    fontSize: 12,
     color: 'rgba(0,255,255,0.8)',
     fontWeight: '500',
   },
@@ -176,11 +176,11 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   statText: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.35)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
   },
   statDot: {
-    color: 'rgba(255,255,255,0.2)',
-    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 12,
   },
 });

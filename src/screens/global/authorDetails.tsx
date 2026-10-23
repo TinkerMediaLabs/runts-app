@@ -240,7 +240,7 @@ const CreatorProfile = () => {
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
                 ListEmptyComponent={
                     <View style={{ alignItems: 'center', paddingTop: 40 }}>
-                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+                        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>
                             No stories yet
                         </Text>
                     </View>
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     storiesLabelText: {
         fontSize: 13,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         textTransform: 'uppercase',
         letterSpacing: 0.8,
     },

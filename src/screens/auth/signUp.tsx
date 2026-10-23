@@ -116,9 +116,9 @@ const s = StyleSheet.create({
     errorText:  { color: '#ff8a8a', fontSize: 13, textAlign: 'center' },
     button:     { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18, elevation: 8 },
     buttonText: { width: '100%', fontSize: 16, fontWeight: '700' },
-    linkText:   { fontSize: 14, color: 'rgba(255,255,255,0.4)', alignSelf: 'center', marginTop: 28 },
+    linkText:   { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 28 },
     linkAccent: { color: '#00ffff' },
-    backText:   { fontSize: 14, color: 'rgba(255,255,255,0.35)', alignSelf: 'center', marginTop: 14 },
+    backText:   { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 14 },
 });
 
 export default SignUp;

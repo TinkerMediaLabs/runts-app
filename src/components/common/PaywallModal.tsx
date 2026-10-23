@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
         color:      '#000',
     },
     packagePrimaryNote: {
-        fontSize: 11,
+        fontSize: 12,
         color:    'rgba(0,0,0,0.6)',
         marginTop: 2,
     },

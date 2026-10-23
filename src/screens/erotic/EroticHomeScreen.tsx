@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
   },
   tabLabelActive: {
     color: EROTIC_ORANGE,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
   genreGridTileCount: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
   },
   tagPillRow: {
     flexDirection: 'row',

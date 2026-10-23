@@ -194,12 +194,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
   },
   metaDot: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.2)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
   },
   deleteBtn: {
     padding: 8,

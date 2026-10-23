@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   finishedLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.55)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 14,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   },
   ratingHint: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
   },
 
@@ -474,8 +474,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   emojiLabel: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -499,8 +499,8 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   charCount: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.25)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'right',
     marginTop: 6,
   },
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 15,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
     fontWeight: '500',
   },
   submitBtn: {
@@ -557,6 +557,6 @@ anonCheckboxActive: {
 },
 anonLabel: {
   fontSize: 13,
-  color: 'rgba(255,255,255,0.4)',
+  color: 'rgba(255,255,255,0.55)',
 },
 });

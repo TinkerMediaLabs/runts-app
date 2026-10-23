@@ -4,6 +4,7 @@ import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
 import { pinErrorMessage } from '@/lib/eroticPin';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 const { width } = Dimensions.get('window');
 const SUPPORT_EMAIL = 'mailto:admin@tinkermedia.net';
@@ -59,7 +60,10 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
         }
     }, [visible]);
 
+    const reduceMotion = useReduceMotion();
+
     const shake = () => {
+        if (reduceMotion) return;
         Animated.sequence([
             Animated.timing(shakeAnim, { toValue: 10,  duration: 50, useNativeDriver: true }),
             Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),

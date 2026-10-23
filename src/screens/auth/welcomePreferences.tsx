@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     selectionCount: {
         textAlign: 'center',
         fontSize: 13,
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         fontWeight: '500',
     },
     cta: {

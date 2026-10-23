@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     seeMoreText: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '500',
         color: '#888',
         textAlign: 'center',

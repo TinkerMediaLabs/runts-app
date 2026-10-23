@@ -252,13 +252,13 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     author: {
-        fontSize: 11,
+        fontSize: 12,
         color: 'rgba(255,255,255,0.55)',
         flex: 1,
     },
     timeLeft: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.45)',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.55)',
     },
     progressTrack: {
         height: 2,

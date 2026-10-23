@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     },
     heroSubtitle: {
         fontSize: 14,
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         marginTop: 4,
         marginBottom: 16,
     },
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     },
     versionBadgeText: {
         fontSize: 12,
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         fontWeight: '600',
     },
 
@@ -226,11 +226,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 10,
         marginLeft: 4,
     },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     },
     rowValue: {
         fontSize: 14,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
     divider: {
         height: StyleSheet.hairlineWidth,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     // ── Footer ────────────────────────────────────────────────────────────────
     footer: {
         textAlign: 'center',
-        color: '#ffffff25',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 12,
         lineHeight: 20,
         marginTop: 40,

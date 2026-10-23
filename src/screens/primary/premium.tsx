@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     },
     heroSubtitle: {
         fontSize: 15,
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         textAlign: 'center',
         lineHeight: 22,
         paddingHorizontal: 10,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
     },
     planBadgeText: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: 0.5,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     planPeriodShort: {
         fontSize: 12,
         fontWeight: '700',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         letterSpacing: 1,
         marginTop: 8,
         marginBottom: 8,
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     },
     planPerMonth: {
         fontSize: 12,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
     planPerMonthSelected: {
         color: 'rgba(0,255,255,0.6)',
@@ -435,8 +435,8 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
     renewalNote: {
-        fontSize: 11,
-        color: '#ffffff40',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.55)',
         textAlign: 'center',
         lineHeight: 17,
         marginBottom: 36,
@@ -447,11 +447,11 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     sectionTitle: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 10,
         marginLeft: 4,
     },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     },
     featureDescription: {
         fontSize: 13,
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         lineHeight: 19,
     },
     featureDivider: {
@@ -505,12 +505,12 @@ const styles = StyleSheet.create({
     },
     legalLink: {
         fontSize: 12,
-        color: '#ffffff40',
+        color: 'rgba(255,255,255,0.55)',
         textDecorationLine: 'underline',
     },
     legalDot: {
         fontSize: 12,
-        color: '#ffffff25',
+        color: 'rgba(255,255,255,0.55)',
     },
 });
 

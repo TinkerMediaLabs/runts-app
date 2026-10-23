@@ -268,8 +268,8 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',

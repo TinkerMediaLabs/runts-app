@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     authorText: {
-        fontSize: 10,
+        fontSize: 12,
         color: 'rgba(255,255,255,0.5)',
         flexShrink: 1,
     },

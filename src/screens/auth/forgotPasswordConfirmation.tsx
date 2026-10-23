@@ -216,7 +216,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                             {/* Back */}
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
                                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                                    <Text style={{ fontSize: 14, color: '#ffffff66', alignSelf: 'center', marginTop: 32 }}>
+                                    <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 32 }}>
                                         Go Back
                                     </Text>
                                 </TouchableOpacity>

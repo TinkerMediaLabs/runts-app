@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: 12,
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         marginTop: 2,
         fontWeight: '500',
     },
@@ -418,11 +418,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 10,
         marginLeft: 4,
     },
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     },
     rowDescription: {
         fontSize: 12,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginTop: 2,
     },
     divider: {

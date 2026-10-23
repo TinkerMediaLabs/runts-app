@@ -786,7 +786,7 @@ const handleDelete = (id: string) => {
       keyExtractor={item => item.id}
       scrollEnabled={false}
       ListEmptyComponent={
-        <Text style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 20 }}>
+        <Text style={{ color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginTop: 20 }}>
           No comments yet. Be the first!
         </Text>
       }
@@ -1043,7 +1043,7 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 13,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         textTransform: 'uppercase',
         letterSpacing: 0.8,
         marginBottom: 12,
@@ -1093,7 +1093,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     spoilerSub: {
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 13,
     },
 
@@ -1126,8 +1126,8 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     commentDate: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.55)',
     },
     commentRating: {
         flexDirection: 'row',
@@ -1150,7 +1150,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     ownBadge: {
-        fontSize: 11,
+        fontSize: 12,
         color: 'cyan',
         fontWeight: '600',
         backgroundColor: 'rgba(0,255,255,0.1)',
@@ -1181,7 +1181,7 @@ const styles = StyleSheet.create({
     },
         anonLabel: {
         fontSize: 13,
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
     },
     tagChipErotic: {
         backgroundColor: 'rgba(255,124,42,0.12)',
@@ -1202,7 +1202,7 @@ metaLineText: {
     color: 'rgba(255,255,255,0.55)',
 },
 metaLineDot: {
-    color: 'rgba(255,255,255,0.25)',
+    color: 'rgba(255,255,255,0.55)',
     fontSize: 13,
 },
 universeRow: {

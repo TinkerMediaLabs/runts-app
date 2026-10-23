@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     emptyHint: {
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 13,
         textAlign: 'center',
         lineHeight: 20,

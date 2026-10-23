@@ -855,9 +855,9 @@ mini: {
     borderColor: 'rgba(255,255,255,0.08)',
   },
   upNextLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,

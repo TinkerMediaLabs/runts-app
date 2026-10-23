@@ -305,7 +305,7 @@ const SignIn = ({ navigation }: any) => {
                             >
                                 <Text
                                     style={{
-                                        color: '#ffffff66',
+                                        color: 'rgba(255,255,255,0.55)',
                                         fontSize: 12,
                                         textAlign: 'center',
                                         lineHeight: 18,

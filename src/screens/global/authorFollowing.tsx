@@ -113,11 +113,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff60',
+    color: 'rgba(255,255,255,0.55)',
   },
   emptySub: {
     fontSize: 14,
-    color: '#ffffff30',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
     lineHeight: 20,
   },
