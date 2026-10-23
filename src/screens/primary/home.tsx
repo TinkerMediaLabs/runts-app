@@ -12,7 +12,6 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
-import Backdrop from '../../components/common/Backdrop';
 import Reveal from '../../components/common/Reveal';
 import { useApp } from '@/context/AppContext';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
@@ -106,7 +105,6 @@ const HomeScreen = ({ navigation }: any) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             >
-                <Backdrop />
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ flexGrow: 1 }}
