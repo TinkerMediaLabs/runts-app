@@ -37,6 +37,7 @@ import PlayButtonV4 from '../../components/common/PlayButtonV4';
 import PlayButtonV3 from '../../components/common/PlayButtonV3';
 import PinButton    from '../../components/common/PinButton';
 import RatingModal  from '../../features/audio/RatingModal';
+import MoreLikeThis from '../../components/story/MoreLikeThis';
 
 import { spacing } from '../../theme/spacing';
 import { useApp }  from '@/context/AppContext';
@@ -716,6 +717,8 @@ const handleDelete = (id: string) => {
                             </View>
                         </View>
                     )}
+
+                    <MoreLikeThis story={story} />
 
                     <View style={styles.separator} />
 {/* ── Discussion ── */}

@@ -71,6 +71,8 @@ export const PlayerProvider = ({ children }: any) => {
     const playlistRef      = useRef<any[]>([]);
     const playlistIndexRef = useRef(-1);
     const [hasNextTrack, setHasNextTrack] = useState(false);
+    // Set when a story ends with nothing queued to autoplay; drives the "Keep going" suggestions sheet.
+    const [keepGoingStoryId, setKeepGoingStoryId] = useState<string | null>(null);
     const [nextTrackInfo, setNextTrackInfo] = useState<any>(null);
 
     const { expand } = usePlayerUI();
@@ -172,6 +174,7 @@ export const PlayerProvider = ({ children }: any) => {
                 await playNext();
             } else {
                 await closePlayerAfterCompletion();
+                setKeepGoingStoryId(storyId);
             }
 
         } catch (err) {
@@ -213,6 +216,7 @@ export const PlayerProvider = ({ children }: any) => {
 
     // ── Play ──────────────────────────────────────────────────────────────────
     const playTrack = async (track: Track) => {
+        setKeepGoingStoryId(null);
         setState(prev => ({ ...prev, playError: null }));
 
         try {
@@ -345,6 +349,7 @@ export const PlayerProvider = ({ children }: any) => {
         setState(prev => ({ ...prev, playError: null }));
 
     const clearTrack = async () => {
+        setKeepGoingStoryId(null);
         setSleepTimer(null);
         stopProgressTracking();
         isPlayingRef.current    = false;
@@ -511,6 +516,8 @@ export const PlayerProvider = ({ children }: any) => {
                 setPlaybackRate,
                 clearPlayError,
                 clearPendingRating,
+                keepGoingStoryId,
+                dismissKeepGoing: () => setKeepGoingStoryId(null),
                 clearTrack,
                 sleepMinutesLeft,
                 setSleepTimer,

@@ -2,6 +2,7 @@ import { View } from 'react-native';
 
 import TrackPlayerWidget from '@/features/audio/TrackPlayer';
 import ActionChip from '@/components/common/ActionChip';
+import KeepGoingSheet from '@/components/story/KeepGoingSheet';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
 
@@ -17,6 +18,7 @@ export default function AppShell({ children }: any) {
     <View style={{ flex: 1 }}>
       {children}
       <TrackPlayerWidget expanded={expanded} />
+      <KeepGoingSheet />
       <ActionChip />
     </View>
   );
