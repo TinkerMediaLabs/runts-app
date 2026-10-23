@@ -15,6 +15,7 @@ import { navigate } from '@/navigation/RootNavigator';
 import { Analytics } from '@/lib/analytics';
 import { findFinished, findPinned, findInProgress, findRating } from '@/lib/userStoryLookups';
 import { unwrap, warnOnErrors } from '@/lib/amplifyResult';
+import { withTimeout } from '@/lib/withTimeout';
 
 const client = generateClient<Schema>();
 
@@ -259,7 +260,7 @@ export const PlayerProvider = ({ children }: any) => {
 
             await audioEngine.play(track);
 
-            const playlist = await loadPlaylist(track.id);
+            const playlist = await withTimeout(loadPlaylist(track.id), 4000, [] as any[]);
             const index    = playlist.findIndex((s: any) => s.id === track.id);
             playlistIndexRef.current = index;
             const hasNext = index >= 0 && index < playlist.length - 1;

@@ -4,6 +4,17 @@ import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { findInProgress } from '../../lib/userStoryLookups';
 import { unwrap } from '@/lib/amplifyResult';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { withTimeout } from '../../lib/withTimeout';
+
+// Last position is also kept on the device so a story can resume (and keep its place) offline.
+const POS_KEY = (storyId: string) => `@runts/pos/${storyId}`;
+async function saveLocalPosition(storyId: string, seconds: number) {
+  try { await AsyncStorage.setItem(POS_KEY(storyId), String(Math.floor(seconds))); } catch {}
+}
+async function readLocalPosition(storyId: string): Promise<number> {
+  try { return Number(await AsyncStorage.getItem(POS_KEY(storyId))) || 0; } catch { return 0; }
+}
 
 const IN_PROGRESS_PAGE = 20;
 
@@ -52,6 +63,7 @@ export function useInProgressStoriesPaginated() {
 }
 
 export async function upsertInProgressStory(storyId: string, progressSeconds: number) {
+  await saveLocalPosition(storyId, progressSeconds);
   const { userId } = await getCurrentUser();
   const client = generateClient<Schema>();
   const existing = await findInProgress(userId, storyId);
@@ -88,7 +100,11 @@ export function useDeleteInProgressStory() {
 }
 
 export async function getInProgressSeconds(storyId: string): Promise<number> {
-  const { userId } = await getCurrentUser();
-  const rows = await findInProgress(userId, storyId);
-  return rows[0]?.progressSeconds ?? 0;
+  const fetchRemote = async () => {
+    const { userId } = await getCurrentUser();
+    const rows = await findInProgress(userId, storyId);
+    return rows[0]?.progressSeconds ?? 0;
+  };
+  const remote = await withTimeout<number | null>(fetchRemote(), 3000, null);
+  return remote ?? (await readLocalPosition(storyId));
 }

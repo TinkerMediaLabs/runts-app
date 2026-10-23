@@ -14,6 +14,7 @@ import { useApp } from '@/context/AppContext';
 import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
+import { useStory } from '../../hooks/queries/useStories';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { unwrap } from '@/lib/amplifyResult';
 
@@ -40,19 +41,7 @@ const PinnedStoryTile = ({
     drag?: () => void;
     isActive?: boolean;
 }) => {
-    const [story, setStory] = useState<any>(null);
-
-    useEffect(() => {
-        async function fetchStory() {
-            try {
-                const { data } = await client.models.Story.get({ id: item.storyId });
-                setStory(data);
-            } catch (e) {
-                console.log('Error fetching pinned story:', e);
-            }
-        }
-        fetchStory();
-    }, [item.storyId]);
+    const { data: story } = useStory(item.storyId);
 
     const { data: resolvedImageUri } = useStoryImage(
         story?.imageUri?.startsWith('stories/') ? story.imageUri : null
