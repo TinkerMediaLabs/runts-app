@@ -78,7 +78,7 @@ const SignIn = ({ navigation }: any) => {
     }
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessibilityRole="none">
             <View
                 style={[
                     styles.container,

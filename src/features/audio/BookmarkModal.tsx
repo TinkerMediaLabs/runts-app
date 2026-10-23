@@ -73,6 +73,7 @@ export default function BookmarkModal({
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback
+          accessibilityRole="none"
         onPress={onClose}
         accessibilityElementsHidden
         importantForAccessibility="no"

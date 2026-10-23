@@ -218,7 +218,7 @@ const Sheet = ({
             animationType="slide"
             onRequestClose={onClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
                 <View style={styles.sheetBackdrop} />
             </TouchableWithoutFeedback>
             <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>

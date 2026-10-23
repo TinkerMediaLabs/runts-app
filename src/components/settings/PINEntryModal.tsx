@@ -118,6 +118,7 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <TouchableOpacity
+                    accessibilityRole="button" accessibilityLabel="Cancel"
                     style={StyleSheet.absoluteFill}
                     activeOpacity={1}
                     onPress={onCancel}
@@ -137,6 +138,7 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
 
                     {/* Tapping the dot area re-focuses the hidden input */}
                     <TouchableOpacity
+                        accessibilityRole="none"
                         activeOpacity={1}
                         onPress={() => inputRef.current?.focus()}
                         accessibilityElementsHidden

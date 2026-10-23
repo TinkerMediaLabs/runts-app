@@ -138,6 +138,7 @@ export default function OptionsModal({
       {/* Backdrop — behind card and button, closes on tap */}
       {isMounted && (
         <TouchableWithoutFeedback
+            accessibilityRole="none"
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no"

@@ -727,6 +727,8 @@ const handleDelete = (id: string) => {
 {editingComment ? (
   <View style={styles.commentInput}>
     <TextInput
+        accessibilityLabel="Edit comment"
+        accessibilityHint="Edit the text of your comment"
       style={styles.commentInputText}
       value={editingComment.content}
       onChangeText={text => setEditingComment(prev => prev ? { ...prev, content: text } : null)}

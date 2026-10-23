@@ -1,3 +1,11 @@
 {
-  "extends": ["expo"]
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": { "ecmaVersion": 2022, "sourceType": "module", "ecmaFeatures": { "jsx": true } },
+  "extends": ["plugin:react-native-a11y/basic"],
+  "plugins": ["react-native-a11y"],
+  "rules": {
+    "react-native-a11y/has-accessibility-hint": "off"
+  },
+  "ignorePatterns": ["node_modules/", "amplify/", ".expo/"]
 }

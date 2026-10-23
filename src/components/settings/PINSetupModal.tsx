@@ -139,6 +139,7 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <TouchableOpacity
+                    accessibilityRole="button" accessibilityLabel="Cancel"
                     style={StyleSheet.absoluteFill}
                     activeOpacity={1}
                     onPress={onCancel}
@@ -170,6 +171,7 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
                     )}
 
                     <TouchableOpacity
+                        accessibilityRole="none"
                         activeOpacity={1}
                         onPress={() => inputRef.current?.focus()}
                         accessibilityElementsHidden

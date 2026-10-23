@@ -279,7 +279,7 @@ const SwipeableSheet = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
           <View style={styles.sheetBackdrop} />
         </TouchableWithoutFeedback>
         <Animated.View style={[styles.sheet, extraStyle, { paddingBottom }, sheetStyle]}>

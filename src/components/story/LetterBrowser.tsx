@@ -137,7 +137,7 @@ const LetterBrowser = ({
             >
                 <TouchableWithoutFeedback onPress={onLengthModalClose} accessibilityRole="button" accessibilityLabel="Close story length options">
                     <View style={styles.modalBackdrop}>
-                        <TouchableWithoutFeedback>
+                        <TouchableWithoutFeedback accessibilityRole="none">
                             <View style={styles.modalCard} accessibilityViewIsModal>
                                 <Text style={styles.modalTitle}>Story Length</Text>
                                 {LENGTH_OPTIONS.map(({ label, start, end }) => {

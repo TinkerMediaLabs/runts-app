@@ -78,7 +78,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
     );
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessibilityRole="none">
             <LinearGradient
                 colors={['#000000', '#050505', '#0a0a0a']}
                 style={{ flex: 1 }}
