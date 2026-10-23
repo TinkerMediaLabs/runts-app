@@ -13,6 +13,7 @@ import { tagIndexSync } from './functions/tag-index-sync/resource';
 import { listensAggregator } from './functions/listens-aggregator/resource';
 import { userCleanup } from './functions/user-cleanup/resource';
 import { eroticPin } from './functions/erotic-pin/resource';
+import { uploadUrl } from './functions/upload-url/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -35,6 +36,7 @@ const backend = defineBackend({
   listensAggregator,
   userCleanup,
   eroticPin,
+  uploadUrl,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -61,6 +63,14 @@ const streamFailureQueue = new sqs.Queue(streamFailureStack, 'StreamFailureQueue
   retentionPeriod: Duration.days(14),
 });
 const onFailure = new SqsDlq(streamFailureQueue);
+
+// ── upload-url ────────────────────────────────────────────────────────────
+// Signs short-lived upload links for the CMS. The storage rules are read-only for app users, so this
+// function (admin-only) is the only way to write story / author / narrator files.
+const uploadUrlFn = backend.uploadUrl.resources.lambda as lambda.Function;
+const storageBucket = backend.storage.resources.bucket;
+uploadUrlFn.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
+['stories/*', 'authors/*', 'narrators/*'].forEach(prefix => storageBucket.grantPut(uploadUrlFn, prefix));
 
 // ── erotic-pin ────────────────────────────────────────────────────────────
 const eroticPinFn = backend.eroticPin.resources.lambda as lambda.Function;
