@@ -176,12 +176,19 @@ const CarouselItem = ({
                         onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
                         style={styles.imageTap}
                         activeOpacity={1}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open ${title}${author ? `, by ${author}` : ''}`}
+                        accessibilityActions={[{ name: 'toggle', label: 'Show or hide details' }]}
+                        onAccessibilityAction={(e) => {
+                            if (e.nativeEvent.actionName === 'toggle') toggleExpand();
+                        }}
                     />
 
                     <TouchableOpacity
                         onPress={toggleExpand}
                         activeOpacity={0.9}
                         style={styles.infoPanel}
+                        accessible={false}
                     >
                         {/* Title row */}
                         <View style={styles.titleRow}>
@@ -286,7 +293,14 @@ const CarouselItem = ({
                                     )}
                                     <View style={styles.iconActions}>
                                         <PinButton storyId={id} size={20} />
-                                        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7} onPress={handleShare}>
+                                        <TouchableOpacity
+                                            style={styles.iconBtn}
+                                            activeOpacity={0.7}
+                                            onPress={handleShare}
+                                            accessibilityRole="button"
+                                            accessibilityLabel="Share story"
+                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                        >
                                             <FontAwesome name="share" size={20} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>
                                     </View>

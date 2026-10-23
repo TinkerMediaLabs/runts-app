@@ -77,6 +77,13 @@ export default function BookmarkTile({
       activeOpacity={0.8}
       onPress={() => onPlay(story.id, bookmark.positionSeconds)}
       style={styles.tile}
+      accessibilityRole="button"
+      accessibilityLabel={`${bookmark.name || 'My Bookmark'}, at ${formatPosition(bookmark.positionSeconds)} in ${story.title}${authorName ? `, by ${authorName}` : ''}`}
+      accessibilityHint="Plays from this bookmark"
+      accessibilityActions={[{ name: 'delete', label: 'Delete bookmark' }]}
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === 'delete') handleDelete();
+      }}
     >
       {/* Artwork */}
       <Image source={{ uri: displayImageUri }} style={styles.artwork} />
@@ -117,6 +124,8 @@ export default function BookmarkTile({
       <TouchableOpacity
         onPress={handleDelete}
         disabled={deleting}
+        accessibilityRole="button"
+        accessibilityLabel="Delete bookmark"
         style={styles.deleteBtn}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >

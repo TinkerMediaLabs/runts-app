@@ -28,7 +28,11 @@ const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any)
     const onPlay = useOnPlay();
 
     return (
-        <TouchableOpacity onPress={() => onPlay({
+        <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`Play ${title ?? 'story'}, ${TimeConversion(duration)}`}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => onPlay({
             id: id,
             title: title,
             url: audioUri,

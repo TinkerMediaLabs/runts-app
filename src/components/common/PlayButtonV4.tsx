@@ -20,7 +20,11 @@ const PlayButtonV4 = ({ style, id, title, audioUri, imageUri, author, isLocked =
     };
 
     return (
-        <TouchableOpacity onPress={handlePress}>
+        <TouchableOpacity
+            onPress={handlePress}
+            accessibilityRole="button"
+            accessibilityLabel={isLocked ? 'Premium story. Unlock to play' : `Play ${title ?? 'story'}`}
+        >
             <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',

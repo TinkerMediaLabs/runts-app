@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, AccessibilityInfo, Animated, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
@@ -63,6 +63,11 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
     }, [visible]);
 
     const reduceMotion = useReduceMotion();
+
+    // Read validation errors aloud (the error text appears without any focus change).
+    useEffect(() => {
+        if (error) AccessibilityInfo.announceForAccessibility(error);
+    }, [error]);
 
     const shake = () => {
         if (reduceMotion) return;
@@ -137,6 +142,8 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
                     style={StyleSheet.absoluteFill}
                     activeOpacity={1}
                     onPress={onCancel}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
                 />
 
                 <Animated.View
@@ -165,6 +172,8 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
                     <TouchableOpacity
                         activeOpacity={1}
                         onPress={() => inputRef.current?.focus()}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
                     >
                         <PINDots length={pin.length} />
                     </TouchableOpacity>
@@ -178,13 +187,21 @@ const PINSetupModal = ({ visible, onSuccess, onCancel }: Props) => {
                         style={styles.hiddenInput}
                         caretHidden
                         contextMenuHidden
+                        secureTextEntry
+                        accessibilityLabel={step === 'enter' ? 'Choose a 4-digit PIN' : 'Confirm your 4-digit PIN'}
                     />
 
-                    {!!error && <Text style={styles.error}>{error}</Text>}
+                    {!!error && (
+                        <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                            {error}
+                        </Text>
+                    )}
 
                     <TouchableOpacity
                         onPress={onCancel}
                         style={styles.cancelButton}
+                        accessibilityRole="button"
+                        accessibilityLabel="Cancel"
                         activeOpacity={0.7}
                     >
                         <Text style={styles.cancelText}>Cancel</Text>

@@ -85,7 +85,11 @@ const ToggleRow = ({
     iconColor?: string;
 }) => (
     <View style={[styles.row, disabled && { opacity: 0.4 }]}>
-        <View style={styles.rowLeft}>
+        <View
+            style={styles.rowLeft}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+        >
             <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
                 <FontAwesome5
                     name={icon}
@@ -102,6 +106,8 @@ const ToggleRow = ({
             </View>
         </View>
         <Switch
+            accessibilityLabel={label}
+            accessibilityHint={description}
             value={value}
             onValueChange={disabled ? undefined : onChange}
             disabled={disabled}
@@ -123,7 +129,13 @@ const SelectRow = ({
     value: string;
     onPress: () => void;
 }) => (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row}>
+    <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.row}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${value}`}
+    >
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
                 <FontAwesome5 name={icon} size={14} color="#ffffffa5" iconStyle="solid" />
@@ -154,7 +166,14 @@ const ActionRow = ({
     iconColor?: string;
     destructive?: boolean;
 }) => (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row}>
+    <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.row}
+        accessibilityRole="button"
+        accessibilityLabel={badge ? `${label}, ${badge}` : label}
+        accessibilityHint={description}
+    >
         <View style={styles.rowLeft}>
             <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
                 <FontAwesome5
@@ -209,6 +228,8 @@ const Sheet = ({
                     <TouchableOpacity
                         onPress={onClose}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Close"
                     >
                         <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
                     </TouchableOpacity>
@@ -232,6 +253,9 @@ const OptionPill = ({
         activeOpacity={0.7}
         onPress={onPress}
         style={[styles.optionPill, active && styles.optionPillActive]}
+        accessibilityRole="radio"
+        accessibilityLabel={label}
+        accessibilityState={{ checked: active }}
     >
         <Text style={[styles.optionPillText, active && styles.optionPillTextActive]}>
             {label}
@@ -276,6 +300,8 @@ const EroticSection = ({
                     activeOpacity={0.7}
                     onPress={onOpenPinEntry}
                     style={styles.row}
+                    accessibilityRole="button"
+                    accessibilityLabel="Locked. Enter your PIN to change erotic content settings"
                 >
                     <View style={styles.rowLeft}>
                         <View style={[styles.rowIcon, { backgroundColor: `${EROTIC_ORANGE}22` }]}>

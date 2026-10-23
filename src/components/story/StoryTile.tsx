@@ -110,6 +110,9 @@ const StoryTile = ({
                     onLongPress={drag}
                     activeOpacity={0.6}
                     style={styles.dragHandle}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reorder ${title}`}
+                    accessibilityHint="Press and hold, then drag to move this story in your playlist"
                 >
                     <FontAwesome5 name="grip-lines" size={16} color="#ffffff30" iconStyle="solid" />
                 </TouchableOpacity>
@@ -118,7 +121,14 @@ const StoryTile = ({
             <View style={styles.card}>
 
                     {/* ── Header row — tap here to expand/collapse ── */}
-                    <TouchableOpacity onPress={toggle} activeOpacity={0.85} style={styles.row}>
+                    <TouchableOpacity
+                        onPress={toggle}
+                        activeOpacity={0.85}
+                        style={styles.row}
+                        accessibilityRole="button"
+                        accessibilityLabel={[title, author ? `by ${author}` : null, durationDisplay].filter(Boolean).join(', ')}
+                        accessibilityHint="Shows or hides the story details"
+                    >
 
                         {/* Artwork — animates to 0 width on expand */}
                         <Animated.Image
@@ -209,6 +219,8 @@ const StoryTile = ({
                             {/* Full artwork → story screen */}
                             <TouchableWithoutFeedback
                                 onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Open ${title}`}
                             >
                                 <View>
                                     <Image
@@ -242,7 +254,13 @@ const StoryTile = ({
                                 <View style={styles.actionsLeft}>
                                     <PinButton storyId={id} size={20} />
 
-                                    <TouchableOpacity onPress={handleShare} style={styles.actionBtn} activeOpacity={0.7}>
+                                    <TouchableOpacity
+                                        onPress={handleShare}
+                                        style={styles.actionBtn}
+                                        activeOpacity={0.7}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Share story"
+                                    >
                                         <FontAwesome5 name="share" size={19} color="#ffffff70" iconStyle="solid" />
                                     </TouchableOpacity>
                                 </View>

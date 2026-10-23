@@ -27,6 +27,10 @@ const PinButton = ({
       onPress={() => toggle(storyId, isPinned)}
       activeOpacity={0.7}
       style={{ padding: 0 }}
+      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      accessibilityRole="button"
+      accessibilityLabel={isPinned ? 'Unpin story from playlist' : 'Pin story to playlist'}
+      accessibilityState={{ selected: isPinned }}
     >
       <AntDesign
         name="pushpin"

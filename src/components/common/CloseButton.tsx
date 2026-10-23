@@ -8,7 +8,12 @@ import AntDesign from '@react-native-vector-icons/ant-design';
 const CloseButton = ({navigation} :any) => {
 
     return (
-        <TouchableWithoutFeedback onPress={() => {navigation.goBack(); }}>
+        <TouchableWithoutFeedback
+            onPress={() => {navigation.goBack(); }}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        >
             <View style={ [{
                 flexDirection: 'row',        
                 alignItems: 'center',

@@ -99,6 +99,8 @@ const ProgressCard = ({
             activeOpacity={0.88}
             onPress={handlePlay}
             style={styles.card}
+            accessibilityRole="button"
+            accessibilityLabel={`Continue ${story.title}${authorName ? `, by ${authorName}` : ''}, ${percent} percent played, ${minsLeft} minutes left`}
         >
             <Image source={{ uri: displayImageUri }} style={styles.artwork} />
 

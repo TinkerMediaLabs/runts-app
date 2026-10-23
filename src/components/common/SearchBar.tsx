@@ -22,7 +22,12 @@ const SearchBar = () => {
 
     return (
         <View style={{ marginBottom: 20, marginHorizontal: 20, alignItems: 'center'}}>
-            <TouchableWithoutFeedback onPress={() => navigation.navigate('SearchScreen')}>
+            <TouchableWithoutFeedback
+                onPress={() => navigation.navigate('SearchScreen')}
+                accessibilityRole="button"
+                accessibilityLabel="Search stories, authors, tags"
+                accessibilityHint="Opens search"
+            >
                 <View style={
                     {alignItems: 'center', 
                     paddingHorizontal: 10, 

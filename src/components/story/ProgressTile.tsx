@@ -108,6 +108,8 @@ const ProgressTile = ({
                     <TouchableOpacity
                         onPress={() => deleteInProgress(story.id)}
                         activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${story?.title ?? 'story'} from in progress`}
                         style={styles.deleteBtn}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
