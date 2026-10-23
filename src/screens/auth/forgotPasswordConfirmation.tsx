@@ -116,6 +116,8 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                             {error ? (
                                 <Animated.View
                                     entering={FadeIn.duration(250)}
+                                    accessibilityRole="alert"
+                                    accessibilityLiveRegion="assertive"
                                     style={{ backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 18, padding: 14, marginBottom: 24 }}
                                 >
                                     <Text style={{ color: '#ff8a8a', fontSize: 13, textAlign: 'center' }}>{error}</Text>
@@ -127,8 +129,9 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                 <Text style={[styles.title, { marginBottom: 8, marginHorizontal: 0, fontSize: 14 }]}>Reset Code</Text>
                                 <View style={[styles.inputfield, { borderRadius: 18, backgroundColor: '#1a1a1a', borderColor: '#ffffff10', justifyContent: 'center', marginBottom: 20 }]}>
                                     <TextInput
+                                        accessibilityLabel="Reset code"
                                         placeholder="Enter your code"
-                                        placeholderTextColor="#ffffff55"
+                                        placeholderTextColor="#ffffff8c"
                                         style={[styles.textInputTitle, { fontSize: 16, color: '#fff' }]}
                                         maxLength={6}
                                         keyboardType="number-pad"
@@ -147,8 +150,9 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                 <Text style={[styles.title, { marginBottom: 8, marginHorizontal: 0, fontSize: 14 }]}>New Password</Text>
                                 <View style={[styles.inputfield, { borderRadius: 18, backgroundColor: '#1a1a1a', borderColor: '#ffffff10', flexDirection: 'row', alignItems: 'center', marginBottom: 20, paddingRight: 14 }]}>
                                     <TextInput
+                                        accessibilityLabel="New password"
                                         placeholder="At least 8 characters"
-                                        placeholderTextColor="#ffffff55"
+                                        placeholderTextColor="#ffffff8c"
                                         style={[styles.textInputTitle, { flex: 1, fontSize: 16, color: '#fff' }]}
                                         maxLength={40}
                                         autoCapitalize="none"
@@ -159,7 +163,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         value={newPassword}
                                         onChangeText={setNewPassword}
                                     />
-                                    <TouchableOpacity onPress={() => setShowNew(v => !v)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showNew ? 'Hide new password' : 'Show new password'} onPress={() => setShowNew(v => !v)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                                         <Feather
                                             name={showNew ? 'eye' : 'eye-off'}
                                             size={18}
@@ -174,8 +178,9 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                 <Text style={[styles.title, { marginBottom: 8, marginHorizontal: 0, fontSize: 14 }]}>Confirm Password</Text>
                                 <View style={[styles.inputfield, { borderRadius: 18, backgroundColor: '#1a1a1a', borderColor: '#ffffff10', flexDirection: 'row', alignItems: 'center', marginBottom: 32, paddingRight: 14 }]}>
                                     <TextInput
+                                        accessibilityLabel="Confirm new password"
                                         placeholder="Re-enter your new password"
-                                        placeholderTextColor="#ffffff55"
+                                        placeholderTextColor="#ffffff8c"
                                         style={[styles.textInputTitle, { flex: 1, fontSize: 16, color: '#fff' }]}
                                         maxLength={40}
                                         autoCapitalize="none"
@@ -186,7 +191,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         value={confirmPassword}
                                         onChangeText={setConfirmPassword}
                                     />
-                                    <TouchableOpacity onPress={() => setShowConfirm(v => !v)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showConfirm ? 'Hide confirm password' : 'Show confirm password'} onPress={() => setShowConfirm(v => !v)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                                         <Feather
                                             name={showConfirm ? 'eye' : 'eye-off'}
                                             size={18}
@@ -202,7 +207,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                             ) : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity activeOpacity={0.9} onPress={handleConfirm}>
+                                    <TouchableOpacity accessibilityRole="button" activeOpacity={0.9} onPress={handleConfirm}>
                                         <View style={[styles.buttonlayout, { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18 }]}>
                                             <Text style={[styles.buttontext, { width: '100%', fontSize: 16, fontWeight: '700' }]}>
                                                 Reset Password
@@ -215,7 +220,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
 
                             {/* Back */}
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <TouchableOpacity accessibilityRole="button" onPress={() => navigation.goBack()}>
                                     <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 32 }}>
                                         Go Back
                                     </Text>

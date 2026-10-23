@@ -75,7 +75,8 @@ export const TextField = ({ label, value, onChangeText, mb, ...rest }: TextField
                     style={fieldStyles.input}
                     value={value}
                     onChangeText={onChangeText}
-                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    accessibilityLabel={label}
+                    placeholderTextColor="rgba(255,255,255,0.55)"
                     selectionColor="#00ffff"
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
@@ -98,7 +99,8 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
                     style={fieldStyles.input}
                     value={value}
                     onChangeText={onChangeText}
-                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    accessibilityLabel={label}
+                    placeholderTextColor="rgba(255,255,255,0.55)"
                     selectionColor="#00ffff"
                     secureTextEntry={!visible}
                     autoCapitalize="none"
@@ -112,11 +114,13 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
                     style={fieldStyles.eyeBtn}
                     activeOpacity={0.7}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={visible ? `Hide ${label}` : `Show ${label}`}
                 >
                     <Feather
                         name={visible ? 'eye' : 'eye-off'}
                         size={18}
-                        color="rgba(255,255,255,0.45)"
+                        color="rgba(255,255,255,0.6)"
                     />
                 </TouchableOpacity>
             </View>

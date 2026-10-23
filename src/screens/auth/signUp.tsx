@@ -64,7 +64,7 @@ const SignUp = ({ navigation }: any) => {
                                 <Text style={[styles.title, s.heading]}>Create Account</Text>
                             </Animated.View>
 
-                            {error ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox}><Text style={s.errorText}>{error}</Text></Animated.View> : null}
+                            {error ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox} accessibilityRole="alert" accessibilityLiveRegion="assertive"><Text style={s.errorText}>{error}</Text></Animated.View> : null}
 
                             <Animated.View entering={FadeInUp.delay(150).duration(700)}>
                                 <TextField label="Email" value={email} onChangeText={setEmail} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
@@ -81,7 +81,7 @@ const SignUp = ({ navigation }: any) => {
                             {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity activeOpacity={0.9} onPress={handleSignUp}>
+                                    <TouchableOpacity accessibilityRole="button" activeOpacity={0.9} onPress={handleSignUp}>
                                         <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Create Account</Text></View>
                                     </TouchableOpacity>
                                 </Animated.View>
@@ -89,12 +89,12 @@ const SignUp = ({ navigation }: any) => {
                             )}
 
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.navigate('EmailSignIn')}>
+                                <TouchableOpacity accessibilityRole="button" onPress={() => navigation.navigate('EmailSignIn')}>
                                     <Text style={s.linkText}>Already have an account? <Text style={s.linkAccent}>Sign In</Text></Text>
                                 </TouchableOpacity>
                             </Animated.View>
                             <Animated.View entering={FadeIn.delay(550).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <TouchableOpacity accessibilityRole="button" onPress={() => navigation.goBack()}>
                                     <Text style={s.backText}>Go Back</Text>
                                 </TouchableOpacity>
                             </Animated.View>

@@ -75,7 +75,7 @@ const ConfirmEmail = ({ navigation, route }: any) => {
                                 </Text>
                             </Animated.View>
 
-                            {error     ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox}><Text style={s.errorText}>{error}</Text></Animated.View> : null}
+                            {error     ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox} accessibilityRole="alert" accessibilityLiveRegion="assertive"><Text style={s.errorText}>{error}</Text></Animated.View> : null}
                             {resentMsg ? <Animated.View entering={FadeIn.duration(250)} style={s.successBox}><Text style={s.successText}>{resentMsg}</Text></Animated.View> : null}
 
                             <Animated.View entering={FadeInUp.delay(150).duration(700)}>
@@ -85,7 +85,7 @@ const ConfirmEmail = ({ navigation, route }: any) => {
                             {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity activeOpacity={0.9} onPress={handleConfirm}>
+                                    <TouchableOpacity accessibilityRole="button" activeOpacity={0.9} onPress={handleConfirm}>
                                         <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Verify Email</Text></View>
                                     </TouchableOpacity>
                                 </Animated.View>
@@ -94,13 +94,13 @@ const ConfirmEmail = ({ navigation, route }: any) => {
 
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
                                 {resending ? <ActivityIndicator size="small" color="rgba(255,255,255,0.35)" style={{ marginTop: 32 }} /> : (
-                                    <TouchableOpacity onPress={handleResend}>
+                                    <TouchableOpacity accessibilityRole="button" onPress={handleResend}>
                                         <Text style={s.linkText}>Didn't get a code? <Text style={s.linkAccent}>Resend</Text></Text>
                                     </TouchableOpacity>
                                 )}
                             </Animated.View>
                             <Animated.View entering={FadeIn.delay(550).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <TouchableOpacity accessibilityRole="button" onPress={() => navigation.goBack()}>
                                     <Text style={s.backText}>Go Back</Text>
                                 </TouchableOpacity>
                             </Animated.View>

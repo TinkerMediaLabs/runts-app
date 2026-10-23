@@ -163,6 +163,9 @@ const SignIn = ({ navigation }: any) => {
                             >
                                 <TouchableOpacity
                                     activeOpacity={0.85}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Continue with email"
+                                    accessibilityState={{ disabled: signingIn }}
                                     onPress={() =>
                                         !signingIn
                                             ? navigation.navigate('EmailSignIn')
@@ -212,6 +215,9 @@ const SignIn = ({ navigation }: any) => {
                             >
                                 <TouchableOpacity
                                     activeOpacity={0.85}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Continue with Google"
+                                    accessibilityState={{ disabled: signingIn }}
                                     onPress={() =>
                                         !signingIn
                                             ? signInWithGoogle()
@@ -249,6 +255,9 @@ const SignIn = ({ navigation }: any) => {
                             >
                                 <TouchableOpacity
                                     activeOpacity={0.85}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Continue with Apple"
+                                    accessibilityState={{ disabled: signingIn }}
                                     onPress={() =>
                                         !signingIn
                                             ? signInWithApple()
@@ -327,6 +336,7 @@ const SignIn = ({ navigation }: any) => {
                                 }}
                             >
                                 <TouchableOpacity
+                                    accessibilityRole="link"
                                     onPress={() =>
                                         Linking.openURL(
                                             'mailto:admin@tinkermedia.net'
@@ -346,6 +356,7 @@ const SignIn = ({ navigation }: any) => {
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
+                                    accessibilityRole="link"
                                     onPress={() =>
                                         Linking.openURL(
                                             'https://www.tinkermedia.net/runts/terms/'
