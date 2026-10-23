@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Dimensions, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, cancelAnimation,
 } from 'react-native-reanimated';
 import { Text } from '@/components/common/AppText';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import {
-  loadTips, useTipsState, getTargetRef, markTipSeen, setTipsEnabled,
+  loadTips, useTipsState, getTargetRef, markTipSeen, setTipsEnabled, setTipsRoute,
 } from './tipsStore';
+import { navigationRef } from '@/navigation/RootNavigator';
 import { TIPS, type Tip } from './tips';
 
-const SETTLE_MS = 900;          // let the screen finish animating before measuring
+const SETTLE_MS = 600;          // let the screen finish animating before measuring
 const PAD = 8;                  // breathing room around the highlighted control
 const DIM = 'rgba(0,0,0,0.78)';
 const ACCENT = '#00ffff';
@@ -23,12 +24,27 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
   const { loaded, enabled, seen, route, flags, version } = useTipsState();
   const reduceMotion = useReduceMotion();
   const [active, setActive] = useState<Active | null>(null);
+  // The overlay's own box. Controls are measured RELATIVE TO THIS, so the spotlight always lines up even
+  // with status bar / edge-to-edge differences between phones.
+  const rootRef = useRef<View>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
   const fade = useSharedValue(0);
   const pulse = useSharedValue(0);
   const lift = useSharedValue(12);
 
   useEffect(() => { loadTips(); }, []);
+
+  // Keep the current screen name fresh. Navigation events alone miss the first screen after sign-in,
+  // so also check twice a second (cheap: reads a name, only updates when it changed).
+  useEffect(() => {
+    const sync = () => {
+      if (navigationRef.current?.isReady()) setTipsRoute(navigationRef.current.getCurrentRoute()?.name);
+    };
+    sync();
+    const id = setInterval(sync, 500);
+    return () => clearInterval(id);
+  }, []);
 
   const eligible = (tip: Tip) =>
     !seen.includes(tip.id) &&
@@ -47,16 +63,20 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
 
     const timer = setTimeout(() => {
       const ref = getTargetRef(next.target);
-      if (!ref?.current?.measureInWindow) return;
-      ref.current.measureInWindow((x: number, y: number, w: number, h: number) => {
-        const { width, height } = Dimensions.get('window');
-        const onScreen = w > 0 && h > 0 && x >= -1 && y >= 0 && x + w <= width + 1 && y + h <= height + 1;
-        if (onScreen && eligible(next)) setActive({ tip: next, x, y, w, h });
-      });
+      const root = rootRef.current;
+      if (!ref?.current?.measureLayout || !root || size.width === 0) return;
+      ref.current.measureLayout(
+        root as any,
+        (x: number, y: number, w: number, h: number) => {
+          const onScreen = w > 0 && h > 0 && x >= -1 && y >= 0 && x + w <= size.width + 1 && y + h <= size.height + 1;
+          if (onScreen && eligible(next)) setActive({ tip: next, x, y, w, h });
+        },
+        () => {},
+      );
     }, SETTLE_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, enabled, blocked, seen, route, flags, version, active?.tip.id]);
+  }, [loaded, enabled, blocked, seen, route, flags, version, active?.tip.id, size.width]);
 
   // Animate in / announce.
   useEffect(() => {
@@ -84,9 +104,21 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
     transform: [{ scale: reduceMotion ? 1 : 1 + pulse.value * 0.1 }],
   }));
 
-  if (!active) return null;
+  const frame = (children: React.ReactNode) => (
+    <View
+      ref={rootRef}
+      collapsable={false}
+      pointerEvents="box-none"
+      style={styles.frame}
+      onLayout={e => setSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
+    >
+      {children}
+    </View>
+  );
 
-  const { width: W, height: H } = Dimensions.get('window');
+  if (!active) return frame(null);
+
+  const { width: W, height: H } = size;
   const hx = Math.max(0, active.x - PAD);
   const hy = Math.max(0, active.y - PAD);
   const hw = Math.min(W - hx, active.w + PAD * 2);
@@ -100,7 +132,7 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
   const dismiss = () => { markTipSeen(active.tip.id); setActive(null); };
   const turnOff = () => { markTipSeen(active.tip.id); setTipsEnabled(false); setActive(null); };
 
-  return (
+  return frame(
     <Animated.View style={[styles.root, overlayStyle]} accessibilityViewIsModal pointerEvents="auto">
       {/* Dim everything except the spotlight (four rectangles around it). */}
       <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} accessibilityRole="none" accessibilityElementsHidden importantForAccessibility="no" />
@@ -128,7 +160,8 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFillObject, zIndex: 9000, elevation: 9000 },
+  frame: { ...StyleSheet.absoluteFillObject, zIndex: 9000, elevation: 9000 },
+  root: { ...StyleSheet.absoluteFillObject },
   dim: { position: 'absolute', backgroundColor: DIM },
   ring: { position: 'absolute', borderRadius: 18, borderWidth: 2, borderColor: ACCENT },
   card: {

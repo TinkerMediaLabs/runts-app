@@ -13,7 +13,7 @@ import { useApp } from '@/context/AppContext';
 import { navigate } from '@/navigation/RootNavigator';
 
 import { Analytics } from '@/lib/analytics';
-import { findFinished, findPinned, findInProgress } from '@/lib/userStoryLookups';
+import { findFinished, findPinned, findInProgress, findRating } from '@/lib/userStoryLookups';
 import { unwrap, warnOnErrors } from '@/lib/amplifyResult';
 
 const client = generateClient<Schema>();
@@ -140,6 +140,21 @@ export const PlayerProvider = ({ children }: any) => {
                     await refreshProfile();
                 } catch (err) {
                     console.warn('Profile stats update error:', err);
+                }
+            } else {
+                // Finished before but never rated: still ask for a rating.
+                try {
+                    const rated = await findRating(userId, storyId);
+                    if (!rated.length) {
+                        setState(prev => ({
+                            ...prev,
+                            pendingRatingStoryId: storyId,
+                            pendingRatingTitle:   currentTrackRef.current?.title ?? '',
+                            pendingRatingArtwork: currentTrackRef.current?.artwork ?? '',
+                        }));
+                    }
+                } catch (err) {
+                    console.warn('Rating lookup error:', err);
                 }
             }
 
