@@ -23,7 +23,9 @@ const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
  *   2. Existing HTTPS URL (pass-through)
  *   3. Signed S3 URL (in-memory cache, then fresh getUrl)
  */
-async function resolveAudioUrl(url: string): Promise<string> {
+type LocalMode = 'uri' | 'path' | 'remote';
+
+async function resolveAudioUrl(url: string, localMode: LocalMode = 'uri'): Promise<string> {
   // Already a full URL — pass through
   if (url.startsWith('https://') || url.startsWith('http://')) {
     return url;
@@ -32,12 +34,15 @@ async function resolveAudioUrl(url: string): Promise<string> {
   // Downloaded file first: it needs no network, and signing an S3 URL succeeds offline (no request is
   // made) so the player would be handed a link it cannot reach.
   try {
-    const localPath = await getLocalFilePath(url);
+    const localPath = localMode === 'remote' ? null : await getLocalFilePath(url);
     if (localPath) {
       const info: any = await FileSystem.getInfoAsync(localPath);
       console.log('audioEngine: local file', localPath, 'exists:', info.exists, 'bytes:', info.size);
       // A real story is megabytes; a tiny file is a failed download, so ignore it and use the network.
-      if (info.exists && (info.size ?? 0) > 100 * 1024) return localPath;
+      if (info.exists && (info.size ?? 0) > 100 * 1024) {
+        // The player may want the plain path instead of a file:// address; the error ladder below tries both.
+        return localMode === 'path' ? localPath.replace(/^file:\/\//, '') : localPath;
+      }
     }
   } catch {
     // fall through to the network path
@@ -90,6 +95,8 @@ class AudioEngine {
 
   private currentTrack: Track | null = null;
   private lastRecoveryAt = 0;
+  private localMode: LocalMode = 'uri';
+  private playingLocal = false;
   private errorSub: { remove: () => void } | null = null;
 
   constructor() {
@@ -108,6 +115,30 @@ class AudioEngine {
         console.warn('audioEngine: PlaybackError', JSON.stringify(e));
         const track = this.currentTrack;
         if (!track || e?.code === 'renderer') return;
+
+        // A saved file the player cannot open: step through other ways to hand it over (plain path, then
+        // the network when online) instead of staying silent. These steps are not rate limited.
+        if (this.playingLocal) {
+          const next: LocalMode = this.localMode === 'uri' ? 'path' : 'remote';
+          if (next === 'remote' && !onlineManager.isOnline()) {
+            console.error('audioEngine: saved file could not be opened and there is no connection');
+            return;
+          }
+          this.localMode = next;
+          try {
+            const position = this.getCurrentPosition();
+            const url = await resolveAudioUrl(track.url, next);
+            this.playingLocal = url.startsWith('file://') || url.startsWith('/');
+            console.log('audioEngine: retrying with', next, url.slice(0, 60));
+            await TrackPlayer.setMediaItems([{ url, title: track.title, artwork: track.artwork, artist: track.artist } as any]);
+            if (position > 0) await TrackPlayer.seekTo(position);
+            await TrackPlayer.play();
+          } catch (err) {
+            console.error('audioEngine: local retry failed', err);
+          }
+          return;
+        }
+
         const now = Date.now();
         if (now - this.lastRecoveryAt < 30_000) return;
         this.lastRecoveryAt = now;
@@ -139,8 +170,11 @@ async play(track: Track) {
       await TrackPlayer.play();
       return;
     }
-    const resolvedUrl = await resolveAudioUrl(track.url);
-    console.log('audioEngine.play: resolvedUrl =', resolvedUrl);  // ← add
+    // 'remote' is only a per-story rescue; the next story starts from the saved file again.
+    if (this.localMode === 'remote') this.localMode = 'uri';
+    const resolvedUrl = await resolveAudioUrl(track.url, this.localMode);
+    this.playingLocal = resolvedUrl.startsWith('file://') || resolvedUrl.startsWith('/');
+    console.log('audioEngine.play: resolvedUrl =', resolvedUrl);
 
     await TrackPlayer.stop();
     await new Promise(resolve => setTimeout(resolve, 100));

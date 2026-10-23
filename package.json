@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint src --ext .ts,.tsx --no-inline-config"
+    "lint": "eslint src --ext .ts,.tsx --no-inline-config",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@aws-amplify/react-native": "^1.3.3",
@@ -89,6 +90,7 @@
     "constructs": "^10.6.0",
     "esbuild": "^0.28.0",
     "eslint-plugin-react-native-a11y": "^3.5.1",
+    "patch-package": "^8.0.1",
     "tsx": "^4.22.1",
     "typescript": "^5.9.3"
   },

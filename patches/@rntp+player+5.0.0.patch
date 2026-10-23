@@ -1,0 +1,26 @@
+diff --git a/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt b/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt
+index 964c96b..ff60345 100644
+--- a/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt
++++ b/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt
+@@ -22,6 +22,7 @@ import androidx.media3.common.MediaMetadata
+ import androidx.media3.common.Player
+ import androidx.media3.common.util.UnstableApi
+ import androidx.media3.datasource.DataSource
++import androidx.media3.datasource.DefaultDataSource
+ import androidx.media3.datasource.DataSpec
+ import androidx.media3.datasource.DefaultHttpDataSource
+ import androidx.media3.datasource.cache.CacheDataSource
+@@ -92,8 +93,11 @@ class TrackPlayerPlaybackService: MediaLibraryService(), MediaLibraryService.Med
+       )
+       .build()
+ 
+-    val upstreamFactory: DataSource.Factory = HeaderInjectingDataSourceFactory(
+-      DefaultHttpDataSource.Factory()
++    // DefaultDataSource routes file://, content:// and asset:// to the right reader and only uses HTTP for
++    // http(s), so downloaded files can play offline.
++    val upstreamFactory: DataSource.Factory = DefaultDataSource.Factory(
++      this,
++      HeaderInjectingDataSourceFactory(DefaultHttpDataSource.Factory())
+     )
+ 
+     val dataSourceFactory: DataSource.Factory = config.cacheMaxSizeBytes?.let { maxBytes ->
