@@ -32,8 +32,10 @@ const PinnedStoryTile = ({
     reorderEnabled,
     drag,
     isActive,
+    isFirst,
 }: {
     item: any;
+    isFirst?: boolean;
     reorderEnabled: boolean;
     drag?: () => void;
     isActive?: boolean;
@@ -84,6 +86,7 @@ const PinnedStoryTile = ({
             licenseType={item.licenseType}
             universeId={item.universeId}
             sequenceNumber={item.sequenceNumber}
+            tipTarget={isFirst ? 'story-tile' : undefined}
         />
     );
 };
@@ -136,13 +139,14 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         }
     };
 
-    const renderItem = ({ item, drag, isActive }: RenderItemParams<any>) => (
+    const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<any>) => (
         <ScaleDecorator activeScale={1.02}>
             <PinnedStoryTile
                 item={item}
                 reorderEnabled={reorderEnabled}
                 drag={drag}
                 isActive={isActive}
+                isFirst={getIndex?.() === 0}
             />
         </ScaleDecorator>
     );

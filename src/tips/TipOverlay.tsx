@@ -64,15 +64,17 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
     const timer = setTimeout(() => {
       const ref = getTargetRef(next.target);
       const root = rootRef.current;
-      if (!ref?.current?.measureLayout || !root || size.width === 0) return;
-      ref.current.measureLayout(
-        root as any,
-        (x: number, y: number, w: number, h: number) => {
+      if (!ref?.current?.measureInWindow || !root?.measureInWindow || size.width === 0) return;
+      // Measure the overlay and the control in the same (window) coordinates, then subtract the
+      // overlay's own origin. That cancels any status bar / edge-to-edge offset between phones.
+      root.measureInWindow((rx: number, ry: number) => {
+        ref.current.measureInWindow((wx: number, wy: number, w: number, h: number) => {
+          const x = wx - rx;
+          const y = wy - ry;
           const onScreen = w > 0 && h > 0 && x >= -1 && y >= 0 && x + w <= size.width + 1 && y + h <= size.height + 1;
           if (onScreen && eligible(next)) setActive({ tip: next, x, y, w, h });
-        },
-        () => {},
-      );
+        });
+      });
     }, SETTLE_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps

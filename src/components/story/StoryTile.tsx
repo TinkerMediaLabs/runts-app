@@ -18,6 +18,7 @@ import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
+import { useTipTarget } from '../../tips/useTipTarget';
 import { useStoryProgress } from '../../hooks/queries/useStoryProgressMap';
 import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
@@ -46,7 +47,10 @@ const StoryTile = ({
     isActive,
     isLocked = false, 
     isPremium = false,
+    tipTarget,
 }: any) => {
+
+    const tileTipRef = useTipTarget(tipTarget);
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -118,7 +122,7 @@ const StoryTile = ({
                 </TouchableOpacity>
             )}
 
-            <View style={styles.card}>
+            <View style={styles.card} ref={tileTipRef as any} collapsable={false}>
 
                     {/* ── Header row — tap here to expand/collapse ── */}
                     <TouchableOpacity
