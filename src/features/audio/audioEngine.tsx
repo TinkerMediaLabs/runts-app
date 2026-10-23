@@ -28,7 +28,18 @@ async function resolveAudioUrl(url: string): Promise<string> {
     return url;
   }
 
-  // Try signed S3 URL first (online path — works reliably with @rntp/player)
+  // Downloaded file first: it needs no network, and signing an S3 URL succeeds offline (no request is
+  // made) so the player would be handed a link it cannot reach.
+  try {
+    const localPath = await getLocalFilePath(url);
+    if (localPath) {
+      const info = await FileSystem.getInfoAsync(localPath);
+      if (info.exists) return localPath;
+    }
+  } catch {
+    // fall through to the network path
+  }
+
   const cached = signedUrlCache.get(url);
   const now    = Date.now();
 
