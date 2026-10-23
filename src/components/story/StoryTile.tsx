@@ -19,6 +19,7 @@ import { RootStackParamList } from '../../types/types';
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
 import { useTipTarget } from '../../tips/useTipTarget';
+import { useIsDownloaded } from '../../hooks/useIsDownloaded';
 import { useStoryProgress } from '../../hooks/queries/useStoryProgressMap';
 import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
@@ -51,6 +52,7 @@ const StoryTile = ({
 }: any) => {
 
     const tileTipRef = useTipTarget(tipTarget);
+    const savedOffline = useIsDownloaded(id);
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -181,6 +183,15 @@ const StoryTile = ({
                                     <Text style={[styles.durationText, { color: durationDisplay.color }]}>
                                         {durationDisplay.text}
                                     </Text>
+                                </View>
+                            )}
+                            {savedOffline && (
+                                <View
+                                    style={styles.metaRow}
+                                    accessible
+                                    accessibilityLabel="Saved for offline listening"
+                                >
+                                    <FontAwesome5 name="download" size={11} color="cyan" iconStyle="solid" />
                                 </View>
                             )}
                             {/* Tag pills — moved here from expanded view */}

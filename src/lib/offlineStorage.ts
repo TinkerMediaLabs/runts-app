@@ -9,6 +9,7 @@ export const OFFLINE_ENABLED_KEY = '@runts/offline_enabled';
 export const DOWNLOADS_KEY       = '@runts/downloads';
 export const STORAGE_LIMIT_BYTES = 500 * 1024 * 1024; // 500 MB
 export const AUDIO_DIR = `${(FileSystem as any).documentDirectory ?? ''}audio/`;
+export const COVERS_DIR = `${(FileSystem as any).documentDirectory ?? ''}covers/`;
 export const SCENES_DIR = `${(FileSystem as any).documentDirectory ?? ''}scenes/`;
 
 // ---------------------------------------------------------------------------
@@ -32,6 +33,8 @@ export type DownloadRecord = {
   fileSize:     number;   // bytes (0 while downloading or on failure)
   downloadedAt: string;   // ISO timestamp
   status:       DownloadStatus;
+  coverUri?:    string;   // original S3 key of the cover image (matches Story.imageUri)
+  coverPath?:   string;   // absolute on-device path of the saved cover
   scenes?:      DownloadScene[];   // picture-book scenes, when the story has any (fileSize includes their bytes)
 };
 
@@ -67,7 +70,48 @@ export async function getDownloads(): Promise<DownloadRecord[]> {
 }
 
 export async function saveDownloads(records: DownloadRecord[]): Promise<void> {
+  coverIndex = null;
+  downloadedIds = new Set(records.filter(r => r.status === 'complete').map(r => r.storyId));
+  listeners.forEach(l => l());
   await AsyncStorage.setItem(DOWNLOADS_KEY, JSON.stringify(records));
+}
+
+// Which stories are saved on the device (complete downloads), shared so any tile can show a badge
+// without reading storage. Loaded once, then kept current by saveDownloads.
+let downloadedIds: Set<string> | null = null;
+const listeners = new Set<() => void>();
+
+export async function getDownloadedIds(): Promise<Set<string>> {
+  if (!downloadedIds) {
+    downloadedIds = new Set((await getDownloads()).filter(r => r.status === 'complete').map(r => r.storyId));
+  }
+  return downloadedIds;
+}
+
+export function subscribeDownloaded(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+
+// In-memory lookup of saved covers (S3 key -> local file), rebuilt after every change to the records,
+// so tiles can resolve a cover without reading storage each time.
+let coverIndex: Map<string, string> | null = null;
+
+/** Local file for a cover image key when that story's cover was saved for offline use, else null. */
+export async function getLocalCoverPath(s3Path: string): Promise<string | null> {
+  if (!coverIndex) {
+    const map = new Map<string, string>();
+    (await getDownloads()).forEach(r => {
+      if (r.status === 'complete' && r.coverUri && r.coverPath) map.set(r.coverUri, r.coverPath);
+    });
+    coverIndex = map;
+  }
+  return coverIndex.get(s3Path) ?? null;
+}
+
+/** Canonical local path for a story's saved cover. */
+export function coverPathForStory(storyId: string): string {
+  return COVERS_DIR + storyId + '.jpg';
 }
 
 /** Total bytes of completed downloads only. */

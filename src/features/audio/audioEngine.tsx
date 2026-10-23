@@ -1,5 +1,6 @@
 import TrackPlayer, { Event } from '@rntp/player';
 import { getUrl } from 'aws-amplify/storage';
+import { onlineManager } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getLocalFilePath } from '../../lib/offlineStorage';
 
@@ -38,6 +39,11 @@ async function resolveAudioUrl(url: string): Promise<string> {
     }
   } catch {
     // fall through to the network path
+  }
+
+  // No connection and no saved copy: say so plainly instead of handing the player a link that cannot load.
+  if (!onlineManager.isOnline()) {
+    throw new Error("This story isn't saved on your phone, so it can't play offline. Pin it while online to save it.");
   }
 
   const cached = signedUrlCache.get(url);

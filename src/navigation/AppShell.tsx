@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import TrackPlayerWidget from '@/features/audio/TrackPlayer';
 import ActionChip from '@/components/common/ActionChip';
 import KeepGoingSheet from '@/components/story/KeepGoingSheet';
+import OfflineBanner from '@/components/common/OfflineBanner';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
 import { usePlayer } from '@/context/PlayerContext';
@@ -32,6 +33,7 @@ export default function AppShell({ children }: any) {
       <TrackPlayerWidget expanded={expanded} />
       <KeepGoingSheet />
       <TipOverlay blocked={tipsBlocked} />
+      <OfflineBanner />
       <ActionChip />
     </View>
   );

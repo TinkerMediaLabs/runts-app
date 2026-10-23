@@ -18,6 +18,8 @@ import {
   removeDownloadRecord,
   ensureAudioDir,
   localPathForStory,
+  coverPathForStory,
+  COVERS_DIR,
   sceneDirForStory,
   STORAGE_LIMIT_BYTES,
   type DownloadScene,
@@ -39,6 +41,7 @@ export async function downloadStory(story: {
   id: string;
   audioUri: string;
   title?: string | null;
+  imageUri?: string | null;
 }): Promise<{ success: boolean; reason?: string }> {
   const offlineEnabled = await getOfflineEnabled();
   if (!offlineEnabled) return { success: false, reason: 'offline_disabled' };
@@ -108,11 +111,15 @@ export async function downloadStory(story: {
       return { success: false, reason: 'storage_limit' };
     }
 
+    // Cover image: best effort, so tiles and the player show artwork offline.
+    const cover = await downloadCover(story.id, story.imageUri);
+
     const completeRecord = {
       storyId:      story.id,
       audioUri:     story.audioUri,
       localPath,
-      fileSize,
+      fileSize:     fileSize + cover.bytes,
+      ...(cover.path ? { coverUri: story.imageUri as string, coverPath: cover.path } : {}),
       downloadedAt: new Date().toISOString(),
       status:       'complete' as const,
     };
@@ -125,7 +132,7 @@ export async function downloadStory(story: {
       if (sceneResult.scenes.length > 0) {
         await addOrUpdateDownload({
           ...completeRecord,
-          fileSize: fileSize + sceneResult.bytes,
+          fileSize: completeRecord.fileSize + sceneResult.bytes,
           scenes:   sceneResult.scenes,
         });
       }
@@ -147,6 +154,35 @@ export async function downloadStory(story: {
     });
     return { success: false, reason: 'error' };
   }
+}
+
+/** Saves a story's cover image on the device. Returns where it went and its size; never throws. */
+async function downloadCover(storyId: string, imageUri?: string | null): Promise<{ path: string | null; bytes: number }> {
+  if (!imageUri || !imageUri.startsWith('stories/')) return { path: null, bytes: 0 };
+  try {
+    await FileSystem.makeDirectoryAsync(COVERS_DIR, { intermediates: true }).catch(() => {});
+    const dest = coverPathForStory(storyId);
+    const { url } = await getUrl({ path: imageUri, options: { expiresIn: 3600 } });
+    const out = await FileSystem.downloadAsync(url.toString(), dest);
+    if (out.status !== 200) { await FileSystem.deleteAsync(dest, { idempotent: true }); return { path: null, bytes: 0 }; }
+    const info = await FileSystem.getInfoAsync(dest);
+    return { path: dest, bytes: (info as any).size ?? 0 };
+  } catch (err) {
+    console.warn('downloadCover error:', err);
+    return { path: null, bytes: 0 };
+  }
+}
+
+/** Adds a cover to an existing complete download that was saved before covers were stored. */
+async function backfillCover(storyId: string): Promise<void> {
+  const records = await getDownloads();
+  const record = records.find(r => r.storyId === storyId && r.status === 'complete');
+  if (!record || record.coverPath) return;
+  const client = generateClient<Schema>();
+  const { data: story } = await client.models.Story.get({ id: storyId });
+  const cover = await downloadCover(storyId, story?.imageUri);
+  if (!cover.path) return;
+  await addOrUpdateDownload({ ...record, fileSize: record.fileSize + cover.bytes, coverUri: story!.imageUri as string, coverPath: cover.path });
 }
 
 /**
@@ -200,6 +236,7 @@ export async function deleteDownload(storyId: string): Promise<void> {
     await FileSystem.deleteAsync(record.localPath, { idempotent: true });
   }
   await FileSystem.deleteAsync(sceneDirForStory(storyId), { idempotent: true });
+  await FileSystem.deleteAsync(coverPathForStory(storyId), { idempotent: true });
   await removeDownloadRecord(storyId);
 }
 
@@ -212,6 +249,7 @@ export async function clearAllDownloads(): Promise<void> {
     records.flatMap(r => [
       FileSystem.deleteAsync(r.localPath, { idempotent: true }),
       FileSystem.deleteAsync(sceneDirForStory(r.storyId), { idempotent: true }),
+      FileSystem.deleteAsync(coverPathForStory(r.storyId), { idempotent: true }),
     ])
   );
   await saveDownloads([]);
@@ -251,6 +289,11 @@ export async function syncDownloads(): Promise<void> {
     const orphans = downloads.filter((_d, i) => !pinnedFlags[i]);
     await Promise.all(orphans.map(d => deleteDownload(d.storyId)));
 
+    // Older downloads saved before covers were stored get their cover now (best effort).
+    for (const d of downloads) {
+      if (d.status === 'complete' && !d.coverPath) await backfillCover(d.storyId).catch(() => {});
+    }
+
     // Download pinned stories not yet downloaded
     const toDownload = (pinnedRecords ?? []).filter(
       (p : any) => p.storyId && !downloadedIds.has(p.storyId)
@@ -267,6 +310,7 @@ export async function syncDownloads(): Promise<void> {
         id:       story.id,
         audioUri: story.audioUri,
         title:    story.title,
+        imageUri: story.imageUri,
       });
 
 
@@ -323,7 +367,7 @@ export function useDownloads() {
     isDownloading,
     refresh,
 
-    downloadStory: async (story: { id: string; audioUri: string; title?: string | null }) => {
+    downloadStory: async (story: { id: string; audioUri: string; title?: string | null; imageUri?: string | null }) => {
       const result = await downloadStory(story);
       await refresh();
       return result;
