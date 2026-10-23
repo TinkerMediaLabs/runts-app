@@ -12,7 +12,7 @@ const AccountInfoTile = ({title, detail, onPress} : any) => {
     const typo = useTypography();
 
     return (
-        <TouchableWithoutFeedback onPress={onPress}>
+        <TouchableWithoutFeedback onPress={onPress} accessibilityRole={onPress ? 'button' : 'text'} accessibilityLabel={`${title}, ${detail}`}>
             <View style={{  width: '100%', paddingHorizontal: 40, paddingVertical: 20,} }> 
                 <Text style={ [typo.accounttitle, {textTransform: 'capitalize'}] }>{title}</Text>
                 <Text style={ [typo.infotext, {textTransform: 'capitalize'}] }>{detail}</Text>

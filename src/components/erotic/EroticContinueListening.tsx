@@ -67,6 +67,8 @@ const EroticContinueTile = ({ storyId, progressSeconds }: {
             activeOpacity={0.85}
             onPress={handlePress}
             style={styles.tile}
+            accessibilityRole="button"
+            accessibilityLabel={`Continue listening, ${story.title ?? 'story'}, ${remainingMn} minutes left`}
         >
             {/* Cover image */}
             <Image

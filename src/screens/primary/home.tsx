@@ -119,7 +119,7 @@ const HomeScreen = ({ navigation }: any) => {
                         <Text style={[{ color: colors.text }, typo.h1]}>
                             {text}
                         </Text>
-                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')}>
+                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
                                 <Ionicons name="person" size={20} color="#fff" />
                             </View>

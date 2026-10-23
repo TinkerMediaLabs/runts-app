@@ -207,7 +207,7 @@ const CreatorProfile = () => {
                 { paddingTop: insets.top + 10 },
                 topBarStyle,
             ]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
                     <AntDesign name="close" size={22} color="#fff" />
                 </TouchableOpacity>
 
@@ -220,6 +220,10 @@ const CreatorProfile = () => {
                     onPress={handleToggleFollow}
                     // disabled={following || unfollowing || followLoading}
                     style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                    accessibilityRole="button"
+                    accessibilityLabel={isFollowing ? `Following ${author?.name ?? 'author'}` : `Follow ${author?.name ?? 'author'}`}
+                    accessibilityHint={isFollowing ? 'Double tap to unfollow' : undefined}
+                    accessibilityState={{ selected: !!isFollowing }}
                     >
                     <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
                         {isFollowing ? 'Following' : 'Follow'}

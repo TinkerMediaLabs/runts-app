@@ -98,6 +98,8 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
                     activeOpacity={0.7}
                     onPress={handleRefresh}
                     style={styles.refreshBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Shuffle tags"
                     disabled={spinning}
                 >
                     <Animated.View style={{ transform: [{ rotate: spin }] }}>
@@ -119,6 +121,8 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
                         key={tag.id}
                         activeOpacity={0.7}
                         onPress={() => handlePress(tag.id, tag.name)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Tag ${tag.name}`}
                         style={styles.chip}
                     >
                         <Text style={styles.chipText}>#{tag.name}</Text>

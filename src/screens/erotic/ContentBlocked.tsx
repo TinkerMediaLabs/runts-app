@@ -71,6 +71,8 @@ const ContentBlocked = () => {
                 <TouchableOpacity
                     activeOpacity={0.85}
                     onPress={handleGoToSettings}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open Settings"
                     style={styles.primaryButton}
                 >
                     <LinearGradient
@@ -93,6 +95,8 @@ const ContentBlocked = () => {
                 <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={handleGoHome}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go to Home"
                     style={styles.secondaryButton}
                 >
                     <Text style={styles.secondaryButtonText}>Go to Home</Text>

@@ -1,90 +1,57 @@
 import {
-    View,  
+    View,
     Dimensions,
     Linking,
     Image,
-    TouchableWithoutFeedback,
+    TouchableOpacity,
 } from 'react-native';
 
-const SocialBlock = ({tikTok, website, instagram, reddit, deviantArt, facebook, youTube, email} : any) => {
+const SocialLink = ({ label, url, source, size, round }: { label: string; url: string; source: any; size: number; round?: boolean }) => (
+    <TouchableOpacity
+        onPress={() => Linking.openURL(url)}
+        activeOpacity={0.7}
+        accessibilityRole="link"
+        accessibilityLabel={label}
+        hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+        style={{ marginRight: 6, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+    >
+        <Image
+            accessible={false}
+            style={{ height: size, width: size, ...(round ? { borderRadius: 16, overflow: 'hidden' as const } : null) }}
+            source={source}
+        />
+    </TouchableOpacity>
+);
 
+const SocialBlock = ({tikTok, website, instagram, reddit, deviantArt, facebook, youTube, email} : any) => {
     return (
         <View style={{width: Dimensions.get('window').width - 80, flexDirection: 'row', alignItems: 'center', marginVertical: 10, flexWrap: 'wrap', justifyContent: 'center'}}>
-
             {facebook ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(facebook)}>
-                    <Image 
-                        style={{height: 50, width: 50}}
-                        source={require('../../../assets/social/facebook.png')}
-                    />
-                </TouchableWithoutFeedback> 
+                <SocialLink label="Author on Facebook" url={facebook} source={require('../../../assets/social/facebook.png')} size={50} />
             ) : null}
-            
             {deviantArt ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(deviantArt)}>
-                    <Image 
-                        style={{height: 40, width: 40, marginRight: 4}}
-                        source={require('../../../assets/social/deviantart.png')}
-                    />
-                </TouchableWithoutFeedback>
+                <SocialLink label="Author on DeviantArt" url={deviantArt} source={require('../../../assets/social/deviantart.png')} size={40} />
             ) : null}
-            
             {instagram ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(instagram)}>
-                    <Image 
-                        style={{height: 40, width: 40, marginRight: 6}}
-                        source={require('../../../assets/social/instagram.png')}
-                    />
-                </TouchableWithoutFeedback>
+                <SocialLink label="Author on Instagram" url={instagram} source={require('../../../assets/social/instagram.png')} size={40} />
             ) : null}
-
             {youTube ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(youTube)}>
-                    <Image 
-                        style={{height: 35, width: 35, marginRight: 6}}
-                        source={require('../../../assets/social/youtube.png')}
-                    /> 
-                </TouchableWithoutFeedback>
+                <SocialLink label="Author on YouTube" url={youTube} source={require('../../../assets/social/youtube.png')} size={35} />
             ) : null}
-            
             {tikTok ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(tikTok)}>
-                    <Image 
-                        style={{height: 34, width: 34, borderRadius: 16, overflow: 'hidden', marginRight: 6}}
-                        source={require('../../../assets/social/tiktok.png')}
-                    />
-                </TouchableWithoutFeedback>
+                <SocialLink label="Author on TikTok" url={tikTok} source={require('../../../assets/social/tiktok.png')} size={34} round />
             ) : null}
-
             {reddit ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(reddit)}>
-                    <Image 
-                        style={{height: 34, width: 34, borderRadius: 16, overflow: 'hidden', marginRight: 6}}
-                        source={require('../../../assets/social/reddit.png')}
-                    />
-                </TouchableWithoutFeedback>
+                <SocialLink label="Author on Reddit" url={reddit} source={require('../../../assets/social/reddit.png')} size={34} round />
             ) : null}
-
             {website ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL(website)}>
-                    <Image 
-                        style={{height: 36, width: 36, borderRadius: 16, overflow: 'hidden', marginRight: 6}}
-                        source={require('../../../assets/social/website.png')}
-                    />
-                </TouchableWithoutFeedback>
+                <SocialLink label="Author website" url={website} source={require('../../../assets/social/website.png')} size={36} round />
             ) : null}
-            
             {email ? (
-                <TouchableWithoutFeedback onPress={() => Linking.openURL('mailto:' + email)}>
-                    <Image 
-                        style={{height: 36, width: 36}}
-                        source={require('../../../assets/social/email.png')}
-                    />
-                </TouchableWithoutFeedback>
+                <SocialLink label="Email the author" url={'mailto:' + email} source={require('../../../assets/social/email.png')} size={36} />
             ) : null}
-            
         </View>
-    )
-}
+    );
+};
 
 export default SocialBlock;

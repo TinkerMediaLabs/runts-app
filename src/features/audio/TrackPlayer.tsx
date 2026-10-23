@@ -550,6 +550,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={playNext}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Up next: ${nextTrackInfo.title}. Play now`}
                   style={[styles.upNextCard, { marginHorizontal: 20, marginTop: 40 }]}
                   onLayout={(e) => {
                     floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;

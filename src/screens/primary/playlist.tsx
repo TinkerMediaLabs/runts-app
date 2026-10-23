@@ -83,6 +83,9 @@ const PlaylistScreen = () => {
                                 activeOpacity={0.7}
                                 onPress={() => setReorderEnabled(!reorderEnabled)}
                                 style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}
+                                accessibilityRole="button"
+                                accessibilityLabel={reorderEnabled ? 'Finish reordering' : 'Reorder pinned stories'}
+                                accessibilityState={{ selected: reorderEnabled }}
                             >
                                 <FontAwesome5
                                 name="sort"
@@ -107,6 +110,9 @@ const PlaylistScreen = () => {
                                     activeOpacity={0.7}
                                     onPress={() => handleTabPress(tab.id, index)}
                                     style={[styles.tab, { width: TAB_WIDTH }]}
+                                    accessibilityRole="tab"
+                                    accessibilityLabel={tab.label}
+                                    accessibilityState={{ selected: isActive }}
                                 >
                                     <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                                         {tab.label}

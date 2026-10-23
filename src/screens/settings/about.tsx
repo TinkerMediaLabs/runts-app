@@ -35,7 +35,7 @@ const LinkRow = ({
     label: string;
     onPress: () => void;
 }) => (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row}>
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="link" accessibilityLabel={label}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
                 <FontAwesome5 name={icon} size={13} color="#ffffffa5" iconStyle="solid" />

@@ -58,6 +58,9 @@ const GenreChip = ({
             <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={onPress}
+                accessibilityRole="checkbox"
+                accessibilityLabel={name}
+                accessibilityState={{ checked: !!selected }}
                 onPressIn={() => { scale.value = 0.95; }}
                 onPressOut={() => { scale.value = selected ? 1.03 : 1; }}
                 style={[styles.chip, { backgroundColor: bgColor, borderColor }]}
@@ -195,6 +198,9 @@ const WelcomePreferences = ({ navigation, route }: any) => {
                         activeOpacity={0.85}
                         disabled={!canContinue || saving}
                         onPress={handleContinue}
+                        accessibilityRole="button"
+                        accessibilityLabel={saving ? 'Saving, please wait' : 'Continue'}
+                        accessibilityState={{ disabled: !canContinue || saving, busy: saving }}
                         style={[
                             styles.cta,
                             (!canContinue || saving) && styles.ctaDisabled,

@@ -32,6 +32,8 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
                 name: tagName ?? '',
             })}
             style={styles.seeMore}
+            accessibilityRole="button"
+            accessibilityLabel={tagName ? `See more ${tagName} stories` : 'See more stories'}
         >
             <View style={styles.seeMoreBubble}>
                 <FontAwesome5

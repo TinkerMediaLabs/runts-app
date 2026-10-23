@@ -82,11 +82,11 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
             animationType="slide"
             onRequestClose={onClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close premium offer">
                 <View style={styles.backdrop} />
             </TouchableWithoutFeedback>
 
-            <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]} accessibilityViewIsModal>
                 {/* Handle */}
                 <View style={styles.handle} />
 
@@ -103,8 +103,8 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                             </Text>
                         )}
                     </View>
-                    <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                        <FontAwesome5 name="times" size={16} color="#ffffff50" iconStyle="solid" />
+                    <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                        <FontAwesome5 name="times" size={16} color="#ffffff99" iconStyle="solid" />
                     </TouchableOpacity>
                 </View>
 
@@ -131,6 +131,8 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                                 activeOpacity={0.85}
                                 onPress={() => handleSubscribe(annualPkg)}
                                 disabled={purchasing}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Subscribe annually, ${annualPkg.product.priceString} per year, best value`}
                             >
                                 {purchasing ? (
                                     <ActivityIndicator color="#000" />
@@ -154,6 +156,8 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                                 activeOpacity={0.85}
                                 onPress={() => handleSubscribe(monthlyPkg)}
                                 disabled={purchasing}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Subscribe monthly, ${monthlyPkg.product.priceString} per month`}
                             >
                                 <Text style={styles.packageSecondaryText}>
                                     Monthly · {monthlyPkg.product.priceString} / mo

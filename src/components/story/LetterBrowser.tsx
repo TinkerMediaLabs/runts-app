@@ -75,11 +75,16 @@ const LetterItem = React.memo(({ letter, index, selectedIndex, onPress }: Letter
 
     const color = anim.interpolate({
         inputRange:  [0, 1],
-        outputRange: ['rgba(255,255,255,0.3)', 'cyan'],
+        outputRange: ['rgba(255,255,255,0.55)', 'cyan'],
     });
 
     return (
-        <TouchableWithoutFeedback onPress={onPress}>
+        <TouchableWithoutFeedback
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={`Letter ${letter.toUpperCase()}`}
+            accessibilityState={{ selected: index === selectedIndex }}
+        >
             <View style={styles.letterCell}>
                 <Animated.Text style={{
                     fontSize,
@@ -130,10 +135,10 @@ const LetterBrowser = ({
                 visible={lengthModalVisible}
                 onRequestClose={onLengthModalClose}
             >
-                <TouchableWithoutFeedback onPress={onLengthModalClose}>
+                <TouchableWithoutFeedback onPress={onLengthModalClose} accessibilityRole="button" accessibilityLabel="Close story length options">
                     <View style={styles.modalBackdrop}>
                         <TouchableWithoutFeedback>
-                            <View style={styles.modalCard}>
+                            <View style={styles.modalCard} accessibilityViewIsModal>
                                 <Text style={styles.modalTitle}>Story Length</Text>
                                 {LENGTH_OPTIONS.map(({ label, start, end }) => {
                                     const active = lengthFilter === label;
@@ -143,6 +148,9 @@ const LetterBrowser = ({
                                             activeOpacity={0.7}
                                             onPress={() => onLengthFilterChange(label, start, end)}
                                             style={[styles.modalOption, active && styles.modalOptionActive]}
+                                            accessibilityRole="radio"
+                                            accessibilityLabel={label}
+                                            accessibilityState={{ checked: active }}
                                         >
                                             <Text style={[styles.modalOptionText, active && styles.modalOptionTextActive]}>
                                                 {label}
@@ -193,12 +201,19 @@ const LetterBrowser = ({
                         activeOpacity={0.75}
                         onPress={onLengthModalOpen}
                         style={[styles.chip, lengthFilter !== 'Any Length' && styles.chipActive]}
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={`Story length: ${lengthFilter}`}
+                        accessibilityHint="Opens length options"
+                        accessibilityActions={lengthFilter !== 'Any Length' ? [{ name: 'clear', label: 'Clear length filter' }] : undefined}
+                        onAccessibilityAction={(e) => { if (e.nativeEvent.actionName === 'clear') onLengthFilterChange('Any Length', 0, 5400000); }}
                     >
                         <Text style={[styles.chipText, lengthFilter !== 'Any Length' && styles.chipTextActive]}>
                             {lengthFilter}
                         </Text>
                         {lengthFilter !== 'Any Length' && (
                             <TouchableOpacity
+                                accessible={false}
                                 onPress={() => onLengthFilterChange('Any Length', 0, 5400000)}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
@@ -207,11 +222,11 @@ const LetterBrowser = ({
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity activeOpacity={0.75} style={styles.chip}>
+                    <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
                         <Text style={styles.chipText}>Any Popularity</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity activeOpacity={0.75} style={styles.chip}>
+                    <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
                         <Text style={styles.chipText}>Any Date</Text>
                     </TouchableOpacity>
                 </ScrollView>
