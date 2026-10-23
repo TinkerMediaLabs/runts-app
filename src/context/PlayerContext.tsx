@@ -350,7 +350,9 @@ export const PlayerProvider = ({ children }: any) => {
         }));
         // Only jump to the finished story's page when nothing is playing. When
         // autoplay moved on to the next story, leave the player alone.
-        if (finishedStoryId && !currentTrackRef.current) {
+        // The Keep going sheet takes over from here when there are suggestions; it opens the story page
+        // itself if there are none.
+        if (finishedStoryId && !currentTrackRef.current && keepGoingStoryId !== finishedStoryId) {
             navigate('StoryScreen', { storyID: finishedStoryId });
         }
     };

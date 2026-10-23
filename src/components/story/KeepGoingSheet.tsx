@@ -55,9 +55,19 @@ const KeepGoingSheet = () => {
     const insets = useSafeAreaInsets();
 
     const { data: story } = useStory(keepGoingStoryId ?? '');
-    const { items } = useRecommendations(keepGoingStoryId ? story : null, eroticEnabled, MAX_ROWS);
+    const { items, isLoading } = useRecommendations(keepGoingStoryId ? story : null, eroticEnabled, MAX_ROWS);
 
     const visible = !!keepGoingStoryId && !state.pendingRatingStoryId && !state.currentTrack && items.length > 0;
+
+    // Nothing to suggest: fall back to the finished story's page (what used to happen after rating).
+    useEffect(() => {
+        if (!keepGoingStoryId || state.pendingRatingStoryId || state.currentTrack) return;
+        if (!story || isLoading || items.length > 0) return;
+        const id = keepGoingStoryId;
+        dismissKeepGoing();
+        navigate('StoryScreen', { storyID: id });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keepGoingStoryId, state.pendingRatingStoryId, state.currentTrack, story, isLoading, items.length]);
 
     useEffect(() => {
         if (visible) AccessibilityInfo.announceForAccessibility('Keep going. Suggestions for what to listen to next.');
