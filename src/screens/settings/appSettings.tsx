@@ -41,6 +41,8 @@ import PINEntryModal from '../../components/settings/PINEntryModal';
 import PINSetupModal from '../../components/settings/PINSetupModal';
 
 import { Notifications } from '../../lib/notifications';
+import { resetTips } from '../../tips/tipsStore';
+import { showChip } from '../../lib/chip';
 
 const { width } = Dimensions.get('window');
 
@@ -557,6 +559,16 @@ const AppSettings = ({ navigation }: any) => {
                             label="Default Speed"
                             value={`${playbackSpeed}x`}
                             onPress={() => open('playbackSpeed')}
+                        />
+                    </Section>
+
+                    {/* ── Help ── */}
+                    <Section title="Help">
+                        <ActionRow
+                            icon="lightbulb"
+                            label="Show tips again"
+                            description="Replays the short first-use tips that point out controls"
+                            onPress={() => { resetTips(); showChip('Tips will show again', 'success'); }}
                         />
                     </Section>
 

@@ -559,7 +559,7 @@ const handleDelete = (id: string) => {
                     {/* Action icons */}
                     <View style={styles.actionsRow}>
                         <View style={styles.actionsLeft}>
-                            <PinButton storyId={story?.id ?? ''} size={22} />
+                            <PinButton storyId={story?.id ?? ''} size={22} tipTarget="pin-button" />
 
                             {/* Star — gold outlined if finished+unrated, solid if rated, dim if not finished */}
                             {/* Personal rating badge — hidden if not finished, "Rate" prompt if finished+unrated, rating value if rated */}

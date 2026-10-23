@@ -3,11 +3,13 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Feather from '@expo/vector-icons/Feather';
 import { audioEngine } from '../audio/audioEngine';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 const SKIP_BACK_SECONDS = 15;
 const SKIP_FORWARD_SECONDS = 30;
 
 export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNext }: any) {
+  const tipRef = useTipTarget('player-skip');
 
   const toggle = async () => {
     if (isPlaying) {
@@ -22,7 +24,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
   return (
     <View style={styles.container}>
 
-      <View style={styles.row}>
+      <View style={styles.row} ref={tipRef} collapsable={false}>
         {/* Back 15 seconds */}
         <TouchableOpacity
           onPress={() => audioEngine.skipBy(-SKIP_BACK_SECONDS)}

@@ -17,6 +17,7 @@ import useStyles from '../../theme/styles';
 import useTypography from '../../theme/typography';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 const { width } = Dimensions.get('window');
 
@@ -40,6 +41,7 @@ const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subti
 );
 
 const PlaylistScreen = () => {
+    const reorderTipRef = useTipTarget('reorder-button');
 
     const { userId } = useApp();
     const insets        = useSafeAreaInsets();
@@ -80,6 +82,7 @@ const PlaylistScreen = () => {
                         {/* Reorder toggle — only shown on pinned tab */}
                             {activeTab === 'pinned' && (
                             <TouchableOpacity
+                                ref={reorderTipRef as any}
                                 activeOpacity={0.7}
                                 onPress={() => setReorderEnabled(!reorderEnabled)}
                                 style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}

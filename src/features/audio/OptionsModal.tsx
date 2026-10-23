@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Feather from '@expo/vector-icons/Feather';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -66,6 +67,7 @@ export default function OptionsModal({
   onSleepTimer,
 }: OptionsModalProps) {
 
+  const tipRef = useTipTarget('player-options');
   const progress = useSharedValue(0); // 0 = closed, 1 = open
   const [isMounted, setIsMounted] = React.useState(false);
 
@@ -222,6 +224,7 @@ export default function OptionsModal({
       {/* Button — always on top, overlays the card's top-right corner.
           Shows more-vertical when closed, X when open. */}
       <TouchableOpacity
+        ref={tipRef as any}
         style={[styles.button, { top: buttonTop, right: BUTTON_RIGHT }]}
         onPress={visible ? onClose : onOpen}
         activeOpacity={0.7}

@@ -2,12 +2,14 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import AntDesign from '@react-native-vector-icons/ant-design';
 import { useIsPinned, useTogglePin } from '../../hooks/queries/usePinnedStories';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 type PinButtonProps = {
   storyId: string;
   size?: number;
   activeColor?: string;
   inactiveColor?: string;
+  tipTarget?: string;   // name for first-use tips (see src/tips)
 };
 
 const PinButton = ({
@@ -15,7 +17,9 @@ const PinButton = ({
   size = 20,
   activeColor = 'cyan',
   inactiveColor = 'rgba(255,255,255,0.75)',
+  tipTarget,
 }: PinButtonProps) => {
+  const tipRef = useTipTarget(tipTarget);
 
   const { data: isPinnedData } = useIsPinned(storyId);
   const { toggle } = useTogglePin();
@@ -24,6 +28,7 @@ const PinButton = ({
 
   return (
     <TouchableOpacity
+      ref={tipRef as any}
       onPress={() => toggle(storyId, isPinned)}
       activeOpacity={0.7}
       style={{ padding: 0 }}
