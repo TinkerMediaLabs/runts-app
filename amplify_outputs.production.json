@@ -3925,6 +3925,26 @@
               "isRequired": false
             }
           }
+        },
+        "getUploadUrl": {
+          "name": "getUploadUrl",
+          "isArray": false,
+          "type": "String",
+          "isRequired": false,
+          "arguments": {
+            "key": {
+              "name": "key",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "contentType": {
+              "name": "contentType",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            }
+          }
         }
       }
     }
@@ -3955,25 +3975,19 @@
           "stories/*": {
             "authenticated": [
               "get",
-              "list",
-              "write",
-              "delete"
+              "list"
             ]
           },
           "authors/*": {
             "authenticated": [
               "get",
-              "list",
-              "write",
-              "delete"
+              "list"
             ]
           },
           "narrators/*": {
             "authenticated": [
               "get",
-              "list",
-              "write",
-              "delete"
+              "list"
             ]
           }
         }
