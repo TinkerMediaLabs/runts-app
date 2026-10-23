@@ -34,8 +34,10 @@ async function resolveAudioUrl(url: string): Promise<string> {
   try {
     const localPath = await getLocalFilePath(url);
     if (localPath) {
-      const info = await FileSystem.getInfoAsync(localPath);
-      if (info.exists) return localPath;
+      const info: any = await FileSystem.getInfoAsync(localPath);
+      console.log('audioEngine: local file', localPath, 'exists:', info.exists, 'bytes:', info.size);
+      // A real story is megabytes; a tiny file is a failed download, so ignore it and use the network.
+      if (info.exists && (info.size ?? 0) > 100 * 1024) return localPath;
     }
   } catch {
     // fall through to the network path
@@ -103,6 +105,7 @@ class AudioEngine {
   private attachErrorRecovery() {
     try {
       this.errorSub = (TrackPlayer as any).addEventListener(Event.PlaybackError, async (e: any) => {
+        console.warn('audioEngine: PlaybackError', JSON.stringify(e));
         const track = this.currentTrack;
         if (!track || e?.code === 'renderer') return;
         const now = Date.now();

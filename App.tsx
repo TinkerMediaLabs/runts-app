@@ -13,7 +13,7 @@ import { PlayerProvider } from './src/context/PlayerContext';
 import Navigation from './src/navigation';
 import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
-import { configureAmplify } from './src/lib/amplifyConfig';
+import { configureAmplify, BACKEND_ID } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { queryClient, queryPersister, shouldPersistQuery, PERSIST_MAX_AGE } from './src/lib/queryClient';
@@ -92,6 +92,7 @@ function App() {
             persistOptions={{
                 persister: queryPersister,
                 maxAge: PERSIST_MAX_AGE,
+                buster: BACKEND_ID,
                 dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
             }}
         >
