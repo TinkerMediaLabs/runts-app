@@ -13,7 +13,7 @@ const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isPremium 
     if (isPremium && !userIsPremium) return null;
 
     return (
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Play ${title ?? 'story'}`} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onPlay({ id, title, url: audioUri, artwork: imageUri, artist: author })}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Play ${title ?? 'story'}`} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => onPlay({ id, title, url: audioUri, artwork: imageUri, artist: author })}>
             <Animated.View style={[
                 style,
                 {

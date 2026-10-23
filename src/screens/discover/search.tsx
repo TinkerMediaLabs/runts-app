@@ -168,7 +168,7 @@ const SearchAuthorItem = React.memo(({
       <FontAwesome5
         name={'chevron-right' as any}
         size={12}
-        color="rgba(255,255,255,0.25)"
+        color="rgba(255,255,255,0.5)"
         iconStyle="solid"
       />
     </TouchableOpacity>
@@ -472,7 +472,7 @@ const EmptyState = ({ icon, title, subtitle }: {
   subtitle?: string;
 }) => (
   <View style={styles.emptyState}>
-    <FontAwesome5 name={icon} size={40} color="rgba(255,255,255,0.15)" iconStyle="solid" />
+    <FontAwesome5 name={icon} size={40} color="rgba(255,255,255,0.5)" iconStyle="solid" />
     <Text style={styles.emptyTitle}>{title}</Text>
     {subtitle ? <Text style={styles.emptySub}>{subtitle}</Text> : null}
   </View>
@@ -684,7 +684,7 @@ const filteredTagResults = useMemo(() => {
 
         {/* ── Header ── */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity
+          <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
             activeOpacity={0.7}

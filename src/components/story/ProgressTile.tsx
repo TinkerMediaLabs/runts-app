@@ -111,7 +111,7 @@ const ProgressTile = ({
                         accessibilityRole="button"
                         accessibilityLabel={`Remove ${story?.title ?? 'story'} from in progress`}
                         style={styles.deleteBtn}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                     >
                         <FontAwesome5
                             name="times"

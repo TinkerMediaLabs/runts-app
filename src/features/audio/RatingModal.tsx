@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { successHaptic } from '../../lib/haptics';
 import { useRef } from 'react';
 import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
@@ -215,6 +216,7 @@ const handleSubmit = async () => {
     queryClient.invalidateQueries({ queryKey: ['stories'] });
     queryClient.invalidateQueries({ queryKey: ['favoritedStories'] });
 
+    successHaptic();
     onClose();
   } catch (err) {
     console.error('RatingModal submit error:', err);
@@ -262,7 +264,7 @@ const handleSubmit = async () => {
             <Text style={styles.sectionLabel}>Rate this story</Text>
             <View style={styles.starsRow} accessibilityRole="radiogroup">
               {Array.from({ length: 10 }, (_, i) => i + 1).map(star => (
-                <TouchableOpacity
+                <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                   key={star}
                   onPress={() => setSelectedRating(selectedRating === star ? null : star)}
                   activeOpacity={0.7}

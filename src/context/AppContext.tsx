@@ -13,6 +13,7 @@ import { getOrCreateUser } from '../services/auth';
 import { queryClient, queryPersister } from '../lib/queryClient';
 import { getProfilePicUrl } from '../services/auth';
 import { syncDownloads } from '../hooks/queries/useDownloads';
+import NetInfo from '@react-native-community/netinfo';
 import {
     loadAllEroticSettings,
     saveEroticEnabled,
@@ -338,6 +339,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (isAuthenticated) {
             syncDownloads().catch(e => console.warn('Sync downloads error:', e));
         }
+    }, [isAuthenticated]);
+
+    // Pins that were waiting for Wi-Fi download as soon as the phone joins one.
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        let lastType: string | null = null;
+        const unsub = NetInfo.addEventListener(net => {
+            const onWifi = net.type === 'wifi' || net.type === 'ethernet';
+            if (onWifi && lastType !== null && lastType !== net.type) {
+                syncDownloads().catch(e => console.warn('Sync downloads error:', e));
+            }
+            lastType = net.type;
+        });
+        return unsub;
     }, [isAuthenticated]);
 
     // ── Provider ──────────────────────────────────────────────────────────────

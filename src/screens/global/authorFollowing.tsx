@@ -84,7 +84,7 @@ const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <FontAwesome5 name="user-friends" size={36} color="#ffffff20" iconStyle="solid" />
+              <FontAwesome5 name="user-friends" size={36} color="#ffffff80" iconStyle="solid" />
               <Text style={styles.emptyTitle}>Not following anyone yet</Text>
               <Text style={styles.emptySub}>
                 Follow authors from their profile page to see them here.

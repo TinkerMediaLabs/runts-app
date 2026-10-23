@@ -116,7 +116,7 @@ const SettingRow = ({
                 <FontAwesome5
                     name="chevron-right"
                     size={11}
-                    color="#ffffff40"
+                    color="#ffffff80"
                     iconStyle="solid"
                 />
             )}
@@ -165,7 +165,7 @@ const Sheet = ({
                     <View style={styles.sheetHandle} />
                     <View style={styles.sheetHeader}>
                         <Text style={styles.sheetTitle}>{title}</Text>
-                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel={`Close ${title}`}>
+                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel={`Close ${title}`}>
                             <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
                         </TouchableOpacity>
                     </View>
@@ -209,7 +209,7 @@ const PasswordField = ({
                     maxLength={32}
                     autoCapitalize="none"
                 />
-                <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                     <FontAwesome5
                         name={hidden ? 'eye-slash' : 'eye'}
                         size={14}

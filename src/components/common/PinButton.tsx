@@ -3,6 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import AntDesign from '@react-native-vector-icons/ant-design';
 import { useIsPinned, useTogglePin } from '../../hooks/queries/usePinnedStories';
 import { useTipTarget } from '../../tips/useTipTarget';
+import { tapHaptic, successHaptic } from '../../lib/haptics';
 
 type PinButtonProps = {
   storyId: string;
@@ -29,7 +30,7 @@ const PinButton = ({
   return (
     <TouchableOpacity
       ref={tipRef as any}
-      onPress={() => toggle(storyId, isPinned)}
+      onPress={() => { isPinned ? tapHaptic() : successHaptic(); toggle(storyId, isPinned); }}
       activeOpacity={0.7}
       style={{ padding: 0 }}
       hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}

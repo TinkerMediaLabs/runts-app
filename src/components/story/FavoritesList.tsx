@@ -6,6 +6,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
 
 import StoryTile from './StoryTile';
+import EmptyState from '../common/EmptyState';
+import { navigate } from '@/navigation/RootNavigator';
 import {
   useFavoritedStories,
   getFavoriteThreshold,
@@ -124,13 +126,13 @@ const { data: tagMap = {} } = useTagNames(allTagIds);
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
       ListEmptyComponent={
-        <View style={styles.empty}>
-          <FontAwesome name="star-o" size={36} color="#ffffff20" />
-          <Text style={styles.emptyTitle}>No favorites yet</Text>
-          <Text style={styles.emptySub}>
-            Stories you rate {threshold} stars or higher will appear here.
-          </Text>
-        </View>
+        <EmptyState
+          icon={<FontAwesome name="star-o" size={40} color="#ffffff80" />}
+          title="Your favorites will live here"
+          body={`Rate a story ${threshold} stars or higher after you listen and it shows up here, so your best ones are easy to find again.`}
+          actionLabel="Find a story"
+          onAction={() => navigate('SearchScreen')}
+        />
       }
     />
   );

@@ -68,6 +68,9 @@ export const PlayerProvider = ({ children }: any) => {
     const sleepTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
     const sleepIntervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
     const [sleepMinutesLeft, setSleepMinutesLeft] = useState<number | null>(null);
+    // "End of story" sleep timer: when the current story finishes, stop instead of playing the next one.
+    const [sleepEndOfStory, setSleepEndOfStory] = useState(false);
+    const sleepEndRef = useRef(false);
 
     const playlistRef      = useRef<any[]>([]);
     const playlistIndexRef = useRef(-1);
@@ -186,11 +189,13 @@ export const PlayerProvider = ({ children }: any) => {
             // ── Autoplay next in playlist or stop ─────────────────────────────
             const autoplay = await getAutoplayEnabled();
 
-            if (autoplay && hasNextToPlay) {
+            const stopAtEnd = sleepEndRef.current;
+            if (!stopAtEnd && autoplay && hasNextToPlay) {
                 await playNext();
             } else {
                 await closePlayerAfterCompletion();
-                setKeepGoingStoryId(storyId);
+                // Asleep: no suggestions sheet.
+                if (!stopAtEnd) setKeepGoingStoryId(storyId);
             }
 
         } catch (err) {
@@ -415,13 +420,20 @@ export const PlayerProvider = ({ children }: any) => {
         }));
     };
 
-    const setSleepTimer = async (minutes: number | null) => {
+    const setSleepTimer = async (minutes: number | 'end' | null) => {
         if (sleepTimerRef.current)    clearTimeout(sleepTimerRef.current);
         if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
         sleepTimerRef.current    = null;
         sleepIntervalRef.current = null;
         setSleepMinutesLeft(null);
+        sleepEndRef.current = false;
+        setSleepEndOfStory(false);
 
+        if (minutes === 'end') {
+            sleepEndRef.current = true;
+            setSleepEndOfStory(true);
+            return;
+        }
         if (!minutes) return;
 
         setSleepMinutesLeft(minutes);
@@ -538,6 +550,7 @@ export const PlayerProvider = ({ children }: any) => {
                 dismissKeepGoing: () => setKeepGoingStoryId(null),
                 clearTrack,
                 sleepMinutesLeft,
+                sleepEndOfStory,
                 setSleepTimer,
                 hasNextTrack,
                 nextTrackInfo,

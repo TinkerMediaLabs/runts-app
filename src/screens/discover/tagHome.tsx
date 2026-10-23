@@ -237,7 +237,7 @@ const GenreHome = ({ navigation }: any) => {
                     style={[styles.heroStickyHeader, heroHeaderStyle, { paddingTop: insets.top + 10 }]}
                     pointerEvents="box-none"
                 >
-                    <TouchableOpacity
+                    <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                         onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
                         style={styles.heroStickyBackBtn}
                         activeOpacity={0.7}
@@ -269,7 +269,7 @@ const GenreHome = ({ navigation }: any) => {
                             style={StyleSheet.absoluteFill}
                         />
                         <View style={[styles.heroTopRow, { paddingTop: insets.top + 10 }]}>
-                            <TouchableOpacity
+                            <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                                 onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
                                 style={styles.heroBubble}
                                 activeOpacity={0.7}
@@ -337,7 +337,7 @@ const GenreHome = ({ navigation }: any) => {
 
                             {totalEmpty && (
                                 <View style={styles.emptyContainer}>
-                                    <FontAwesome5 name="book-open" size={32} color="rgba(255,255,255,0.2)" iconStyle="solid" />
+                                    <FontAwesome5 name="book-open" size={32} color="rgba(255,255,255,0.5)" iconStyle="solid" />
                                     <Text style={styles.emptyText}>No stories in {tagName} yet</Text>
                                 </View>
                             )}
@@ -397,7 +397,7 @@ const GenreHome = ({ navigation }: any) => {
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                    <TouchableOpacity
+                    <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                         onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
                         style={styles.backBtn}
                         activeOpacity={0.7}
@@ -423,7 +423,7 @@ const GenreHome = ({ navigation }: any) => {
                     </View>
                 ) : totalEmpty ? (
                     <View style={styles.emptyContainer}>
-                        <FontAwesome5 name="book-open" size={32} color="rgba(255,255,255,0.2)" iconStyle="solid" />
+                        <FontAwesome5 name="book-open" size={32} color="rgba(255,255,255,0.5)" iconStyle="solid" />
                         <Text style={styles.emptyText}>No stories in {tagName} yet</Text>
                     </View>
                 ) : (
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 15,
-        color:    'rgba(255,255,255,0.4)',
+        color:    'rgba(255,255,255,0.6)',
     },
     browseText: {
         color:    'rgba(255,255,255,0.6)',

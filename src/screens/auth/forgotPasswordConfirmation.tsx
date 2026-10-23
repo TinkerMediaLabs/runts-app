@@ -163,7 +163,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         value={newPassword}
                                         onChangeText={setNewPassword}
                                     />
-                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showNew ? 'Hide new password' : 'Show new password'} onPress={() => setShowNew(v => !v)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showNew ? 'Hide new password' : 'Show new password'} onPress={() => setShowNew(v => !v)} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                                         <Feather
                                             name={showNew ? 'eye' : 'eye-off'}
                                             size={18}
@@ -191,7 +191,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         value={confirmPassword}
                                         onChangeText={setConfirmPassword}
                                     />
-                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showConfirm ? 'Hide confirm password' : 'Show confirm password'} onPress={() => setShowConfirm(v => !v)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={showConfirm ? 'Hide confirm password' : 'Show confirm password'} onPress={() => setShowConfirm(v => !v)} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                                         <Feather
                                             name={showConfirm ? 'eye' : 'eye-off'}
                                             size={18}

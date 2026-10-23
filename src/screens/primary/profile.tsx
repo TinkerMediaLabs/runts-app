@@ -54,7 +54,7 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
                 <Text style={styles.rowDescription}>{description}</Text>
             </View>
         </View>
-        <FontAwesome5 name="chevron-right" size={11} color="#ffffff40" iconStyle="solid" />
+        <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
     </TouchableOpacity>
 );
 
@@ -287,7 +287,7 @@ const ProfileScreen = ({ navigation }: any) => {
                                 accessibilityRole="button"
                                 accessibilityLabel="Change profile photo"
                                 accessibilityState={{ busy: uploadingPhoto }}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                             >
                                 <FontAwesome5 name="camera" size={11} color="#000" iconStyle="solid" />
                             </TouchableOpacity>

@@ -6,10 +6,15 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 
 import { findPinned } from '../../lib/userStoryLookups';
+import { setDownloadProgress, clearDownloadProgress } from '../../lib/downloadProgress';
+
+// Stories being downloaded right now, so two syncs never fetch the same file twice.
+const inFlight = new Set<string>();
 
 const DOWNLOAD_SYNC_LIMIT = 50;
 import {
   getOfflineEnabled,
+  canDownloadNow,
   getDownloads,
   saveDownloads,
   getTotalDownloadSize,
@@ -47,6 +52,26 @@ export async function downloadStory(story: {
   if (!offlineEnabled) return { success: false, reason: 'offline_disabled' };
   if (!story.audioUri) return { success: false, reason: 'no_audio_uri' };
 
+  // Waits for Wi-Fi (when that setting is on) and a connection. The next sync picks it up.
+  const allowed = await canDownloadNow();
+  if (!allowed.ok) return { success: false, reason: allowed.reason };
+
+  if (inFlight.has(story.id)) return { success: false, reason: 'in_progress' };
+  inFlight.add(story.id);
+  try {
+    return await downloadStoryInner(story);
+  } finally {
+    inFlight.delete(story.id);
+    clearDownloadProgress(story.id);
+  }
+}
+
+async function downloadStoryInner(story: {
+  id: string;
+  audioUri: string;
+  title?: string | null;
+  imageUri?: string | null;
+}): Promise<{ success: boolean; reason?: string }> {
   // Already downloaded and file still on disk?
   const existingPath = await getLocalFilePath(story.audioUri);
   if (existingPath) {
@@ -83,10 +108,20 @@ export async function downloadStory(story: {
       options: { expiresIn: 3600 },
     });
 
-    const result = await FileSystem.downloadAsync(
+    setDownloadProgress(story.id, 0);
+    const resumable = FileSystem.createDownloadResumable(
       signedUrl.toString(),
-      localPath
+      localPath,
+      {},
+      p => {
+        if (p.totalBytesExpectedToWrite > 0) {
+          // Audio is most of the work; leave the last few percent for the cover and scenes.
+          setDownloadProgress(story.id, (p.totalBytesWritten / p.totalBytesExpectedToWrite) * 0.95);
+        }
+      },
     );
+    const result = await resumable.downloadAsync();
+    if (!result) throw new Error('Download was cancelled');
 
     if (result.status !== 200) {
       await addOrUpdateDownload({
@@ -226,6 +261,14 @@ async function downloadScenes(storyId: string, usedBytes: number): Promise<{ sce
   return { scenes, bytes };
 }
 
+/** Retries a failed or stalled download for one story (looks the story up first). */
+export async function retryDownload(storyId: string): Promise<{ success: boolean; reason?: string }> {
+  const client = generateClient<Schema>();
+  const { data: story } = await client.models.Story.get({ id: storyId });
+  if (!story?.audioUri) return { success: false, reason: 'no_audio_uri' };
+  return downloadStory({ id: story.id, audioUri: story.audioUri, title: story.title, imageUri: story.imageUri });
+}
+
 /**
  * Deletes the local audio file (and any scene images) and removes the download record.
  */
@@ -268,6 +311,7 @@ export async function syncDownloads(): Promise<void> {
   const offlineEnabled = await getOfflineEnabled();
 
   if (!offlineEnabled) return;
+  if (!(await canDownloadNow()).ok) return;
 
   try {
     const { userId } = await getCurrentUser();
@@ -281,7 +325,7 @@ export async function syncDownloads(): Promise<void> {
     const pinnedRecords: any[] = pinsRes.data ?? [];
 
     const downloads     = await getDownloads();
-    const downloadedIds = new Set(downloads.map(d => d.storyId));
+    const downloadedIds = new Set(downloads.filter(d => d.status === 'complete').map(d => d.storyId));
 
     // Delete downloads for stories no longer pinned. Checked per download with an index lookup
     // (downloads are bounded by device storage), so pins beyond the sync window are never deleted.

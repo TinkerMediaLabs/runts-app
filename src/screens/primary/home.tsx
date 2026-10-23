@@ -19,6 +19,7 @@ import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import ForYouCarousel from '../../components/story/ForYouCarousel';
 import HorizontalList from '../../components/story/HorizontalList';
 import ContinueListening from '../../components/story/ContinueListening';
+import BecauseYouFinished from '../../components/story/BecauseYouFinished';
 
 import { useStories } from '../../hooks/queries/useStories';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
@@ -121,7 +122,7 @@ const HomeScreen = ({ navigation }: any) => {
                         <Text style={[{ color: colors.text }, typo.h1]}>
                             {text}
                         </Text>
-                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
+                        <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
                                 <Ionicons name="person" size={20} color="#fff" />
                             </View>
@@ -146,6 +147,11 @@ const HomeScreen = ({ navigation }: any) => {
                             {/* Continue Listening — shows up to 4 most recent in-progress stories */}
                             <Reveal index={2} style={{ paddingVertical: 10 }}>
                                 <ContinueListening />
+                            </Reveal>
+
+                            {/* Because you finished X — suggestions seeded by the last finished story */}
+                            <Reveal index={3}>
+                                <BecauseYouFinished />
                             </Reveal>
 
                             {/* Horizontal lists by tag */}

@@ -591,7 +591,7 @@ const handleDelete = (id: string) => {
                                     </TouchableOpacity>
 )}
 
-                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                                 <FontAwesome name="share" size={22} color="#fff" />
                             </TouchableOpacity>
                         </View>

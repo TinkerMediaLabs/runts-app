@@ -203,7 +203,7 @@ const headerTitleStyle = useAnimatedStyle(() => ({
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
           <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
         </TouchableOpacity>

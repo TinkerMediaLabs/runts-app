@@ -24,6 +24,7 @@ import {
     getAutoplayEnabled,
     saveAutoplayEnabled,
 } from '../../lib/audioSettings';
+import { getHapticsEnabled, saveHapticsEnabled, hapticsAvailable } from '../../lib/haptics';
 
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -31,6 +32,8 @@ import { useDownloads } from '../../hooks/queries/useDownloads';
 import {
     getOfflineEnabled,
     saveOfflineEnabled,
+    getWifiOnly,
+    saveWifiOnly,
     formatBytes,
     STORAGE_LIMIT_BYTES,
 } from '../../lib/offlineStorage';
@@ -146,7 +149,7 @@ const SelectRow = ({
         </View>
         <View style={styles.rowRight}>
             <Text style={styles.rowValue}>{value}</Text>
-            <FontAwesome5 name="chevron-right" size={11} color="#ffffff40" iconStyle="solid" />
+            <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
         </View>
     </TouchableOpacity>
 );
@@ -196,7 +199,7 @@ const ActionRow = ({
                     <Text style={styles.badgeText}>{badge}</Text>
                 </View>
             ) : null}
-            <FontAwesome5 name="chevron-right" size={11} color="#ffffff40" iconStyle="solid" />
+            <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
         </View>
     </TouchableOpacity>
 );
@@ -229,7 +232,7 @@ const Sheet = ({
                     <Text style={styles.sheetTitle}>{title}</Text>
                     <TouchableOpacity
                         onPress={onClose}
-                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                         accessibilityRole="button"
                         accessibilityLabel="Close"
                     >
@@ -316,7 +319,7 @@ const EroticSection = ({
                             </Text>
                         </View>
                     </View>
-                    <FontAwesome5 name="chevron-right" size={11} color="#ffffff40" iconStyle="solid" />
+                    <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
                 </TouchableOpacity>
             </Section>
         );
@@ -433,6 +436,8 @@ const AppSettings = ({ navigation }: any) => {
     const [favoriteThreshold, setFavoriteThreshold] = useState(DEFAULT_THRESHOLD);
 
     const [offlineEnabled, setOfflineEnabled] = useState(true);
+    const [wifiOnly, setWifiOnly] = useState(true);
+    const [haptics, setHaptics] = useState(true);
     const { totalSize, refresh: refreshDownloads } = useDownloads();
 
     const [authorNotifications, setAuthorNotifications] = useState(true);
@@ -459,6 +464,8 @@ const AppSettings = ({ navigation }: any) => {
         getFavoriteThreshold().then(setFavoriteThreshold);
         getDefaultPlaybackSpeed().then(v => setPlaybackSpeed(v as PlaybackSpeed));
         getOfflineEnabled().then(setOfflineEnabled);
+        getWifiOnly().then(setWifiOnly);
+        getHapticsEnabled().then(setHaptics);
         getAutoplayEnabled().then(setAutoPlay);
     }, []);
 
@@ -483,6 +490,17 @@ const AppSettings = ({ navigation }: any) => {
         } else {
             syncDownloads().catch(() => {});
         }
+    };
+
+    const handleHapticsToggle = async (value: boolean) => {
+        setHaptics(value);
+        await saveHapticsEnabled(value);
+    };
+
+    const handleWifiOnlyToggle = async (value: boolean) => {
+        setWifiOnly(value);
+        await saveWifiOnly(value);
+        if (!value && offlineEnabled) syncDownloads().catch(() => {});
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -521,6 +539,14 @@ const AppSettings = ({ navigation }: any) => {
                             onChange={handleOfflineToggle}
                         />
                         <RowDivider />
+                        <ToggleRow
+                            icon="wifi"
+                            label="Download on Wi-Fi only"
+                            description="Saves mobile data. Pinned stories wait for Wi-Fi, then download on their own"
+                            value={wifiOnly}
+                            onChange={handleWifiOnlyToggle}
+                        />
+                        <RowDivider />
                         <View style={styles.row}>
                             <View style={styles.rowLeft}>
                                 <View style={styles.rowIcon}>
@@ -543,6 +569,18 @@ const AppSettings = ({ navigation }: any) => {
                             value={autoPlay}
                             onChange={handleAutoPlayChange}
                         />
+                        {hapticsAvailable() && (
+                            <>
+                                <RowDivider />
+                                <ToggleRow
+                                    icon="mobile-alt"
+                                    label="Haptic Feedback"
+                                    description="A light vibration when you pin, play, rate or save a bookmark"
+                                    value={haptics}
+                                    onChange={handleHapticsToggle}
+                                />
+                            </>
+                        )}
                     </Section>
 
                     {/* ── Erotic Content ── */}

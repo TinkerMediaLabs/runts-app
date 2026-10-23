@@ -207,7 +207,7 @@ const CreatorProfile = () => {
                 { paddingTop: insets.top + 10 },
                 topBarStyle,
             ]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
+                <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
                     <AntDesign name="close" size={22} color="#fff" />
                 </TouchableOpacity>
 
