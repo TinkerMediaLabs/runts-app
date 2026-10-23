@@ -51,7 +51,7 @@ const EmailSignIn = ({ navigation }: any) => {
             };
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessibilityRole="none">
             <LinearGradient colors={['#000000', '#050505', '#0a0a0a']} style={{ flex: 1 }} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                 <StatusBar style="light" backgroundColor="transparent" />
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -64,7 +64,7 @@ const EmailSignIn = ({ navigation }: any) => {
 
                             <Text style={[styles.title, s.heading]}>Sign In</Text>
 
-                            {error ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox}><Text style={s.errorText}>{error}</Text></Animated.View> : null}
+                            {error ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox} accessibilityRole="alert" accessibilityLiveRegion="assertive"><Text style={s.errorText}>{error}</Text></Animated.View> : null}
 
                             <Animated.View entering={FadeInUp.delay(150).duration(700)}>
                                 <TextField label="Email" value={email} onChangeText={setEmail} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
@@ -74,14 +74,14 @@ const EmailSignIn = ({ navigation }: any) => {
                                 <PasswordField label="Password" value={password} onChangeText={setPassword} placeholder="Enter your password" mb={8} />
                             </Animated.View>
 
-                            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ alignSelf: 'flex-end', marginBottom: 32 }}>
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Forgot password" onPress={() => navigation.navigate('ForgotPassword')} style={{ alignSelf: 'flex-end', marginBottom: 32 }}>
                                 <Text style={s.forgotText}>Forgot password?</Text>
                             </TouchableOpacity>
 
                             {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity activeOpacity={0.9} onPress={handleSignIn}>
+                                    <TouchableOpacity activeOpacity={0.9} onPress={handleSignIn} accessibilityRole="button" accessibilityLabel="Sign in">
                                         <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Sign In</Text></View>
                                     </TouchableOpacity>
                                 </Animated.View>
@@ -89,12 +89,12 @@ const EmailSignIn = ({ navigation }: any) => {
                             )}
 
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                                <TouchableOpacity onPress={() => navigation.navigate('SignUp')} accessibilityRole="button" accessibilityLabel="Don't have an account? Sign up">
                                     <Text style={s.linkText}>Don't have an account? <Text style={s.linkAccent}>Sign Up</Text></Text>
                                 </TouchableOpacity>
                             </Animated.View>
                             <Animated.View entering={FadeIn.delay(550).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back">
                                     <Text style={s.backText}>Go Back</Text>
                                 </TouchableOpacity>
                             </Animated.View>
@@ -116,9 +116,9 @@ const s = StyleSheet.create({
     errorText:   { color: '#ff8a8a', fontSize: 13, textAlign: 'center' },
     button:      { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18, elevation: 8 },
     buttonText:  { width: '100%', fontSize: 16, fontWeight: '700' },
-    linkText:    { fontSize: 14, color: 'rgba(255,255,255,0.4)', alignSelf: 'center', marginTop: 28 },
+    linkText:    { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 28 },
     linkAccent:  { color: '#00ffff' },
-    backText:    { fontSize: 14, color: 'rgba(255,255,255,0.35)', alignSelf: 'center', marginTop: 14 },
+    backText:    { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 14 },
     forgotText:  { color: 'rgba(0,255,255,0.6)', fontSize: 13 },
 });
 

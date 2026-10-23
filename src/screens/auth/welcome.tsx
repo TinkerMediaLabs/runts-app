@@ -111,6 +111,9 @@ const Welcome = ({ navigation }: any) => {
 
                     <TouchableOpacity
                         onPress={() => setPickerVisible(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Birthdate, ${format(date, "MMMM do, yyyy")}`}
+                        accessibilityHint="Opens date picker"
                         style={{
                             marginTop: 15,
                             paddingVertical: 12,
@@ -131,6 +134,8 @@ const Welcome = ({ navigation }: any) => {
                 <Animated.View style={[{ paddingBottom: 40 }, buttonOpacityStyle]}>
                 <Animated.View style={buttonScaleStyle}>
                     <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel="Next"
                         onPress={() => navigation.navigate('WelcomePref', {
                             birthdate: format(date, 'yyyy-MM-dd'),
                         })}

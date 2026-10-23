@@ -93,6 +93,18 @@ export default function ProgressBar({ progress, isErotic = false }: any) {
 
   return (
     <View style={styles.container}>
+      {/* One adjustable control for screen readers: speaks "1:23 of 12:00"; swipe up/down to seek 15 s */}
+      <View
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Playback position"
+        accessibilityValue={{ text: `${displayPosition} of ${displayDuration}` }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={(e) => {
+          if (e.nativeEvent.actionName === 'increment') audioEngine.skipBy(15);
+          else if (e.nativeEvent.actionName === 'decrement') audioEngine.skipBy(-15);
+        }}
+      >
       <Slider
         progress={sliderProgress}
         minimumValue={min}
@@ -138,8 +150,13 @@ export default function ProgressBar({ progress, isErotic = false }: any) {
           cacheTrackTintColor:   'rgba(255,255,255,0.2)',
       }}
       />
+      </View>
 
-      <View style={styles.row}>
+      <View
+        style={styles.row}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         <Text style={styles.time}>{displayPosition}</Text>
         <Text style={styles.time}>{displayDuration}</Text>
       </View>

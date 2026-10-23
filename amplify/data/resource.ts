@@ -296,6 +296,7 @@ Comment: a
       secondaryTagId: a.string(),
       storyFormat: a.enum(['SHORT_STORY', 'NOVELLA', 'FLASH_FICTION']),
       sequenceNumber: a.integer(),
+      sceneCount: a.integer(),   // picture-book scenes; set by the CMS. App only queries StoryScene when > 0.
       universeId: a.string(),
       pov: a.enum(['THIRD_PERSON', 'SECOND_PERSON', 'FIRST_PERSON', 'MULTIPLE_POV']),
       narrationType: a.enum(['AI', 'HUMAN', 'MIXED']),
@@ -319,6 +320,7 @@ Comment: a
       comments: a.hasMany('Comment', 'storyId'),
       favoritedBy: a.hasMany('UserFavoritedStory', 'storyId'),
       bookmarks: a.hasMany('UserBookmark', 'storyId'),
+      scenes: a.hasMany('StoryScene', 'storyId'),
     })
     .secondaryIndexes(index => [
       index('live').sortKeys(['publishedAt']).name('byLiveAndPublishedAt'),
@@ -488,6 +490,25 @@ Comment: a
     .secondaryIndexes(index => [
       index('storyId').name('byStoryId'),
       index('narratorId').name('byNarratorId'),
+    ])
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
+  // ── StoryScene (picture-book images that change at set points in the audio) ──
+  // One query on byStoryAndStart returns a story's scenes in time order (CMS caps ~60 per story).
+  // The current scene is derived from playback position: the last scene whose startSeconds <= position.
+  StoryScene: a
+    .model({
+      storyId: a.string().required(),
+      startSeconds: a.integer().required(),
+      imageUri: a.string().required(),   // S3 key: stories/{storyId}/scenes/{n}.jpg
+      altText: a.string(),
+      story: a.belongsTo('Story', 'storyId'),
+    })
+    .secondaryIndexes(index => [
+      index('storyId').sortKeys(['startSeconds']).name('byStoryAndStart'),
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),

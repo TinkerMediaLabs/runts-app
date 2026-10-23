@@ -43,6 +43,8 @@ const GenreGridTile = ({ tag, navigation }: { tag: any; navigation: any }) => (
     activeOpacity={0.8}
     onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
     style={styles.genreGridTile}
+    accessibilityRole="button"
+    accessibilityLabel={`${tag.name}, ${tag.storyCount ?? 0} ${(tag.storyCount ?? 0) === 1 ? 'story' : 'stories'}`}
   >
     <Text style={styles.genreGridTileName} numberOfLines={1}>{tag.name}</Text>
     <Text style={styles.genreGridTileCount}>
@@ -60,6 +62,8 @@ const TagPill = ({ tag, navigation }: { tag: any; navigation: any }) => (
     activeOpacity={0.7}
     onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
     style={styles.tagPill}
+    accessibilityRole="button"
+    accessibilityLabel={`Tag ${tag.name}`}
   >
     <Text style={styles.tagPillText}>{tag.name}</Text>
   </TouchableOpacity>
@@ -197,6 +201,8 @@ const headerTitleStyle = useAnimatedStyle(() => ({
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
@@ -210,6 +216,8 @@ const headerTitleStyle = useAnimatedStyle(() => ({
           onPress={() => navigation.navigate('BrowseByTitle')}
           style={styles.browseButton}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Browse by title"
         >
           <Text style={styles.browseButtonText}>Browse</Text>
         </TouchableOpacity>
@@ -217,13 +225,13 @@ const headerTitleStyle = useAnimatedStyle(() => ({
 
       {/* Tab switcher */}
       <Animated.View style={[styles.tabBar, tabBarStyle]}>
-        <TouchableOpacity activeOpacity={0.7} onPress={() => handleTabPress('foryou')} style={styles.tab}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => handleTabPress('foryou')} style={styles.tab} accessibilityRole="tab" accessibilityLabel="For You" accessibilityState={{ selected: activeTab === 'foryou' }}>
           <Text style={[styles.tabLabel, activeTab === 'foryou' && styles.tabLabelActive]}>
             For You
           </Text>
           {activeTab === 'foryou' && <View style={styles.tabIndicator} />}
         </TouchableOpacity>
-        <TouchableOpacity activeOpacity={0.7} onPress={() => handleTabPress('genres')} style={styles.tab}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => handleTabPress('genres')} style={styles.tab} accessibilityRole="tab" accessibilityLabel="Genres and tags" accessibilityState={{ selected: activeTab === 'genres' }}>
           <Text style={[styles.tabLabel, activeTab === 'genres' && styles.tabLabelActive]}>
             Genres & Tags
           </Text>
@@ -339,7 +347,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
   },
   tabLabelActive: {
     color: EROTIC_ORANGE,
@@ -389,7 +397,7 @@ const styles = StyleSheet.create({
   },
   genreGridTileCount: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
   },
   tagPillRow: {
     flexDirection: 'row',

@@ -52,6 +52,8 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
                 navigation.navigate('TagHomeScreen', { id, name });
             }}
             style={styles_local.tileWrapper}
+            accessibilityRole="button"
+            accessibilityLabel={`Genre ${name}`}
         >
             {imageSource ? (
                 <ImageBackground
@@ -126,6 +128,8 @@ const GenreTilesList = ({ primaryTags, navigation, eroticEnabled }: any) => {
                                     <TouchableOpacity
                                         activeOpacity={0.85}
                                         onPress={() => navigation.navigate('EroticHome')}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Genre Erotica"
                                         style={styles_local.tileWrapper}
                                     >
                                             <ImageBackground

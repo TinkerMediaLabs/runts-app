@@ -53,6 +53,15 @@ const HorzStoryTile = ({
             activeOpacity={0.88}
             onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
             style={styles.wrapper}
+            accessibilityRole="button"
+            accessibilityLabel={[
+                title,
+                author ? `by ${author}` : null,
+                durationDisplay,
+                hasRating ? `rated ${(avgRating as number).toFixed(1)} out of 10` : null,
+                isNew ? 'new' : null,
+            ].filter(Boolean).join(', ')}
+            accessibilityHint="Opens the story"
         >
             {displayImageUri ? (
                 <ImageBackground
@@ -244,7 +253,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     authorText: {
-        fontSize: 10,
+        fontSize: 12,
         color: 'rgba(255,255,255,0.5)',
         flexShrink: 1,
     },

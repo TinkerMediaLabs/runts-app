@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Feather from '@expo/vector-icons/Feather';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -66,6 +67,7 @@ export default function OptionsModal({
   onSleepTimer,
 }: OptionsModalProps) {
 
+  const tipRef = useTipTarget('player-options');
   const progress = useSharedValue(0); // 0 = closed, 1 = open
   const [isMounted, setIsMounted] = React.useState(false);
 
@@ -137,7 +139,12 @@ export default function OptionsModal({
 
       {/* Backdrop — behind card and button, closes on tap */}
       {isMounted && (
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback
+            accessibilityRole="none"
+          onPress={onClose}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        >
           <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]} />
         </TouchableWithoutFeedback>
       )}
@@ -145,6 +152,7 @@ export default function OptionsModal({
       {/* Card — expands from the button's top-right corner */}
       {isMounted && (
         <Animated.View
+          accessibilityViewIsModal
           style={[
             styles.card,
             { top: cardTop, right: BUTTON_RIGHT, width: MODAL_WIDTH },
@@ -161,6 +169,9 @@ export default function OptionsModal({
                   style={[styles.chip, isActive && styles.chipActive]}
                   activeOpacity={0.7}
                   onPress={() => onRateChange(speed)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Playback speed ${speed} times`}
+                  accessibilityState={{ checked: isActive }}
                 >
                   <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                     {speed}x
@@ -182,6 +193,9 @@ export default function OptionsModal({
                   style={[styles.chip, isActive && styles.chipActive]}
                   activeOpacity={0.7}
                   onPress={() => { onSleepTimer(minutes); onClose(); }}
+                  accessibilityRole="radio"
+                  accessibilityLabel={minutes === null ? 'Sleep timer off' : `Sleep timer ${label}`}
+                  accessibilityState={{ checked: isActive }}
                 >
                   <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                     {label}
@@ -197,6 +211,8 @@ export default function OptionsModal({
             style={styles.dismissRow}
             activeOpacity={0.6}
             onPress={onDismiss}
+            accessibilityRole="button"
+            accessibilityLabel="Close player"
           >
             <Feather name="x-circle" size={16} color="#ff6b6b" />
             <Text style={styles.dismissText}>Close Player</Text>
@@ -208,9 +224,14 @@ export default function OptionsModal({
       {/* Button — always on top, overlays the card's top-right corner.
           Shows more-vertical when closed, X when open. */}
       <TouchableOpacity
+        ref={tipRef as any}
         style={[styles.button, { top: buttonTop, right: BUTTON_RIGHT }]}
         onPress={visible ? onClose : onOpen}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={visible ? 'Close player options' : 'Player options'}
+        accessibilityHint={visible ? undefined : 'Playback speed, sleep timer and close player'}
+        accessibilityState={{ expanded: visible }}
       >
         <Animated.View style={menuIconStyle}>
           <Feather name="more-vertical" size={24} color="#fff" />
@@ -268,8 +289,8 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',

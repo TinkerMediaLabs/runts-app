@@ -72,7 +72,12 @@ export default function BookmarkModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback
+          accessibilityRole="none"
+        onPress={onClose}
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+      >
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
 
@@ -89,7 +94,12 @@ export default function BookmarkModal({
               <FontAwesome5 name={'bookmark' as any} size={16} color="cyan" iconStyle="solid" />
             </View>
             <Text style={styles.title}>Create Bookmark</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
               <FontAwesome5 name={'times' as any} size={15} color="rgba(255,255,255,0.4)" iconStyle="solid" />
             </TouchableOpacity>
           </View>
@@ -109,7 +119,8 @@ export default function BookmarkModal({
             value={name}
             onChangeText={setName}
             placeholder="My Bookmark"
-            placeholderTextColor="rgba(255,255,255,0.25)"
+            placeholderTextColor="rgba(255,255,255,0.55)"
+            accessibilityLabel="Bookmark name"
             maxLength={30}
             selectTextOnFocus
             returnKeyType="done"
@@ -123,6 +134,9 @@ export default function BookmarkModal({
             onPress={handleConfirm}
             activeOpacity={0.8}
             disabled={isSubmitting}
+            accessibilityRole="button"
+            accessibilityLabel="Create bookmark"
+            accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
           >
             {isSubmitting ? (
               <ActivityIndicator size="small" color="#000" />
@@ -222,8 +236,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   charCount: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.25)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'right',
     marginBottom: 16,
   },

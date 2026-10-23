@@ -93,6 +93,9 @@ const PlanCard = ({
             activeOpacity={0.85}
             onPress={onPress}
             style={[styles.planCard, selected && styles.planCardSelected]}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: selected }}
+            accessibilityLabel={`${isAnnual ? 'Annual plan, best value' : 'Monthly plan'}, ${price}, ${perMonth}`}
         >
             {isAnnual && (
                 <View style={styles.planBadge}>
@@ -264,6 +267,9 @@ const PremiumScreen = () => {
                         activeOpacity={0.85}
                         onPress={handleSubscribe}
                         disabled={isLoading || offeringsLoading || !selectedPkg}
+                        accessibilityRole="button"
+                        accessibilityLabel={isLoading ? 'Starting premium, loading' : 'Start Premium'}
+                        accessibilityState={{ disabled: isLoading || offeringsLoading || !selectedPkg, busy: isLoading }}
                         style={[
                             styles.ctaButton,
                             (isLoading || offeringsLoading || !selectedPkg) && { opacity: 0.5 },
@@ -295,15 +301,15 @@ const PremiumScreen = () => {
 
                     {/* ── Legal ── */}
                     <View style={styles.legalRow}>
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.tinkermedia.net/terms')}>
+                        <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL('https://www.tinkermedia.net/terms')}>
                             <Text style={styles.legalLink}>Terms</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.tinkermedia.net/privacy-policy')}>
+                        <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL('https://www.tinkermedia.net/privacy-policy')}>
                             <Text style={styles.legalLink}>Privacy Policy</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>
-                        <TouchableOpacity onPress={handleRestore} disabled={isLoading}>
+                        <TouchableOpacity accessibilityRole="button" onPress={handleRestore} disabled={isLoading}>
                             <Text style={styles.legalLink}>Restore Purchase</Text>
                         </TouchableOpacity>
                     </View>
@@ -337,7 +343,7 @@ const styles = StyleSheet.create({
     },
     heroSubtitle: {
         fontSize: 15,
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         textAlign: 'center',
         lineHeight: 22,
         paddingHorizontal: 10,
@@ -378,7 +384,7 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
     },
     planBadgeText: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: 0.5,
@@ -386,7 +392,7 @@ const styles = StyleSheet.create({
     planPeriodShort: {
         fontSize: 12,
         fontWeight: '700',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         letterSpacing: 1,
         marginTop: 8,
         marginBottom: 8,
@@ -399,7 +405,7 @@ const styles = StyleSheet.create({
     },
     planPerMonth: {
         fontSize: 12,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
     planPerMonthSelected: {
         color: 'rgba(0,255,255,0.6)',
@@ -435,8 +441,8 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
     renewalNote: {
-        fontSize: 11,
-        color: '#ffffff40',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.55)',
         textAlign: 'center',
         lineHeight: 17,
         marginBottom: 36,
@@ -447,11 +453,11 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     sectionTitle: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 10,
         marginLeft: 4,
     },
@@ -487,7 +493,7 @@ const styles = StyleSheet.create({
     },
     featureDescription: {
         fontSize: 13,
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         lineHeight: 19,
     },
     featureDivider: {
@@ -505,12 +511,12 @@ const styles = StyleSheet.create({
     },
     legalLink: {
         fontSize: 12,
-        color: '#ffffff40',
+        color: 'rgba(255,255,255,0.55)',
         textDecorationLine: 'underline',
     },
     legalDot: {
         fontSize: 12,
-        color: '#ffffff25',
+        color: 'rgba(255,255,255,0.55)',
     },
 });
 

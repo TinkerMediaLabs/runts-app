@@ -13,8 +13,9 @@ import { useApp } from '@/context/AppContext';
 import { navigate } from '@/navigation/RootNavigator';
 
 import { Analytics } from '@/lib/analytics';
-import { findFinished, findPinned, findInProgress } from '@/lib/userStoryLookups';
+import { findFinished, findPinned, findInProgress, findRating } from '@/lib/userStoryLookups';
 import { unwrap, warnOnErrors } from '@/lib/amplifyResult';
+import { withTimeout } from '@/lib/withTimeout';
 
 const client = generateClient<Schema>();
 
@@ -71,6 +72,8 @@ export const PlayerProvider = ({ children }: any) => {
     const playlistRef      = useRef<any[]>([]);
     const playlistIndexRef = useRef(-1);
     const [hasNextTrack, setHasNextTrack] = useState(false);
+    // Set when a story ends with nothing queued to autoplay; drives the "Keep going" suggestions sheet.
+    const [keepGoingStoryId, setKeepGoingStoryId] = useState<string | null>(null);
     const [nextTrackInfo, setNextTrackInfo] = useState<any>(null);
 
     const { expand } = usePlayerUI();
@@ -139,6 +142,21 @@ export const PlayerProvider = ({ children }: any) => {
                 } catch (err) {
                     console.warn('Profile stats update error:', err);
                 }
+            } else {
+                // Finished before but never rated: still ask for a rating.
+                try {
+                    const rated = await findRating(userId, storyId);
+                    if (!rated.length) {
+                        setState(prev => ({
+                            ...prev,
+                            pendingRatingStoryId: storyId,
+                            pendingRatingTitle:   currentTrackRef.current?.title ?? '',
+                            pendingRatingArtwork: currentTrackRef.current?.artwork ?? '',
+                        }));
+                    }
+                } catch (err) {
+                    console.warn('Rating lookup error:', err);
+                }
             }
 
             // ── Find the next pinned story BEFORE unpinning this one ─────────
@@ -172,6 +190,7 @@ export const PlayerProvider = ({ children }: any) => {
                 await playNext();
             } else {
                 await closePlayerAfterCompletion();
+                setKeepGoingStoryId(storyId);
             }
 
         } catch (err) {
@@ -213,6 +232,7 @@ export const PlayerProvider = ({ children }: any) => {
 
     // ── Play ──────────────────────────────────────────────────────────────────
     const playTrack = async (track: Track) => {
+        setKeepGoingStoryId(null);
         setState(prev => ({ ...prev, playError: null }));
 
         try {
@@ -240,7 +260,7 @@ export const PlayerProvider = ({ children }: any) => {
 
             await audioEngine.play(track);
 
-            const playlist = await loadPlaylist(track.id);
+            const playlist = await withTimeout(loadPlaylist(track.id), 4000, [] as any[]);
             const index    = playlist.findIndex((s: any) => s.id === track.id);
             playlistIndexRef.current = index;
             const hasNext = index >= 0 && index < playlist.length - 1;
@@ -331,7 +351,9 @@ export const PlayerProvider = ({ children }: any) => {
         }));
         // Only jump to the finished story's page when nothing is playing. When
         // autoplay moved on to the next story, leave the player alone.
-        if (finishedStoryId && !currentTrackRef.current) {
+        // The Keep going sheet takes over from here when there are suggestions; it opens the story page
+        // itself if there are none.
+        if (finishedStoryId && !currentTrackRef.current && keepGoingStoryId !== finishedStoryId) {
             navigate('StoryScreen', { storyID: finishedStoryId });
         }
     };
@@ -345,6 +367,7 @@ export const PlayerProvider = ({ children }: any) => {
         setState(prev => ({ ...prev, playError: null }));
 
     const clearTrack = async () => {
+        setKeepGoingStoryId(null);
         setSleepTimer(null);
         stopProgressTracking();
         isPlayingRef.current    = false;
@@ -511,6 +534,8 @@ export const PlayerProvider = ({ children }: any) => {
                 setPlaybackRate,
                 clearPlayError,
                 clearPendingRating,
+                keepGoingStoryId,
+                dismissKeepGoing: () => setKeepGoingStoryId(null),
                 clearTrack,
                 sleepMinutesLeft,
                 setSleepTimer,

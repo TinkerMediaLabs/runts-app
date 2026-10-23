@@ -10,7 +10,7 @@ import { Hub } from 'aws-amplify/utils';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 import { getOrCreateUser } from '../services/auth';
-import { queryClient } from '../lib/queryClient';
+import { queryClient, queryPersister } from '../lib/queryClient';
 import { getProfilePicUrl } from '../services/auth';
 import { syncDownloads } from '../hooks/queries/useDownloads';
 import {
@@ -222,6 +222,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             if (userId) await Notifications.unregisterToken(userId);
             await signOut();
             queryClient.clear();
+            queryPersister.removeClient();
             Analytics.reset();
             await PurchasesService.reset();
             setUserId(null);

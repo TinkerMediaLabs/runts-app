@@ -17,6 +17,7 @@ import useStyles from '../../theme/styles';
 import useTypography from '../../theme/typography';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 const { width } = Dimensions.get('window');
 
@@ -40,6 +41,7 @@ const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subti
 );
 
 const PlaylistScreen = () => {
+    const reorderTipRef = useTipTarget('reorder-button');
 
     const { userId } = useApp();
     const insets        = useSafeAreaInsets();
@@ -80,9 +82,13 @@ const PlaylistScreen = () => {
                         {/* Reorder toggle — only shown on pinned tab */}
                             {activeTab === 'pinned' && (
                             <TouchableOpacity
+                                ref={reorderTipRef as any}
                                 activeOpacity={0.7}
                                 onPress={() => setReorderEnabled(!reorderEnabled)}
                                 style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}
+                                accessibilityRole="button"
+                                accessibilityLabel={reorderEnabled ? 'Finish reordering' : 'Reorder pinned stories'}
+                                accessibilityState={{ selected: reorderEnabled }}
                             >
                                 <FontAwesome5
                                 name="sort"
@@ -107,6 +113,9 @@ const PlaylistScreen = () => {
                                     activeOpacity={0.7}
                                     onPress={() => handleTabPress(tab.id, index)}
                                     style={[styles.tab, { width: TAB_WIDTH }]}
+                                    accessibilityRole="tab"
+                                    accessibilityLabel={tab.label}
+                                    accessibilityState={{ selected: isActive }}
                                 >
                                     <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                                         {tab.label}
@@ -210,7 +219,7 @@ const styles = StyleSheet.create({
     },
     reorderHintText: {
         fontSize: 12,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
 
     tabBar: {
@@ -226,7 +235,7 @@ const styles = StyleSheet.create({
     tabLabel: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#ffffff40',
+        color: 'rgba(255,255,255,0.55)',
     },
     tabLabelActive: {
         color: '#fff',
@@ -266,12 +275,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#ffffff30',
+        color: 'rgba(255,255,255,0.55)',
         textAlign: 'center',
         lineHeight: 20,
     },

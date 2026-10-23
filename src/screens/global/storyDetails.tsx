@@ -37,6 +37,8 @@ import PlayButtonV4 from '../../components/common/PlayButtonV4';
 import PlayButtonV3 from '../../components/common/PlayButtonV3';
 import PinButton    from '../../components/common/PinButton';
 import RatingModal  from '../../features/audio/RatingModal';
+import MoreLikeThis from '../../components/story/MoreLikeThis';
+import Reveal from '../../components/common/Reveal';
 
 import { spacing } from '../../theme/spacing';
 import { useApp }  from '@/context/AppContext';
@@ -111,7 +113,7 @@ const REACTION_EMOJIS: Record<string, string> = {
         onPress: () => void;
         children: React.ReactNode;
     }) => (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.actionBtn}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.actionBtn} accessibilityRole="button">
             {children}
         </TouchableOpacity>
     );
@@ -129,6 +131,9 @@ const REACTION_EMOJIS: Record<string, string> = {
             onPress={onPress}
             activeOpacity={0.7}
             style={[styles.tagChip, isErotic && styles.tagChipErotic]}
+            accessibilityRole="button"
+            accessibilityLabel={`Tag ${name}`}
+            accessibilityHint="Opens stories with this tag"
         >
             <Text style={[styles.tagChipText, isErotic && styles.tagChipTextErotic]}>
                 #{name}
@@ -163,6 +168,13 @@ const REACTION_EMOJIS: Record<string, string> = {
         onLongPress={handleLongPress}
         activeOpacity={isOwn ? 0.75 : 1}
         delayLongPress={400}
+        accessible
+        accessibilityLabel={`${item.userName ?? 'Anonymous'} said: ${item.content}`}
+        accessibilityActions={isOwn ? [{ name: 'edit', label: 'Edit comment' }, { name: 'delete', label: 'Delete comment' }] : undefined}
+        onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === 'edit') onEdit(item);
+            if (e.nativeEvent.actionName === 'delete') onDelete(item.id);
+        }}
         >
         <View style={styles.commentCard}>
             <View style={styles.commentHeader}>
@@ -502,6 +514,7 @@ const handleDelete = (id: string) => {
 
                 <Animated.View style={[styles.contentCard, bounceStyle]}>
 
+                    <Reveal index={0}>
                     {/* Title + author */}
                   <View style={styles.titleSection}>
                     <Text style={styles.title}>{story?.title}</Text>
@@ -510,6 +523,9 @@ const handleDelete = (id: string) => {
                         activeOpacity={0.7}
                         onPress={() => navigation.navigate('AuthorDetails', { id: story?.authorId })}
                         style={styles.authorRow}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Author ${author?.name ?? ''}`}
+                        accessibilityHint="Opens author page"
                     >
                         <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
                         <Text style={styles.author}>{author?.name ?? ''}</Text>
@@ -523,6 +539,9 @@ const handleDelete = (id: string) => {
                     ) : null}
                 </View>
 
+                    </Reveal>
+
+                    <Reveal index={1}>
                     {/* Stats row */}
                     <View style={styles.statsRow}>
                         {story?.licenseType === 'runts_exclusive' && (
@@ -542,10 +561,13 @@ const handleDelete = (id: string) => {
                         <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
                     </View>
 
+                    </Reveal>
+
+                    <Reveal index={2}>
                     {/* Action icons */}
                     <View style={styles.actionsRow}>
                         <View style={styles.actionsLeft}>
-                            <PinButton storyId={story?.id ?? ''} size={22} />
+                            <PinButton storyId={story?.id ?? ''} size={22} tipTarget="pin-button" />
 
                             {/* Star — gold outlined if finished+unrated, solid if rated, dim if not finished */}
                             {/* Personal rating badge — hidden if not finished, "Rate" prompt if finished+unrated, rating value if rated */}
@@ -554,6 +576,9 @@ const handleDelete = (id: string) => {
                                         onPress={() => setShowRatingModal(true)}
                                         activeOpacity={0.7}
                                         style={styles.personalRatingPill}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={userRating ? `Your rating ${userRating.rating} out of 10` : 'Rate this story'}
+                                        accessibilityHint="Opens the rating form"
                                     >
                                         <MaterialDesignIcons
                                             name={userRating ? 'account-star' : 'account-star-outline'}
@@ -566,7 +591,7 @@ const handleDelete = (id: string) => {
                                     </TouchableOpacity>
 )}
 
-                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7}>
+                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                                 <FontAwesome name="share" size={22} color="#fff" />
                             </TouchableOpacity>
                         </View>
@@ -582,6 +607,8 @@ const handleDelete = (id: string) => {
                             isPremium={story?.isPremium}
                         />
                     </View>
+
+                    </Reveal>
 
                                        {/* Story Format / Story Tone / POV */}
                     <View style={styles.separator} />
@@ -701,6 +728,8 @@ const handleDelete = (id: string) => {
                         </View>
                     )}
 
+                    <MoreLikeThis story={story} />
+
                     <View style={styles.separator} />
 {/* ── Discussion ── */}
 <Text style={styles.sectionLabel}>
@@ -711,6 +740,8 @@ const handleDelete = (id: string) => {
 {editingComment ? (
   <View style={styles.commentInput}>
     <TextInput
+        accessibilityLabel="Edit comment"
+        accessibilityHint="Edit the text of your comment"
       style={styles.commentInputText}
       value={editingComment.content}
       onChangeText={text => setEditingComment(prev => prev ? { ...prev, content: text } : null)}
@@ -719,10 +750,10 @@ const handleDelete = (id: string) => {
       autoFocus
     />
     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-      <TouchableOpacity onPress={() => setEditingComment(null)} style={[styles.postBtn, { backgroundColor: '#2a2a2a' }]}>
+      <TouchableOpacity onPress={() => setEditingComment(null)} style={[styles.postBtn, { backgroundColor: '#2a2a2a' }]} accessibilityRole="button" accessibilityLabel="Cancel editing comment">
         <Text style={[styles.postBtnText, { color: '#fff' }]}>Cancel</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={handleEditSave} style={styles.postBtn} disabled={updating}>
+      <TouchableOpacity onPress={handleEditSave} style={styles.postBtn} disabled={updating} accessibilityRole="button" accessibilityLabel="Save comment" accessibilityState={{ disabled: updating }}>
         <Text style={styles.postBtnText}>{updating ? 'Saving…' : 'Save'}</Text>
       </TouchableOpacity>
     </View>
@@ -733,7 +764,8 @@ const handleDelete = (id: string) => {
       <TextInput
         ref={focus}
         placeholder="Leave a comment…"
-        placeholderTextColor="rgba(255,255,255,0.3)"
+        placeholderTextColor="rgba(255,255,255,0.55)"
+        accessibilityLabel="Leave a comment"
         style={styles.commentInputText}
         maxLength={500}
         multiline
@@ -746,6 +778,9 @@ const handleDelete = (id: string) => {
             onPress={() => setPostAnonymously(v => !v)}
             activeOpacity={0.7}
             style={styles.anonRow}
+            accessibilityRole="checkbox"
+            accessibilityLabel="Post anonymously"
+            accessibilityState={{ checked: postAnonymously }}
             >
             <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
                 {postAnonymously && (
@@ -760,6 +795,9 @@ const handleDelete = (id: string) => {
           activeOpacity={0.8}
           onPress={handlePost}
           disabled={posting}
+          accessibilityRole="button"
+          accessibilityLabel={posting ? 'Posting comment' : 'Post comment'}
+          accessibilityState={{ disabled: posting }}
         >
           <Text style={styles.postBtnText}>{posting ? 'Posting…' : 'Post'}</Text>
         </TouchableOpacity>
@@ -786,7 +824,7 @@ const handleDelete = (id: string) => {
       keyExtractor={item => item.id}
       scrollEnabled={false}
       ListEmptyComponent={
-        <Text style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 20 }}>
+        <Text style={{ color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginTop: 20 }}>
           No comments yet. Be the first!
         </Text>
       }
@@ -796,7 +834,7 @@ const handleDelete = (id: string) => {
             loadingMoreComments ? (
               <ActivityIndicator color="cyan" />
             ) : (
-              <TouchableOpacity onPress={() => fetchMoreComments()} activeOpacity={0.7}>
+              <TouchableOpacity onPress={() => fetchMoreComments()} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Load more comments">
                 <Text style={{ color: 'cyan', fontSize: 14 }}>Load more comments</Text>
               </TouchableOpacity>
             )
@@ -811,6 +849,9 @@ const handleDelete = (id: string) => {
     activeOpacity={0.8}
     onPress={() => setSeeSpoilers(true)}
     style={styles.spoilerGate}
+    accessibilityRole="button"
+    accessibilityLabel="Spoiler warning. Show comments"
+    accessibilityHint="Comments may reveal the story"
   >
     <FontAwesome5 name="exclamation-triangle" size={16} color="#ff8888" iconStyle="solid" />
     <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
@@ -1043,7 +1084,7 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 13,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         textTransform: 'uppercase',
         letterSpacing: 0.8,
         marginBottom: 12,
@@ -1093,7 +1134,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     spoilerSub: {
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 13,
     },
 
@@ -1126,8 +1167,8 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     commentDate: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.55)',
     },
     commentRating: {
         flexDirection: 'row',
@@ -1150,7 +1191,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     ownBadge: {
-        fontSize: 11,
+        fontSize: 12,
         color: 'cyan',
         fontWeight: '600',
         backgroundColor: 'rgba(0,255,255,0.1)',
@@ -1181,7 +1222,7 @@ const styles = StyleSheet.create({
     },
         anonLabel: {
         fontSize: 13,
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
     },
     tagChipErotic: {
         backgroundColor: 'rgba(255,124,42,0.12)',
@@ -1202,7 +1243,7 @@ metaLineText: {
     color: 'rgba(255,255,255,0.55)',
 },
 metaLineDot: {
-    color: 'rgba(255,255,255,0.25)',
+    color: 'rgba(255,255,255,0.55)',
     fontSize: 13,
 },
 universeRow: {

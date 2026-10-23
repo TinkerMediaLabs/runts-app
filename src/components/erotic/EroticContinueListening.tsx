@@ -67,6 +67,8 @@ const EroticContinueTile = ({ storyId, progressSeconds }: {
             activeOpacity={0.85}
             onPress={handlePress}
             style={styles.tile}
+            accessibilityRole="button"
+            accessibilityLabel={`Continue listening, ${story.title ?? 'story'}, ${remainingMn} minutes left`}
         >
             {/* Cover image */}
             <Image
@@ -196,7 +198,7 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     tileRemaining: {
-        fontSize: 10,
+        fontSize: 12,
         color:    'rgba(255,124,42,0.8)',
     },
 });

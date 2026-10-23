@@ -43,7 +43,7 @@ const ForgotPassword = ({ navigation }: any) => {
     };
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessibilityRole="none">
             <LinearGradient colors={['#000000', '#050505', '#0a0a0a']} style={{ flex: 1 }} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                 <StatusBar style="light" backgroundColor="transparent" />
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -59,7 +59,7 @@ const ForgotPassword = ({ navigation }: any) => {
                                 <Text style={s.subText}>Enter the email associated with your account and we'll send you a reset code.</Text>
                             </Animated.View>
 
-                            {error ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox}><Text style={s.errorText}>{error}</Text></Animated.View> : null}
+                            {error ? <Animated.View entering={FadeIn.duration(250)} style={s.errorBox} accessibilityRole="alert" accessibilityLiveRegion="assertive"><Text style={s.errorText}>{error}</Text></Animated.View> : null}
 
                             <Animated.View entering={FadeInUp.delay(150).duration(700)}>
                                 <TextField label="Email" value={email} onChangeText={setEmail} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} mb={32} />
@@ -68,7 +68,7 @@ const ForgotPassword = ({ navigation }: any) => {
                             {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity activeOpacity={0.9} onPress={handleForgotPassword}>
+                                    <TouchableOpacity accessibilityRole="button" activeOpacity={0.9} onPress={handleForgotPassword}>
                                         <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Send Reset Code</Text></View>
                                     </TouchableOpacity>
                                 </Animated.View>
@@ -76,7 +76,7 @@ const ForgotPassword = ({ navigation }: any) => {
                             )}
 
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
-                                <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <TouchableOpacity accessibilityRole="button" onPress={() => navigation.goBack()}>
                                     <Text style={s.backText}>Go Back</Text>
                                 </TouchableOpacity>
                             </Animated.View>
@@ -99,7 +99,7 @@ const s = StyleSheet.create({
     errorText:  { color: '#ff8a8a', fontSize: 13, textAlign: 'center' },
     button:     { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18, elevation: 8 },
     buttonText: { width: '100%', fontSize: 16, fontWeight: '700' },
-    backText:   { fontSize: 14, color: 'rgba(255,255,255,0.35)', alignSelf: 'center', marginTop: 32 },
+    backText:   { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 32 },
 });
 
 export default ForgotPassword;

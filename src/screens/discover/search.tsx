@@ -145,6 +145,9 @@ const SearchAuthorItem = React.memo(({
       activeOpacity={0.75}
       onPress={() => navigation.navigate('AuthorDetails', { id: item.id })}
       style={styles.authorItem}
+      accessibilityRole="button"
+      accessibilityLabel={`Author ${item.name}`}
+      accessibilityHint="Opens author page"
     >
       <Image
         source={
@@ -153,6 +156,8 @@ const SearchAuthorItem = React.memo(({
             : require('../../../assets/images/blankprofile.png')
         }
         style={styles.authorAvatar}
+        accessible={false}
+        importantForAccessibility="no"
       />
       <View style={styles.authorInfo}>
         <Text style={styles.authorName} numberOfLines={1}>{item.name}</Text>
@@ -179,6 +184,8 @@ const GenreTile = React.memo(({ item, onPress }: { item: any; onPress: () => voi
     activeOpacity={0.7}
     onPress={onPress}
     style={styles.genreTile}
+    accessibilityRole="button"
+    accessibilityLabel={`${item.name}, ${item.storyCount ?? 0} ${(item.storyCount ?? 0) === 1 ? 'story' : 'stories'}`}
   >
     <Text style={styles.genreTileName} numberOfLines={1}>{item.name}</Text>
     <Text style={styles.genreTileCount}>
@@ -206,6 +213,9 @@ const FilterChip = ({
     onPress={onPress}
     activeOpacity={0.7}
     style={[styles.filterChip, active && styles.filterChipActive]}
+    accessibilityRole="button"
+    accessibilityLabel={label}
+    accessibilityState={{ selected: active }}
   >
     {icon ? (
       <FontAwesome5
@@ -269,7 +279,7 @@ const SwipeableSheet = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
           <View style={styles.sheetBackdrop} />
         </TouchableWithoutFeedback>
         <Animated.View style={[styles.sheet, extraStyle, { paddingBottom }, sheetStyle]}>
@@ -310,6 +320,9 @@ const SwipeableSheet = ({
             activeOpacity={0.7}
             onPress={() => { onSelect(opt.value); onClose(); }}
             style={styles.sheetOption}
+            accessibilityRole="radio"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ checked: current === opt.value }}
           >
             <View style={styles.sheetOptionLeft}>
               <FontAwesome5
@@ -359,6 +372,9 @@ const SwipeableSheet = ({
             activeOpacity={0.7}
             onPress={() => { onSelect(opt.value); onClose(); }}
             style={styles.sheetOption}
+            accessibilityRole="radio"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ checked: current === opt.value }}
           >
             <Text style={[
               styles.sheetOptionText,
@@ -406,6 +422,9 @@ const GenreSheet = ({
           activeOpacity={0.7}
           onPress={() => { onSelect(null); onClose(); }}
           style={styles.sheetOption}
+          accessibilityRole="radio"
+          accessibilityLabel="All Genres"
+          accessibilityState={{ checked: current === null }}
         >
           <Text style={[
             styles.sheetOptionText,
@@ -423,6 +442,9 @@ const GenreSheet = ({
             activeOpacity={0.7}
             onPress={() => { onSelect(tag.id); onClose(); }}
             style={styles.sheetOption}
+            accessibilityRole="radio"
+            accessibilityLabel={tag.name}
+            accessibilityState={{ checked: current === tag.id }}
           >
             <Text style={[
               styles.sheetOptionText,
@@ -666,6 +688,8 @@ const filteredTagResults = useMemo(() => {
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <FontAwesome5 name={'chevron-left' as any} size={18} color="#fff" iconStyle="solid" />
           </TouchableOpacity>
@@ -699,6 +723,9 @@ const filteredTagResults = useMemo(() => {
                 activeOpacity={0.7}
                 onPress={() => handleTabPress(tab.id, i)}
                 style={styles.tab}
+                accessibilityRole="tab"
+                accessibilityLabel={`${tab.label}, ${countLabel} results`}
+                accessibilityState={{ selected: isActive }}
               >
                 <Animated.View style={tabIconStyle}>
                   <Text style={[styles.tabCount, isActive && styles.tabCountActive]}>
@@ -936,7 +963,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.55)',
     letterSpacing: 0.3,
   },
   tabLabelActive: {
@@ -945,7 +972,7 @@ const styles = StyleSheet.create({
   tabCount: {
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 16,
 },
 tabCountActive: {
@@ -1034,7 +1061,7 @@ tabCountActive: {
   },
   authorBio: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 17,
   },
   emptyState: {
@@ -1047,12 +1074,12 @@ tabCountActive: {
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
   },
   emptySub: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.25)',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
     lineHeight: 19,
   },
@@ -1138,7 +1165,7 @@ genreTileName: {
 },
 genreTileCount: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.55)',
 },
 });
 

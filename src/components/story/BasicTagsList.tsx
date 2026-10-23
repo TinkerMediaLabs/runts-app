@@ -37,6 +37,8 @@ const BasicTagsList = ({ tags }: any) => {
                             navigate('TagHomeScreen', { id: item.id, name: item.name });
                         }}
                         style={{ marginRight: 10, marginTop: 10 }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Tag ${item.name}`}
                     >
                         <Text style={[
                             styles.tagtext,

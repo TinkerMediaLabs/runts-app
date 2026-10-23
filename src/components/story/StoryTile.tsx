@@ -18,6 +18,7 @@ import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
+import { useTipTarget } from '../../tips/useTipTarget';
 import { useStoryProgress } from '../../hooks/queries/useStoryProgressMap';
 import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
@@ -46,7 +47,10 @@ const StoryTile = ({
     isActive,
     isLocked = false, 
     isPremium = false,
+    tipTarget,
 }: any) => {
+
+    const tileTipRef = useTipTarget(tipTarget);
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -110,15 +114,25 @@ const StoryTile = ({
                     onLongPress={drag}
                     activeOpacity={0.6}
                     style={styles.dragHandle}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reorder ${title}`}
+                    accessibilityHint="Press and hold, then drag to move this story in your playlist"
                 >
                     <FontAwesome5 name="grip-lines" size={16} color="#ffffff30" iconStyle="solid" />
                 </TouchableOpacity>
             )}
 
-            <View style={styles.card}>
+            <View style={styles.card} ref={tileTipRef as any} collapsable={false}>
 
                     {/* ── Header row — tap here to expand/collapse ── */}
-                    <TouchableOpacity onPress={toggle} activeOpacity={0.85} style={styles.row}>
+                    <TouchableOpacity
+                        onPress={toggle}
+                        activeOpacity={0.85}
+                        style={styles.row}
+                        accessibilityRole="button"
+                        accessibilityLabel={[title, author ? `by ${author}` : null, durationDisplay].filter(Boolean).join(', ')}
+                        accessibilityHint="Shows or hides the story details"
+                    >
 
                         {/* Artwork — animates to 0 width on expand */}
                         <Animated.Image
@@ -209,6 +223,8 @@ const StoryTile = ({
                             {/* Full artwork → story screen */}
                             <TouchableWithoutFeedback
                                 onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Open ${title}`}
                             >
                                 <View>
                                     <Image
@@ -242,7 +258,13 @@ const StoryTile = ({
                                 <View style={styles.actionsLeft}>
                                     <PinButton storyId={id} size={20} />
 
-                                    <TouchableOpacity onPress={handleShare} style={styles.actionBtn} activeOpacity={0.7}>
+                                    <TouchableOpacity
+                                        onPress={handleShare}
+                                        style={styles.actionBtn}
+                                        activeOpacity={0.7}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Share story"
+                                    >
                                         <FontAwesome5 name="share" size={19} color="#ffffff70" iconStyle="solid" />
                                     </TouchableOpacity>
                                 </View>
@@ -350,7 +372,7 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
     },
     tagPillText: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         color: 'rgba(255,255,255,0.75)',
         textTransform: 'capitalize',
@@ -392,7 +414,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     universeText: {
-        fontSize: 10.5,
+        fontSize: 12.5,
         fontWeight: '700',
         color: '#ffffffa5',
         textTransform: 'uppercase',

@@ -15,7 +15,7 @@ const MenuHeader = ({title, navigation} : any) => {
 
     return (
         <View style={{ flexDirection: 'row', marginTop: 30, marginLeft: 20, alignItems: 'center'}}>
-            <TouchableWithoutFeedback onPress={() => navigation.goBack()}>
+            <TouchableWithoutFeedback onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back">
                 <View style={{padding: 30, margin: -30}}>
                     <FontAwesome5 
                         name='chevron-left'

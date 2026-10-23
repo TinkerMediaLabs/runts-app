@@ -2195,6 +2195,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "sceneCount": {
+              "name": "sceneCount",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
             "universeId": {
               "name": "universeId",
               "isArray": false,
@@ -2431,6 +2438,22 @@
               "isArray": true,
               "type": {
                 "model": "UserBookmark"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true,
+              "association": {
+                "connectionType": "HAS_MANY",
+                "associatedWith": [
+                  "storyId"
+                ]
+              }
+            },
+            "scenes": {
+              "name": "scenes",
+              "isArray": true,
+              "type": {
+                "model": "StoryScene"
               },
               "isRequired": false,
               "attributes": [],
@@ -3604,6 +3627,128 @@
                 "queryField": "listStoryNarratorByNarratorId",
                 "fields": [
                   "narratorId"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "StoryScene": {
+          "name": "StoryScene",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "storyId": {
+              "name": "storyId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "startSeconds": {
+              "name": "startSeconds",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": true,
+              "attributes": []
+            },
+            "imageUri": {
+              "name": "imageUri",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "altText": {
+              "name": "altText",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "story": {
+              "name": "story",
+              "isArray": false,
+              "type": {
+                "model": "Story"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "association": {
+                "connectionType": "BELONGS_TO",
+                "targetNames": [
+                  "storyId"
+                ]
+              }
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "StoryScenes",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byStoryAndStart",
+                "queryField": "listStorySceneByStoryIdAndStartSeconds",
+                "fields": [
+                  "storyId",
+                  "startSeconds"
                 ]
               }
             },

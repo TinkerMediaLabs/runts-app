@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TouchableOpacity, Modal, StyleSheet, Linking, Animated, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, Linking, AccessibilityInfo, Animated, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
 import { pinErrorMessage } from '@/lib/eroticPin';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 const { width } = Dimensions.get('window');
 const SUPPORT_EMAIL = 'mailto:admin@tinkermedia.net';
@@ -59,7 +60,15 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
         }
     }, [visible]);
 
+    const reduceMotion = useReduceMotion();
+
+    // Read validation errors aloud (the error text appears without any focus change).
+    useEffect(() => {
+        if (error) AccessibilityInfo.announceForAccessibility(error);
+    }, [error]);
+
     const shake = () => {
+        if (reduceMotion) return;
         Animated.sequence([
             Animated.timing(shakeAnim, { toValue: 10,  duration: 50, useNativeDriver: true }),
             Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
@@ -109,9 +118,12 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <TouchableOpacity
+                    accessibilityRole="button" accessibilityLabel="Cancel"
                     style={StyleSheet.absoluteFill}
                     activeOpacity={1}
                     onPress={onCancel}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
                 />
 
                 <Animated.View
@@ -126,8 +138,11 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
 
                     {/* Tapping the dot area re-focuses the hidden input */}
                     <TouchableOpacity
+                        accessibilityRole="none"
                         activeOpacity={1}
                         onPress={() => inputRef.current?.focus()}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
                     >
                         <PINDots length={pin.length} />
                     </TouchableOpacity>
@@ -142,13 +157,21 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
                         style={styles.hiddenInput}
                         caretHidden
                         contextMenuHidden
+                        secureTextEntry
+                        accessibilityLabel={mode === 'remove' ? 'Enter your 4-digit PIN to remove the lock' : 'Enter your 4-digit PIN'}
                     />
 
-                    {!!error && <Text style={styles.error}>{error}</Text>}
+                    {!!error && (
+                        <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                            {error}
+                        </Text>
+                    )}
 
                     <TouchableOpacity
                         onPress={() => Linking.openURL(SUPPORT_EMAIL)}
                         style={styles.forgotButton}
+                        accessibilityRole="link"
+                        accessibilityLabel="Forgot PIN? Contact support"
                         activeOpacity={0.7}
                     >
                         <Text style={styles.forgotText}>Forgot PIN? Contact support</Text>
@@ -157,6 +180,8 @@ const PINEntryModal = ({ visible, onSuccess, onCancel, mode = 'unlock' }: Props)
                     <TouchableOpacity
                         onPress={onCancel}
                         style={styles.cancelButton}
+                        accessibilityRole="button"
+                        accessibilityLabel="Cancel"
                         activeOpacity={0.7}
                     >
                         <Text style={styles.cancelText}>Cancel</Text>

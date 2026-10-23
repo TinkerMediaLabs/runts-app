@@ -14,7 +14,7 @@ const MenuTile = ({title, onPress} : any) => {
     const typo = useTypography();
 
     return (
-        <TouchableWithoutFeedback onPress={onPress}>
+        <TouchableWithoutFeedback onPress={onPress} accessibilityRole="button" accessibilityLabel={title}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 40, marginVertical: 20}}>
                 <Text style={{ color: '#fff', fontSize: 16}}>
                     {title}

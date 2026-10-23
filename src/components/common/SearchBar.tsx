@@ -11,6 +11,7 @@ import { spacing } from '../../theme/spacing';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
+import { useTipTarget } from '../../tips/useTipTarget';
 
 const SearchBar = () => {
 
@@ -18,12 +19,18 @@ const SearchBar = () => {
     const typo = useTypography();
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const tipRef = useTipTarget('search-bar');
     
 
     return (
         <View style={{ marginBottom: 20, marginHorizontal: 20, alignItems: 'center'}}>
-            <TouchableWithoutFeedback onPress={() => navigation.navigate('SearchScreen')}>
-                <View style={
+            <TouchableWithoutFeedback
+                onPress={() => navigation.navigate('SearchScreen')}
+                accessibilityRole="button"
+                accessibilityLabel="Search stories, authors, tags"
+                accessibilityHint="Opens search"
+            >
+                <View ref={tipRef} collapsable={false} style={
                     {alignItems: 'center', 
                     paddingHorizontal: 10, 
                     borderRadius: 8, 

@@ -15,8 +15,8 @@ import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
 import { configureAmplify } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './src/lib/queryClient';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { queryClient, queryPersister, shouldPersistQuery, PERSIST_MAX_AGE } from './src/lib/queryClient';
 import { Analytics } from '@/lib/analytics';
 import { PurchasesService } from '@/lib/purchases';
 
@@ -87,7 +87,14 @@ function App() {
     }
 
     return (
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+                persister: queryPersister,
+                maxAge: PERSIST_MAX_AGE,
+                dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+            }}
+        >
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <SafeAreaProvider>
                     <AppProvider>
@@ -105,7 +112,7 @@ function App() {
                     </AppProvider>
                 </SafeAreaProvider>
             </GestureHandlerRootView>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
     );
 }
 

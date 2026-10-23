@@ -28,7 +28,18 @@ async function resolveAudioUrl(url: string): Promise<string> {
     return url;
   }
 
-  // Try signed S3 URL first (online path — works reliably with @rntp/player)
+  // Downloaded file first: it needs no network, and signing an S3 URL succeeds offline (no request is
+  // made) so the player would be handed a link it cannot reach.
+  try {
+    const localPath = await getLocalFilePath(url);
+    if (localPath) {
+      const info = await FileSystem.getInfoAsync(localPath);
+      if (info.exists) return localPath;
+    }
+  } catch {
+    // fall through to the network path
+  }
+
   const cached = signedUrlCache.get(url);
   const now    = Date.now();
 
@@ -119,7 +130,6 @@ async play(track: Track) {
       await TrackPlayer.play();
       return;
     }
-    this.currentTrack = track;
     const resolvedUrl = await resolveAudioUrl(track.url);
     console.log('audioEngine.play: resolvedUrl =', resolvedUrl);  // ← add
 
@@ -132,6 +142,7 @@ async play(track: Track) {
       artwork: track.artwork,
       artist:  track.artist,
     } as any]);
+    this.currentTrack = track;
     await TrackPlayer.play();
     console.log('audioEngine.play: play() called successfully');  // ← add
   } catch (error) {
@@ -171,6 +182,22 @@ async play(track: Track) {
     } catch {
       return 0;
     }
+  }
+
+  getDuration(): number {
+    try {
+      return (TrackPlayer as any).getProgress?.()?.duration ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  // Jump forward (positive) or back (negative) from the current position, kept inside the track.
+  async skipBy(deltaSeconds: number) {
+    const duration = this.getDuration();
+    let next = this.getCurrentPosition() + deltaSeconds;
+    if (duration > 0) next = Math.min(next, Math.max(0, duration - 1));
+    await this.seek(Math.max(0, next));
   }
 }
 

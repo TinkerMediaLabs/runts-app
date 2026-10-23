@@ -14,6 +14,7 @@ import { useApp } from '@/context/AppContext';
 import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
+import { useStory } from '../../hooks/queries/useStories';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { unwrap } from '@/lib/amplifyResult';
 
@@ -32,25 +33,15 @@ const PinnedStoryTile = ({
     reorderEnabled,
     drag,
     isActive,
+    isFirst,
 }: {
     item: any;
+    isFirst?: boolean;
     reorderEnabled: boolean;
     drag?: () => void;
     isActive?: boolean;
 }) => {
-    const [story, setStory] = useState<any>(null);
-
-    useEffect(() => {
-        async function fetchStory() {
-            try {
-                const { data } = await client.models.Story.get({ id: item.storyId });
-                setStory(data);
-            } catch (e) {
-                console.log('Error fetching pinned story:', e);
-            }
-        }
-        fetchStory();
-    }, [item.storyId]);
+    const { data: story } = useStory(item.storyId);
 
     const { data: resolvedImageUri } = useStoryImage(
         story?.imageUri?.startsWith('stories/') ? story.imageUri : null
@@ -84,6 +75,7 @@ const PinnedStoryTile = ({
             licenseType={item.licenseType}
             universeId={item.universeId}
             sequenceNumber={item.sequenceNumber}
+            tipTarget={isFirst ? 'story-tile' : undefined}
         />
     );
 };
@@ -136,13 +128,14 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         }
     };
 
-    const renderItem = ({ item, drag, isActive }: RenderItemParams<any>) => (
+    const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<any>) => (
         <ScaleDecorator activeScale={1.02}>
             <PinnedStoryTile
                 item={item}
                 reorderEnabled={reorderEnabled}
                 drag={drag}
                 isActive={isActive}
+                isFirst={getIndex?.() === 0}
             />
         </ScaleDecorator>
     );
@@ -200,7 +193,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     emptyHint: {
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 13,
         textAlign: 'center',
         lineHeight: 20,

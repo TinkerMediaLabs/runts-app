@@ -39,6 +39,9 @@ const HorzTagTile = ({
             activeOpacity={0.88}
             onPress={() => navigation.navigate('TagHomeScreen', { id, name })}
             style={styles.wrapper}
+            accessibilityRole="button"
+            accessibilityLabel={`${name}, ${countLabel}`}
+            accessibilityHint="Opens this tag"
         >
             {displayImageUri ? (
                 <ImageBackground

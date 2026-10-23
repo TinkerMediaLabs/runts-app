@@ -33,7 +33,13 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
     return (
       <View style={[styles.container, style]}>
         {/* Left Icon */}
-        <TouchableOpacity onPress={onSubmit} style={styles.iconLeft}>
+        <TouchableOpacity
+          onPress={onSubmit}
+          style={styles.iconLeft}
+          accessibilityRole="button"
+          accessibilityLabel="Search"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <FontAwesome5 name="search" size={16} color={iconColor} />
         </TouchableOpacity>
 
@@ -43,7 +49,8 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={iconColor}
+          placeholderTextColor="#595959"
+          accessibilityLabel={placeholder}
           style={[styles.input, inputStyle]}
           returnKeyType="search"
           onSubmitEditing={onSubmit}
@@ -55,6 +62,9 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           <TouchableOpacity
             onPress={() => onChangeText('')}
             style={styles.iconRight}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <FontAwesome5 name="times-circle" size={16} color={iconColor} />
           </TouchableOpacity>

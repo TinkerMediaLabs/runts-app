@@ -40,6 +40,13 @@ export default function AuthorTile({
       activeOpacity={0.85}
       onPress={() => navigation.navigate('AuthorDetails', { id: author.id })}
       style={styles.tile}
+      accessibilityRole="button"
+      accessibilityLabel={`${author?.name ?? 'Author'}, following, ${storyCount} ${storyCount === 1 ? 'story' : 'stories'}`}
+      accessibilityHint="Opens the author page"
+      accessibilityActions={[{ name: 'unfollow', label: 'Unfollow' }]}
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === 'unfollow' && !isPending) handleUnfollow();
+      }}
     >
       {/* Avatar */}
      <Image
@@ -60,6 +67,8 @@ export default function AuthorTile({
             disabled={isPending}
             activeOpacity={0.7}
             style={styles.unfollowBtn}
+            accessibilityRole="button"
+            accessibilityLabel={`Unfollow ${author?.name ?? 'author'}`}
           >
             {isPending ? (
               <ActivityIndicator size="small" color="cyan" />
@@ -161,7 +170,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,255,255,0.2)',
   },
   genreChipText: {
-    fontSize: 11,
+    fontSize: 12,
     color: 'rgba(0,255,255,0.8)',
     fontWeight: '500',
   },
@@ -176,11 +185,11 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   statText: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.35)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
   },
   statDot: {
-    color: 'rgba(255,255,255,0.2)',
-    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 12,
   },
 });

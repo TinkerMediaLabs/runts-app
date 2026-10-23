@@ -9,12 +9,21 @@ export const OFFLINE_ENABLED_KEY = '@runts/offline_enabled';
 export const DOWNLOADS_KEY       = '@runts/downloads';
 export const STORAGE_LIMIT_BYTES = 500 * 1024 * 1024; // 500 MB
 export const AUDIO_DIR = `${(FileSystem as any).documentDirectory ?? ''}audio/`;
+export const SCENES_DIR = `${(FileSystem as any).documentDirectory ?? ''}scenes/`;
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export type DownloadStatus = 'complete' | 'downloading' | 'failed';
+
+// A picture-book scene saved for offline use (image file on device + its timing).
+export type DownloadScene = {
+  startSeconds: number;
+  imageUri:     string;   // original S3 key (matches StoryScene.imageUri)
+  localPath:    string;   // absolute on-device path
+  altText:      string;
+};
 
 export type DownloadRecord = {
   storyId:      string;
@@ -23,6 +32,7 @@ export type DownloadRecord = {
   fileSize:     number;   // bytes (0 while downloading or on failure)
   downloadedAt: string;   // ISO timestamp
   status:       DownloadStatus;
+  scenes?:      DownloadScene[];   // picture-book scenes, when the story has any (fileSize includes their bytes)
 };
 
 // ---------------------------------------------------------------------------
@@ -103,6 +113,18 @@ export async function ensureAudioDir(): Promise<void> {
   if (!info.exists) {
     await FileSystem.makeDirectoryAsync(AUDIO_DIR, { intermediates: true });
   }
+}
+
+/** Folder holding a story's offline scene images. */
+export function sceneDirForStory(storyId: string): string {
+  return SCENES_DIR + storyId + '/';
+}
+
+/** The saved scenes for a story, or [] when none are downloaded. */
+export async function getOfflineScenes(storyId: string): Promise<DownloadScene[]> {
+  const records = await getDownloads();
+  const record  = records.find(r => r.storyId === storyId && r.status === 'complete');
+  return record?.scenes ?? [];
 }
 
 /** Canonical local path for a story's audio file. */

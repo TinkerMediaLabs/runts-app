@@ -24,6 +24,8 @@ import PlayButtonV2 from '../common/PlayButtonV2';
 import LoadingItem  from '../common/LoadingItem';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import PinButton from '../common/PinButton';
+import { useTipTarget } from '../../tips/useTipTarget';
+import { setTipsFlag } from '../../tips/tipsStore';
 
 import { useApp } from '@/context/AppContext';
 import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
@@ -73,14 +75,18 @@ type ItemProps = {
     isNew?:         boolean;
     progressStatus?: ProgressStatus;
     progressSeconds?: number;
+    isFirst?: boolean;
 };
 
 const CarouselItem = ({
     id, title, primaryTagName, secondaryTagName, summary,
     imageUri, audioUri, author, narratorDisplay, duration,
     numListens, avgRating, numRatings, spiceRating,
-    isPremium, isNew, progressStatus = 'none', progressSeconds = 0,
+    isPremium, isNew, progressStatus = 'none', progressSeconds = 0, isFirst = false,
 }: ItemProps) => {
+
+    const cardTipRef = useTipTarget(isFirst ? 'foryou-card' : null);
+    React.useEffect(() => () => { if (isFirst) setTipsFlag('foryouExpanded', false); }, [isFirst]);
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -98,6 +104,7 @@ const CarouselItem = ({
     const toggleExpand = () => {
         const next = !isExpanded.value;
         isExpanded.value     = next;
+        if (isFirst) setTipsFlag('foryouExpanded', next);
         expandProgress.value = withTiming(next ? 1 : 0, TIMING_CFG);
     };
 
@@ -127,7 +134,7 @@ const CarouselItem = ({
     const durationDisplay = getDurationDisplay(duration, progressStatus, progressSeconds);
 
     return (
-        <View style={styles.itemWrapper}>
+        <View style={styles.itemWrapper} ref={cardTipRef as any} collapsable={false}>
             {displayImageUri ? (
                 <ImageBackground
                     source={{ uri: displayImageUri }}
@@ -176,12 +183,19 @@ const CarouselItem = ({
                         onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
                         style={styles.imageTap}
                         activeOpacity={1}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open ${title}${author ? `, by ${author}` : ''}`}
+                        accessibilityActions={[{ name: 'toggle', label: 'Show or hide details' }]}
+                        onAccessibilityAction={(e) => {
+                            if (e.nativeEvent.actionName === 'toggle') toggleExpand();
+                        }}
                     />
 
                     <TouchableOpacity
                         onPress={toggleExpand}
                         activeOpacity={0.9}
                         style={styles.infoPanel}
+                        accessible={false}
                     >
                         {/* Title row */}
                         <View style={styles.titleRow}>
@@ -285,8 +299,15 @@ const CarouselItem = ({
                                         />
                                     )}
                                     <View style={styles.iconActions}>
-                                        <PinButton storyId={id} size={20} />
-                                        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7} onPress={handleShare}>
+                                        <PinButton storyId={id} size={20} tipTarget={isFirst ? 'foryou-pin' : undefined} />
+                                        <TouchableOpacity
+                                            style={styles.iconBtn}
+                                            activeOpacity={0.7}
+                                            onPress={handleShare}
+                                            accessibilityRole="button"
+                                            accessibilityLabel="Share story"
+                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                        >
                                             <FontAwesome name="share" size={20} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>
                                     </View>
@@ -312,8 +333,9 @@ const ForYouCarousel = ({ stories, tagMap }: {
     tagMap:  Record<string, string>;
 }) => {
 
-    const renderItem = ({ item }: any) => (
+    const renderItem = ({ item, index }: any) => (
         <CarouselItem
+            isFirst={index === 0}
             id={item?.id}
             title={item?.title}
             imageUri={item?.imageUri ?? ''}

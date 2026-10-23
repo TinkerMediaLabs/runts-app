@@ -42,7 +42,7 @@ const PlayButtonV2 = ({ id, duration, author, imageUri, audioUri, title, isPremi
     };
 
     return (
-        <TouchableOpacity onPress={handlePress} activeOpacity={0.75}>
+        <TouchableOpacity onPress={handlePress} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Play story">
             <View style={styles.pill}>
                 <FontAwesome5
                     name="play"

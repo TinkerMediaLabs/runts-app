@@ -207,7 +207,7 @@ const CreatorProfile = () => {
                 { paddingTop: insets.top + 10 },
                 topBarStyle,
             ]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
                     <AntDesign name="close" size={22} color="#fff" />
                 </TouchableOpacity>
 
@@ -220,6 +220,10 @@ const CreatorProfile = () => {
                     onPress={handleToggleFollow}
                     // disabled={following || unfollowing || followLoading}
                     style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                    accessibilityRole="button"
+                    accessibilityLabel={isFollowing ? `Following ${author?.name ?? 'author'}` : `Follow ${author?.name ?? 'author'}`}
+                    accessibilityHint={isFollowing ? 'Double tap to unfollow' : undefined}
+                    accessibilityState={{ selected: !!isFollowing }}
                     >
                     <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
                         {isFollowing ? 'Following' : 'Follow'}
@@ -240,7 +244,7 @@ const CreatorProfile = () => {
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
                 ListEmptyComponent={
                     <View style={{ alignItems: 'center', paddingTop: 40 }}>
-                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+                        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>
                             No stories yet
                         </Text>
                     </View>
@@ -456,7 +460,7 @@ const styles = StyleSheet.create({
     storiesLabelText: {
         fontSize: 13,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.55)',
         textTransform: 'uppercase',
         letterSpacing: 0.8,
     },

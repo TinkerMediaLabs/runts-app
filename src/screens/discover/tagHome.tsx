@@ -238,7 +238,7 @@ const GenreHome = ({ navigation }: any) => {
                     pointerEvents="box-none"
                 >
                     <TouchableOpacity
-                        onPress={() => navigation.goBack()}
+                        onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
                         style={styles.heroStickyBackBtn}
                         activeOpacity={0.7}
                     >
@@ -270,14 +270,14 @@ const GenreHome = ({ navigation }: any) => {
                         />
                         <View style={[styles.heroTopRow, { paddingTop: insets.top + 10 }]}>
                             <TouchableOpacity
-                                onPress={() => navigation.goBack()}
+                                onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
                                 style={styles.heroBubble}
                                 activeOpacity={0.7}
                             >
                                 <FontAwesome5 name="chevron-left" size={16} color="#fff" iconStyle="solid" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                                onPress={() => navigation.navigate('BrowseByTitle')}
+                                onPress={() => navigation.navigate('BrowseByTitle')} accessibilityRole="button" accessibilityLabel="Browse by title"
                                 style={styles.heroBubble}
                                 activeOpacity={0.7}
                             >
@@ -398,7 +398,7 @@ const GenreHome = ({ navigation }: any) => {
                 {/* Header */}
                 <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                     <TouchableOpacity
-                        onPress={() => navigation.goBack()}
+                        onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
                         style={styles.backBtn}
                         activeOpacity={0.7}
                     >
@@ -410,7 +410,7 @@ const GenreHome = ({ navigation }: any) => {
                     </Text>
 
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('BrowseByTitle')}
+                        onPress={() => navigation.navigate('BrowseByTitle')} accessibilityRole="button" accessibilityLabel="Browse by title"
                         activeOpacity={0.7}
                     >
                         <Text style={styles.browseText}>Browse</Text>

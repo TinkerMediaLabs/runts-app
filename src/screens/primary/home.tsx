@@ -12,6 +12,7 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
+import Reveal from '../../components/common/Reveal';
 import { useApp } from '@/context/AppContext';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 
@@ -109,6 +110,7 @@ const HomeScreen = ({ navigation }: any) => {
                     contentContainerStyle={{ flexGrow: 1 }}
                 >
                     {/* Header */}
+                    <Reveal index={0}>
                     <View style={{
                         flexDirection: 'row',
                         justifyContent: 'space-between',
@@ -119,12 +121,13 @@ const HomeScreen = ({ navigation }: any) => {
                         <Text style={[{ color: colors.text }, typo.h1]}>
                             {text}
                         </Text>
-                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')}>
+                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
                                 <Ionicons name="person" size={20} color="#fff" />
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
+                    </Reveal>
 
                     {isLoading ? (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
@@ -133,26 +136,26 @@ const HomeScreen = ({ navigation }: any) => {
                     ) : (
                         <>
                             {/* Featured carousel */}
-                            <View>
+                            <Reveal index={1}>
                                 <ForYouCarousel
                                     stories={enrichedStories}
                                     tagMap={tagMap}
                                 />
-                            </View>
+                            </Reveal>
 
                             {/* Continue Listening — shows up to 4 most recent in-progress stories */}
-                            <View style={{ paddingVertical: 10 }}>
+                            <Reveal index={2} style={{ paddingVertical: 10 }}>
                                 <ContinueListening />
-                            </View>
+                            </Reveal>
 
                             {/* Horizontal lists by tag */}
-                            {topTags.map(tag => {
+                            {topTags.map((tag, tagIndex) => {
                                 const tagStories = enrichedStories.filter(
                                     s => s.primaryTagId === tag.id
                                 );
                                 if (tagStories.length === 0) return null;
                                 return (
-                                    <View key={tag.id}>
+                                    <Reveal key={tag.id} index={3 + tagIndex}>
                                         <View style={{ marginLeft: spacing.margin, paddingVertical: spacing.margin }}>
                                             <Text style={typo.title}>{tag.name}</Text>
                                         </View>
@@ -161,7 +164,7 @@ const HomeScreen = ({ navigation }: any) => {
                                             tagId={tag.id}
                                             tagName={tag.name ?? ''}
                                         />
-                                    </View>
+                                    </Reveal>
                                 );
                             })}
                         </>

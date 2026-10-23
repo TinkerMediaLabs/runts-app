@@ -46,6 +46,8 @@ import PinButton from '../../components/common/PinButton';
 
 import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
+import { useStoryScenes } from '@/hooks/queries/useStoryScenes';
+import SceneHero, { announceScene } from '@/features/audio/SceneHero';
 import { useTag } from '@/hooks/queries/useTagNames';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
 
@@ -127,6 +129,9 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const scrollRef = useRef<ScrollView>(null);
 
   const { data: currentStory } = useStory(track?.id ?? null);
+  // Picture-book scenes (only queried when the story has any)
+  const { data: scenes = [] } = useStoryScenes(currentStory?.id, (currentStory as any)?.sceneCount);
+  const hasScenes = scenes.length > 0;
   const { data: primaryTagData }   = useTag(currentStory?.primaryTagId);
   const { data: secondaryTagData } = useTag(currentStory?.secondaryTagId);
 
@@ -372,7 +377,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       resizeMode="cover"
                       fadeDuration={0}
                   >
-                      <View style={styles.overlay} />
+                      {hasScenes && <SceneHero scenes={scenes} onSceneChange={announceScene} />}
+                      <View style={[styles.overlay, hasScenes && { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
 
                       {/* Pan-to-collapse zone + sleep timer pill — scrolls
                           away with the hero image, distinct from the sticky
@@ -393,7 +399,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
                                       alignItems: 'center',
                                   }}
                               >
-                                  <View style={styles.sleepPill}>
+                                  <View
+                                      style={styles.sleepPill}
+                                      accessible
+                                      accessibilityLabel={`Sleep timer, ${sleepMinutesLeft} minutes left`}
+                                  >
                                       <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
                                   </View>
                               </View>
@@ -417,6 +427,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       activeOpacity={0.9}
                       onPress={toggle}
                       style={styles.heroTouch}
+                      accessibilityRole="button"
+                      accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
                   >
                       <Animated.View style={[heroControlsStyle]}>
                           <FontAwesome5
@@ -439,7 +451,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   <View>
                     <View style={styles.titlecontainer}>
                         <Text style={styles.bigTitle}>{track.title}</Text>
-                      <TouchableWithoutFeedback onPress={() => {
+                      <TouchableWithoutFeedback
+                        accessibilityRole="link"
+                        accessibilityLabel={`by ${track.artist}`}
+                        accessibilityHint="Opens the author page"
+                        onPress={() => {
                         if (currentStory?.authorId) {
                           navigate('AuthorDetails', { id: currentStory.authorId });
                           collapsePlayer();
@@ -453,7 +469,12 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       </View>
 
                     <View style={styles.actioncontainer}>
-                     <TouchableWithoutFeedback onPress={() => {
+                     <TouchableWithoutFeedback
+                      accessible={!!storyTags[0]?.name}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${storyTags[0]?.name ?? ''} genre`}
+                      accessibilityHint="Opens this tag"
+                      onPress={() => {
                       if (currentStory?.primaryTagId) {
                         navigate('TagHomeScreen', {
                           id: currentStory.primaryTagId,
@@ -476,12 +497,24 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           <PinButton storyId={track.id} size={20} />
                         </View>
                         <View style={styles.actionbutton}>
-                          <TouchableWithoutFeedback onPress={handleShare}>
+                          <TouchableWithoutFeedback
+                            onPress={handleShare}
+                            accessibilityRole="button"
+                            accessibilityLabel="Share story"
+                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                          >
                               <FontAwesome5 name="share" size={20} color="#fff" />
                           </TouchableWithoutFeedback>
                       </View>
                         <View style={styles.actionbutton}>
-                          <TouchableOpacity onPress={handleBookmarkPress} activeOpacity={0.7}>
+                          <TouchableOpacity
+                            onPress={handleBookmarkPress}
+                            activeOpacity={0.7}
+                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Add bookmark"
+                            accessibilityHint="Saves your current position"
+                          >
                             <FontAwesome5 name={'bookmark' as any} size={20} color="#fff" />
                           </TouchableOpacity>
                         </View>
@@ -523,6 +556,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={playNext}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Up next: ${nextTrackInfo.title}. Play now`}
                   style={[styles.upNextCard, { marginHorizontal: 20, marginTop: 40 }]}
                   onLayout={(e) => {
                     floatingThresholdY.value = HERO_HEIGHT + e.nativeEvent.layout.y + e.nativeEvent.layout.height;
@@ -564,6 +599,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
               onPress={collapsePlayer}
               style={[styles.stickyButton, { top: insets.top + 12, left: 20 }]}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Minimize player"
             >
               <Feather name="chevron-down" size={28} color="#fff" />
             </TouchableOpacity>
@@ -618,7 +655,13 @@ export default function TrackPlayerWidget({ expanded }: any) {
           style={[styles.floatingButtonWrapper, floatingButtonStyle, { bottom: insets.bottom + 24 }]}
           pointerEvents="box-none"
         >
-          <TouchableOpacity onPress={toggle} activeOpacity={0.8} style={styles.floatingPlayButton}>
+          <TouchableOpacity
+            onPress={toggle}
+            activeOpacity={0.8}
+            style={styles.floatingPlayButton}
+            accessibilityRole="button"
+            accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
+          >
             <FontAwesome5
                 name={optimisticPlaying ? 'pause' : 'play'}
                 size={16}
@@ -641,10 +684,18 @@ export default function TrackPlayerWidget({ expanded }: any) {
         >
             <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
               <View style={styles.miniTint} pointerEvents="none" />            
-              <TouchableWithoutFeedback onPress={expandPlayer}>
+              <TouchableWithoutFeedback onPress={expandPlayer} accessible={false}>
                     <View style={styles.miniInner}>
               <Image source={{ uri: track.artwork }} style={styles.miniImage} />
-              <View style={{ flex: 1 }}>
+              <View
+                style={{ flex: 1 }}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${track.title}, by ${track.artist}`}
+                accessibilityHint="Opens the full player"
+                accessibilityActions={[{ name: 'activate' }]}
+                onAccessibilityAction={() => expandPlayer()}
+              >
                 <Text numberOfLines={1} style={styles.title}>
                   {track.title}
                 </Text>
@@ -652,7 +703,12 @@ export default function TrackPlayerWidget({ expanded }: any) {
                   {track.artist}
                 </Text>
               </View>
-              <TouchableOpacity onPress={toggle}>
+              <TouchableOpacity
+                onPress={toggle}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
+              >
                 <Feather
                   name={optimisticPlaying ? 'pause' : 'play'}
                   size={22}
@@ -855,9 +911,9 @@ mini: {
     borderColor: 'rgba(255,255,255,0.08)',
   },
   upNextLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,

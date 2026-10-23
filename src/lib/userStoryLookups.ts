@@ -11,6 +11,11 @@ export async function findFinished(userId: string, storyId: string) {
     { userId, storyId: { eq: storyId } }, { limit: 10 });
   return data ?? [];
 }
+export async function findRating(userId: string, storyId: string) {
+  const { data } = await (client.models.UserRating as any).listUserRatingByUserIdAndStoryId(
+    { userId, storyId: { eq: storyId } }, { limit: 10 });
+  return (data ?? []) as any[];
+}
 export async function findPinned(userId: string, storyId: string) {
   const { data } = await client.models.UserPinnedStory.listUserPinnedStoryByUserIdAndStoryId(
     { userId, storyId: { eq: storyId } }, { limit: 10 });

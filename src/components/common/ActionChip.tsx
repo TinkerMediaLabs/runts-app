@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/common/AppText';
 import { subscribeChip, ChipMessage } from '@/lib/chip';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 const SHOW_MS = 2200;
 const ANIM_MS = 180;
 
 export default function ActionChip() {
     const insets = useSafeAreaInsets();
+    const reduceMotion = useReduceMotion();
     const [chip, setChip] = useState<ChipMessage | null>(null);
     const opacity    = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(-12)).current;
@@ -18,16 +20,19 @@ export default function ActionChip() {
         const unsubscribe = subscribeChip((message) => {
             if (timer.current) clearTimeout(timer.current);
             setChip(message);
+            // The chip is not focusable, so tell screen readers directly.
+            AccessibilityInfo.announceForAccessibility(message.text);
+            const ms = reduceMotion ? 0 : ANIM_MS;
             opacity.setValue(0);
-            translateY.setValue(-12);
+            translateY.setValue(reduceMotion ? 0 : -12);
             Animated.parallel([
-                Animated.timing(opacity,    { toValue: 1, duration: ANIM_MS, useNativeDriver: true }),
-                Animated.timing(translateY, { toValue: 0, duration: ANIM_MS, useNativeDriver: true }),
+                Animated.timing(opacity,    { toValue: 1, duration: ms, useNativeDriver: true }),
+                Animated.timing(translateY, { toValue: 0, duration: ms, useNativeDriver: true }),
             ]).start();
             timer.current = setTimeout(() => {
                 Animated.parallel([
-                    Animated.timing(opacity,    { toValue: 0,   duration: ANIM_MS, useNativeDriver: true }),
-                    Animated.timing(translateY, { toValue: -12, duration: ANIM_MS, useNativeDriver: true }),
+                    Animated.timing(opacity,    { toValue: 0,   duration: ms, useNativeDriver: true }),
+                    Animated.timing(translateY, { toValue: reduceMotion ? 0 : -12, duration: ms, useNativeDriver: true }),
                 ]).start(({ finished }) => {
                     if (finished) setChip(null);
                 });
@@ -37,7 +42,7 @@ export default function ActionChip() {
             unsubscribe();
             if (timer.current) clearTimeout(timer.current);
         };
-    }, [opacity, translateY]);
+    }, [opacity, translateY, reduceMotion]);
 
     if (!chip) return null;
 

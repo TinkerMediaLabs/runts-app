@@ -152,7 +152,7 @@ const Waiting = () => {
                         </View>
                     </View>
 
-                    <Text style={{ color: '#ffffff55', marginTop: 24, fontSize: 13 }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.55)', marginTop: 24, fontSize: 13 }}>
                         loading
                     </Text>
                 </Animated.View>

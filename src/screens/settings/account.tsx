@@ -74,6 +74,9 @@ const SettingRow = ({
         onPress={onPress}
         style={styles.row}
         disabled={!onPress}
+        accessible
+        accessibilityRole={onPress ? 'button' : 'text'}
+        accessibilityLabel={value ? `${label}, ${value}` : badge ? `${label}, ${badge}` : label}
     >
         <View style={styles.rowLeft}>
             <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
@@ -149,7 +152,7 @@ const Sheet = ({
             animationType="slide"
             onRequestClose={onClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
                 <View style={styles.sheetBackdrop} />
             </TouchableWithoutFeedback>
 
@@ -162,7 +165,7 @@ const Sheet = ({
                     <View style={styles.sheetHandle} />
                     <View style={styles.sheetHeader}>
                         <Text style={styles.sheetTitle}>{title}</Text>
-                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel={`Close ${title}`}>
                             <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
                         </TouchableOpacity>
                     </View>
@@ -200,12 +203,13 @@ const PasswordField = ({
                     value={value}
                     onChangeText={onChange}
                     placeholder={placeholder ?? ''}
-                    placeholderTextColor="#ffffff40"
+                    accessibilityLabel={label}
+                    placeholderTextColor="#ffffff8c"
                     secureTextEntry={hidden}
                     maxLength={32}
                     autoCapitalize="none"
                 />
-                <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye}>
+                <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <FontAwesome5
                         name={hidden ? 'eye-slash' : 'eye'}
                         size={14}
@@ -235,6 +239,9 @@ const ActionButton = ({
         activeOpacity={0.8}
         onPress={onPress}
         disabled={disabled || loading}
+        accessibilityRole="button"
+        accessibilityLabel={loading ? `${label}, loading` : label}
+        accessibilityState={{ disabled: disabled || loading, busy: loading }}
         style={[
             styles.actionButton,
             destructive && styles.actionButtonDestructive,
@@ -252,14 +259,14 @@ const ActionButton = ({
 );
 
 const SuccessBanner = ({ message }: { message: string }) => (
-    <View style={styles.successBanner}>
+    <View style={styles.successBanner} accessibilityLiveRegion="polite">
         <FontAwesome5 name="check-circle" size={14} color="#00ffff" iconStyle="solid" />
         <Text style={styles.successBannerText}>{message}</Text>
     </View>
 );
 
 const ErrorBanner = ({ message }: { message: string }) => (
-    <View style={styles.dangerBanner}>
+    <View style={styles.dangerBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
         <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
         <Text style={styles.dangerBannerText}>{message}</Text>
     </View>
@@ -695,7 +702,8 @@ const AccountScreen = ({ navigation }: any) => {
                     value={name}
                     onChangeText={setName}
                     placeholder="Your display name"
-                    placeholderTextColor="#ffffff40"
+                    accessibilityLabel="New display name"
+                    placeholderTextColor="#ffffff8c"
                     maxLength={30}
                     autoCapitalize="words"
                 />
@@ -727,7 +735,8 @@ const AccountScreen = ({ navigation }: any) => {
                             value={email}
                             onChangeText={setEmail}
                             placeholder="new@email.com"
-                            placeholderTextColor="#ffffff40"
+                            accessibilityLabel="New email address"
+                            placeholderTextColor="#ffffff8c"
                             maxLength={60}
                             keyboardType="email-address"
                             autoCapitalize="none"
@@ -751,7 +760,8 @@ const AccountScreen = ({ navigation }: any) => {
                             value={emailCode}
                             onChangeText={setEmailCode}
                             placeholder="000000"
-                            placeholderTextColor="#ffffff40"
+                            accessibilityLabel="Verification code"
+                            placeholderTextColor="#ffffff8c"
                             maxLength={6}
                             keyboardType="number-pad"
                             autoCapitalize="none"
@@ -770,6 +780,8 @@ const AccountScreen = ({ navigation }: any) => {
                                 setSuccess('');
                             }}
                             style={styles.cancelButton}
+                            accessibilityRole="button"
+                            accessibilityLabel="Back"
                         >
                             <Text style={styles.cancelText}>← Back</Text>
                         </TouchableOpacity>
@@ -818,7 +830,7 @@ const AccountScreen = ({ navigation }: any) => {
                     onPress={handleSignOut}
                     loading={isLoading}
                 />
-                <TouchableOpacity onPress={close} style={styles.cancelButton}>
+                <TouchableOpacity onPress={close} style={styles.cancelButton} accessibilityRole="button" accessibilityLabel="Cancel">
                     <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
             </Sheet>
@@ -843,7 +855,8 @@ const AccountScreen = ({ navigation }: any) => {
                     value={deleteConfirm}
                     onChangeText={setDeleteConfirm}
                     placeholder="delete"
-                    placeholderTextColor="#ffffff20"
+                    accessibilityLabel="Type delete to confirm"
+                    placeholderTextColor="#ffffff8c"
                     autoCapitalize="none"
                 />
                 <ActionButton
@@ -853,7 +866,7 @@ const AccountScreen = ({ navigation }: any) => {
                     destructive
                     disabled={deleteConfirm.toLowerCase() !== 'delete'}
                 />
-                <TouchableOpacity onPress={close} style={styles.cancelButton}>
+                <TouchableOpacity onPress={close} style={styles.cancelButton} accessibilityRole="button" accessibilityLabel="Cancel">
                     <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
             </Sheet>
@@ -878,11 +891,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 10,
         marginLeft: 4,
     },
@@ -935,7 +948,7 @@ const styles = StyleSheet.create({
     },
     rowValue: {
         fontSize: 14,
-        color: '#ffffff50',
+        color: 'rgba(255,255,255,0.55)',
     },
     divider: {
         height: StyleSheet.hairlineWidth,
@@ -954,7 +967,7 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         color: '#00ffff',
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
     },
 
@@ -998,7 +1011,7 @@ const styles = StyleSheet.create({
     },
     sheetNote: {
         fontSize: 13,
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         lineHeight: 20,
         marginBottom: 20,
     },
@@ -1007,7 +1020,7 @@ const styles = StyleSheet.create({
     fieldLabel: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         letterSpacing: 0.5,
         marginBottom: 8,
     },
@@ -1061,7 +1074,7 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     cancelText: {
-        color: '#ffffff60',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 14,
     },
 
@@ -1114,14 +1127,14 @@ const styles = StyleSheet.create({
     infoBannerText: {
         flex: 1,
         fontSize: 13,
-        color: '#ffffff70',
+        color: 'rgba(255,255,255,0.55)',
         lineHeight: 19,
     },
 
     // ── Footer ────────────────────────────────────────────────────────────────
     version: {
         textAlign: 'center',
-        color: '#ffffff25',
+        color: 'rgba(255,255,255,0.55)',
         fontSize: 12,
         marginTop: 40,
     },

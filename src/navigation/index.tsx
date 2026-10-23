@@ -4,6 +4,7 @@ import { ColorSchemeName } from 'react-native';
 import 'react-native-gesture-handler';
 
 import { navigationRef } from './RootNavigator';
+import { setTipsRoute } from '../tips/tipsStore';
 import { RootStackParamList } from '../types/types';
 import BottomTabNavigator from './TabNavigator';
 import { useApp } from '../context/AppContext';
@@ -35,7 +36,12 @@ import ContentBlocked from '../screens/erotic/ContentBlocked';
 
 export default function Navigation({ }: { colorScheme: ColorSchemeName }) {
   return (
-    <NavigationContainer theme={DarkTheme} ref={navigationRef}>
+    <NavigationContainer
+      theme={DarkTheme}
+      ref={navigationRef}
+      onReady={() => setTipsRoute(navigationRef.current?.getCurrentRoute()?.name)}
+      onStateChange={() => setTipsRoute(navigationRef.current?.getCurrentRoute()?.name)}
+    >
       <RootNavigator />
     </NavigationContainer>
   );
