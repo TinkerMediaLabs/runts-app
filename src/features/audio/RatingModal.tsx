@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRef } from 'react';
-import { View, Alert, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -223,6 +223,13 @@ const handleSubmit = async () => {
   }
 };
 
+  // This popup is an overlay (not a native modal), so tell screen readers it appeared.
+  useEffect(() => {
+    if (visible) {
+      AccessibilityInfo.announceForAccessibility(`You finished ${storyTitle}. Rate this story.`);
+    }
+  }, [visible]);
+
   if (!visible) return null;
 
   return (
@@ -231,7 +238,7 @@ const handleSubmit = async () => {
         style={{ flex: 1, justifyContent: 'flex-end' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Animated.View style={[styles.card, cardStyle]}>
+        <Animated.View style={[styles.card, cardStyle]} accessibilityViewIsModal>
 
           {/* ── Story header ── */}
           <View style={styles.storyHeader}>
@@ -253,13 +260,16 @@ const handleSubmit = async () => {
 
             {/* ── Rating ── */}
             <Text style={styles.sectionLabel}>Rate this story</Text>
-            <View style={styles.starsRow}>
+            <View style={styles.starsRow} accessibilityRole="radiogroup">
               {Array.from({ length: 10 }, (_, i) => i + 1).map(star => (
                 <TouchableOpacity
                   key={star}
                   onPress={() => setSelectedRating(selectedRating === star ? null : star)}
                   activeOpacity={0.7}
                   style={styles.starBtn}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${star} out of 10`}
+                  accessibilityState={{ checked: selectedRating === star }}
                 >
                   <FontAwesome
                     name={selectedRating !== null && star <= selectedRating ? 'star' : 'star-o'}
@@ -286,6 +296,9 @@ const handleSubmit = async () => {
                     onPress={() => setSelectedReaction(isSelected ? null : r.key)}
                     activeOpacity={0.7}
                     style={[styles.emojiBtn, isSelected && styles.emojiBtnSelected]}
+                    accessibilityRole="radio"
+                    accessibilityLabel={r.label}
+                    accessibilityState={{ checked: isSelected }}
                   >
                     <Text style={styles.emoji}>{r.emoji}</Text>
                     <Text style={[styles.emojiLabel, isSelected && styles.emojiLabelSelected]}>
@@ -305,7 +318,8 @@ const handleSubmit = async () => {
               ref={commentInputRef}
               style={styles.commentInput}
               placeholder="Share your thoughts… (optional)"
-              placeholderTextColor="rgba(255,255,255,0.25)"
+              placeholderTextColor="rgba(255,255,255,0.55)"
+              accessibilityLabel="Comment, optional"
               multiline
               maxLength={500}
               value={comment}
@@ -321,6 +335,9 @@ const handleSubmit = async () => {
                 onPress={() => setPostAnonymously(v => !v)}
                 activeOpacity={0.7}
                 style={styles.anonRow}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Post anonymously"
+                accessibilityState={{ checked: postAnonymously }}
               >
                 <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
                   {postAnonymously && (
@@ -337,7 +354,13 @@ const handleSubmit = async () => {
 
           {/* ── Footer ── */}
           <View style={[styles.footer, { paddingBottom: footerBottomPadding }]}>
-            <TouchableOpacity onPress={onClose} style={styles.skipBtn} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.skipBtn}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Skip rating"
+            >
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -345,6 +368,9 @@ const handleSubmit = async () => {
               style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
               activeOpacity={0.8}
               disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="Submit"
+              accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
             >
               {isSubmitting ? (
                 <ActivityIndicator size="small" color="#000" />

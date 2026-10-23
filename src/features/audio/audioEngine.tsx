@@ -172,6 +172,22 @@ async play(track: Track) {
       return 0;
     }
   }
+
+  getDuration(): number {
+    try {
+      return (TrackPlayer as any).getProgress?.()?.duration ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  // Jump forward (positive) or back (negative) from the current position, kept inside the track.
+  async skipBy(deltaSeconds: number) {
+    const duration = this.getDuration();
+    let next = this.getCurrentPosition() + deltaSeconds;
+    if (duration > 0) next = Math.min(next, Math.max(0, duration - 1));
+    await this.seek(Math.max(0, next));
+  }
 }
 
 export const audioEngine = new AudioEngine();
