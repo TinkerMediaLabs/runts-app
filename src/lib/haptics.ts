@@ -6,8 +6,13 @@ const KEY = '@runts/haptics_enabled';
 
 let Haptics: any = null;
 try {
+  // The JS package can be present while the phone build lacks the native part, so check that too.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Haptics = require('expo-haptics');
+  const { requireOptionalNativeModule } = require('expo-modules-core');
+  if (requireOptionalNativeModule('ExpoHaptics')) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    Haptics = require('expo-haptics');
+  }
 } catch {
   Haptics = null;
 }
@@ -22,15 +27,17 @@ export const getHapticsEnabled = async (): Promise<boolean> => {
 export const saveHapticsEnabled = async (value: boolean) => {
   enabled = value;
   try { await AsyncStorage.setItem(KEY, String(value)); } catch {}
+  // Turning it on gives a sample pulse so the listener can feel what it does.
+  if (value) successHaptic();
 };
 
 const run = (fn: () => Promise<void>) => {
   if (!enabled || !Haptics) return;
-  try { fn().catch(() => {}); } catch {}
+  try { fn().catch(err => console.warn('haptics: failed', err)); } catch (err) { console.warn('haptics: failed', err); }
 };
 
-/** A light tap: pin, play, pause, skip. */
-export const tapHaptic = () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
+/** A tap (medium strength, so it is noticeable on Android motors): pin, play, pause, skip. */
+export const tapHaptic = () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 /** A selection tick: choosing an option. */
 export const selectHaptic = () => run(() => Haptics.selectionAsync());
 /** A success pulse: rating submitted, bookmark saved, story pinned. */
