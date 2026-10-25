@@ -21,6 +21,8 @@ jobs:
       - run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Stub Amplify outputs
+        run: '[ -f amplify_outputs.json ] || echo "{}" > amplify_outputs.json'
       - name: Type check
         run: |
           set +e
