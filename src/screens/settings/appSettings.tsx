@@ -601,6 +601,15 @@ const AppSettings = ({ navigation }: any) => {
                     </Section>
 
                     {/* ── Help ── */}
+                    <Section title="Community">
+                        <ActionRow
+                            icon="user-slash"
+                            label="Blocked commenters"
+                            description="See and unblock people whose comments you have hidden"
+                            onPress={() => navigation.navigate('BlockedUsersScreen')}
+                        />
+                    </Section>
+
                     <Section title="Help">
                         <ActionRow
                             icon="lightbulb"
