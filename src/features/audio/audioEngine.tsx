@@ -194,14 +194,55 @@ async play(track: Track) {
   }
 }
 
+  private pausedAt = 0;
+  private fadeTimer: ReturnType<typeof setInterval> | null = null;
+
   async pause() {
-    try { await TrackPlayer.pause(); }
+    try {
+      this.pausedAt = Date.now();
+      await TrackPlayer.pause();
+    }
     catch (error) { console.error('Pause error:', error); }
   }
 
+  /**
+   * Press play after a pause: back up a little first so the listener picks the thread back up, the way
+   * audiobook apps do. The longer the pause, the further back (0s under 5s, 2s, 5s, then 8s).
+   */
   async resume() {
-    try { await TrackPlayer.play(); }
+    try {
+      if (this.pausedAt > 0) {
+        const away = (Date.now() - this.pausedAt) / 1000;
+        const back = away < 5 ? 0 : away < 60 ? 2 : away < 600 ? 5 : 8;
+        const position = this.getCurrentPosition();
+        if (back > 0 && position > back) await TrackPlayer.seekTo(position - back);
+        this.pausedAt = 0;
+      }
+      await TrackPlayer.play();
+    }
     catch (error) { console.error('Resume error:', error); }
+  }
+
+  /** Ease the volume down to silence over durationMs, then pause and restore the volume for next time. */
+  fadeOutAndPause(durationMs: number) {
+    this.cancelFade();
+    const steps = Math.max(1, Math.floor(durationMs / 500));
+    let step = 0;
+    this.fadeTimer = setInterval(async () => {
+      step++;
+      try { (TrackPlayer as any).setVolume(Math.max(0, 1 - step / steps)); } catch {}
+      if (step >= steps) {
+        this.cancelFade(false);
+        await this.pause();
+        try { (TrackPlayer as any).setVolume(1); } catch {}
+      }
+    }, 500);
+  }
+
+  /** Stop a fade in progress (sleep timer cancelled or changed) and bring the volume back. */
+  cancelFade(restore: boolean = true) {
+    if (this.fadeTimer) { clearInterval(this.fadeTimer); this.fadeTimer = null; }
+    if (restore) { try { (TrackPlayer as any).setVolume(1); } catch {} }
   }
 
   async stop() {

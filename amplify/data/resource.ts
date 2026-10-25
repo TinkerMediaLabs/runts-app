@@ -16,6 +16,7 @@ const schema = a.schema({
       isPublisher: a.boolean(),
       plan: a.string(),
       onboardingComplete: a.boolean(),
+      preferredTagIds: a.string().array(),   // up to 3 genres picked at onboarding; seeds Home
       // Story connections
       pinnedStories: a.hasMany('UserPinnedStory', 'userId'),
       finishedStories: a.hasMany('UserFinishedStory', 'userId'),

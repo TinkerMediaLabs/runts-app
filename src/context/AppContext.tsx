@@ -43,6 +43,7 @@ type UserProfile = {
     plan?: string | null;
     birthdate?: string | null;
     onboardingComplete?: boolean | null;
+    preferredTagIds?: string[] | null;
     totalListenSeconds?: number | null;
     totalStoriesFinished?: number | null;
 };
@@ -164,6 +165,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 plan:                 dbUser?.plan,
                 birthdate:            dbUser?.birthdate,
                 onboardingComplete:   dbUser?.onboardingComplete,
+                preferredTagIds:      (dbUser?.preferredTagIds ?? []).filter(Boolean),
                 totalListenSeconds:   dbUser?.totalListenSeconds,
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
