@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
+import { mixRoundRobin } from '../../lib/mixStories';
 import type { Schema } from '../../../amplify/data/resource';
 
 const PER_TAG = 8;
@@ -27,23 +28,7 @@ export function useForYouStories(preferredTagIds: string[]) {
 
       if (!preferredTagIds.length) return newest;
 
-      const lists = [...byTag, newest];
-      const seen = new Set<string>();
-      const out: any[] = [];
-      for (let i = 0; out.length < TOTAL; i++) {
-        let any = false;
-        for (const l of lists) {
-          const s = l[i];
-          if (!s) continue;
-          any = true;
-          if (!s.id || seen.has(s.id) || s.isErotic === 'true') continue;
-          seen.add(s.id);
-          out.push(s);
-          if (out.length >= TOTAL) break;
-        }
-        if (!any) break;
-      }
-      return out;
+      return mixRoundRobin([...byTag, newest], TOTAL);
     },
     staleTime: 1000 * 60 * 5,
   });
