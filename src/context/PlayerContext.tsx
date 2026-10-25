@@ -67,7 +67,11 @@ export const PlayerProvider = ({ children }: any) => {
 
     const sleepTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
     const sleepIntervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+    const sleepFadeRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [sleepMinutesLeft, setSleepMinutesLeft] = useState<number | null>(null);
+    // "End of story" sleep timer: when the current story finishes, stop instead of playing the next one.
+    const [sleepEndOfStory, setSleepEndOfStory] = useState(false);
+    const sleepEndRef = useRef(false);
 
     const playlistRef      = useRef<any[]>([]);
     const playlistIndexRef = useRef(-1);
@@ -186,11 +190,13 @@ export const PlayerProvider = ({ children }: any) => {
             // ── Autoplay next in playlist or stop ─────────────────────────────
             const autoplay = await getAutoplayEnabled();
 
-            if (autoplay && hasNextToPlay) {
+            const stopAtEnd = sleepEndRef.current;
+            if (!stopAtEnd && autoplay && hasNextToPlay) {
                 await playNext();
             } else {
                 await closePlayerAfterCompletion();
-                setKeepGoingStoryId(storyId);
+                // Asleep: no suggestions sheet.
+                if (!stopAtEnd) setKeepGoingStoryId(storyId);
             }
 
         } catch (err) {
@@ -415,13 +421,23 @@ export const PlayerProvider = ({ children }: any) => {
         }));
     };
 
-    const setSleepTimer = async (minutes: number | null) => {
+    const setSleepTimer = async (minutes: number | 'end' | null) => {
         if (sleepTimerRef.current)    clearTimeout(sleepTimerRef.current);
         if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+        if (sleepFadeRef.current)     clearTimeout(sleepFadeRef.current);
         sleepTimerRef.current    = null;
         sleepIntervalRef.current = null;
+        sleepFadeRef.current     = null;
+        audioEngine.cancelFade();
         setSleepMinutesLeft(null);
+        sleepEndRef.current = false;
+        setSleepEndOfStory(false);
 
+        if (minutes === 'end') {
+            sleepEndRef.current = true;
+            setSleepEndOfStory(true);
+            return;
+        }
         if (!minutes) return;
 
         setSleepMinutesLeft(minutes);
@@ -436,13 +452,21 @@ export const PlayerProvider = ({ children }: any) => {
             });
         }, 60 * 1000);
 
+        // The last 30 seconds fade to silence instead of cutting off.
+        const FADE_MS = 30 * 1000;
+        const totalMs = minutes * 60 * 1000;
+        sleepFadeRef.current = setTimeout(() => {
+            if (isPlayingRef.current) audioEngine.fadeOutAndPause(FADE_MS);
+        }, Math.max(0, totalMs - FADE_MS));
+
         sleepTimerRef.current = setTimeout(async () => {
             if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
             setSleepMinutesLeft(null);
             isPlayingRef.current = false;
             await audioEngine.pause();
+            audioEngine.cancelFade();
             setState(prev => ({ ...prev, isPlaying: false }));
-        }, minutes * 60 * 1000);
+        }, totalMs);
     };
 
     // ── Playlist — filters erotic based on current settings ───────────────────
@@ -520,6 +544,7 @@ export const PlayerProvider = ({ children }: any) => {
             stopProgressTracking();
             if (sleepTimerRef.current)    clearTimeout(sleepTimerRef.current);
             if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+            if (sleepFadeRef.current)     clearTimeout(sleepFadeRef.current);
             unsubscribe();
         };
     }, []);
@@ -538,6 +563,7 @@ export const PlayerProvider = ({ children }: any) => {
                 dismissKeepGoing: () => setKeepGoingStoryId(null),
                 clearTrack,
                 sleepMinutesLeft,
+                sleepEndOfStory,
                 setSleepTimer,
                 hasNextTrack,
                 nextTrackInfo,

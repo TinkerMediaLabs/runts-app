@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
     },
     forgotText: {
-        color:    'rgba(255,255,255,0.35)',
+        color:    'rgba(255,255,255,0.6)',
         fontSize: 13,
         textDecorationLine: 'underline',
     },

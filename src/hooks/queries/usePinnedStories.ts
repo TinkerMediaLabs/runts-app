@@ -112,6 +112,7 @@ export function usePinStory() {
               id:       story.id,
               audioUri: story.audioUri,
               title:    story.title,
+              imageUri: story.imageUri,
             }).catch(err => console.warn('Pin download error:', err));
           }
         });

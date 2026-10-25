@@ -10,6 +10,9 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
 import StoryTile from './StoryTile';
+import EmptyState from '../common/EmptyState';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { navigate } from '@/navigation/RootNavigator';
 import { useApp } from '@/context/AppContext';
 import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
@@ -145,12 +148,13 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
             {isLoading ? (
                 <ActivityIndicator size="small" color="cyan" />
             ) : (
-                <>
-                    <Text style={styles.emptyText}>No pinned stories yet.</Text>
-                    <Text style={styles.emptyHint}>
-                        Tap the pin icon on any story to add it here.
-                    </Text>
-                </>
+                <EmptyState
+                    icon={<FontAwesome5 name="thumbtack" size={40} color="#ffffff80" iconStyle="solid" />}
+                    title="Build your playlist"
+                    body="Tap the pin on any story to add it here. Pinned stories play one after another and are saved to your phone for offline listening."
+                    actionLabel="Find a story"
+                    onAction={() => navigate('SearchScreen')}
+                />
             )}
         </View>
     );

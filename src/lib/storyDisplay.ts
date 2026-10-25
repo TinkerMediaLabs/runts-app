@@ -37,7 +37,8 @@ export function getDurationDisplay(duration: number, progressStatus: ProgressSta
   }
   if (progressStatus === 'in_progress') {
     const remaining = Math.max(0, duration - (progressSeconds ?? 0));
-    return { text: `${fmtDuration(remaining)} left`, color: 'cyan', icon: 'clock' as const };
+    const text = remaining < 60 ? 'Almost done' : `${fmtDuration(remaining)} left`;
+    return { text, color: 'cyan', icon: 'clock' as const };
   }
   return { text: fmtDuration(duration), color: 'rgba(255,255,255,0.85)', icon: 'clock' as const };
 }

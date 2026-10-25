@@ -38,7 +38,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           style={styles.iconLeft}
           accessibilityRole="button"
           accessibilityLabel="Search"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
           <FontAwesome5 name="search" size={16} color={iconColor} />
         </TouchableOpacity>
@@ -64,7 +64,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
             style={styles.iconRight}
             accessibilityRole="button"
             accessibilityLabel="Clear search"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           >
             <FontAwesome5 name="times-circle" size={16} color={iconColor} />
           </TouchableOpacity>

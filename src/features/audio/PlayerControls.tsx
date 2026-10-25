@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Feather from '@expo/vector-icons/Feather';
 import { audioEngine } from '../audio/audioEngine';
+import { tapHaptic } from '../../lib/haptics';
 import { useTipTarget } from '../../tips/useTipTarget';
 
 const SKIP_BACK_SECONDS = 15;
@@ -12,6 +13,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
   const tipRef = useTipTarget('player-skip');
 
   const toggle = async () => {
+    tapHaptic();
     if (isPlaying) {
       await audioEngine.pause();
       pause?.();
@@ -27,7 +29,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
       <View style={styles.row} ref={tipRef} collapsable={false}>
         {/* Back 15 seconds */}
         <TouchableOpacity
-          onPress={() => audioEngine.skipBy(-SKIP_BACK_SECONDS)}
+          onPress={() => { tapHaptic(); audioEngine.skipBy(-SKIP_BACK_SECONDS); }}
           activeOpacity={0.7}
           style={styles.skip}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -54,7 +56,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
 
         {/* Forward 30 seconds */}
         <TouchableOpacity
-          onPress={() => audioEngine.skipBy(SKIP_FORWARD_SECONDS)}
+          onPress={() => { tapHaptic(); audioEngine.skipBy(SKIP_FORWARD_SECONDS); }}
           activeOpacity={0.7}
           style={styles.skip}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

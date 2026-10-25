@@ -17,6 +17,7 @@ import type { Schema } from '../../../amplify/data/resource';
 import useOnPlay from '@/components/functions/OnPlay';
 import { spacing } from '../../theme/spacing';
 import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
+import FadeImage from '../common/FadeImage';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 
@@ -102,7 +103,7 @@ const ProgressCard = ({
             accessibilityRole="button"
             accessibilityLabel={`Continue ${story.title}${authorName ? `, by ${authorName}` : ''}, ${percent} percent played, ${minsLeft} minutes left`}
         >
-            <Image source={{ uri: displayImageUri }} style={styles.artwork} />
+            <FadeImage source={{ uri: displayImageUri }} style={styles.artwork} />
 
             <View style={styles.info}>
                 <View style={styles.infoTop}>

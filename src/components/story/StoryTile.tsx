@@ -1,4 +1,5 @@
 import React from 'react';
+import FadeImage from '../common/FadeImage';
 import { View, TouchableWithoutFeedback, Image, StyleSheet, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -19,6 +20,7 @@ import { RootStackParamList } from '../../types/types';
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
 import { useTipTarget } from '../../tips/useTipTarget';
+import DownloadBadge from '../common/DownloadBadge';
 import { useStoryProgress } from '../../hooks/queries/useStoryProgressMap';
 import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
@@ -110,7 +112,7 @@ const StoryTile = ({
 
             {/* Drag handle */}
             {reorderEnabled && (
-                <TouchableOpacity
+                <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                     onLongPress={drag}
                     activeOpacity={0.6}
                     style={styles.dragHandle}
@@ -118,7 +120,7 @@ const StoryTile = ({
                     accessibilityLabel={`Reorder ${title}`}
                     accessibilityHint="Press and hold, then drag to move this story in your playlist"
                 >
-                    <FontAwesome5 name="grip-lines" size={16} color="#ffffff30" iconStyle="solid" />
+                    <FontAwesome5 name="grip-lines" size={16} color="#ffffff80" iconStyle="solid" />
                 </TouchableOpacity>
             )}
 
@@ -164,7 +166,7 @@ const StoryTile = ({
                             ) : null}
 
                             <View style={styles.metaRow}>
-                                <FontAwesome5 name="book-open" size={11} color="#ffffff50" iconStyle="solid" />
+                                <FontAwesome5 name="book-open" size={11} color="#ffffff80" iconStyle="solid" />
                                 <Text style={styles.author} numberOfLines={1}>{author}</Text>
                             </View>
 
@@ -183,6 +185,7 @@ const StoryTile = ({
                                     </Text>
                                 </View>
                             )}
+                            <DownloadBadge storyId={id} />
                             {/* Tag pills — moved here from expanded view */}
                             {(primaryTag || secondaryTag) ? (
                                 <View style={styles.tagRow}>
@@ -207,7 +210,7 @@ const StoryTile = ({
                             <FontAwesome5
                                 name="chevron-down"
                                 size={11}
-                                color="#ffffff30"
+                                color="#ffffff80"
                                 iconStyle="solid"
                             />
                         </Animated.View>
@@ -227,7 +230,7 @@ const StoryTile = ({
                                 accessibilityLabel={`Open ${title}`}
                             >
                                 <View>
-                                    <Image
+                                    <FadeImage
                                         source={{ uri: imageUri }}
                                         style={styles.expandedImage}
                                         resizeMode="cover"
@@ -258,7 +261,7 @@ const StoryTile = ({
                                 <View style={styles.actionsLeft}>
                                     <PinButton storyId={id} size={20} />
 
-                                    <TouchableOpacity
+                                    <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                                         onPress={handleShare}
                                         style={styles.actionBtn}
                                         activeOpacity={0.7}

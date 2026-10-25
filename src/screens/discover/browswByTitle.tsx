@@ -247,7 +247,7 @@ const BrowseByTitle = ({ navigation }: any) => {
                                     <FontAwesome5
                                         name={'book-open' as any}
                                         size={40}
-                                        color="#ffffff40"
+                                        color="#ffffff80"
                                         iconStyle="solid"
                                     />
                                     <Text style={styles.emptyText}>

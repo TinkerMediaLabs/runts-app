@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { successHaptic } from '../../lib/haptics';
 import { View, Alert, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
@@ -56,6 +57,7 @@ export default function BookmarkModal({
     setIsSubmitting(true);
     try {
       await onConfirm(name.trim() || 'My Bookmark');
+      successHaptic();
       onClose();
     } catch (err) {
       console.warn('Bookmark save failed:', err);
@@ -96,7 +98,7 @@ export default function BookmarkModal({
             <Text style={styles.title}>Create Bookmark</Text>
             <TouchableOpacity
               onPress={onClose}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
               accessibilityRole="button"
               accessibilityLabel="Close"
             >

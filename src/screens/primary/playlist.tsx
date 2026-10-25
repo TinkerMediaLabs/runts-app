@@ -33,7 +33,7 @@ const TABS: Tab[] = [
 const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subtitle: string }) => (
     <View style={styles.emptyState}>
         <View style={styles.emptyIconWrap}>
-            <FontAwesome5 name={icon} size={28} color="#ffffff20" iconStyle="solid" />
+            <FontAwesome5 name={icon} size={28} color="#ffffff80" iconStyle="solid" />
         </View>
         <Text style={styles.emptyTitle}>{title}</Text>
         <Text style={styles.emptySubtitle}>{subtitle}</Text>
@@ -136,7 +136,7 @@ const PlaylistScreen = () => {
                 {/* Reorder hint */}
                 {activeTab === 'pinned' && reorderEnabled && (
                     <View style={styles.reorderHint}>
-                        <FontAwesome5 name="grip-lines" size={11} color="#ffffff50" iconStyle="solid" />
+                        <FontAwesome5 name="grip-lines" size={11} color="#ffffff80" iconStyle="solid" />
                         <Text style={styles.reorderHintText}>Hold and drag items to reorder</Text>
                     </View>
                 )}

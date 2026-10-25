@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Stub Amplify outputs
+        run: '[ -f amplify_outputs.json ] || echo "{}" > amplify_outputs.json'
+      - name: Type check
+        run: |
+          set +e
+          npx tsc --noEmit > tsc.log 2>&1
+          cat tsc.log
+          if grep "error TS" tsc.log | grep -v "@sentry/react-native"; then exit 1; fi

@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 12,
-        color:    'rgba(255,255,255,0.3)',
+        color:    'rgba(255,255,255,0.6)',
     },
     refreshBtn: {
         flexDirection:     'row',

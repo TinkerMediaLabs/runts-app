@@ -5,6 +5,7 @@ import { Text } from '@/components/common/AppText';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import BookmarkTile        from './BookmarkTile';
+import EmptyState from '../common/EmptyState';
 import { useBookmarks }    from '../../hooks/queries/useBookmarks';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames } from '../../hooks/queries/useTagNames';
@@ -98,13 +99,11 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
           : null
       }
       ListEmptyComponent={
-        <View style={styles.empty}>
-          <FontAwesome5 name={'bookmark' as any} size={36} color="#ffffff20" iconStyle="solid" />
-          <Text style={styles.emptyTitle}>No bookmarks yet</Text>
-          <Text style={styles.emptySub}>
-            Tap the bookmark icon while listening to save your place in a story.
-          </Text>
-        </View>
+        <EmptyState
+          icon={<FontAwesome5 name={'bookmark' as any} size={40} color="#ffffff80" iconStyle="solid" />}
+          title="Save your place"
+          body="While a story plays, tap the bookmark icon to mark a moment. Come back here to jump straight to it."
+        />
       }
     />
   );

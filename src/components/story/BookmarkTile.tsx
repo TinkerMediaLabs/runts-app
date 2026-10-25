@@ -127,7 +127,7 @@ export default function BookmarkTile({
         accessibilityRole="button"
         accessibilityLabel="Delete bookmark"
         style={styles.deleteBtn}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
       >
         <FontAwesome5
           name={'times' as any}

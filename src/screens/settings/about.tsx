@@ -42,7 +42,7 @@ const LinkRow = ({
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
-        <FontAwesome5 name="chevron-right" size={11} color="#ffffff40" iconStyle="solid" />
+        <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
     </TouchableOpacity>
 );
 

@@ -27,12 +27,13 @@ const BUTTON_RIGHT     = 20; // heroHeader paddingHorizontal
 const BUTTON_EXTRA_TOP = 12; // extra offset below insets.top in heroHeader
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-const SLEEP_OPTIONS = [
+const SLEEP_OPTIONS: { label: string; minutes: number | 'end' | null }[] = [
   { label: 'Off', minutes: null },
   { label: '15m', minutes: 15 },
   { label: '30m', minutes: 30 },
   { label: '45m', minutes: 45 },
   { label: '60m', minutes: 60 },
+  { label: 'End of story', minutes: 'end' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -48,7 +49,8 @@ interface OptionsModalProps {
   onRateChange: (rate: number) => void;
   onDismiss: () => void;
   sleepMinutesLeft: number | null;
-  onSleepTimer: (minutes: number | null) => void;
+  sleepEndOfStory?: boolean;
+  onSleepTimer: (minutes: number | 'end' | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,6 +66,7 @@ export default function OptionsModal({
   onRateChange,
   onDismiss,
   sleepMinutesLeft,
+  sleepEndOfStory = false,
   onSleepTimer,
 }: OptionsModalProps) {
 
@@ -129,10 +132,12 @@ export default function OptionsModal({
   // Sleep timer "active" chip: highlight the option matching the value that
   // was set (mirrors the previous logic — active while minutesLeft is within
   // that option's ceiling and the timer is running).
-  const isSleepActive = (minutes: number | null) =>
+  const isSleepActive = (minutes: number | 'end' | null) =>
     minutes === null
-      ? sleepMinutesLeft === null
-      : sleepMinutesLeft !== null && minutes >= sleepMinutesLeft;
+      ? sleepMinutesLeft === null && !sleepEndOfStory
+      : minutes === 'end'
+        ? sleepEndOfStory
+        : sleepMinutesLeft !== null && minutes >= sleepMinutesLeft;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -223,7 +228,7 @@ export default function OptionsModal({
 
       {/* Button — always on top, overlays the card's top-right corner.
           Shows more-vertical when closed, X when open. */}
-      <TouchableOpacity
+      <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         ref={tipRef as any}
         style={[styles.button, { top: buttonTop, right: BUTTON_RIGHT }]}
         onPress={visible ? onClose : onOpen}

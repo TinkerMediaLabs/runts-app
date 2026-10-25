@@ -41,6 +41,7 @@ import { audioEngine } from '@/features/audio/audioEngine';
 
 import ProgressBar from './ProgressBar';
 import PlayerControls from './PlayerControls';
+import SleepTimerButton from './SleepTimerButton';
 import OptionsModal, { OPTIONS_BUTTON_SIZE } from './OptionsModal';
 import PinButton from '../../components/common/PinButton';
 
@@ -81,6 +82,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
     clearPendingRating,
     clearTrack,
     sleepMinutesLeft,
+    sleepEndOfStory,
     setSleepTimer,
     hasNextTrack,
     nextTrackInfo,
@@ -501,7 +503,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                             onPress={handleShare}
                             accessibilityRole="button"
                             accessibilityLabel="Share story"
-                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                           >
                               <FontAwesome5 name="share" size={20} color="#fff" />
                           </TouchableWithoutFeedback>
@@ -510,7 +512,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           <TouchableOpacity
                             onPress={handleBookmarkPress}
                             activeOpacity={0.7}
-                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                             accessibilityRole="button"
                             accessibilityLabel="Add bookmark"
                             accessibilityHint="Saves your current position"
@@ -529,6 +531,12 @@ export default function TrackPlayerWidget({ expanded }: any) {
                         hasNext={false}
                         onNext={undefined}
                       />
+
+                  <SleepTimerButton
+                    minutesLeft={sleepMinutesLeft}
+                    endOfStory={sleepEndOfStory}
+                    onSelect={setSleepTimer}
+                  />
 
                   {/* PROGRESS + PRIMARY PLAY BUTTON + UP NEXT */}
                   <View
@@ -622,6 +630,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 clearTrack();
               }}
               sleepMinutesLeft={sleepMinutesLeft}
+              sleepEndOfStory={sleepEndOfStory}
               onSleepTimer={(minutes) => setSleepTimer(minutes)}
             />
 
@@ -655,7 +664,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
           style={[styles.floatingButtonWrapper, floatingButtonStyle, { bottom: insets.bottom + 24 }]}
           pointerEvents="box-none"
         >
-          <TouchableOpacity
+          <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
             onPress={toggle}
             activeOpacity={0.8}
             style={styles.floatingPlayButton}
@@ -705,7 +714,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
               </View>
               <TouchableOpacity
                 onPress={toggle}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                 accessibilityRole="button"
                 accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
               >

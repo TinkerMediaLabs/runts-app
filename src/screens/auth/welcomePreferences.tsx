@@ -120,6 +120,7 @@ const WelcomePreferences = ({ navigation, route }: any) => {
                 id: userId,
                 birthdate,
                 onboardingComplete: true,
+                preferredTagIds: selected,
             }), 'Save your preferences');
 
             await refreshAuth();

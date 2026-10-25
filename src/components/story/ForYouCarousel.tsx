@@ -306,7 +306,7 @@ const CarouselItem = ({
                                             onPress={handleShare}
                                             accessibilityRole="button"
                                             accessibilityLabel="Share story"
-                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                                         >
                                             <FontAwesome name="share" size={20} color="rgba(255,255,255,0.7)" />
                                         </TouchableOpacity>

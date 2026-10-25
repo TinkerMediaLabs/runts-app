@@ -71,6 +71,8 @@ import {
   useUpdateComment,
   useDeleteComment,
 } from '../../hooks/queries/useComments';
+import { useBlockedUsers, useBlockUser, useReportComment, type ReportReason } from '../../hooks/queries/useModeration';
+import { showChip } from '@/lib/chip';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -146,11 +148,13 @@ const REACTION_EMOJIS: Record<string, string> = {
     currentUserId,
     onEdit,
     onDelete,
+    onMore,
     }: {
     item: any;
     currentUserId: string | null;
     onEdit: (item: any) => void;
     onDelete: (id: string) => void;
+    onMore: (item: any) => void;
     }) => {
     const isOwn = item.userId === currentUserId;
 
@@ -170,10 +174,13 @@ const REACTION_EMOJIS: Record<string, string> = {
         delayLongPress={400}
         accessible
         accessibilityLabel={`${item.userName ?? 'Anonymous'} said: ${item.content}`}
-        accessibilityActions={isOwn ? [{ name: 'edit', label: 'Edit comment' }, { name: 'delete', label: 'Delete comment' }] : undefined}
+        accessibilityActions={isOwn
+            ? [{ name: 'edit', label: 'Edit comment' }, { name: 'delete', label: 'Delete comment' }]
+            : [{ name: 'more', label: 'Report or block this commenter' }]}
         onAccessibilityAction={(e) => {
             if (e.nativeEvent.actionName === 'edit') onEdit(item);
             if (e.nativeEvent.actionName === 'delete') onDelete(item.id);
+            if (e.nativeEvent.actionName === 'more') onMore(item);
         }}
         >
         <View style={styles.commentCard}>
@@ -189,8 +196,18 @@ const REACTION_EMOJIS: Record<string, string> = {
                 </Text>
                 ) : null}
             </View>
-            {isOwn && (
+            {isOwn ? (
                 <Text style={styles.ownBadge}>You</Text>
+            ) : (
+                <TouchableOpacity
+                    onPress={() => onMore(item)}
+                    hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+                    style={{ padding: 6 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Report or block ${item.userName ?? 'this commenter'}`}
+                >
+                    <FontAwesome5 name="ellipsis-h" size={16} color="rgba(255,255,255,0.7)" iconStyle="solid" />
+                </TouchableOpacity>
             )}
             </View>
             <Text style={styles.commentContent}>{item.content}</Text>
@@ -345,6 +362,40 @@ const comments = React.useMemo(() => commentPages?.pages.flatMap(p => p.items) ?
 const { mutate: postComment,   isPending: posting   } = usePostComment();
 const { mutate: updateComment, isPending: updating  } = useUpdateComment();
 const { mutate: deleteComment                        } = useDeleteComment();
+const { data: blockedList = [] } = useBlockedUsers();
+const { mutate: blockUser }      = useBlockUser();
+const { mutate: reportComment }  = useReportComment();
+const blockedIds = React.useMemo(() => new Set(blockedList.map((b: any) => b.blockedUserId)), [blockedList]);
+const visibleComments = React.useMemo(() => comments.filter((c: any) => !blockedIds.has(c.userId)), [comments, blockedIds]);
+
+const submitReport = (item: any, reason: ReportReason) => {
+  reportComment({ comment: item, reason }, {
+    onSuccess: () => showChip('Thanks. We will review this comment.', 'success'),
+    onError:   () => showChip("Couldn't send the report. Please try again.", 'error'),
+  });
+};
+
+const handleMore = (item: any) => {
+  Alert.alert(item.userName ?? 'Commenter', undefined, [
+    {
+      text: 'Report comment',
+      onPress: () => Alert.alert('Why are you reporting this?', undefined, [
+        { text: 'Spam',                onPress: () => submitReport(item, 'spam') },
+        { text: 'Harassment or hate',   onPress: () => submitReport(item, 'harassment') },
+        { text: 'Inappropriate',        onPress: () => submitReport(item, 'inappropriate') },
+      ], { cancelable: true }),
+    },
+    {
+      text: `Block ${item.userName ?? 'this person'}`,
+      style: 'destructive',
+      onPress: () => blockUser(
+        { blockedUserId: item.userId, blockedUserName: item.userName },
+        { onSuccess: () => showChip('Blocked. You can undo this in Settings.', 'success') },
+      ),
+    },
+    { text: 'Cancel', style: 'cancel' },
+  ], { cancelable: true });
+};
 
 const handlePost = () => {
   const trimmed = comment.trim();
@@ -591,7 +642,7 @@ const handleDelete = (id: string) => {
                                     </TouchableOpacity>
 )}
 
-                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                           <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                                 <FontAwesome name="share" size={22} color="#fff" />
                             </TouchableOpacity>
                         </View>
@@ -812,13 +863,14 @@ const handleDelete = (id: string) => {
     <ActivityIndicator color="cyan" style={{ marginTop: 20 }} />
   ) : (
     <FlatList
-      data={comments ?? []}
+      data={visibleComments}
       renderItem={({ item }) => (
         <CommentItem
           item={item}
           currentUserId={userId}
           onEdit={setEditingComment}
           onDelete={handleDelete}
+          onMore={handleMore}
         />
       )}
       keyExtractor={item => item.id}

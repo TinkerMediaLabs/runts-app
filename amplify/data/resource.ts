@@ -16,6 +16,7 @@ const schema = a.schema({
       isPublisher: a.boolean(),
       plan: a.string(),
       onboardingComplete: a.boolean(),
+      preferredTagIds: a.string().array(),   // up to 3 genres picked at onboarding; seeds Home
       // Story connections
       pinnedStories: a.hasMany('UserPinnedStory', 'userId'),
       finishedStories: a.hasMany('UserFinishedStory', 'userId'),
@@ -146,7 +147,47 @@ Comment: a
   .authorization(allow => [
     allow.owner(),
     allow.authenticated().to(['read']),
+    allow.group('admin').to(['read', 'delete']),   // moderation: remove reported comments from the CMS
   ]),
+
+  // ── CommentReport ─────────────────────────────────────────────────────────
+  // A listener reporting a comment. Keeps a snapshot of the comment so moderators can still see what
+  // was reported after it is edited or deleted. userId is the reporter. Moderators list open reports
+  // through byStatusAndCreatedAt (never a scan).
+  CommentReport: a
+    .model({
+      userId: a.string().required(),           // reporter
+      commentId: a.string().required(),
+      storyId: a.string().required(),
+      commentContent: a.string(),
+      commentUserId: a.string(),
+      commentUserName: a.string(),
+      reason: a.string().required(),           // spam | harassment | inappropriate | other
+      status: a.string().required(),           // open | reviewed
+      createdAt: a.datetime(),
+    })
+    .secondaryIndexes(index => [
+      index('status').sortKeys(['createdAt']).name('byStatusAndCreatedAt'),
+      index('userId').sortKeys(['commentId']).name('byUserAndComment'),   // no duplicate reports; account cleanup
+    ])
+    .authorization(allow => [
+      allow.owner().to(['create', 'read']),
+      allow.group('admin').to(['read', 'update', 'delete']),
+    ]),
+
+  // ── UserBlock ─────────────────────────────────────────────────────────────
+  // A listener hiding another listener's comments. userId is the blocker.
+  UserBlock: a
+    .model({
+      userId: a.string().required(),
+      blockedUserId: a.string().required(),
+      blockedUserName: a.string(),
+      createdAt: a.datetime(),
+    })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['blockedUserId']).name('byUserAndBlocked'),
+    ])
+    .authorization(allow => [allow.owner()]),
 
   // ── UserFavoritedStory ────────────────────────────────────────────────────
   // Auto-populated by rating-aggregator Lambda when rating >= 8.

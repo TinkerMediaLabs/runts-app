@@ -13,6 +13,7 @@ import { getOrCreateUser } from '../services/auth';
 import { queryClient, queryPersister } from '../lib/queryClient';
 import { getProfilePicUrl } from '../services/auth';
 import { syncDownloads } from '../hooks/queries/useDownloads';
+import NetInfo from '@react-native-community/netinfo';
 import {
     loadAllEroticSettings,
     saveEroticEnabled,
@@ -42,6 +43,7 @@ type UserProfile = {
     plan?: string | null;
     birthdate?: string | null;
     onboardingComplete?: boolean | null;
+    preferredTagIds?: string[] | null;
     totalListenSeconds?: number | null;
     totalStoriesFinished?: number | null;
 };
@@ -163,6 +165,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 plan:                 dbUser?.plan,
                 birthdate:            dbUser?.birthdate,
                 onboardingComplete:   dbUser?.onboardingComplete,
+                preferredTagIds:      (dbUser?.preferredTagIds ?? []).filter(Boolean),
                 totalListenSeconds:   dbUser?.totalListenSeconds,
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
@@ -338,6 +341,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (isAuthenticated) {
             syncDownloads().catch(e => console.warn('Sync downloads error:', e));
         }
+    }, [isAuthenticated]);
+
+    // Pins that were waiting for Wi-Fi download as soon as the phone joins one.
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        let lastType: string | null = null;
+        const unsub = NetInfo.addEventListener(net => {
+            const onWifi = net.type === 'wifi' || net.type === 'ethernet';
+            if (onWifi && lastType !== null && lastType !== net.type) {
+                syncDownloads().catch(e => console.warn('Sync downloads error:', e));
+            }
+            lastType = net.type;
+        });
+        return unsub;
     }, [isAuthenticated]);
 
     // ── Provider ──────────────────────────────────────────────────────────────

@@ -113,7 +113,7 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
                     onPress={() => setVisible(v => !v)}
                     style={fieldStyles.eyeBtn}
                     activeOpacity={0.7}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                     accessibilityRole="button"
                     accessibilityLabel={visible ? `Hide ${label}` : `Show ${label}`}
                 >

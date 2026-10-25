@@ -19,6 +19,8 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Duration, Stack } from 'aws-cdk-lib';
 
 const backend = defineBackend({
@@ -235,6 +237,8 @@ const cleanupTargets: { model: string; index: string }[] = [
   { model: 'UserBookmark',        index: 'byUserAndCreatedAt' },
   { model: 'UserDevice',          index: 'byUserId' },
   { model: 'Comment',             index: 'byUserAndCreatedAt' },
+  { model: 'UserBlock',           index: 'byUserAndBlocked' },
+  { model: 'CommentReport',       index: 'byUserAndComment' },
 ];
 userCleanupFn.addEnvironment('CLEANUP_TARGETS', Stack.of(userCleanupFn).toJsonString(
   cleanupTargets.map(t => ({ table: backend.data.resources.tables[t.model].tableName, index: t.index })),
@@ -257,3 +261,25 @@ userCleanupFn.addEventSource(new DynamoEventSource(userTable, {
   onFailure,
   filters: [lambda.FilterCriteria.filter({ eventName: lambda.FilterRule.isEqual('REMOVE') })],
 }));
+
+
+// ── backups (production only) ─────────────────────────────────────────────
+// Point-in-time recovery on every table (restore to any second in the last 35 days) and versioning on the
+// storage bucket (an overwritten or deleted file can be brought back; old versions expire after 30 days
+// so cost stays bounded). Sandboxes and staging skip this to avoid the extra cost.
+if (process.env.AWS_BRANCH === 'production') {
+  Object.values(backend.data.resources.tables).forEach(table => {
+    (table.node.defaultChild as dynamodb.CfnTable).pointInTimeRecoverySpecification = {
+      pointInTimeRecoveryEnabled: true,
+    };
+  });
+  const cfnBucket = backend.storage.resources.bucket.node.defaultChild as s3.CfnBucket;
+  cfnBucket.versioningConfiguration = { status: 'Enabled' };
+  cfnBucket.lifecycleConfiguration = {
+    rules: [{
+      id: 'expire-old-versions',
+      status: 'Enabled',
+      noncurrentVersionExpiration: { noncurrentDays: 30 },
+    }],
+  };
+}

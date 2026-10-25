@@ -12,7 +12,7 @@ const CloseButton = ({navigation} :any) => {
             onPress={() => {navigation.goBack(); }}
             accessibilityRole="button"
             accessibilityLabel="Close"
-            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
             <View style={ [{
                 flexDirection: 'row',        

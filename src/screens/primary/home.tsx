@@ -14,29 +14,28 @@ import { spacing } from '../../theme/spacing';
 import Screen from '@/components/common/Screen';
 import Reveal from '../../components/common/Reveal';
 import { useApp } from '@/context/AppContext';
-import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 
 import ForYouCarousel from '../../components/story/ForYouCarousel';
-import HorizontalList from '../../components/story/HorizontalList';
+import TagRow from '../../components/story/TagRow';
 import ContinueListening from '../../components/story/ContinueListening';
+import BecauseYouFinished from '../../components/story/BecauseYouFinished';
 
-import { useStories } from '../../hooks/queries/useStories';
+import { useForYouStories } from '../../hooks/queries/useForYouStories';
+import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
-import { useTagNames } from '../../hooks/queries/useTagNames';
-
-import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
-import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
 
 const HomeScreen = ({ navigation }: any) => {
 
-    const { userId } = useApp();
-    const styles = useStyles();
+        const styles = useStyles();
     const typo = useTypography();
 
 
 
-    const { data: stories, isLoading: storiesLoading } = useStories();
+    const { profile } = useApp();
+    const preferredTagIds = React.useMemo(() => profile?.preferredTagIds ?? [], [profile?.preferredTagIds]);
+    const { data: forYou, isLoading: storiesLoading } = useForYouStories(preferredTagIds);
     const { data: tags, isLoading: tagsLoading } = usePrimaryTags();
+    const { stories: enrichedStories, tagMap } = useEnrichedStories(forYou);
 
     const isLoading = storiesLoading || tagsLoading;
 
@@ -61,41 +60,13 @@ const HomeScreen = ({ navigation }: any) => {
         setText(welcomeText[getRandomInt(welcomeText.length)]);
     }, []);
 
-    const allTagIds = React.useMemo(() => {
-        if (!stories) return [];
-        return stories.flatMap(s => [s.primaryTagId, s.secondaryTagId]);
-    }, [stories]);
-
-    const { data: tagMap } = useTagNames(allTagIds);
-    const { data: authorMap = {} } = useAuthorNames(stories?.map(s => s.authorId) ?? []);
-
     const topTags = React.useMemo(() => {
         if (!tags) return [];
-        return tags.filter(t => !t.isErotic).slice(0, 4);  // ← add erotic filter
-    }, [tags]);
-
-    const progressMap = useStoryProgressMap(stories?.map(s => s.id) ?? []);
-
-
-
-        const enrichedStories = React.useMemo(() => {
-        if (!stories) return [];
-        return stories
-            .filter(story => !!story.id && story.isErotic !== 'true')
-            .map(story => {
-                const progress = progressMap[story.id];
-                return {
-                    ...story,
-                    primaryTagName:   story.primaryTagId   ? tagMap[story.primaryTagId]   ?? '' : '',
-                    secondaryTagName: story.secondaryTagId ? tagMap[story.secondaryTagId] ?? '' : '',
-                    authorName:       story.authorId       ? authorMap[story.authorId]    ?? '' : '',
-                    narratorDisplay:  formatNarratorDisplay((story.narratorNames ?? undefined) as string[] | undefined),
-                    isNew:            isRecentlyPublished(story.publishedAt),
-                    progressStatus:   progress?.status ?? 'none',
-                    progressSeconds:  progress?.progressSeconds ?? 0,
-                };
-            });
-    }, [stories, tagMap, authorMap, progressMap]);
+        const usable = tags.filter(t => !t.isErotic);
+        const mine = preferredTagIds.map(id => usable.find(t => t.id === id)).filter(Boolean) as typeof usable;
+        const rest = usable.filter(t => !preferredTagIds.includes(t.id));
+        return [...mine, ...rest].slice(0, 4);
+    }, [tags, preferredTagIds]);
 
     return (
         <Screen>
@@ -121,7 +92,7 @@ const HomeScreen = ({ navigation }: any) => {
                         <Text style={[{ color: colors.text }, typo.h1]}>
                             {text}
                         </Text>
-                        <TouchableWithoutFeedback onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
+                        <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
                                 <Ionicons name="person" size={20} color="#fff" />
                             </View>
@@ -148,25 +119,15 @@ const HomeScreen = ({ navigation }: any) => {
                                 <ContinueListening />
                             </Reveal>
 
+                            {/* Because you finished X — suggestions seeded by the last finished story */}
+                            <Reveal index={3}>
+                                <BecauseYouFinished />
+                            </Reveal>
+
                             {/* Horizontal lists by tag */}
-                            {topTags.map((tag, tagIndex) => {
-                                const tagStories = enrichedStories.filter(
-                                    s => s.primaryTagId === tag.id
-                                );
-                                if (tagStories.length === 0) return null;
-                                return (
-                                    <Reveal key={tag.id} index={3 + tagIndex}>
-                                        <View style={{ marginLeft: spacing.margin, paddingVertical: spacing.margin }}>
-                                            <Text style={typo.title}>{tag.name}</Text>
-                                        </View>
-                                        <HorizontalList
-                                            stories={tagStories}
-                                            tagId={tag.id}
-                                            tagName={tag.name ?? ''}
-                                        />
-                                    </Reveal>
-                                );
-                            })}
+                            {topTags.map((tag, tagIndex) => (
+                                <TagRow key={tag.id} tag={tag} index={3 + tagIndex} />
+                            ))}
                         </>
                     )}
 
