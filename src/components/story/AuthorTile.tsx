@@ -4,6 +4,7 @@ import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
+import FadeImage from '../common/FadeImage';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
 import { useUnfollowAuthor } from '../../hooks/queries/useAuthorFollowing';
@@ -49,7 +50,7 @@ export default function AuthorTile({
       }}
     >
       {/* Avatar */}
-     <Image
+     <FadeImage
         source={
             authorImageUrl
                 ? { uri: authorImageUrl }

@@ -1,4 +1,5 @@
 import React from 'react';
+import FadeImage from '../common/FadeImage';
 import { View, TouchableWithoutFeedback, Image, StyleSheet, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -229,7 +230,7 @@ const StoryTile = ({
                                 accessibilityLabel={`Open ${title}`}
                             >
                                 <View>
-                                    <Image
+                                    <FadeImage
                                         source={{ uri: imageUri }}
                                         style={styles.expandedImage}
                                         resizeMode="cover"
