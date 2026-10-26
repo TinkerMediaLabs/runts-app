@@ -559,7 +559,7 @@ Comment: a
   // ── HomeSection: one list on the Home screen, edited in the CMS ────────────
   // The CMS decides WHICH lists appear, in what order, with what title and settings. What each type
   // does (the query behind it) lives in the app: forYou, continueListening, becauseYou, genres,
-  // newStories, featuredAuthor, handPicked (trending is added later). The app skips types it does not know.
+  // newStories, featuredAuthor, handPicked, trending. The app skips types it does not know.
   // A handful of rows (tens, never thousands); the index just keeps them ordered.
   HomeSection: a
     .model({
@@ -574,7 +574,7 @@ Comment: a
       limit: a.integer(),                   // how many stories / rows to show
       authorId: a.string(),                 // featuredAuthor
       storyIds: a.string().array(),         // handPicked, in display order
-      windowDays: a.integer(),              // trending (later)
+      windowDays: a.integer(),              // trending: look at the last N days (2 to 7)
     })
     .secondaryIndexes(index => [
       index('layoutPk').sortKeys(['sortOrder']).name('byLayoutAndOrder'),
@@ -582,6 +582,40 @@ Comment: a
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
+  // ── StoryListenDay ────────────────────────────────────────────────────────
+  // Plays per story per UTC day (id = `${day}#${storyId}`, day = YYYY-MM-DD). listens-aggregator adds to it
+  // in the same batches that update Story.numListens, so a play costs no extra write at play time.
+  // trending-snapshot reads one day at a time (byDay) and deletes rows older than about a week.
+  StoryListenDay: a
+    .model({
+      id: a.id().required(),
+      day: a.string().required(),
+      storyId: a.string().required(),
+      count: a.integer().default(0),
+    })
+    .secondaryIndexes(index => [
+      index('day').name('byDay'),
+    ])
+    .authorization(allow => [
+      allow.group('admin').to(['read']),
+    ]),
+
+  // ── TrendingSnapshot ──────────────────────────────────────────────────────
+  // One row per window: id = 'd2' ... 'd7' (the last N days). The top stories with their play counts,
+  // rewritten hourly by trending-snapshot. The app reads one row, so Trending costs the same at any scale.
+  TrendingSnapshot: a
+    .model({
+      id: a.id().required(),
+      windowDays: a.integer(),
+      storyIds: a.string().array(),
+      counts: a.integer().array(),
+      computedAt: a.string(),
+    })
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['read']),
     ]),
 
   // ── StoryTag (join table for many-to-many) ────────────────────────────────
