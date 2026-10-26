@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { spacing } from '../../theme/spacing';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
+import { CachedImageBackground } from '../common/CachedImage';
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
@@ -44,7 +45,7 @@ const HorzTagTile = ({
             accessibilityHint="Opens this tag"
         >
             {displayImageUri ? (
-                <ImageBackground
+                <CachedImageBackground
                     source={{ uri: displayImageUri }}
                     style={styles.card}
                     imageStyle={styles.cardImage}
@@ -67,7 +68,7 @@ const HorzTagTile = ({
                         </Text>
                         <Text style={styles.countText}>{countLabel}</Text>
                     </View>
-                </ImageBackground>
+                </CachedImageBackground>
             ) : (
                 <View style={[styles.card, styles.cardFallback]}>
                     <View style={styles.info}>

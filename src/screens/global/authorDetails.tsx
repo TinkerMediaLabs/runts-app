@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, TouchableOpacity, Image, FlatList, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, FlatList, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -35,6 +35,7 @@ import {
 
 import { useApp } from '@/context/AppContext';
 
+import { CachedImage } from '../../components/common/CachedImage';
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
 const HEADER_H      = 260;
@@ -265,7 +266,7 @@ const CreatorProfile = () => {
                         {/* Avatar — hidden entirely if the author has no image */}
                         {authorImageUrl ? (
                             <View style={styles.avatarWrapper}>
-                                <Image source={{ uri: authorImageUrl }} style={styles.avatar} />
+                                <CachedImage source={{ uri: authorImageUrl }} style={styles.avatar} />
                                 <View style={styles.avatarRing} />
                             </View>
                         ) : null}

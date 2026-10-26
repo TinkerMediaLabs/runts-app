@@ -12,6 +12,7 @@ import { Analytics } from '@/lib/analytics';
 
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
+import { CachedImageBackground } from '../common/CachedImage';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -56,7 +57,7 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
             accessibilityLabel={`Genre ${name}`}
         >
             {imageSource ? (
-                <ImageBackground
+                <CachedImageBackground
                     source={imageSource}
                     style={styles_local.tileImage}
                     imageStyle={{ borderRadius: 15 }}
@@ -72,7 +73,7 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
                             {name}
                         </Text>
                     </LinearGradient>
-                </ImageBackground>
+                </CachedImageBackground>
             ) : (
                 // Fallback for genres without a tile image
                 <View style={[styles_local.tileImage, styles_local.tileFallback]}>

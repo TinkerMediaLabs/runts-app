@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { View, Image, StyleSheet, Dimensions, TouchableOpacity, FlatList, ActivityIndicator, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, FlatList, ActivityIndicator, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -17,10 +17,10 @@ import type { Schema } from '../../../amplify/data/resource';
 import useOnPlay from '@/components/functions/OnPlay';
 import { spacing } from '../../theme/spacing';
 import { useInProgressStories } from '../../hooks/queries/useInProgressStories';
-import FadeImage from '../common/FadeImage';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 
+import { CachedImage } from '../common/CachedImage';
 const client = generateClient<Schema>();
 
 // ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ const ProgressCard = ({
             accessibilityRole="button"
             accessibilityLabel={`Continue ${story.title}${authorName ? `, by ${authorName}` : ''}, ${percent} percent played, ${minsLeft} minutes left`}
         >
-            <FadeImage source={{ uri: displayImageUri }} style={styles.artwork} />
+            <CachedImage source={{ uri: displayImageUri }} style={styles.artwork} />
 
             <View style={styles.info}>
                 <View style={styles.infoTop}>

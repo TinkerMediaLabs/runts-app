@@ -1,5 +1,4 @@
 import React from 'react';
-import FadeImage from '../common/FadeImage';
 import { View, TouchableWithoutFeedback, Image, StyleSheet, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -26,6 +25,7 @@ import { useUniverse } from '../../hooks/queries/useUniverse';
 import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
 
 
+import { CachedImage } from '../common/CachedImage';
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 
@@ -137,10 +137,9 @@ const StoryTile = ({
                     >
 
                         {/* Artwork — animates to 0 width on expand */}
-                        <Animated.Image
-                            source={{ uri: imageUri }}
-                            style={[styles.artwork, artworkStyle]}
-                        />
+                        <Animated.View style={[styles.artwork, artworkStyle, { overflow: 'hidden' }]}>
+                            <CachedImage source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
+                        </Animated.View>
 
                         {/* Text block — flex:1 so it fills the space left by artwork */}
                         <View style={styles.textBlock}>
@@ -230,7 +229,7 @@ const StoryTile = ({
                                 accessibilityLabel={`Open ${title}`}
                             >
                                 <View>
-                                    <FadeImage
+                                    <CachedImage
                                         source={{ uri: imageUri }}
                                         style={styles.expandedImage}
                                         resizeMode="cover"

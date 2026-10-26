@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, ImageBackground, TouchableOpacity, Share } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -30,6 +30,7 @@ import { setTipsFlag } from '../../tips/tipsStore';
 import { useApp } from '@/context/AppContext';
 import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 
+import { CachedImageBackground } from '../common/CachedImage';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -136,7 +137,7 @@ const CarouselItem = ({
     return (
         <View style={styles.itemWrapper} ref={cardTipRef as any} collapsable={false}>
             {displayImageUri ? (
-                <ImageBackground
+                <CachedImageBackground
                     source={{ uri: displayImageUri }}
                     style={styles.card}
                     imageStyle={styles.cardImage}
@@ -316,7 +317,7 @@ const CarouselItem = ({
                         </Animated.View>
                     </TouchableOpacity>
 
-                </ImageBackground>
+                </CachedImageBackground>
             ) : (
                 <LoadingItem width={CARD_WIDTH} height={CARD_HEIGHT} radius={15} />
             )}

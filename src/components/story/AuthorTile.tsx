@@ -1,14 +1,14 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
-import FadeImage from '../common/FadeImage';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
 import { useUnfollowAuthor } from '../../hooks/queries/useAuthorFollowing';
 
+import { CachedImage } from '../common/CachedImage';
 interface AuthorTileProps {
   author: any;
   followRecordId: string;
@@ -50,7 +50,7 @@ export default function AuthorTile({
       }}
     >
       {/* Avatar */}
-     <FadeImage
+     <CachedImage
         source={
             authorImageUrl
                 ? { uri: authorImageUrl }

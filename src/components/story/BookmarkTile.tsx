@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -8,6 +8,7 @@ import { useStoryImage }   from '../../hooks/queries/useStoryImage';
 import { useDeleteBookmark } from '../../hooks/queries/useBookmarks';
 import { spacing } from '../../theme/spacing';
 
+import { CachedImage } from '../common/CachedImage';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -86,7 +87,7 @@ export default function BookmarkTile({
       }}
     >
       {/* Artwork */}
-      <Image source={{ uri: displayImageUri }} style={styles.artwork} />
+      <CachedImage source={{ uri: displayImageUri }} style={styles.artwork} />
 
       {/* Content */}
       <View style={styles.content}>
