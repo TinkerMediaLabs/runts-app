@@ -197,6 +197,13 @@ const ProfileScreen = ({ navigation }: any) => {
             onPress: () => navigation.navigate('HistoryScreen'),
         },
         {
+            id: '3b',
+            icon: 'tags',
+            title: 'Your Genres',
+            description: 'Choose what shows up in For You',
+            onPress: () => navigation.navigate('EditGenresScreen'),
+        },
+        {
             id: '4',
             icon: 'cog',
             title: 'App Settings',
@@ -321,7 +328,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
                     {/* ── Navigation ── */}
                     <Section title="My Library">
-                        {NAV_TILES.filter(t => ['2', '3', '6'].includes(t.id)).map((tile, i, arr) => (
+                        {NAV_TILES.filter(t => ['2', '3', '3b', '6'].includes(t.id)).map((tile, i, arr) => (
                             <React.Fragment key={tile.id}>
                                 <NavRow {...tile} />
                                 {i < arr.length - 1 && <RowDivider />}

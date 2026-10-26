@@ -19,6 +19,7 @@ import AuthorDetailsScreen from '../screens/global/authorDetails';
 import BrowseByTitleScreen from '../screens/discover/browswByTitle';
 import AuthorFollowingScreen from '../screens/global/authorFollowing';
 import InProgressScreen from '@/screens/settings/inProgress';
+import EditGenresScreen from '@/screens/settings/editGenres';
 import HistoryScreen from '@/screens/settings/history';
 import BlockedUsersScreen from '@/screens/settings/blockedUsers';
 import AppSettings from '../screens/settings/appSettings';
@@ -92,6 +93,7 @@ function RootNavigator() {
         <Stack.Screen name="BrowseByTitle" component={BrowseByTitleScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="InProgressScreen" component={InProgressScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="HistoryScreen" component={HistoryScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="EditGenresScreen" component={EditGenresScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="BlockedUsersScreen" component={BlockedUsersScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AppSettingsScreen" component={AppSettings} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AuthorFollowing" component={AuthorFollowingScreen} options={{ cardStyleInterpolator: forFade }} />
