@@ -7,8 +7,9 @@ import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDispl
 // Adds what the Home tiles show (tag names, author, narrator, NEW badge, listening progress) to a list
 // of stories. Looks names and progress up by id for just these stories, so it costs the same however
 // large the catalog is. Erotic stories never appear on Home.
-export function useEnrichedStories(stories: any[] | undefined) {
-  const list = useMemo(() => (stories ?? []).filter(s => !!s?.id && s.isErotic !== 'true'), [stories]);
+// `allowErotic` is only for the erotic area's own screens.
+export function useEnrichedStories(stories: any[] | undefined, allowErotic: boolean = false) {
+  const list = useMemo(() => (stories ?? []).filter(s => !!s?.id && (allowErotic || s.isErotic !== 'true')), [stories, allowErotic]);
   const tagIds = useMemo(() => list.flatMap(s => [s.primaryTagId, s.secondaryTagId]), [list]);
   const { data: tagMap = {} } = useTagNames(tagIds);
   const { data: authorMap = {} } = useAuthorNames(list.map(s => s.authorId));

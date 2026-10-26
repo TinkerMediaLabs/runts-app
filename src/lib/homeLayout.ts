@@ -24,6 +24,8 @@ export interface HomeSectionRow {
   authorId?: string | null;
   storyIds?: (string | null)[] | null;
   windowDays?: number | null;
+  tagIds?: (string | null)[] | null;
+  hideTagIds?: (string | null)[] | null;
 }
 
 // Shown when no layout has been set up yet (a fresh environment) or it cannot be loaded: the same Home

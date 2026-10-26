@@ -120,6 +120,11 @@ function homeSectionShown(props: { sectionId: string; type: string; position: nu
     track('home_section_shown', props);
 }
 
+// A genre's home screen was shown, and which size layout it got (RudderStack does the reporting).
+function tagHomeShown(props: { tagId: string; tier: string }): void {
+    track('tag_home_shown', props);
+}
+
 function genreTapped(tagId: string, tagName: string): void {
     track('genre_tapped', { tagId, tagName });
 }
@@ -167,6 +172,7 @@ export const Analytics = {
     searchPerformed,
     genreTapped,
     homeSectionShown,
+    tagHomeShown,
     eroticEnabled,
     eroticDisabled,
 };
