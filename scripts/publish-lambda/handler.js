@@ -191,6 +191,30 @@ async function copyS3Asset(key) {
 
 // ── Handler ─────────────────────────────────────────────────────────────────
 
+// Home layout: make the production HomeSection table an exact copy of staging's (a few dozen rows at most).
+async function scanAll(table) {
+    const items = [];
+    let key;
+    do {
+        const res = await dynamo.send(new ScanCommand({ TableName: table, ExclusiveStartKey: key }));
+        for (const it of res.Items ?? []) items.push(unmarshall(it));
+        key = res.LastEvaluatedKey;
+    } while (key);
+    return items;
+}
+
+async function publishHomeLayout() {
+    const staged = await scanAll(stg('HomeSection'));
+    const live = await scanAll(prod('HomeSection'));
+    const keep = new Set(staged.map(r => r.id));
+    for (const row of staged) await upsertItem(prod('HomeSection'), row);
+    let removed = 0;
+    for (const row of live) {
+        if (!keep.has(row.id)) { await deleteItem(prod('HomeSection'), row.id); removed++; }
+    }
+    return { success: true, count: staged.length, removed };
+}
+
 exports.handler = async (event) => {
     if (event.requestContext?.http?.method === 'OPTIONS') {
         return { statusCode: 200, headers: CORS, body: '' };
@@ -201,9 +225,13 @@ exports.handler = async (event) => {
         return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
-    let storyId;
-    try { ({ storyId } = JSON.parse(event.body ?? '{}')); }
+    let storyId, kind;
+    try { ({ storyId, kind } = JSON.parse(event.body ?? '{}')); }
     catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+    if (kind === 'homeLayout') {
+        try { return { statusCode: 200, headers: CORS, body: JSON.stringify(await publishHomeLayout()) }; }
+        catch (err) { console.error(err); return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: err.message }) }; }
+    }
     if (!storyId) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'storyId required' }) };
 
     try {

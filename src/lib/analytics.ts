@@ -115,6 +115,11 @@ function searchPerformed(query: string, tab: 'stories' | 'authors' | 'genres'): 
     track('search_performed', { query, tab });
 }
 
+// A Home section was included in the layout the listener was shown (RudderStack does the reporting).
+function homeSectionShown(props: { sectionId: string; type: string; position: number }): void {
+    track('home_section_shown', props);
+}
+
 function genreTapped(tagId: string, tagName: string): void {
     track('genre_tapped', { tagId, tagName });
 }
@@ -161,6 +166,7 @@ export const Analytics = {
     authorUnfollowed,
     searchPerformed,
     genreTapped,
+    homeSectionShown,
     eroticEnabled,
     eroticDisabled,
 };

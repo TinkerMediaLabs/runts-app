@@ -18,9 +18,10 @@ type HorizontalListProps = {
     stories: any[];
     tagId?: string;
     tagName?: string;
+    showSeeMore?: boolean;   // default true when a genre is given
 };
 
-const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
+const HorizontalList = ({ stories, tagId, tagName, showSeeMore }: HorizontalListProps) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -81,7 +82,7 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
                 snapToInterval={SNAP_INTERVAL}
                 snapToAlignment="start"
                 decelerationRate="fast"
-                ListFooterComponent={<SeeMore />}
+                ListFooterComponent={(showSeeMore ?? !!tagId) ? <SeeMore /> : null}
             />
         </View>
     );
