@@ -575,6 +575,8 @@ Comment: a
       authorId: a.string(),                 // featuredAuthor
       storyIds: a.string().array(),         // handPicked, in display order
       windowDays: a.integer(),              // trending: look at the last N days (2 to 7)
+      tagIds: a.string().array(),           // tag home 'related genres': genres to pin first, in order
+      hideTagIds: a.string().array(),       // tag home 'related genres': genres never to show
     })
     .secondaryIndexes(index => [
       index('layoutPk').sortKeys(['sortOrder']).name('byLayoutAndOrder'),
@@ -612,6 +614,29 @@ Comment: a
       storyIds: a.string().array(),
       counts: a.integer().array(),
       computedAt: a.string(),
+    })
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['read']),
+    ]),
+
+  // ── TagInsight ────────────────────────────────────────────────────────────
+  // One row per tag (id = tagId), written by two scheduled jobs and only read by the app:
+  //  - tag-insights (every few hours): liveCount, related genres with how many live stories they share,
+  //    and the newest stories shared with the top few related genres (sharedJson = {tagId: [storyIds]}).
+  //  - trending-snapshot (hourly): this tag's most-played stories of the last 7 days.
+  // The Tag Home screen reads this single row to decide its size-based layout and its related-genre rows.
+  TagInsight: a
+    .model({
+      id: a.id().required(),
+      liveCount: a.integer(),
+      relatedTagIds: a.string().array(),
+      relatedCounts: a.integer().array(),
+      sharedJson: a.string(),
+      computedAt: a.string(),
+      trendingStoryIds: a.string().array(),
+      trendingCounts: a.integer().array(),
+      trendingAt: a.string(),
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),

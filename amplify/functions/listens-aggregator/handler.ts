@@ -27,23 +27,31 @@ export const handler = async (event: DynamoDBStreamEvent) => {
   for (let i = 0; i < entries.length; i += CONCURRENCY) {
     await Promise.all(entries.slice(i, i + CONCURRENCY).map(async ([storyId, delta]) => {
       try {
-        await dynamo.send(new UpdateItemCommand({
+        const updated = await dynamo.send(new UpdateItemCommand({
           TableName: STORY_TABLE,
           Key: { id: { S: storyId } },
           UpdateExpression: 'ADD numListens :d',
           ConditionExpression: 'attribute_exists(id)',
           ExpressionAttributeValues: { ':d': { N: String(delta) } },
+          ReturnValues: 'ALL_NEW',
         }));
+        const primaryTagId = updated.Attributes?.primaryTagId?.S;
+        const secondaryTagId = updated.Attributes?.secondaryTagId?.S;
         // Per-day count for Trending. A failure here must not fail the batch (a retry would count the
         // Story row twice), so Trending just runs a little low for that story.
         try {
           await dynamo.send(new UpdateItemCommand({
             TableName: DAY_TABLE,
             Key: { id: { S: `${day}#${storyId}` } },
-            UpdateExpression: 'ADD #c :d SET #day = :day, storyId = :s, #tn = if_not_exists(#tn, :tn)',
+            // The story's genres ride along on the day row so Trending can be ranked per genre without any
+            // extra reads later.
+            UpdateExpression: 'ADD #c :d SET #day = :day, storyId = :s, #tn = if_not_exists(#tn, :tn)'
+              + (primaryTagId ? ', primaryTagId = :p' : '') + (secondaryTagId ? ', secondaryTagId = :t2' : ''),
             ExpressionAttributeNames: { '#c': 'count', '#day': 'day', '#tn': '__typename' },
             ExpressionAttributeValues: {
               ':d': { N: String(delta) }, ':day': { S: day }, ':s': { S: storyId }, ':tn': { S: 'StoryListenDay' },
+              ...(primaryTagId ? { ':p': { S: primaryTagId } } : {}),
+              ...(secondaryTagId ? { ':t2': { S: secondaryTagId } } : {}),
             },
           }));
         } catch (dayErr) {
