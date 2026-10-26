@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/common/AppText';
 import { useApp } from '@/context/AppContext';
 
@@ -27,6 +28,18 @@ import { spacing } from '../../theme/spacing';
 
 type Props = { section: HomeSectionRow; index: number };
 
+// Sections load their data independently. Each one tells the Home screen when it has settled (data in, or
+// confirmed empty) so the screen can show them strictly top to bottom and nothing jumps down later.
+const SettleContext = createContext<() => void>(() => {});
+const useSettleWhen = (ready: boolean) => {
+  const settle = useContext(SettleContext);
+  useEffect(() => { if (ready) settle(); }, [ready, settle]);
+};
+const useSettleAfter = (ms: number) => {
+  const settle = useContext(SettleContext);
+  useEffect(() => { const t = setTimeout(settle, ms); return () => clearTimeout(t); }, [ms, settle]);
+};
+
 const SectionTitle = ({ text }: { text: string }) => {
   const typo = useTypography();
   return (
@@ -51,8 +64,9 @@ const StoryRow = ({ title, stories, index }: { title: string; stories: any[]; in
 const ForYouSection = ({ section, index }: Props) => {
   const { profile } = useApp();
   const preferred = useMemo(() => profile?.preferredTagIds ?? [], [profile?.preferredTagIds]);
-  const { data } = useForYouStories(preferred, section.limit ?? 8);
+  const { data, isLoading } = useForYouStories(preferred, section.limit ?? 8);
   const { stories, tagMap } = useEnrichedStories(data);
+  useSettleWhen(!isLoading);
   if (stories.length === 0) return null;
   return (
     <Reveal index={index}>
@@ -73,6 +87,7 @@ const GenresSection = ({ section, index }: Props) => {
     const rest = usable.filter(t => !preferred.includes(t.id));
     return [...mine, ...rest].slice(0, section.limit ?? 3);
   }, [tags, preferred, section.limit]);
+  useSettleAfter(1200);
   return (
     <>
       {rows.map((tag, i) => <TagRow key={tag.id} tag={tag} index={index + i} />)}
@@ -81,13 +96,15 @@ const GenresSection = ({ section, index }: Props) => {
 };
 
 const NewStoriesSection = ({ section, index }: Props) => {
-  const { data } = useStories(section.limit ?? 12);
+  const { data, isLoading } = useStories(section.limit ?? 12);
+  useSettleWhen(!isLoading);
   return <StoryRow title={section.title || 'New'} stories={data ?? []} index={index} />;
 };
 
 const HandPickedSection = ({ section, index }: Props) => {
   const ids = useMemo(() => (section.storyIds ?? []).filter(Boolean) as string[], [section.storyIds]);
   const { stories } = useStoriesByIds(ids);
+  useSettleAfter(1200);
   return <StoryRow title={section.title || 'Hand-picked'} stories={stories} index={index} />;
 };
 
@@ -96,12 +113,14 @@ const FeaturedAuthorSection = ({ section, index }: Props) => {
   const typo = useTypography();
   const { data: author } = useAuthor(section.authorId ?? '');
   const { data: photo } = useAuthorImage(author?.profilePicUri);
-  const { data } = useAuthorNewest(section.authorId, section.limit ?? 10);
+  const { data, isLoading } = useAuthorNewest(section.authorId, section.limit ?? 10);
   const { stories } = useEnrichedStories(data);
+  useSettleWhen(!isLoading && !!author);
+  useSettleAfter(2500);
   if (!author || stories.length === 0) return null;
   const blurb = section.blurb || author.bio || '';
   return (
-    <Reveal index={index}>
+    <Reveal index={index} style={styles.authorBlock}>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => navigation.navigate('AuthorDetails', { id: author.id })}
@@ -126,20 +145,16 @@ const FeaturedAuthorSection = ({ section, index }: Props) => {
   );
 };
 
-const HomeSectionView = ({ section, index }: Props) => {
-  useEffect(() => {
-    Analytics.homeSectionShown({ sectionId: section.id, type: section.type, position: index });
-  }, [section.id]);
-
+const SectionContent = ({ section, index }: Props) => {
   const reveal = Math.min(index + 1, 6);
   switch (section.type) {
     case 'forYou':            return <ForYouSection section={section} index={reveal} />;
     case 'continueListening': return (
-      <Reveal index={reveal} style={{ paddingVertical: 10 }}>
+      <TimedReveal index={reveal} style={{ paddingVertical: 10 }}>
         <ContinueListening />
-      </Reveal>
+      </TimedReveal>
     );
-    case 'becauseYou':        return <Reveal index={reveal}><BecauseYouFinished /></Reveal>;
+    case 'becauseYou':        return <TimedReveal index={reveal}><BecauseYouFinished /></TimedReveal>;
     case 'genres':            return <GenresSection section={section} index={reveal} />;
     case 'newStories':        return <NewStoriesSection section={section} index={reveal} />;
     case 'featuredAuthor':    return <FeaturedAuthorSection section={section} index={reveal} />;
@@ -148,15 +163,61 @@ const HomeSectionView = ({ section, index }: Props) => {
   }
 };
 
+
+const TimedReveal = ({ index, style, children }: { index: number; style?: any; children: React.ReactNode }) => {
+  useSettleAfter(1200);
+  return <Reveal index={index} style={style}>{children}</Reveal>;
+};
+
+// Sections mount right away so their data loads in parallel, but stay invisible and out of the layout until
+// every section above them has settled.
+const HomeSectionView = ({ section, index, visible, onSettled }: Props & { visible: boolean; onSettled: (id: string) => void }) => {
+  const settle = useCallback(() => onSettled(section.id), [onSettled, section.id]);
+  const shown = useRef(false);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    const t = setTimeout(settle, 3000);
+    return () => clearTimeout(t);
+  }, [settle]);
+
+  useEffect(() => {
+    if (visible && !shown.current) {
+      shown.current = true;
+      opacity.value = withTiming(1, { duration: 250 });
+      Analytics.homeSectionShown({ sectionId: section.id, type: section.type, position: index });
+    }
+  }, [visible]);
+
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <SettleContext.Provider value={settle}>
+      <Animated.View
+        style={[visible ? undefined : styles.hidden, fade]}
+        pointerEvents={visible ? 'auto' : 'none'}
+        importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
+      >
+        <SectionContent section={section} index={index} />
+      </Animated.View>
+    </SettleContext.Provider>
+  );
+};
+
 export default HomeSectionView;
 
 const styles = StyleSheet.create({
+  hidden: { position: 'absolute', left: 0, right: 0, opacity: 0 },
   titleWrap: { marginLeft: spacing.margin, paddingVertical: spacing.margin },
   authorHeader: {
     flexDirection: 'row', alignItems: 'center',
-    marginHorizontal: spacing.margin, paddingVertical: spacing.margin, gap: 12,
+    marginHorizontal: spacing.margin, paddingTop: 8, paddingBottom: 20, gap: 14,
   },
-  authorPhoto: { width: 56, height: 56, borderRadius: 28 },
+  authorBlock: {
+    marginTop: 28, marginBottom: 20, paddingTop: 24,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.18)',
+  },
+  authorPhoto: { width: 64, height: 64, borderRadius: 32 },
   authorLabel: { fontSize: 12, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.6 },
   authorBlurb: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
 });

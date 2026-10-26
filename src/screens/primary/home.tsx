@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, TouchableWithoutFeedback, View, Dimensions, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -25,6 +25,12 @@ const HomeScreen = ({ navigation }: any) => {
 
 
     const { sections, isLoading } = useHomeLayout();
+
+    // Sections appear strictly top to bottom: one is shown once every section above it has settled.
+    const [settled, setSettled] = useState<Record<string, true>>({});
+    const markSettled = useCallback((id: string) => setSettled(s => (s[id] ? s : { ...s, [id]: true })), []);
+    const firstUnsettled = sections.findIndex(s => !settled[s.id]);
+    const lastVisible = firstUnsettled === -1 ? sections.length : firstUnsettled;
 
     const welcomeText = [
         "Discover a new world",
@@ -86,7 +92,7 @@ const HomeScreen = ({ navigation }: any) => {
                     ) : (
                         <>
                             {sections.map((section, i) => (
-                                <HomeSectionView key={section.id} section={section} index={i} />
+                                <HomeSectionView key={section.id} section={section} index={i} visible={i <= lastVisible} onSettled={markSettled} />
                             ))}
                         </>
                     )}
