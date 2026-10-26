@@ -8,6 +8,7 @@ import { unmarshall } from '@aws-sdk/util-dynamodb';
 // Story table, its numListens indexes and its stream quiet no matter how many plays happen.
 const dynamo = new DynamoDBClient({});
 const STORY_TABLE = process.env.STORY_TABLE_NAME!;
+const DAY_TABLE = process.env.DAY_TABLE_NAME!;
 const CONCURRENCY = 10;
 
 export const handler = async (event: DynamoDBStreamEvent) => {
@@ -21,6 +22,7 @@ export const handler = async (event: DynamoDBStreamEvent) => {
   }
 
   const entries = Array.from(deltas.entries());
+  const day = new Date().toISOString().slice(0, 10);
   let failed = 0;
   for (let i = 0; i < entries.length; i += CONCURRENCY) {
     await Promise.all(entries.slice(i, i + CONCURRENCY).map(async ([storyId, delta]) => {
@@ -32,6 +34,21 @@ export const handler = async (event: DynamoDBStreamEvent) => {
           ConditionExpression: 'attribute_exists(id)',
           ExpressionAttributeValues: { ':d': { N: String(delta) } },
         }));
+        // Per-day count for Trending. A failure here must not fail the batch (a retry would count the
+        // Story row twice), so Trending just runs a little low for that story.
+        try {
+          await dynamo.send(new UpdateItemCommand({
+            TableName: DAY_TABLE,
+            Key: { id: { S: `${day}#${storyId}` } },
+            UpdateExpression: 'ADD #c :d SET #day = :day, storyId = :s, #tn = if_not_exists(#tn, :tn)',
+            ExpressionAttributeNames: { '#c': 'count', '#day': 'day', '#tn': '__typename' },
+            ExpressionAttributeValues: {
+              ':d': { N: String(delta) }, ':day': { S: day }, ':s': { S: storyId }, ':tn': { S: 'StoryListenDay' },
+            },
+          }));
+        } catch (dayErr) {
+          console.error('listens-aggregator day count failed for', storyId, dayErr);
+        }
       } catch (err: any) {
         if (err?.name === 'ConditionalCheckFailedException') return; // story no longer exists
         failed++;

@@ -17,6 +17,7 @@ import { useForYouStories } from '../../hooks/queries/useForYouStories';
 import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
 import { useStories } from '../../hooks/queries/useStories';
 import { useStoriesByIds } from '../../hooks/queries/useStoriesByIds';
+import { useTrendingSection } from '../../hooks/queries/useTrending';
 import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
@@ -108,6 +109,12 @@ const HandPickedSection = ({ section, index }: Props) => {
   return <StoryRow title={section.title || 'Hand-picked'} stories={stories} index={index} />;
 };
 
+const TrendingSection = ({ section, index }: Props) => {
+  const { data, isLoading } = useTrendingSection(section.windowDays, section.limit ?? 10);
+  useSettleWhen(!isLoading);
+  return <StoryRow title={section.title || 'Trending'} stories={data ?? []} index={index} />;
+};
+
 const FeaturedAuthorSection = ({ section, index }: Props) => {
   const navigation = useNavigation<any>();
   const typo = useTypography();
@@ -159,6 +166,7 @@ const SectionContent = ({ section, index }: Props) => {
     case 'newStories':        return <NewStoriesSection section={section} index={reveal} />;
     case 'featuredAuthor':    return <FeaturedAuthorSection section={section} index={reveal} />;
     case 'handPicked':        return <HandPickedSection section={section} index={reveal} />;
+    case 'trending':          return <TrendingSection section={section} index={reveal} />;
     default:                  return null;
   }
 };

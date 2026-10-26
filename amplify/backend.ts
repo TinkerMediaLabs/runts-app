@@ -14,6 +14,7 @@ import { listensAggregator } from './functions/listens-aggregator/resource';
 import { userCleanup } from './functions/user-cleanup/resource';
 import { eroticPin } from './functions/erotic-pin/resource';
 import { uploadUrl } from './functions/upload-url/resource';
+import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -37,6 +38,7 @@ const backend = defineBackend({
   userCleanup,
   eroticPin,
   uploadUrl,
+  trendingSnapshot,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -54,6 +56,8 @@ const followTable      = backend.data.resources.tables['UserFollowedAuthor'];
 const listenBufferTable = backend.data.resources.tables['StoryListenBuffer'];
 const listenDedupeTable = backend.data.resources.tables['ListenDedupe'];
 const eroticPinTable    = backend.data.resources.tables['EroticPin'];
+const listenDayTable    = backend.data.resources.tables['StoryListenDay'];
+const trendingTable     = backend.data.resources.tables['TrendingSnapshot'];
 
 // ── stream failure queue ──────────────────────────────────────────────────
 // Stream records that still fail after their retries land here (kept 14 days) instead of being
@@ -93,6 +97,8 @@ backend.data.resources.cfnResources.amplifyDynamoDbTables['ListenDedupe'].timeTo
 const listensAggregatorFn = backend.listensAggregator.resources.lambda as lambda.Function;
 listensAggregatorFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
 storyTable.grantReadWriteData(listensAggregatorFn);
+listensAggregatorFn.addEnvironment('DAY_TABLE_NAME', listenDayTable.tableName);
+listenDayTable.grantReadWriteData(listensAggregatorFn);
 listenBufferTable.grantStreamRead(listensAggregatorFn);
 listensAggregatorFn.addEventSource(new DynamoEventSource(listenBufferTable, {
   startingPosition: StartingPosition.LATEST,
@@ -101,6 +107,18 @@ listensAggregatorFn.addEventSource(new DynamoEventSource(listenBufferTable, {
   retryAttempts: 2,
   bisectBatchOnError: true,
   onFailure,
+}));
+
+// ── trending-snapshot (hourly) ─────────────────────────────────────────────
+const trendingSnapshotFn = backend.trendingSnapshot.resources.lambda as lambda.Function;
+trendingSnapshotFn.addEnvironment('DAY_TABLE_NAME', listenDayTable.tableName);
+trendingSnapshotFn.addEnvironment('SNAPSHOT_TABLE_NAME', trendingTable.tableName);
+listenDayTable.grantReadWriteData(trendingSnapshotFn);
+trendingTable.grantReadWriteData(trendingSnapshotFn);
+// The CDK grant covers the table but not its indexes on Amplify-managed tables; the byDay query needs this.
+trendingSnapshotFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [`${listenDayTable.tableArn}/index/*`],
 }));
 
 // ── rating-aggregator ─────────────────────────────────────────────────────
