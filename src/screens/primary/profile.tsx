@@ -197,6 +197,13 @@ const ProfileScreen = ({ navigation }: any) => {
             onPress: () => navigation.navigate('HistoryScreen'),
         },
         {
+            id: '3b',
+            icon: 'tags',
+            title: 'Your Genres',
+            description: 'Choose what shows up in For You',
+            onPress: () => navigation.navigate('EditGenresScreen'),
+        },
+        {
             id: '4',
             icon: 'cog',
             title: 'App Settings',

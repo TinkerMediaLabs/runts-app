@@ -16,6 +16,7 @@ import Reveal from '../../components/common/Reveal';
 
 import HomeSectionView from '../../components/home/HomeSectionView';
 import { useHomeLayout } from '../../hooks/queries/useHomeLayout';
+import NewGenreNudge, { useNewGenreNudge } from '../../components/home/NewGenreNudge';
 
 const HomeScreen = ({ navigation }: any) => {
 
@@ -25,6 +26,8 @@ const HomeScreen = ({ navigation }: any) => {
 
 
     const { sections, isLoading } = useHomeLayout();
+    const nudge = useNewGenreNudge();
+    const [nudgeHidden, setNudgeHidden] = useState(false);
 
     // Sections appear strictly top to bottom: one is shown once every section above it has settled.
     const [settled, setSettled] = useState<Record<string, true>>({});
@@ -85,7 +88,11 @@ const HomeScreen = ({ navigation }: any) => {
                     </View>
                     </Reveal>
 
-                    {isLoading ? (
+                    {!nudgeHidden && nudge.names.length > 0 && (
+                        <NewGenreNudge names={nudge.names} ids={nudge.ids} userId={nudge.userId} onDismiss={() => setNudgeHidden(true)} />
+                    )}
+
+                    {isLoading || !nudge.decided ? (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
                             <ActivityIndicator color="cyan" />
                         </View>

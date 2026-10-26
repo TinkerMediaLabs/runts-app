@@ -16,6 +16,7 @@ export type RootStackParamList = {
     AuthorDetails: undefined;
     InProgressScreen: undefined;
     HistoryScreen: undefined;
+    EditGenresScreen: undefined;
     BlockedUsersScreen: undefined;
     AuthorFollowing: undefined;
     AppSettingsScreen: undefined;

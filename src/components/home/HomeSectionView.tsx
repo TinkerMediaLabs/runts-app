@@ -17,6 +17,7 @@ import { useForYouStories } from '../../hooks/queries/useForYouStories';
 import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
 import { useStories } from '../../hooks/queries/useStories';
 import { useStoriesByIds } from '../../hooks/queries/useStoriesByIds';
+import { useTasteProfile } from '../../hooks/queries/useTasteProfile';
 import { useTrendingSection } from '../../hooks/queries/useTrending';
 import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
@@ -65,9 +66,16 @@ const StoryRow = ({ title, stories, index }: { title: string; stories: any[]; in
 const ForYouSection = ({ section, index }: Props) => {
   const { profile } = useApp();
   const preferred = useMemo(() => profile?.preferredTagIds ?? [], [profile?.preferredTagIds]);
-  const { data, isLoading } = useForYouStories(preferred, section.limit ?? 8);
+  // Wait for the listening profile so the carousel does not rebuild itself a moment after it appears; if it
+  // cannot be read (offline), carry on with the picked genres alone.
+  const { data: tasteData, isLoading: tasteLoading } = useTasteProfile(preferred);
+  const { data, isPending } = useForYouStories(preferred, section.limit ?? 8, {
+    learnedTagIds: tasteData?.learnedTagIds ?? [],
+    listenedIds: tasteData?.listenedIds ?? [],
+    ready: !tasteLoading,
+  });
   const { stories, tagMap } = useEnrichedStories(data);
-  useSettleWhen(!isLoading);
+  useSettleWhen(!isPending);
   if (stories.length === 0) return null;
   return (
     <Reveal index={index}>
