@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -15,6 +15,7 @@ import { spacing } from '../../theme/spacing';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
+import { CachedImageBackground } from '../common/CachedImage';
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
@@ -64,7 +65,7 @@ const HorzStoryTile = ({
             accessibilityHint="Opens the story"
         >
             {displayImageUri ? (
-                <ImageBackground
+                <CachedImageBackground
                     source={{ uri: displayImageUri }}
                     style={styles.card}
                     imageStyle={styles.cardImage}
@@ -157,7 +158,7 @@ const HorzStoryTile = ({
                             </View>
                         )}
                     </View>
-                </ImageBackground>
+                </CachedImageBackground>
             ) : (
                 <LoadingItem height={CARD_HEIGHT} width={CARD_WIDTH} radius={14} />
             )}

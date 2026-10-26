@@ -18,7 +18,7 @@ aws iam get-role-policy --role-name $ROLE_NAME --policy-name RuntsPublishPolicy 
 
 RES=""
 for ENV in $STG $PRD; do
-  for M in Story Author Narrator Universe Tag StoryTag StoryNarrator StoryScene; do
+  for M in Story Author Narrator Universe Tag StoryTag StoryNarrator StoryScene HomeSection; do
     RES="$RES\"arn:aws:dynamodb:$REGION:$ACCOUNT_ID:table/$M-$ENV-NONE\",\"arn:aws:dynamodb:$REGION:$ACCOUNT_ID:table/$M-$ENV-NONE/index/*\","
   done
 done

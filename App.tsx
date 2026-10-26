@@ -63,7 +63,7 @@ function App() {
                 await Analytics.init();
                 await PurchasesService.init();
                 await TrackPlayer.setupPlayer({
-                    contentType:              'music',
+                    contentType:              'speech',
                     handleAudioBecomingNoisy: true,
                     android:                  { wakeMode: 'network' },
                 });

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Modal, TouchableOpacity, TouchableWithoutFeedback, Image, StyleSheet, AccessibilityInfo } from 'react-native';
+import { View, Modal, TouchableOpacity, TouchableWithoutFeedback, StyleSheet, AccessibilityInfo } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,7 @@ import { useRecommendations } from '../../hooks/queries/useRecommendations';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { fmtDuration } from '../../lib/storyDisplay';
 
+import { CachedImage } from '../common/CachedImage';
 const MAX_ROWS = 4;
 
 const REASON_TEXT: Record<string, string> = {
@@ -35,7 +36,7 @@ const Row = ({ item, onPress }: { item: any; onPress: () => void }) => {
             accessibilityHint="Opens the story"
         >
             {uri ? (
-                <Image source={{ uri }} style={styles.thumb} accessible={false} />
+                <CachedImage source={{ uri }} style={styles.thumb} accessible={false} />
             ) : (
                 <View style={[styles.thumb, { backgroundColor: '#1a1a1a' }]} />
             )}

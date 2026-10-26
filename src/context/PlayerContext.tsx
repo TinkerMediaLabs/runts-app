@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { usePlaybackState, PlaybackState } from '@rntp/player';
+import { usePlaybackState, useIsPlaying, PlaybackState } from '@rntp/player';
 import { audioEngine } from '@/features/audio/audioEngine';
 import { usePlayerUI } from '@/context/PlayerUIContext';
 import { generateClient } from 'aws-amplify/data';
@@ -90,6 +90,9 @@ export const PlayerProvider = ({ children }: any) => {
     // ── Playback state listener for track completion ──────────────────────────
     const playbackState = usePlaybackState();
     const prevPlaybackStateRef = useRef<PlaybackState | null>(null);
+    const playbackStateRef = useRef<PlaybackState>(playbackState);
+    playbackStateRef.current = playbackState;
+    const nativePlaying = useIsPlaying();
 
     useEffect(() => {
         const justEnded =
@@ -346,6 +349,32 @@ export const PlayerProvider = ({ children }: any) => {
             startProgressTracking(currentTrackRef.current.id);
         }
     };
+
+    // ── Follow the real player ────────────────────────────────────────────────
+    // The system can pause or resume audio without going through our buttons: a phone call or another
+    // app taking audio focus, headphones unplugged, the notification, lock screen or a Bluetooth button.
+    // Without this the on-screen button, progress saving and the rewind-on-resume would drift from reality.
+    useEffect(() => {
+        if (!currentTrackRef.current) return;
+        if (nativePlaying) {
+            if (!isPlayingRef.current) {
+                // Resumed from outside the app (or after an interruption ended).
+                isPlayingRef.current = true;
+                setState(prev => ({ ...prev, isPlaying: true }));
+                startProgressTracking(currentTrackRef.current.id);
+            }
+            return;
+        }
+        if (!isPlayingRef.current) return;
+        // Not playing can also mean loading or buffering, so only treat it as a pause when the player has
+        // stayed paused and ready for a moment.
+        const timer = setTimeout(() => {
+            if (!isPlayingRef.current) return;
+            if (playbackStateRef.current !== PlaybackState.Ready) return;
+            pause();
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, [nativePlaying]);
 
     const clearPendingRating = () => {
         const finishedStoryId = state.pendingRatingStoryId;

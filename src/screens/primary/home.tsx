@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, TouchableWithoutFeedback, View, Dimensions, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -13,16 +13,9 @@ import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
 import Reveal from '../../components/common/Reveal';
-import { useApp } from '@/context/AppContext';
 
-import ForYouCarousel from '../../components/story/ForYouCarousel';
-import TagRow from '../../components/story/TagRow';
-import ContinueListening from '../../components/story/ContinueListening';
-import BecauseYouFinished from '../../components/story/BecauseYouFinished';
-
-import { useForYouStories } from '../../hooks/queries/useForYouStories';
-import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
-import { usePrimaryTags } from '../../hooks/queries/useTags';
+import HomeSectionView from '../../components/home/HomeSectionView';
+import { useHomeLayout } from '../../hooks/queries/useHomeLayout';
 
 const HomeScreen = ({ navigation }: any) => {
 
@@ -31,13 +24,13 @@ const HomeScreen = ({ navigation }: any) => {
 
 
 
-    const { profile } = useApp();
-    const preferredTagIds = React.useMemo(() => profile?.preferredTagIds ?? [], [profile?.preferredTagIds]);
-    const { data: forYou, isLoading: storiesLoading } = useForYouStories(preferredTagIds);
-    const { data: tags, isLoading: tagsLoading } = usePrimaryTags();
-    const { stories: enrichedStories, tagMap } = useEnrichedStories(forYou);
+    const { sections, isLoading } = useHomeLayout();
 
-    const isLoading = storiesLoading || tagsLoading;
+    // Sections appear strictly top to bottom: one is shown once every section above it has settled.
+    const [settled, setSettled] = useState<Record<string, true>>({});
+    const markSettled = useCallback((id: string) => setSettled(s => (s[id] ? s : { ...s, [id]: true })), []);
+    const firstUnsettled = sections.findIndex(s => !settled[s.id]);
+    const lastVisible = firstUnsettled === -1 ? sections.length : firstUnsettled;
 
     const welcomeText = [
         "Discover a new world",
@@ -59,14 +52,6 @@ const HomeScreen = ({ navigation }: any) => {
         const getRandomInt = (max: number) => Math.floor(Math.random() * max);
         setText(welcomeText[getRandomInt(welcomeText.length)]);
     }, []);
-
-    const topTags = React.useMemo(() => {
-        if (!tags) return [];
-        const usable = tags.filter(t => !t.isErotic);
-        const mine = preferredTagIds.map(id => usable.find(t => t.id === id)).filter(Boolean) as typeof usable;
-        const rest = usable.filter(t => !preferredTagIds.includes(t.id));
-        return [...mine, ...rest].slice(0, 4);
-    }, [tags, preferredTagIds]);
 
     return (
         <Screen>
@@ -106,27 +91,8 @@ const HomeScreen = ({ navigation }: any) => {
                         </View>
                     ) : (
                         <>
-                            {/* Featured carousel */}
-                            <Reveal index={1}>
-                                <ForYouCarousel
-                                    stories={enrichedStories}
-                                    tagMap={tagMap}
-                                />
-                            </Reveal>
-
-                            {/* Continue Listening — shows up to 4 most recent in-progress stories */}
-                            <Reveal index={2} style={{ paddingVertical: 10 }}>
-                                <ContinueListening />
-                            </Reveal>
-
-                            {/* Because you finished X — suggestions seeded by the last finished story */}
-                            <Reveal index={3}>
-                                <BecauseYouFinished />
-                            </Reveal>
-
-                            {/* Horizontal lists by tag */}
-                            {topTags.map((tag, tagIndex) => (
-                                <TagRow key={tag.id} tag={tag} index={3 + tagIndex} />
+                            {sections.map((section, i) => (
+                                <HomeSectionView key={section.id} section={section} index={i} visible={i <= lastVisible} onSettled={markSettled} />
                             ))}
                         </>
                     )}

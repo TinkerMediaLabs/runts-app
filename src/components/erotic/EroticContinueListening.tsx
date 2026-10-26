@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { useEroticInProgressStories } from '@/hooks/queries/useInProgressStories
 import { useStoryImage }              from '@/hooks/queries/useStoryImage';
 import { usePlayer }                  from '@/context/PlayerContext';
 
+import { CachedImage } from '../common/CachedImage';
 const client  = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 const TILE_W  = 160;
@@ -71,7 +72,7 @@ const EroticContinueTile = ({ storyId, progressSeconds }: {
             accessibilityLabel={`Continue listening, ${story.title ?? 'story'}, ${remainingMn} minutes left`}
         >
             {/* Cover image */}
-            <Image
+            <CachedImage
                 source={imageUri ? { uri: imageUri } : require('../../../assets/images/blankprofile.png')}
                 style={styles.tileImage}
             />

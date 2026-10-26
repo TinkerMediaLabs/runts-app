@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { successHaptic } from '../../lib/haptics';
 import { useRef } from 'react';
-import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, Image, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +28,7 @@ import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
 import { unwrap } from '@/lib/amplifyResult';
 
+import { CachedImage } from '../../components/common/CachedImage';
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 
@@ -245,7 +246,7 @@ const handleSubmit = async () => {
           {/* ── Story header ── */}
           <View style={styles.storyHeader}>
             {artwork ? (
-              <Image source={{ uri: artwork }} style={styles.artwork} />
+              <CachedImage source={{ uri: artwork }} style={styles.artwork} />
             ) : null}
             <View style={{ flex: 1 }}>
               <Text style={styles.finishedLabel}>You finished</Text>

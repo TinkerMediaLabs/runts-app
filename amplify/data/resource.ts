@@ -556,6 +556,34 @@ Comment: a
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
+  // ── HomeSection: one list on the Home screen, edited in the CMS ────────────
+  // The CMS decides WHICH lists appear, in what order, with what title and settings. What each type
+  // does (the query behind it) lives in the app: forYou, continueListening, becauseYou, genres,
+  // newStories, featuredAuthor, handPicked (trending is added later). The app skips types it does not know.
+  // A handful of rows (tens, never thousands); the index just keeps them ordered.
+  HomeSection: a
+    .model({
+      layoutPk: a.string().required(),      // constant 'HOME' — partition key for byLayoutAndOrder
+      type: a.string().required(),
+      title: a.string(),                    // overrides the type's default title
+      blurb: a.string(),                    // featuredAuthor: short line under the author's name
+      sortOrder: a.integer().required(),    // lowest first
+      enabled: a.boolean(),                 // false hides it (null counts as on)
+      startsAt: a.datetime(),               // optional schedule; the app checks these when it loads the layout
+      endsAt: a.datetime(),
+      limit: a.integer(),                   // how many stories / rows to show
+      authorId: a.string(),                 // featuredAuthor
+      storyIds: a.string().array(),         // handPicked, in display order
+      windowDays: a.integer(),              // trending (later)
+    })
+    .secondaryIndexes(index => [
+      index('layoutPk').sortKeys(['sortOrder']).name('byLayoutAndOrder'),
+    ])
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
   // ── StoryTag (join table for many-to-many) ────────────────────────────────
   StoryTag: a
     .model({

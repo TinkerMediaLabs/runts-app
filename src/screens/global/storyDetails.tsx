@@ -74,6 +74,7 @@ import {
 import { useBlockedUsers, useBlockUser, useReportComment, type ReportReason } from '../../hooks/queries/useModeration';
 import { showChip } from '@/lib/chip';
 
+import { CachedImage } from '../../components/common/CachedImage';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -515,11 +516,9 @@ const handleDelete = (id: string) => {
             <StatusBar style="light" />
 
             {/* ── Hero image (parallax) ── */}
-            <Animated.Image
-                source={{ uri: displayImageUri }}
-                style={[styles.heroImage, heroImageStyle]}
-                resizeMode="cover"
-            />
+            <Animated.View style={[styles.heroImage, heroImageStyle]}>
+                <CachedImage source={{ uri: displayImageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            </Animated.View>
 
             {/* Hero gradient */}
             <LinearGradient

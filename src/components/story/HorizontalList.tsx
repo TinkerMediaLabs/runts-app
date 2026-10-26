@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { useNavigation } from '@react-navigation/native';
@@ -18,11 +18,16 @@ type HorizontalListProps = {
     stories: any[];
     tagId?: string;
     tagName?: string;
+    showSeeMore?: boolean;   // default true when a genre is given
 };
 
-const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
+const HorizontalList = ({ stories, tagId, tagName, showSeeMore }: HorizontalListProps) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { width: screenWidth } = useWindowDimensions();
+    const withSeeMore = showSeeMore ?? !!tagId;
+    // Empty space after the last tile so it can scroll all the way to the left edge and lock there.
+    const endSpace = Math.max(spacing.margin, screenWidth - SNAP_INTERVAL);
 
     const SeeMore = () => (
         <TouchableOpacity
@@ -81,7 +86,7 @@ const HorizontalList = ({ stories, tagId, tagName }: HorizontalListProps) => {
                 snapToInterval={SNAP_INTERVAL}
                 snapToAlignment="start"
                 decelerationRate="fast"
-                ListFooterComponent={<SeeMore />}
+                ListFooterComponent={withSeeMore ? <SeeMore /> : <View style={{ width: endSpace }} />}
             />
         </View>
     );

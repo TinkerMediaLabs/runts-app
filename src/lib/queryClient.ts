@@ -39,7 +39,7 @@ export const queryPersister = createAsyncStoragePersister({
 const PERSISTED_ROOTS = new Set([
     'story', 'author', 'authorName', 'tag', 'tags', 'universe', 'narrator', 'storyNarratorNames',
     'storyScenes', 'pinnedStories', 'isPinned', 'storyProgress', 'inProgressStories',
-    'finishedStories', 'favoritedStories', 'bookmarks', 'stories',
+    'finishedStories', 'favoritedStories', 'bookmarks', 'stories', 'homeLayout',
 ]);
 
 export const shouldPersistQuery = (query: { queryKey: readonly unknown[]; state: { status: string } }) =>

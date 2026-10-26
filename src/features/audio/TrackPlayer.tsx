@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback, Share } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback, Share } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useStoryNarratorNames } from '@/hooks/queries/useStoryNarratorNames';
 import { formatNarratorDisplay, fmtDuration } from '@/lib/storyDisplay';
@@ -56,6 +56,7 @@ import RatingModal from './RatingModal';
 import BookmarkModal    from './BookmarkModal';
 import { useCreateBookmark } from '../../hooks/queries/useBookmarks';
 
+import { CachedImage } from '../../components/common/CachedImage';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 70;
 const HERO_HEIGHT_RATIO = 0.46; // hero image takes ~46% of screen height
@@ -573,7 +574,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 >
                   <Text style={styles.upNextLabel}>Up Next</Text>
                   <View style={styles.upNextRow}>
-                    <Image source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
+                    <CachedImage source={{ uri: nextImageDisplayUri }} style={styles.upNextThumb} />
                     <View style={{ flex: 1 }}>
                       <Text numberOfLines={1} style={styles.upNextTitle}>
                         {nextTrackInfo.title}
@@ -695,7 +696,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
               <View style={styles.miniTint} pointerEvents="none" />            
               <TouchableWithoutFeedback onPress={expandPlayer} accessible={false}>
                     <View style={styles.miniInner}>
-              <Image source={{ uri: track.artwork }} style={styles.miniImage} />
+              <CachedImage source={{ uri: track.artwork }} style={styles.miniImage} />
               <View
                 style={{ flex: 1 }}
                 accessible

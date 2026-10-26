@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Image, TouchableOpacity, ScrollView, Animated, StyleSheet, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { View, TouchableOpacity, ScrollView, Animated, StyleSheet, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +16,7 @@ import { uploadProfilePicture } from '../../services/auth';
 
 import { useFollowingCount } from '../../hooks/queries/useAuthorFollowing';
 
+import { CachedImage } from '../../components/common/CachedImage';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -269,7 +270,7 @@ const ProfileScreen = ({ navigation }: any) => {
                                     <ActivityIndicator color="cyan" />
                                 </View>
                             ) : (
-                                <Image
+                                <CachedImage
                                     source={
                                         profile?.profilePicUri && !imageError
                                             ? { uri: profile.profilePicUri }

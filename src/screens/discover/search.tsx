@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
-import { View, FlatList, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, Image, Modal, TouchableWithoutFeedback, ScrollView, InteractionManager } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, Modal, TouchableWithoutFeedback, ScrollView, InteractionManager } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -52,6 +52,7 @@ const { width } = Dimensions.get('window');
 
 import { useApp } from '@/context/AppContext';
 
+import { CachedImage } from '../../components/common/CachedImage';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -149,7 +150,7 @@ const SearchAuthorItem = React.memo(({
       accessibilityLabel={`Author ${item.name}`}
       accessibilityHint="Opens author page"
     >
-      <Image
+      <CachedImage
         source={
           authorImageUrl
             ? { uri: authorImageUrl }

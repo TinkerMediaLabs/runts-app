@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { useRoute } from '@react-navigation/native';
@@ -39,6 +39,7 @@ import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useStoryProgressMap } from '../../hooks/queries/useStoryProgressMap';
 import { isRecentlyPublished, formatNarratorDisplay } from '../../lib/storyDisplay';
 
+import { CachedImage } from '../../components/common/CachedImage';
     const BrowseAllStoryTile = ({ item }: { item: any }) => {
         const { data: resolvedImageUri } = useStoryImage(
             item.imageUri?.startsWith('stories/') ? item.imageUri : null
@@ -259,7 +260,7 @@ const GenreHome = ({ navigation }: any) => {
                     {/* Hero */}
                     <View style={styles.heroWrapper}>
                         {resolvedHeroImageUri ? (
-                            <Image source={{ uri: resolvedHeroImageUri }} style={styles.heroImage} resizeMode="cover" />
+                            <CachedImage source={{ uri: resolvedHeroImageUri }} style={styles.heroImage} resizeMode="cover" />
                         ) : (
                             <View style={[styles.heroImage, { backgroundColor: '#1a1a1a' }]} />
                         )}
