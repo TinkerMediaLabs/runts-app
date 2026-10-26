@@ -115,6 +115,11 @@ trendingSnapshotFn.addEnvironment('DAY_TABLE_NAME', listenDayTable.tableName);
 trendingSnapshotFn.addEnvironment('SNAPSHOT_TABLE_NAME', trendingTable.tableName);
 listenDayTable.grantReadWriteData(trendingSnapshotFn);
 trendingTable.grantReadWriteData(trendingSnapshotFn);
+// The CDK grant covers the table but not its indexes on Amplify-managed tables; the byDay query needs this.
+trendingSnapshotFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [`${listenDayTable.tableArn}/index/*`],
+}));
 
 // ── rating-aggregator ─────────────────────────────────────────────────────
 const ratingAggregatorFn = backend.ratingAggregator.resources.lambda as lambda.Function;
