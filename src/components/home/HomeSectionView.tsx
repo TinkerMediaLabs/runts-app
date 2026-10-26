@@ -110,7 +110,7 @@ const NewStoriesSection = ({ section, index }: Props) => {
   return <StoryRow title={section.title || 'New'} stories={data ?? []} index={index} />;
 };
 
-const HandPickedSection = ({ section, index }: Props) => {
+export const HandPickedSection = ({ section, index }: Props) => {
   const ids = useMemo(() => (section.storyIds ?? []).filter(Boolean) as string[], [section.storyIds]);
   const { stories } = useStoriesByIds(ids);
   useSettleAfter(1200);
@@ -123,7 +123,7 @@ const TrendingSection = ({ section, index }: Props) => {
   return <StoryRow title={section.title || 'Trending'} stories={data ?? []} index={index} />;
 };
 
-const FeaturedAuthorSection = ({ section, index }: Props) => {
+export const FeaturedAuthorSection = ({ section, index }: Props) => {
   const navigation = useNavigation<any>();
   const typo = useTypography();
   const { data: author } = useAuthor(section.authorId ?? '');

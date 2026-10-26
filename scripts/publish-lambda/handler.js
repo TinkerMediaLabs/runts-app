@@ -203,9 +203,27 @@ async function scanAll(table) {
     return items;
 }
 
-async function publishHomeLayout() {
-    const staged = await scanAll(stg('HomeSection'));
-    const live = await scanAll(prod('HomeSection'));
+// Rows of one layout (HOME, TAG_DEFAULT or TAG#<id>) via the layoutPk index, so this scales with many genres.
+async function layoutRows(table, layoutPk) {
+    const items = [];
+    let key;
+    do {
+        const res = await dynamo.send(new QueryCommand({
+            TableName: table, IndexName: 'byLayoutAndOrder',
+            KeyConditionExpression: 'layoutPk = :p', ExpressionAttributeValues: marshall({ ':p': layoutPk }),
+            ExclusiveStartKey: key,
+        }));
+        for (const it of res.Items ?? []) items.push(unmarshall(it));
+        key = res.LastEvaluatedKey;
+    } while (key);
+    return items;
+}
+
+// Make production's copy of one layout exactly match staging's.
+async function publishLayout(layoutPk) {
+    if (!/^(HOME|TAG_DEFAULT|TAG#[\w-]+)$/.test(layoutPk ?? '')) throw new Error('Invalid layoutPk');
+    const staged = await layoutRows(stg('HomeSection'), layoutPk);
+    const live = await layoutRows(prod('HomeSection'), layoutPk);
     const keep = new Set(staged.map(r => r.id));
     for (const row of staged) await upsertItem(prod('HomeSection'), row);
     let removed = 0;
@@ -225,11 +243,11 @@ exports.handler = async (event) => {
         return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
-    let storyId, kind;
-    try { ({ storyId, kind } = JSON.parse(event.body ?? '{}')); }
+    let storyId, kind, layoutPk;
+    try { ({ storyId, kind, layoutPk } = JSON.parse(event.body ?? '{}')); }
     catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
-    if (kind === 'homeLayout') {
-        try { return { statusCode: 200, headers: CORS, body: JSON.stringify(await publishHomeLayout()) }; }
+    if (kind === 'homeLayout' || kind === 'layout') {
+        try { return { statusCode: 200, headers: CORS, body: JSON.stringify(await publishLayout(kind === 'homeLayout' ? 'HOME' : layoutPk)) }; }
         catch (err) { console.error(err); return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: err.message }) }; }
     }
     if (!storyId) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'storyId required' }) };

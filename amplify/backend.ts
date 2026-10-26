@@ -15,6 +15,7 @@ import { userCleanup } from './functions/user-cleanup/resource';
 import { eroticPin } from './functions/erotic-pin/resource';
 import { uploadUrl } from './functions/upload-url/resource';
 import { trendingSnapshot } from './functions/trending-snapshot/resource';
+import { tagInsights } from './functions/tag-insights/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -39,6 +40,7 @@ const backend = defineBackend({
   eroticPin,
   uploadUrl,
   trendingSnapshot,
+  tagInsights,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -58,6 +60,7 @@ const listenDedupeTable = backend.data.resources.tables['ListenDedupe'];
 const eroticPinTable    = backend.data.resources.tables['EroticPin'];
 const listenDayTable    = backend.data.resources.tables['StoryListenDay'];
 const trendingTable     = backend.data.resources.tables['TrendingSnapshot'];
+const tagInsightTable   = backend.data.resources.tables['TagInsight'];
 
 // ── stream failure queue ──────────────────────────────────────────────────
 // Stream records that still fail after their retries land here (kept 14 days) instead of being
@@ -115,10 +118,26 @@ trendingSnapshotFn.addEnvironment('DAY_TABLE_NAME', listenDayTable.tableName);
 trendingSnapshotFn.addEnvironment('SNAPSHOT_TABLE_NAME', trendingTable.tableName);
 listenDayTable.grantReadWriteData(trendingSnapshotFn);
 trendingTable.grantReadWriteData(trendingSnapshotFn);
+trendingSnapshotFn.addEnvironment('TAG_INSIGHT_TABLE_NAME', tagInsightTable.tableName);
+tagInsightTable.grantReadWriteData(trendingSnapshotFn);
 // The CDK grant covers the table but not its indexes on Amplify-managed tables; the byDay query needs this.
 trendingSnapshotFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query'],
   resources: [`${listenDayTable.tableArn}/index/*`],
+}));
+
+// ── tag-insights (every 3 hours) ───────────────────────────────────────────
+const tagInsightsFn = backend.tagInsights.resources.lambda as lambda.Function;
+tagInsightsFn.addEnvironment('STORYTAG_TABLE_NAME', storyTagTable.tableName);
+tagInsightsFn.addEnvironment('TAG_TABLE_NAME', tagTable.tableName);
+tagInsightsFn.addEnvironment('TAG_INSIGHT_TABLE_NAME', tagInsightTable.tableName);
+storyTagTable.grantReadData(tagInsightsFn);
+tagTable.grantReadData(tagInsightsFn);
+tagInsightTable.grantReadWriteData(tagInsightsFn);
+// Scanning the live-links index needs the index grant spelled out (see trending-snapshot above).
+tagInsightsFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Scan'],
+  resources: [`${storyTagTable.tableArn}/index/*`],
 }));
 
 // ── rating-aggregator ─────────────────────────────────────────────────────
