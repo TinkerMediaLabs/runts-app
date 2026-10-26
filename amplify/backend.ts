@@ -19,8 +19,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Duration, Stack } from 'aws-cdk-lib';
 
 const backend = defineBackend({
@@ -268,12 +266,10 @@ userCleanupFn.addEventSource(new DynamoEventSource(userTable, {
 // storage bucket (an overwritten or deleted file can be brought back; old versions expire after 30 days
 // so cost stays bounded). Sandboxes and staging skip this to avoid the extra cost.
 if (process.env.AWS_BRANCH === 'production') {
-  Object.values(backend.data.resources.tables).forEach(table => {
-    (table.node.defaultChild as dynamodb.CfnTable).pointInTimeRecoverySpecification = {
-      pointInTimeRecoveryEnabled: true,
-    };
+  Object.values(backend.data.resources.cfnResources.amplifyDynamoDbTables).forEach(table => {
+    table.pointInTimeRecoveryEnabled = true;
   });
-  const cfnBucket = backend.storage.resources.bucket.node.defaultChild as s3.CfnBucket;
+  const cfnBucket = backend.storage.resources.cfnResources.cfnBucket;
   cfnBucket.versioningConfiguration = { status: 'Enabled' };
   cfnBucket.lifecycleConfiguration = {
     rules: [{
