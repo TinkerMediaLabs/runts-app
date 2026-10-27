@@ -1,4 +1,4 @@
-import { rankWindow, rankByTag, lastDays } from '../../amplify/functions/trending-snapshot/rank';
+import { rankWindow, rankByTag, lastDays, tagTotals, tagsToZero } from '../../amplify/functions/trending-snapshot/rank';
 
 const day = (o: Record<string, number>) => new Map(Object.entries(o));
 
@@ -45,5 +45,28 @@ describe('rankByTag', () => {
     const many = [day({ a: 3, b: 2, c: 1 })];
     const all = new Map([['a', ['t']], ['b', ['t']], ['c', ['t']]]);
     expect(rankByTag(many, all, 7, 2).get('t')!.map(x => x.storyId)).toEqual(['a', 'b']);
+  });
+});
+
+describe('tagTotals', () => {
+  const days = [day({ s1: 4, s2: 1 }), day({ s1: 2, s3: 5 })];
+  const tagsOf = new Map([['s1', ['x', 'y']], ['s2', ['x']], ['s3', ['z']]]);
+  it('adds plays of every story to each of its tags', () => {
+    const t = tagTotals(days, tagsOf, 7);
+    expect(t.get('x')).toBe(7);
+    expect(t.get('y')).toBe(6);
+    expect(t.get('z')).toBe(5);
+  });
+  it('only looks at the window', () => {
+    expect(tagTotals(days, tagsOf, 1).get('z')).toBeUndefined();
+  });
+  it('ignores stories with no tags', () => {
+    expect(tagTotals([day({ other: 9 })], tagsOf, 7).size).toBe(0);
+  });
+});
+
+describe('tagsToZero', () => {
+  it('returns tags that had plays before and have none now', () => {
+    expect(tagsToZero(['a', 'b', 'c'], new Map([['a', 2], ['c', 0]]))).toEqual(['b', 'c']);
   });
 });

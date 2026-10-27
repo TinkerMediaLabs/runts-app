@@ -112,7 +112,7 @@ const GenreTilesList = ({ primaryTags, navigation, eroticEnabled }: any) => {
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
                 initialNumToRender={primaryTags?.length ?? 4}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentContainerStyle={{ paddingBottom: 0 }}
                 ListHeaderComponent={() => (
                     <View style={{ marginTop: 20 }}>
                         <Text style={[typo.title, { marginBottom: 10 }]}>

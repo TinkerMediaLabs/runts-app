@@ -1,4 +1,4 @@
-import { computeInsights } from '../../amplify/functions/tag-insights/insights';
+import { computeInsights, discoverFields, staleInsightIds } from '../../amplify/functions/tag-insights/insights';
 
 // stories: storyId -> [tagIds], with a publish date so "newest first" is testable
 const links = (spec: Record<string, { tags: string[]; pub: string }>) =>
@@ -54,5 +54,25 @@ describe('computeInsights', () => {
     expect(computeInsights([], new Set()).size).toBe(0);
     const r = computeInsights([{ storyId: 's', tagId: 'a' }, { storyId: 's', tagId: 'a' }], new Set());
     expect(r.get('a')!.liveCount).toBe(1);
+  });
+});
+
+describe('discoverFields', () => {
+  it('lists a subgenre that has live stories', () => {
+    expect(discoverFields({ id: 'a', name: ' Haunted House ' }, 3)).toEqual({ name: 'Haunted House', nameLower: 'haunted house', listed: true });
+  });
+  it('does not list empty, primary or erotic genres', () => {
+    expect(discoverFields({ id: 'a', name: 'X' }, 0).listed).toBe(false);
+    expect(discoverFields({ id: 'a', name: 'X', isPrimary: true }, 9).listed).toBe(false);
+    expect(discoverFields({ id: 'a', name: 'X', isErotic: true }, 9).listed).toBe(false);
+  });
+  it('does not list a genre without a name', () => {
+    expect(discoverFields({ id: 'a' }, 5).listed).toBe(false);
+  });
+});
+
+describe('staleInsightIds', () => {
+  it('returns rows whose genre is gone', () => {
+    expect(staleInsightIds(['a', 'b', 'c'], new Set(['a', 'c']))).toEqual(['b']);
   });
 });

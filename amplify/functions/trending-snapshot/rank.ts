@@ -44,3 +44,21 @@ export function rankByTag(days: DayCounts[], tagsOf: Map<string, string[]>, wind
   }
   return perTag;
 }
+
+
+// Plays per tag over the window (a story counts for each tag in `tagsOf`).
+export function tagTotals(days: DayCounts[], tagsOf: Map<string, string[]>, windowDays: number): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const day of days.slice(0, windowDays)) {
+    for (const [storyId, count] of day) {
+      if (count <= 0) continue;
+      for (const tagId of tagsOf.get(storyId) ?? []) totals.set(tagId, (totals.get(tagId) ?? 0) + count);
+    }
+  }
+  return totals;
+}
+
+// Tags that had a non-zero total before but have none now (their stored number must be reset to 0).
+export function tagsToZero(previous: string[], current: Map<string, number>): string[] {
+  return previous.filter(id => !(current.get(id) ?? 0));
+}

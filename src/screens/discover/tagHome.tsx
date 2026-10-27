@@ -75,10 +75,6 @@ const GenreHome = ({ navigation }: any) => {
                             accessibilityRole="button" accessibilityLabel="Go back" style={styles.heroBubble} activeOpacity={0.7}>
                             <FontAwesome5 name="chevron-left" size={16} color="#fff" iconStyle="solid" />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => navigation.navigate('BrowseByTitle')} accessibilityRole="button"
-                            accessibilityLabel="Browse by title" style={styles.heroBubble} activeOpacity={0.7}>
-                            <Text style={styles.heroBubbleText}>Browse</Text>
-                        </TouchableOpacity>
                     </View>
                     <Text style={styles.heroTitle}>{(tagName ?? '').toUpperCase()}</Text>
                 </View>
@@ -89,10 +85,6 @@ const GenreHome = ({ navigation }: any) => {
                         <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle} numberOfLines={1}>{tagName}</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('BrowseByTitle')} accessibilityRole="button"
-                        accessibilityLabel="Browse by title" activeOpacity={0.7}>
-                        <Text style={styles.browseText}>Browse</Text>
-                    </TouchableOpacity>
                 </View>
             )}
 
