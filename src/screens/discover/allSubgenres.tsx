@@ -33,7 +33,7 @@ const AllSubgenresScreen = () => {
     <TouchableOpacity
       activeOpacity={0.7} style={styles.row}
       onPress={() => { Analytics.genreTapped(item.id, item.name); navigation.navigate('TagHomeScreen', { id: item.id, name: item.name }); }}
-      accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.liveCount} stories`}
+      accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.liveCount} ${item.liveCount === 1 ? 'story' : 'stories'}`}
     >
       <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
       <Text style={styles.count}>{item.liveCount}</Text>
@@ -63,7 +63,7 @@ const AllSubgenresScreen = () => {
               keyExtractor={t => t.id}
               renderItem={renderItem}
               renderSectionHeader={({ section }) => (
-                <View style={styles.sectionHeader}><Text style={styles.sectionLetter}>{section.title}</Text></View>
+                <View style={styles.sectionHeader} accessible accessibilityRole="header" accessibilityLabel={`Section ${section.title}`}><Text style={styles.sectionLetter}>{section.title}</Text></View>
               )}
               stickySectionHeadersEnabled
               onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage(); }}
@@ -73,7 +73,7 @@ const AllSubgenresScreen = () => {
               contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingRight: 28 }}
               showsVerticalScrollIndicator={false}
             />
-            <View style={styles.strip} pointerEvents="box-none">
+            <View style={styles.strip} pointerEvents="box-none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               {letters.map((l, i) => (
                 <TouchableOpacity key={l} onPress={() => jump(i)} hitSlop={{ left: 14, right: 10 }}
                   accessibilityRole="button" accessibilityLabel={`Jump to ${l}`}>
@@ -96,13 +96,13 @@ const styles = StyleSheet.create({
   sectionHeader: { backgroundColor: '#000', paddingHorizontal: spacing.margin, paddingVertical: 6 },
   sectionLetter: { color: 'cyan', fontSize: 14, fontWeight: '700' },
   row: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: spacing.margin,
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 13, minHeight: 48, paddingHorizontal: spacing.margin,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   name: { flex: 1, color: '#fff', fontSize: 16 },
   count: { color: 'rgba(255,255,255,0.45)', fontSize: 13, marginLeft: 12 },
   strip: { position: 'absolute', right: 4, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', width: 24 },
-  stripLetter: { color: 'cyan', fontSize: 11, fontWeight: '700', paddingVertical: 1.5, paddingHorizontal: 4 },
+  stripLetter: { color: 'cyan', fontSize: 11, fontWeight: '700', paddingVertical: 1.5, paddingHorizontal: 4 },  // hidden from screen readers: sections have headers
 });
 
 export default AllSubgenresScreen;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, FlatList, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, FlatList, TouchableOpacity, Animated, AccessibilityInfo, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
@@ -58,15 +58,30 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
 
   useEffect(() => { setVisible(draw()); }, [draw]);
 
+  // Respect the system "reduce motion" setting: swap instantly instead of spinning and fading.
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    AccessibilityInfo.isReduceMotionEnabled().then(v => { if (alive) setReduceMotion(v); }).catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => { alive = false; sub.remove(); };
+  }, []);
+
   if (pool.length === 0) return null;
 
   const shuffle = () => {
     if (spinning) return;
+    if (reduceMotion) {
+      setVisible(draw());
+      AccessibilityInfo.announceForAccessibility('Showing different subgenres');
+      return;
+    }
     setSpinning(true);
     spin.setValue(0);
     Animated.timing(spin, { toValue: 1, duration: 400, useNativeDriver: true }).start(() => setSpinning(false));
     Animated.timing(fade, { toValue: 0, duration: 140, useNativeDriver: true }).start(() => {
       setVisible(draw());
+      AccessibilityInfo.announceForAccessibility('Showing different subgenres');
       Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
   };
@@ -78,7 +93,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
         text={title}
         right={
           <TouchableOpacity activeOpacity={0.7} onPress={shuffle} disabled={spinning} style={styles.shuffleBtn}
-            accessibilityRole="button" accessibilityLabel="Shuffle subgenres">
+            accessibilityRole="button" accessibilityLabel="Shuffle subgenres" accessibilityHint="Shows a different set of subgenres">
             <Animated.View style={{ transform: [{ rotate }] }}>
               <FontAwesome5 name={'sync-alt' as any} size={12} color="cyan" iconStyle="solid" />
             </Animated.View>
@@ -90,7 +105,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
         {visible.map(tag => (
           <TouchableOpacity key={tag.id} activeOpacity={0.7} style={styles.chip}
             onPress={() => { Analytics.genreTapped(tag.id, tag.name); navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name }); }}
-            accessibilityRole="button" accessibilityLabel={`Subgenre ${tag.name}`}>
+            accessibilityRole="button" accessibilityLabel={`${tag.name}, subgenre, ${tag.liveCount} ${tag.liveCount === 1 ? 'story' : 'stories'}`}>
             <Text style={styles.chipText}>#{tag.name}</Text>
           </TouchableOpacity>
         ))}
@@ -130,17 +145,17 @@ export const CatalogLinks = ({ title }: { title?: string | null }) => {
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   shuffleBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 22, minHeight: 44,
     backgroundColor: 'rgba(0,255,255,0.07)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,255,255,0.25)',
   },
   shuffleText: { fontSize: 12, fontWeight: '600', color: 'cyan' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 22, minHeight: 44, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.15)',
   },
   chipText: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginTop: 14, paddingVertical: 6 },
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginTop: 8, minHeight: 44 },
   seeAllText: { fontSize: 13, fontWeight: '600', color: 'cyan' },
   linkRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 14, marginBottom: 8,

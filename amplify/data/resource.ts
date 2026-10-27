@@ -460,12 +460,16 @@ Comment: a
       description: a.string(),
       useHeroLayout: a.boolean().default(false),
       isErotic: a.boolean().default(false),
+      // What kind of tag this is, beyond genre. Absent = ordinary genre tag. First value: 'setting'
+      // (where a story takes place). Sparse: untyped tags are not in the byType index.
+      tagType: a.string(),
       stories: a.hasMany('StoryTag', 'tagId'),
       
     })
     .secondaryIndexes(index => [
       index('searchPk').sortKeys(['nameLower']).name('byName'),
       index('primaryFlag').sortKeys(['nameLower']).name('byPrimaryAndName'),
+      index('tagType').sortKeys(['nameLower']).name('byType'),
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),

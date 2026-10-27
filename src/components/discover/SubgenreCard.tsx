@@ -10,7 +10,7 @@ import { letterOf } from '../../lib/discoverTags';
 import { Analytics } from '@/lib/analytics';
 
 export const CARD_W = 156;
-export const CARD_H = 100;
+export const CARD_H = 100;   // minimum height: cards grow with the user's font size instead of clipping
 
 // A subgenre card. With an image: the picture with the name over a dark fade. Without one: a dark card with a big
 // faint first letter behind the name (no tag colours are used). `image` is the genre's tile image, else its image.
@@ -25,9 +25,10 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={() => { Analytics.genreTapped(id, name); navigation.push('TagHomeScreen', { id, name }); }}
-      style={[styles.card, { width, height }]}
+      style={[styles.card, { width, minHeight: height }]}
       accessibilityRole="button"
-      accessibilityLabel={`${name} subgenre`}
+      accessibilityLabel={count ? `${name}, subgenre, ${count}` : `${name}, subgenre`}
+      accessibilityHint="Opens this subgenre"
     >
       {uri ? (
         <>
@@ -37,7 +38,7 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
       ) : (
         <>
           <LinearGradient colors={['#20262b', '#101315']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
-          <Text style={styles.letter} accessible={false}>{letterOf(name)}</Text>
+          <Text style={styles.letter} accessible={false} importantForAccessibility="no" accessibilityElementsHidden>{letterOf(name)}</Text>
         </>
       )}
       <View style={styles.text}>
