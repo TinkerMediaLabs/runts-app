@@ -16,9 +16,9 @@ import { spacing } from '../../theme/spacing';
 import useTypography from '../../theme/typography';
 import { CachedImage } from '../../components/common/CachedImage';
 import StoryTile from '../../components/story/StoryTile';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import TagRowView from '../../components/tag/TagRows';
 
-import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { useTagHome } from '../../hooks/queries/useTagHome';
 import { Analytics } from '../../lib/analytics';
@@ -117,24 +117,7 @@ const GenreHome = ({ navigation }: any) => {
         </>
     );
 
-    const renderItem = useCallback(({ item }: { item: any }) => (
-        <StoryTile
-            id={item.id}
-            title={item.title}
-            primaryTag={item.primaryTagName}
-            secondaryTag={item.secondaryTagName}
-            summary={item.summary}
-            imageUri={item.imageUri}
-            audioUri={item.audioUri}
-            author={item.authorName}
-            duration={item.duration}
-            licenseType={item.licenseType}
-            spiceRating={item.spiceRating}
-            universeId={item.universeId}
-            sequenceNumber={item.sequenceNumber}
-            isPremium={item.isPremium}
-        />
-    ), []);
+    const renderItem = useCallback(({ item }: { item: any }) => <GenreStoryTile item={item} />, []);
 
     return (
         <Screen>
@@ -173,6 +156,29 @@ const GenreHome = ({ navigation }: any) => {
         </Screen>
     );
 };
+
+// Per-tile wrapper: turns the cover's storage key into a link, like the other story lists.
+const GenreStoryTile = React.memo(({ item }: { item: any }) => {
+    const { data: resolved } = useStoryImage(item?.imageUri?.startsWith('stories/') ? item.imageUri : null);
+    return (
+        <StoryTile
+            id={item.id}
+            title={item.title}
+            primaryTag={item.primaryTagName}
+            secondaryTag={item.secondaryTagName}
+            summary={item.summary}
+            imageUri={resolved ?? item.imageUri ?? ''}
+            audioUri={item.audioUri}
+            author={item.authorName}
+            duration={item.duration}
+            licenseType={item.licenseType}
+            spiceRating={item.spiceRating}
+            universeId={item.universeId}
+            sequenceNumber={item.sequenceNumber}
+            isPremium={item.isPremium}
+        />
+    );
+});
 
 // ---------------------------------------------------------------------------
 // Styles

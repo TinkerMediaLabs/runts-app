@@ -98,7 +98,8 @@ export function useTagHome(tagId: string, tagName: string, allowErotic: boolean)
   const insight = insightQ.data ?? null;
 
   // Size: from the precomputed row, or (new environment, row not written yet) from a look at the first 31 stories.
-  const knownTier: SizeTier | null = insight?.liveCount != null ? sizeTier(insight.liveCount) : null;
+  // A stored 0 is not trusted (the row can be hours old and the genre may have gained stories since): probe instead.
+  const knownTier: SizeTier | null = insight?.liveCount ? sizeTier(insight.liveCount) : null;
   const insightDone = !insightQ.isLoading;
   const probe = insightDone && knownTier === null;
   const wantsAll = knownTier === 'small' || knownTier === 'medium' || probe;
