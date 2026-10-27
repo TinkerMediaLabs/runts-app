@@ -221,7 +221,7 @@ async function layoutRows(table, layoutPk) {
 
 // Make production's copy of one layout exactly match staging's.
 async function publishLayout(layoutPk) {
-    if (!/^(HOME|TAG_DEFAULT|TAG#[\w-]+)$/.test(layoutPk ?? '')) throw new Error('Invalid layoutPk');
+    if (!/^(HOME|DISCOVER|TAG_DEFAULT|TAG#[\w-]+)$/.test(layoutPk ?? '')) throw new Error('Invalid layoutPk');
     const staged = await layoutRows(stg('HomeSection'), layoutPk);
     const live = await layoutRows(prod('HomeSection'), layoutPk);
     const keep = new Set(staged.map(r => r.id));

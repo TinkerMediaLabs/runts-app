@@ -77,3 +77,21 @@ export function computeInsights(links: TagLink[], eroticTagIds: Set<string>, opt
   }
   return out;
 }
+
+
+// What a genre contributes to the Discover lists. A subgenre is listed only while it has live stories, so the
+// sparse indexes never hold an empty one. Primary and erotic genres are never listed (they have their own areas).
+export type TagMeta = { id: string; name?: string; isPrimary?: boolean; isErotic?: boolean };
+export function discoverFields(tag: TagMeta, liveCount: number): { name: string; nameLower: string; listed: boolean } {
+  const name = (tag.name ?? '').trim();
+  return {
+    name,
+    nameLower: name.toLowerCase(),
+    listed: !!name && liveCount > 0 && !tag.isPrimary && !tag.isErotic,
+  };
+}
+
+// Rows whose genre no longer exists.
+export function staleInsightIds(insightIds: string[], tagIds: Set<string>): string[] {
+  return insightIds.filter(id => !tagIds.has(id));
+}

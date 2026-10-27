@@ -7,6 +7,7 @@ import Reveal from '../common/Reveal';
 import ForYouCarousel from '../story/ForYouCarousel';
 import HorizontalList from '../story/HorizontalList';
 import { FeaturedAuthorSection, HandPickedSection } from '../home/HomeSectionView';
+import { SubgenreRow } from '../discover/DiscoverSections';
 import useTypography from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import type { TagRow } from '../../lib/tagLayout';
@@ -28,31 +29,13 @@ const SectionTitle = ({ text }: { text: string }) => {
   );
 };
 
-// Other genres that share many stories with this one, as tappable tiles.
+// Other genres that share many stories with this one, as the same cards the Discover tab uses.
 const RelatedGenres = ({ tags, index, title }: { tags: any[]; index: number; title?: string | null }) => {
-  const navigation = useNavigation<any>();
-  if (!tags.length) return null;
+  const list = React.useMemo(() => tags.map(t => ({ id: t.id, name: t.name, liveCount: 0 })), [tags]);
+  if (!list.length) return null;
   return (
     <Reveal index={index}>
-      <SectionTitle text={title || 'Related genres'} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {tags.map(tag => {
-          const color = tag.color ?? '#00ffff';
-          return (
-            <TouchableOpacity
-              key={tag.id}
-              activeOpacity={0.8}
-              onPress={() => navigation.push('TagHomeScreen', { id: tag.id, name: tag.name })}
-              style={[styles.chip, { borderColor: color }]}
-              accessibilityRole="button"
-              accessibilityLabel={`${tag.name} genre`}
-            >
-              <View style={[styles.dot, { backgroundColor: color }]} />
-              <Text style={styles.chipText} numberOfLines={1}>{tag.name}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <SubgenreRow title={title || 'Related genres'} tags={list} top={24} />
     </Reveal>
   );
 };

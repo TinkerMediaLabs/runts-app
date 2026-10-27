@@ -637,7 +637,20 @@ Comment: a
       trendingStoryIds: a.string().array(),
       trendingCounts: a.integer().array(),
       trendingAt: a.string(),
+      // Discover lists. A copy of the genre's name, and `listFlag` = 'REGULAR' only for subgenres (not primary, not
+      // erotic) that have at least one live story, so the three indexes below hold nothing else (sparse).
+      // listens7 = plays of the genre's stories in the last 7 days (kept by the hourly trending job).
+      name: a.string(),
+      nameLower: a.string(),
+      listFlag: a.string(),
+      listens7: a.integer(),
+      listens7At: a.string(),
     })
+    .secondaryIndexes(index => [
+      index('listFlag').sortKeys(['nameLower']).name('byListName'),
+      index('listFlag').sortKeys(['listens7']).name('byListListens'),
+      index('listFlag').sortKeys(['liveCount']).name('byListCount'),
+    ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
       allow.group('admin').to(['read']),

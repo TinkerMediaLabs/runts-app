@@ -17,6 +17,7 @@ import AccountScreen from '../screens/settings/account';
 import TagHomeScreen from '../screens/discover/tagHome';
 import AuthorDetailsScreen from '../screens/global/authorDetails';
 import BrowseByTitleScreen from '../screens/discover/browswByTitle';
+import AllSubgenresScreen from '../screens/discover/allSubgenres';
 import AuthorFollowingScreen from '../screens/global/authorFollowing';
 import InProgressScreen from '@/screens/settings/inProgress';
 import EditGenresScreen from '@/screens/settings/editGenres';
@@ -91,6 +92,7 @@ function RootNavigator() {
         <Stack.Screen name="TagHomeScreen" component={TagHomeScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AuthorDetails" component={AuthorDetailsScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="BrowseByTitle" component={BrowseByTitleScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AllSubgenres" component={AllSubgenresScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="InProgressScreen" component={InProgressScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="HistoryScreen" component={HistoryScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="EditGenresScreen" component={EditGenresScreen} options={{ cardStyleInterpolator: forFade }} />

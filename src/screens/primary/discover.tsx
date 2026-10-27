@@ -1,48 +1,94 @@
-import React, { useMemo } from 'react';
-import { Dimensions, View, ScrollView, Platform, TouchableOpacity, StyleSheet } from 'react-native';
-import { Text } from '@/components/common/AppText';
-
+import React, { useEffect, useMemo, useState } from 'react';
+import { Dimensions, View, ScrollView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Screen from '@/components/common/Screen';
 import { spacing } from '../../theme/spacing';
 
 import PrimaryGenreTilesList from '../../components/story/PrimaryGenreTiles';
 import SearchBar              from '../../components/common/SearchBar';
-import PopularTagsList        from '../../components/story/PopularTagsList';
 import LoadingItem            from '../../components/common/LoadingItem';
+import Reveal                 from '../../components/common/Reveal';
+import { SubgenreRow, ExploreSubgenres, CatalogLinks } from '../../components/discover/DiscoverSections';
 
-import { useMinorTagPool, usePrimaryTags } from '../../hooks/queries/useTags';
-import { useApp }                  from '@/context/AppContext';
+import { usePrimaryTags } from '../../hooks/queries/useTags';
+import {
+    useDiscoverLayout, usePopularSubgenres, useExplorePool, useFeaturedTags, useBecauseSubgenres, pickTryNew,
+} from '../../hooks/queries/useDiscover';
+import { useTasteProfile } from '../../hooks/queries/useTasteProfile';
+import { useApp } from '@/context/AppContext';
 
 const { width } = Dimensions.get('window');
+const GIVE_UP_MS = 3000;   // show what is ready after this long even if a section is still loading
 
-
-
-// ---------------------------------------------------------------------------
-// Screen
-// ---------------------------------------------------------------------------
-
+// The Discover tab: search, then the sections the CMS set up (Discover layout). Sections load in parallel and
+// the screen appears once they are all in (or after a short wait), so nothing jumps down as data arrives.
 const BrowseScreen = ({ navigation }: any) => {
+    const { eroticEnabled, profile } = useApp();
+    const picked = useMemo(() => (profile?.preferredTagIds ?? []).filter(Boolean) as string[], [profile?.preferredTagIds]);
 
-    const { data: allTags,     isLoading: tagsLoading    } = useMinorTagPool();
+    const { sections, isLoading: layoutLoading } = useDiscoverLayout();
+    const has = (type: string) => sections.some(s => s.type === type);
+    const wantsPopular = has('discoverPopular'), wantsTry = has('discoverTryNew'), wantsBecause = has('discoverBecause');
+
     const { data: primaryTags, isLoading: primaryLoading } = usePrimaryTags();
-    const { eroticEnabled } = useApp();
+    const popularQ = usePopularSubgenres(wantsPopular || wantsTry);
+    const exploreQ = useExplorePool(has('discoverShuffle'));
+    const tasteQ = useTasteProfile(picked, wantsBecause || wantsTry);
+    const ownIds = useMemo(() => [...picked, ...(tasteQ.data?.learnedTagIds ?? [])], [picked, tasteQ.data]);
+    const becauseQ = useBecauseSubgenres(ownIds, wantsBecause && !tasteQ.isLoading);
 
-    const isLoading = tagsLoading || primaryLoading;
+    const featuredIds = useMemo(
+        () => Array.from(new Set(sections.filter(s => s.type === 'discoverFeatured').flatMap(s => (s.tagIds ?? []).filter(Boolean) as string[]))),
+        [sections],
+    );
+    const featuredQ = useFeaturedTags(featuredIds);
 
-    // Erotic tags are never shown in the general tag lists —
-    // they only appear on the Erotic Home screen
-    const filteredAllTags = useMemo(
-        () => (allTags     ?? []).filter(t => !t.isErotic),
-        [allTags]
-    );
-    const filteredPrimaryTags = useMemo(
-        () => (primaryTags ?? []).filter(t => !t.isErotic),
-        [primaryTags]
-    );
+    const [gaveUp, setGaveUp] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setGaveUp(true), GIVE_UP_MS); return () => clearTimeout(t); }, []);
+
+    const pending =
+        layoutLoading || (has('discoverGenres') && primaryLoading) ||
+        (wantsPopular && popularQ.isLoading) || (wantsTry && (popularQ.isLoading || tasteQ.isLoading)) ||
+        (has('discoverShuffle') && exploreQ.isLoading) || (wantsBecause && (tasteQ.isLoading || becauseQ.isLoading)) ||
+        (featuredIds.length > 0 && featuredQ.isLoading);
+    const ready = !pending || gaveUp;
+
+    const nonErotic = useMemo(() => (primaryTags ?? []).filter((t: any) => !t.isErotic), [primaryTags]);
+
+    const renderSection = (s: any, i: number) => {
+        switch (s.type) {
+            case 'discoverGenres':
+                return nonErotic.length > 0 ? (
+                    <View key={s.id} style={{ marginHorizontal: spacing.margin }}>
+                        <PrimaryGenreTilesList primaryTags={nonErotic} navigation={navigation} eroticEnabled={eroticEnabled} />
+                    </View>
+                ) : null;
+            case 'discoverPopular': {
+                const list = (popularQ.data ?? []).slice(0, s.limit ?? 12);
+                return list.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Popular right now'} tags={list} /></Reveal> : null;
+            }
+            case 'discoverFeatured': {
+                const order = ((s.tagIds ?? []).filter(Boolean) as string[]);
+                const byId = new Map(featuredQ.tags.map(t => [t.id, t]));
+                const list = order.map(id => byId.get(id)).filter(Boolean) as any[];
+                return list.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Featured'} tags={list} /></Reveal> : null;
+            }
+            case 'discoverShuffle':
+                return (exploreQ.data ?? []).length ? <Reveal key={s.id} index={i}><ExploreSubgenres pool={exploreQ.data!} title={s.title || 'Explore subgenres'} /></Reveal> : null;
+            case 'discoverBecause':
+                return becauseQ.tags.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Based on your listening'} tags={becauseQ.tags} /></Reveal> : null;
+            case 'discoverTryNew': {
+                const list = pickTryNew(popularQ.data ?? [], tasteQ.data?.listenedTagIds ?? [], picked, s.limit ?? 10);
+                return list.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Try something new'} tags={list} /></Reveal> : null;
+            }
+            case 'discoverCatalog':
+                return <Reveal key={s.id} index={i}><CatalogLinks title={s.title} /></Reveal>;
+            default:
+                return null;
+        }
+    };
 
     return (
         <Screen>
@@ -58,101 +104,30 @@ const BrowseScreen = ({ navigation }: any) => {
                     end={{ x: 1, y: 1 }}
                 >
                     <ScrollView showsVerticalScrollIndicator={false}>
-
-                        <View style={{
-                            marginTop:        getStatusBarHeight() + 30,
-                            marginBottom:     0,
-                            marginHorizontal: 20,
-                        }} />
+                        <View style={{ marginTop: getStatusBarHeight() + 30, marginBottom: 0, marginHorizontal: 20 }} />
 
                         <SearchBar />
 
-                        {isLoading ? (
+                        {!ready ? (
                             <View style={{ padding: spacing.margin }}>
-                                <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-                                    <LoadingItem width={80}           height={40}  radius={15} />
-                                    <LoadingItem width={80}           height={40}  radius={15} />
-                                    <LoadingItem width={80}           height={40}  radius={15} />
-                                </View>
                                 <View style={{ flexDirection: 'row', marginBottom: 24 }}>
-                                    <LoadingItem width={80}           height={40}  radius={15} />
-                                    <LoadingItem width={80}           height={40}  radius={15} />
+                                    <LoadingItem width={156} height={100} radius={14} />
+                                    <LoadingItem width={156} height={100} radius={14} />
                                 </View>
                                 <LoadingItem width={width - 40} height={100} radius={15} />
                                 <LoadingItem width={width - 40} height={100} radius={15} />
                                 <LoadingItem width={width - 40} height={100} radius={15} />
                             </View>
                         ) : (
-                            <>
-                                {/* Popular tags — erotic tags excluded */}
-                                {filteredAllTags.length > 0 && (
-                                    <View style={{ marginHorizontal: spacing.margin }}>
-                                        <PopularTagsList tags={filteredAllTags} />
-                                    </View>
-                                )}
-
-                                {/* Primary genre tiles — erotic tags excluded */}
-                                {filteredPrimaryTags.length > 0 && (
-                                    <View style={{ marginHorizontal: spacing.margin }}>
-                                        <PrimaryGenreTilesList
-                                            primaryTags={filteredPrimaryTags}
-                                            navigation={navigation}
-                                            eroticEnabled={eroticEnabled}
-                                        />
-                                    </View>
-                                )}
-                            </>
+                            sections.map(renderSection)
                         )}
 
                         <View style={{ height: 100 }} />
-
                     </ScrollView>
                 </LinearGradient>
             </View>
         </Screen>
     );
 };
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const styles = StyleSheet.create({
-    eroticaTile: {
-        borderRadius:    14,
-        overflow:        'hidden',
-        borderWidth:     1,
-        borderColor:     'rgba(255,124,42,0.25)',
-        marginTop:       10,
-        marginBottom:    4,
-    },
-    eroticaTileContent: {
-        flexDirection:  'row',
-        alignItems:     'center',
-        paddingVertical: 18,
-        paddingHorizontal: 16,
-        gap:             14,
-    },
-    eroticaIconWrapper: {
-        width:           44,
-        height:          44,
-        borderRadius:    12,
-        backgroundColor: 'rgba(255,124,42,0.12)',
-        borderWidth:     1,
-        borderColor:     'rgba(255,124,42,0.25)',
-        justifyContent:  'center',
-        alignItems:      'center',
-    },
-    eroticaTitle: {
-        fontSize:   17,
-        fontWeight: '700',
-        color:      '#ff7c2a',
-    },
-    eroticaSubtitle: {
-        fontSize:   12,
-        color:      'rgba(255,124,42,0.55)',
-        marginTop:  2,
-    },
-});
 
 export default BrowseScreen;

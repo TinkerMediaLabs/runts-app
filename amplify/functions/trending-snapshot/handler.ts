@@ -1,6 +1,6 @@
 import { DynamoDBClient, QueryCommand, PutItemCommand, UpdateItemCommand, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
-import { rankWindow, rankByTag, lastDays, MIN_WINDOW, MAX_WINDOW, DayCounts } from './rank';
+import { rankWindow, rankByTag, tagTotals, tagsToZero, lastDays, MIN_WINDOW, MAX_WINDOW, DayCounts } from './rank';
 
 // Hourly: turns the per-day play counts (StoryListenDay) into one small TrendingSnapshot row per window
 // (d2 ... d7) holding the top stories. Reads one day at a time through the byDay index, so the work grows
@@ -91,6 +91,38 @@ export const handler = async () => {
         ':now': { S: stamp },
         ':tn': { S: 'TagInsight' },
       },
+    }))));
+  }
+
+  // Plays per genre over the same 7 days, for the Discover "Popular right now" row. Genres that had plays last
+  // time but none now are reset to 0 (found through the sparse byListListens index, so it only touches genres that
+  // ever had plays).
+  const totals = tagTotals(perDay, tagsOf, MAX_WINDOW);
+  const previous: string[] = [];
+  let lastKey: any;
+  do {
+    const res: any = await dynamo.send(new QueryCommand({
+      TableName: INSIGHT_TABLE, IndexName: 'byListListens',
+      KeyConditionExpression: 'listFlag = :f AND listens7 > :z',
+      ExpressionAttributeValues: { ':f': { S: 'REGULAR' }, ':z': { N: '0' } },
+      ProjectionExpression: 'id', ExclusiveStartKey: lastKey,
+    }));
+    for (const it of res.Items ?? []) previous.push(it.id.S);
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+  const listenUpdates: [string, number][] = [
+    ...Array.from(totals),
+    ...tagsToZero(previous, totals).map(id => [id, 0] as [string, number]),
+  ];
+  for (let i = 0; i < listenUpdates.length; i += 25) {
+    await Promise.all(listenUpdates.slice(i, i + 25).map(([tagId, n]) => dynamo.send(new UpdateItemCommand({
+      TableName: INSIGHT_TABLE,
+      Key: { id: { S: tagId } },
+      UpdateExpression:
+        'SET listens7 = :n, listens7At = :now, ' +
+        '#tn = if_not_exists(#tn, :tn), createdAt = if_not_exists(createdAt, :now), updatedAt = :now',
+      ExpressionAttributeNames: { '#tn': '__typename' },
+      ExpressionAttributeValues: { ':n': { N: String(n) }, ':now': { S: stamp }, ':tn': { S: 'TagInsight' } },
     }))));
   }
 

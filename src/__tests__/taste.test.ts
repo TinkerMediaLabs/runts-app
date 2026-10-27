@@ -1,4 +1,4 @@
-import { isListened, topTags, newGenreIds } from '../lib/taste';
+import { isListened, topTags, newGenreIds, listenedTagIds } from '../lib/taste';
 
 describe('isListened', () => {
   it('counts finished, or at least half played', () => {
@@ -42,5 +42,16 @@ describe('newGenreIds', () => {
   it('lists genres the listener has not seen', () => {
     expect(newGenreIds(['a', 'b', 'c'], ['a'])).toEqual(['b', 'c']);
     expect(newGenreIds(['a'], ['a', 'z'])).toEqual([]);
+  });
+});
+
+describe('listenedTagIds', () => {
+  it('collects both genres of each story and skips erotic ones', () => {
+    const r = listenedTagIds([
+      { primaryTagId: 'a', secondaryTagId: 'b', weight: 1 },
+      { primaryTagId: 'a', secondaryTagId: 'c', weight: 1 },
+      { primaryTagId: 'e', isErotic: 'true', weight: 1 },
+    ]);
+    expect(r.sort()).toEqual(['a', 'b', 'c']);
   });
 });

@@ -41,3 +41,14 @@ export function newGenreIds(allIds: string[], seen: string[]): string[] {
   const s = new Set(seen);
   return allIds.filter(id => !s.has(id));
 }
+
+// Every (non-erotic) genre the listener has listened to, for "try something new".
+export function listenedTagIds(entries: TasteEntry[]): string[] {
+  const ids = new Set<string>();
+  for (const e of entries) {
+    if (e.isErotic === 'true') continue;
+    if (e.primaryTagId) ids.add(e.primaryTagId);
+    if (e.secondaryTagId) ids.add(e.secondaryTagId);
+  }
+  return Array.from(ids);
+}

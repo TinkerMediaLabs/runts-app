@@ -25,24 +25,26 @@ export type TagInsightData = {
   trendingAt: string | null;
 };
 
+export async function fetchTagInsight(tagId: string): Promise<TagInsightData | null> {
+  const client = generateClient<Schema>();
+  const res: any = await (client.models as any).TagInsight.get({ id: tagId });
+  const d = res?.data;
+  if (!d) return null;
+  let shared: Record<string, string[]> = {};
+  try { shared = d.sharedJson ? JSON.parse(d.sharedJson) : {}; } catch { shared = {}; }
+  return {
+    liveCount: typeof d.liveCount === 'number' ? d.liveCount : null,
+    related: ((d.relatedTagIds ?? []) as (string | null)[]).filter(Boolean) as string[],
+    shared,
+    trendingIds: ((d.trendingStoryIds ?? []) as (string | null)[]).filter(Boolean) as string[],
+    trendingAt: d.trendingAt ?? null,
+  };
+}
+
 export function useTagInsight(tagId: string) {
   return useQuery({
     queryKey: ['tagInsight', tagId],
-    queryFn: async (): Promise<TagInsightData | null> => {
-      const client = generateClient<Schema>();
-      const res: any = await (client.models as any).TagInsight.get({ id: tagId });
-      const d = res?.data;
-      if (!d) return null;
-      let shared: Record<string, string[]> = {};
-      try { shared = d.sharedJson ? JSON.parse(d.sharedJson) : {}; } catch { shared = {}; }
-      return {
-        liveCount: typeof d.liveCount === 'number' ? d.liveCount : null,
-        related: ((d.relatedTagIds ?? []) as (string | null)[]).filter(Boolean) as string[],
-        shared,
-        trendingIds: ((d.trendingStoryIds ?? []) as (string | null)[]).filter(Boolean) as string[],
-        trendingAt: d.trendingAt ?? null,
-      };
-    },
+    queryFn: () => fetchTagInsight(tagId),
     enabled: !!tagId,
     staleTime: 1000 * 60 * 15,
   });

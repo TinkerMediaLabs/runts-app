@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
-import { isListened, topTags, type TasteEntry } from '../../lib/taste';
+import { isListened, topTags, listenedTagIds, type TasteEntry } from '../../lib/taste';
 
 const RECENT = 20;          // newest finished + newest in-progress rows looked at: a fixed, small amount of work
 
 export type TasteProfile = {
   learnedTagIds: string[];   // top genres from listening (not including the ones the listener picked)
   listenedIds: string[];     // recently finished / mostly played stories, so For You does not repeat them
+  listenedTagIds?: string[]; // every genre those stories belong to (missing in profiles saved by older app versions)
 };
 
 export async function fetchTasteProfile(pickedTagIds: string[]): Promise<TasteProfile> {
@@ -46,7 +47,7 @@ export async function fetchTasteProfile(pickedTagIds: string[]): Promise<TastePr
     entries.push({ primaryTagId: s.primaryTagId, secondaryTagId: s.secondaryTagId, isErotic: s.isErotic, weight: 0.6 });
   }
 
-  return { learnedTagIds: topTags(entries, new Set(pickedTagIds), 2), listenedIds };
+  return { learnedTagIds: topTags(entries, new Set(pickedTagIds), 2), listenedIds, listenedTagIds: listenedTagIds(entries) };
 }
 
 // The listener's taste, refreshed every few hours. It only shapes For You, so a failure (offline) just

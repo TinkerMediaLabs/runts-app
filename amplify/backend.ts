@@ -123,7 +123,7 @@ tagInsightTable.grantReadWriteData(trendingSnapshotFn);
 // The CDK grant covers the table but not its indexes on Amplify-managed tables; the byDay query needs this.
 trendingSnapshotFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query'],
-  resources: [`${listenDayTable.tableArn}/index/*`],
+  resources: [`${listenDayTable.tableArn}/index/*`, `${tagInsightTable.tableArn}/index/*`],
 }));
 
 // ── tag-insights (every 3 hours) ───────────────────────────────────────────
