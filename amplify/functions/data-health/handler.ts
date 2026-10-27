@@ -20,7 +20,8 @@ async function scanAll<T>(table: string, projection: string, names: Record<strin
   let key: any;
   do {
     const res: any = await dynamo.send(new ScanCommand({
-      TableName: table, ProjectionExpression: projection, ExpressionAttributeNames: names, ExclusiveStartKey: key,
+      TableName: table, ProjectionExpression: projection, ExclusiveStartKey: key,
+      ...(Object.keys(names).length ? { ExpressionAttributeNames: names } : {}),
     }));
     for (const it of res.Items ?? []) out.push(unmarshall(it) as T);
     key = res.LastEvaluatedKey;
