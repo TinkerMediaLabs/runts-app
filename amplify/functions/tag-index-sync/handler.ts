@@ -37,7 +37,10 @@ async function setOrRemove(table: string, key: Record<string, any>, attrs: Recor
       ExpressionAttributeNames: names,
       ...(Object.keys(values).length ? { ExpressionAttributeValues: values } : {}),
     }));
-  } catch (e) { if (!isCondFail(e)) throw e; } // row deleted meanwhile - nothing to do
+  } catch (e) {
+    if (!isCondFail(e)) throw e; // row deleted meanwhile - nothing to do
+    console.warn('tag-index-sync: row missing, skipped', table, JSON.stringify(key));
+  }
 }
 
 const liveOf = (story: any) => story?.live === 'true';
@@ -102,14 +105,15 @@ async function handleStoryTagInsert(record: DynamoDBRecord) {
   const link: any = unmarshall(record.dynamodb.NewImage as any);
   if (!link.storyId) return;
   const { Item } = await dynamo.send(new GetItemCommand({ TableName: STORY_TABLE, Key: { id: { S: link.storyId } } }));
-  if (!Item) return;
+  if (!Item) { console.warn('tag-index-sync: story not found for link', link.id, link.storyId); return; }
   await syncStoryTagRow(link, unmarshall(Item));
 }
 
 export const handler = async (event: DynamoDBStreamEvent) => {
   for (const record of event.Records) {
     const arn = record.eventSourceARN ?? '';
-    if (arn.includes(`/table/${STORYTAG_TABLE}/`)) await handleStoryTagInsert(record);
+    // ARN looks like arn:aws:dynamodb:<region>:<account>:table/<name>/stream/<time> (a colon, not a slash, before "table").
+    if (arn.includes(`:table/${STORYTAG_TABLE}/`)) await handleStoryTagInsert(record);
     else await handleStory(record);
   }
 };
