@@ -16,11 +16,15 @@ import { eroticPin } from './functions/erotic-pin/resource';
 import { uploadUrl } from './functions/upload-url/resource';
 import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import { tagInsights } from './functions/tag-insights/resource';
+import { dataHealth } from './functions/data-health/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
 import { Duration, Stack } from 'aws-cdk-lib';
 
 const backend = defineBackend({
@@ -41,6 +45,7 @@ const backend = defineBackend({
   uploadUrl,
   trendingSnapshot,
   tagInsights,
+  dataHealth,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -316,3 +321,115 @@ if (process.env.AWS_BRANCH === 'production') {
     }],
   };
 }
+
+
+// ── monitoring ────────────────────────────────────────────────────────────
+// One alerts topic per environment. Nothing is subscribed in code (so no address lives in the repo):
+// subscribe once per environment with `aws sns subscribe` (see handoff, "Monitoring").
+// The topic sits in its own stack so data-health (in the data stack) can publish to it while the alarms
+// stack, which watches every function, depends on both without a circular reference.
+const alertsStack = backend.createStack('AlertsTopic');
+const alertsTopic = new sns.Topic(alertsStack, 'AlertsTopic', { displayName: 'Runts alerts' });
+
+const dataHealthFn = backend.dataHealth.resources.lambda as lambda.Function;
+dataHealthFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+dataHealthFn.addEnvironment('STORYTAG_TABLE_NAME', storyTagTable.tableName);
+dataHealthFn.addEnvironment('TRENDING_TABLE_NAME', trendingTable.tableName);
+dataHealthFn.addEnvironment('ALERT_TOPIC_ARN', alertsTopic.topicArn);
+storyTable.grantReadWriteData(dataHealthFn);
+storyTagTable.grantReadWriteData(dataHealthFn);
+trendingTable.grantReadData(dataHealthFn);
+alertsTopic.grantPublish(dataHealthFn);
+
+const alarmsStack = backend.createStack('Alarms');
+const alarmAction = new SnsAction(alertsTopic);
+const watch = (alarm: cloudwatch.Alarm) => { alarm.addAlarmAction(alarmAction); return alarm; };
+
+// Any error in any function.
+const allFunctions: Record<string, lambda.Function> = {
+  incrementListens: backend.incrementListens.resources.lambda as lambda.Function,
+  ratingAggregator: backend.ratingAggregator.resources.lambda as lambda.Function,
+  reactionAggregator: backend.reactionAggregator.resources.lambda as lambda.Function,
+  commentCounter: backend.commentCounter.resources.lambda as lambda.Function,
+  tagCountAggregator: backend.tagCountAggregator.resources.lambda as lambda.Function,
+  storyStatsAggregator: backend.storyStatsAggregator.resources.lambda as lambda.Function,
+  followCountAggregator: backend.followCountAggregator.resources.lambda as lambda.Function,
+  tagIndexSync: backend.tagIndexSync.resources.lambda as lambda.Function,
+  listensAggregator: backend.listensAggregator.resources.lambda as lambda.Function,
+  userCleanup: backend.userCleanup.resources.lambda as lambda.Function,
+  eroticPin: backend.eroticPin.resources.lambda as lambda.Function,
+  uploadUrl: backend.uploadUrl.resources.lambda as lambda.Function,
+  trendingSnapshot: backend.trendingSnapshot.resources.lambda as lambda.Function,
+  tagInsights: backend.tagInsights.resources.lambda as lambda.Function,
+  dataHealth: dataHealthFn,
+};
+for (const [name, fn] of Object.entries(allFunctions)) {
+  watch(new cloudwatch.Alarm(alarmsStack, `${name}Errors`, {
+    alarmDescription: `${name} threw errors`,
+    metric: fn.metricErrors({ period: Duration.minutes(5), statistic: 'Sum' }),
+    threshold: 1,
+    evaluationPeriods: 1,
+    comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+  }));
+}
+
+// Scheduled jobs that stop running (a silent failure no error alarm would catch).
+const scheduled: Array<[string, lambda.Function, Duration, number]> = [
+  ['trendingSnapshot', allFunctions.trendingSnapshot, Duration.hours(3), 1],   // runs hourly
+  ['tagInsights', allFunctions.tagInsights, Duration.hours(6), 1],             // runs every 3h
+  ['dataHealth', allFunctions.dataHealth, Duration.days(1), 2],                // runs daily
+];
+for (const [name, fn, period, periods] of scheduled) {
+  watch(new cloudwatch.Alarm(alarmsStack, `${name}Missed`, {
+    alarmDescription: `${name} has not run on schedule`,
+    metric: fn.metricInvocations({ period, statistic: 'Sum' }),
+    threshold: 1,
+    evaluationPeriods: periods,
+    comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+    treatMissingData: cloudwatch.TreatMissingData.BREACHING,
+  }));
+}
+
+// Stream records that exhausted their retries.
+watch(new cloudwatch.Alarm(alarmsStack, 'StreamFailureQueueNotEmpty', {
+  alarmDescription: 'Stream records landed in the failure queue (aggregators may be drifting)',
+  metric: streamFailureQueue.metricApproximateNumberOfMessagesVisible({ period: Duration.minutes(5), statistic: 'Maximum' }),
+  threshold: 1,
+  evaluationPeriods: 1,
+  comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+  treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+}));
+
+// DynamoDB throttling on the tables every screen depends on.
+const throttleTables: Record<string, { tableName: string }> = {
+  Story: storyTable, StoryTag: storyTagTable, StoryListenDay: listenDayTable, TagInsight: tagInsightTable, TrendingSnapshot: trendingTable,
+};
+for (const [name, table] of Object.entries(throttleTables)) {
+  for (const kind of ['ReadThrottleEvents', 'WriteThrottleEvents']) {
+    watch(new cloudwatch.Alarm(alarmsStack, `${name}${kind}`, {
+      alarmDescription: `${name} is being throttled (${kind})`,
+      metric: new cloudwatch.Metric({
+        namespace: 'AWS/DynamoDB', metricName: kind, dimensionsMap: { TableName: table.tableName },
+        statistic: 'Sum', period: Duration.minutes(5),
+      }),
+      threshold: 5,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    }));
+  }
+}
+
+// The API itself failing.
+watch(new cloudwatch.Alarm(alarmsStack, 'AppSyncServerErrors', {
+  alarmDescription: 'AppSync is returning server errors',
+  metric: new cloudwatch.Metric({
+    namespace: 'AWS/AppSync', metricName: '5XXError', dimensionsMap: { GraphQLAPIId: backend.data.resources.graphqlApi.apiId },
+    statistic: 'Sum', period: Duration.minutes(5),
+  }),
+  threshold: 5,
+  evaluationPeriods: 1,
+  comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+  treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+}));
