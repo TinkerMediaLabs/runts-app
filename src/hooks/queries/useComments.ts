@@ -1,4 +1,5 @@
 import { generateClient } from 'aws-amplify/data';
+import { isCommentAllowed, COMMENT_REJECTED_MESSAGE } from '../../lib/commentFilter';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,6 +42,7 @@ export function usePostComment() {
       content: string;
       userName: string;
     }) => {
+      if (!isCommentAllowed(content)) throw new Error(COMMENT_REJECTED_MESSAGE);
       const client = generateClient<Schema>();
       const { userId } = await getCurrentUser();
       return unwrap(await client.models.Comment.create({ userId, storyId, content, userName }), 'Post comment');
@@ -64,6 +66,7 @@ export function useUpdateComment() {
       content: string;
       storyId: string;
     }) => {
+      if (!isCommentAllowed(content)) throw new Error(COMMENT_REJECTED_MESSAGE);
       const client = generateClient<Schema>();
       return unwrap(await client.models.Comment.update({ id, content }), 'Edit comment');
     },

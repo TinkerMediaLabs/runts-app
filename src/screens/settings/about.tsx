@@ -1,4 +1,5 @@
 import React from 'react';
+import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
 import { View, ScrollView, TouchableOpacity, Linking, StyleSheet, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -117,13 +118,13 @@ const AboutScreen = ({ navigation }: any) => {
                         <LinkRow
                             icon="file-contract"
                             label="Terms and Conditions"
-                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts/terms')}
+                            onPress={() => Linking.openURL(TERMS_URL)}
                         />
                         <RowDivider />
                         <LinkRow
                             icon="shield-alt"
                             label="Privacy Policy"
-                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts/privacy-policy')}
+                            onPress={() => Linking.openURL(PRIVACY_URL)}
                         />
                     </Section>
 

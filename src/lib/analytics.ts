@@ -5,7 +5,7 @@
  * Usage:
  *   import { Analytics } from '@/lib/analytics';
  *   Analytics.init();                        // call once on app start
- *   Analytics.identify(userId, name, email); // call after sign-in
+ *   Analytics.identify(userId); // call after sign-in
  *   Analytics.storyPlayStarted({ ... });     // call on events
  *   Analytics.reset();                       // call on sign-out
  */
@@ -36,9 +36,10 @@ async function init(): Promise<void> {
     }
 }
 
-function identify(userId: string, name?: string, email?: string): void {
+// Only the user id is sent: no name or email, so analytics holds nothing that identifies a person by itself.
+function identify(userId: string): void {
     if (!initialised) return;
-    rudderClient.identify(userId, { name, email });
+    rudderClient.identify(userId);
 }
 
 function reset(): void {

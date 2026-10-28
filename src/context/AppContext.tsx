@@ -169,7 +169,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 totalListenSeconds:   dbUser?.totalListenSeconds,
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
-            Analytics.identify(user.userId, dbUser?.name ?? undefined);
+            Analytics.identify(user.userId);
             await PurchasesService.identify(user.userId);
             Notifications.registerToken(user.userId);
             const premiumStatus = await PurchasesService.isPremium();

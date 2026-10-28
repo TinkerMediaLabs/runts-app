@@ -22,7 +22,14 @@
     "plugins": [
       "expo-font",
       "expo-web-browser",
-      "expo-image-picker"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Runts uses your photos so you can choose a profile picture.",
+          "cameraPermission": "Runts uses the camera so you can take a profile picture.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "owner": "tinkermedia",
     "runtimeVersion": {
