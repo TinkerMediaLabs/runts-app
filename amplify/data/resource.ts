@@ -1,6 +1,7 @@
 import { incrementListens } from '../functions/increment-listens/resource';
 import { eroticPin } from '../functions/erotic-pin/resource';
 import { uploadUrl } from '../functions/upload-url/resource';
+import { deleteAccount } from '../functions/delete-account/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -705,6 +706,12 @@ Comment: a
     .returns(a.string())
     .authorization(allow => [allow.group('admin')])
     .handler(a.handler.function(uploadUrl)),
+  // The signed-in user deletes their own account: profile data first, then the sign-in account (see functions/delete-account).
+  deleteMyAccount: a
+    .mutation()
+    .returns(a.boolean())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(deleteAccount)),
 });
 
 
