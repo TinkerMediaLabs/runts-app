@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { successHaptic } from '../../lib/haptics';
-import { View, Alert, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Alert, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import { fields } from '../../theme/fields';
+import Button from '@/components/common/Button';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -93,7 +99,7 @@ export default function BookmarkModal({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconWrap}>
-              <FontAwesome5 name={'bookmark' as any} size={16} color="cyan" iconStyle="solid" />
+              <FontAwesome5 name={'bookmark' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
             </View>
             <Text style={styles.title}>Create Bookmark</Text>
             <TouchableOpacity
@@ -102,13 +108,13 @@ export default function BookmarkModal({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <FontAwesome5 name={'times' as any} size={15} color="rgba(255,255,255,0.4)" iconStyle="solid" />
+              <FontAwesome5 name={'times' as any} size={iconSize.sm} color={colors.textTertiary} iconStyle="solid" />
             </TouchableOpacity>
           </View>
 
           {/* Bookmark position */}
           <View style={styles.positionRow}>
-            <FontAwesome5 name={'clock' as any} size={12} color="rgba(255,255,255,0.4)" iconStyle="solid" />
+            <FontAwesome5 name={'clock' as any} size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
             <Text style={styles.positionText}>
               Bookmarked at <Text style={styles.positionHighlight}>{formatPosition(positionSeconds)}</Text>
             </Text>
@@ -121,7 +127,7 @@ export default function BookmarkModal({
             value={name}
             onChangeText={setName}
             placeholder="My Bookmark"
-            placeholderTextColor="rgba(255,255,255,0.55)"
+            placeholderTextColor={colors.textSecondary}
             accessibilityLabel="Bookmark name"
             maxLength={30}
             selectTextOnFocus
@@ -131,21 +137,11 @@ export default function BookmarkModal({
           <Text style={styles.charCount}>{name.length} / 30</Text>
 
           {/* Confirm button */}
-          <TouchableOpacity
-            style={[styles.confirmBtn, isSubmitting && { opacity: 0.6 }]}
+          <Button
+            label="Create Bookmark"
+            loading={isSubmitting}
             onPress={handleConfirm}
-            activeOpacity={0.8}
-            disabled={isSubmitting}
-            accessibilityRole="button"
-            accessibilityLabel="Create bookmark"
-            accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#000" />
-            ) : (
-              <Text style={styles.confirmText}>Create Bookmark</Text>
-            )}
-          </TouchableOpacity>
+          />
 
         </View>
       </KeyboardAvoidingView>
@@ -170,11 +166,11 @@ const styles = StyleSheet.create({
   } as any,
   card: {
     width: '85%',
-    backgroundColor: '#111',
+    backgroundColor: colors.surface1,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
@@ -191,7 +187,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: radius.md,
     backgroundColor: 'rgba(0,255,255,0.1)',
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.2)',
@@ -200,59 +196,42 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 16,
+    fontSize: fontSizes.body,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
   },
 
   positionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 10,
+    backgroundColor: colors.surface2,
+    borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
   },
   positionText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
   },
   positionHighlight: {
-    color: 'cyan',
+    color: colors.accent,
     fontWeight: '600',
   },
 
   input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#fff',
-    fontSize: 15,
+    ...fields.box,
+    ...fields.text,
     marginBottom: 6,
   },
   charCount: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
     textAlign: 'right',
     marginBottom: 16,
   },
 
-  confirmBtn: {
-    backgroundColor: 'cyan',
-    borderRadius: 14,
-    paddingVertical: 13,
-    alignItems: 'center',
-  },
-  confirmText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#000',
-  },
 });

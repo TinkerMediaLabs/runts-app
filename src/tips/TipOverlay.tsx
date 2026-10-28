@@ -10,6 +10,7 @@ import {
 } from './tipsStore';
 import { navigationRef } from '@/navigation/RootNavigator';
 import { TIPS, type Tip } from './tips';
+import { colors } from '@/theme/colors';
 
 const SETTLE_MS = 600;          // let the screen finish animating before measuring
 const PAD = 8;                  // breathing room around the highlighted control
@@ -174,10 +175,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.18)',
   },
-  title: { fontSize: 17, fontWeight: '700', color: '#fff', marginBottom: 6 },
+  title: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
   body: { fontSize: 14, lineHeight: 20, color: 'rgba(255,255,255,0.8)' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
   off: { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
   gotIt: { backgroundColor: ACCENT, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 22 },
-  gotItText: { color: '#000', fontWeight: '700', fontSize: 14 },
+  gotItText: { color: colors.textOnAccent, fontWeight: '700', fontSize: 14 },
 });

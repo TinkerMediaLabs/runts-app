@@ -13,6 +13,8 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { spacing } from '../../theme/spacing';
 import { useTag } from '../../hooks/queries/useTagNames';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
 
@@ -98,12 +100,12 @@ const History = ({ navigation }: any) => {
 
     return (
         <Screen>
-            <View style={{ flex: 1, backgroundColor: '#000' }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
                 <MenuHeader title="History" navigation={navigation} />
 
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator color="cyan" />
+                        <ActivityIndicator color={colors.accent} />
                     </View>
                 ) : (
                     <FlatList
@@ -117,7 +119,7 @@ const History = ({ navigation }: any) => {
                             <RefreshControl
                                 refreshing={isFetching}
                                 onRefresh={onRefresh}
-                                tintColor="cyan"
+                                tintColor={colors.accent}
                             />
                         }
                         contentContainerStyle={{ paddingBottom: 100 }}
@@ -131,7 +133,7 @@ const History = ({ navigation }: any) => {
                         }
                         ListFooterComponent={
                             <View style={{ height: 100, paddingTop: 16 }}>
-                                {isFetchingNextPage ? <ActivityIndicator color="cyan" /> : null}
+                                {isFetchingNextPage ? <ActivityIndicator color={colors.accent} /> : null}
                             </View>
                         }
                     />
@@ -154,13 +156,13 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     emptyText: {
-        color: '#fff',
-        fontSize: 15,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         fontWeight: '600',
     },
     emptyHint: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
         textAlign: 'center',
         lineHeight: 20,
     },

@@ -1,5 +1,8 @@
 import React, {useContext, useEffect} from 'react';
 import {Dimensions, Platform, StyleSheet} from 'react-native';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const SCREEN_WIDTH = Dimensions.get('window').width
 const SCREEN_HEIGHT = Dimensions.get('window').height
@@ -13,29 +16,29 @@ return StyleSheet.create ({
   
     container: {
         flex: 1,
-        backgroundColor:  '#000',
+        backgroundColor:  colors.surface0,
       },
     h1: {
-        fontSize: 26,
+        fontSize: fontSizes.headline,
         fontWeight: '600',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     h2: {
-        fontSize: 18,
+        fontSize: fontSizes.subtitle,
         fontWeight: '400',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     socialbuttontext: {
-        fontSize: 16,
+        fontSize: fontSizes.body,
         fontWeight: '500',
-        color: '#fff',
+        color: colors.textPrimary,
         textAlign: 'center',
         paddingRight: 20,
         paddingLeft: 18
     },
     socialbuttonlayout: {
-        backgroundColor: '#363636', 
-        borderRadius: 24, 
+        backgroundColor: colors.surface3, 
+        borderRadius: radius.xl, 
         overflow: 'hidden', 
         alignSelf: 'center', 
         flexDirection: 'row', 
@@ -45,8 +48,8 @@ return StyleSheet.create ({
         paddingVertical: 8,
     },
     paragraph: {
-      fontSize: 14,
-      color: '#fff',
+      fontSize: fontSizes.small,
+      color: colors.textPrimary,
     },
 
 
@@ -55,54 +58,54 @@ return StyleSheet.create ({
 
 
     title: {
-        fontSize: 18,
+        fontSize: fontSizes.subtitle,
         fontWeight: 'bold',
-        color: '#fff',
+        color: colors.textPrimary,
       },
       subtitle: {
-        fontSize: 16,
+        fontSize: fontSizes.body,
         fontWeight: 'bold',
-        color: '#fff',
+        color: colors.textPrimary,
       },
       infotext: {
-        fontSize: 14,
-        color: '#ffffffa5',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
       },
     subtext: {
-      fontSize: 12,
+      fontSize: fontSizes.caption,
       fontWeight: '600',
-      color: '#ffffffa5',
+      color: colors.textSecondary,
     },
     itemtext: {
       marginLeft: 30,
-      fontSize: 16,
+      fontSize: fontSizes.body,
       fontWeight: '400',
-      color: '#fff',
+      color: colors.textPrimary,
     },
     textInputTitle: {
         flex: 1,
-        color: '#fff',
-        fontSize: 16,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         paddingVertical: 0,
         includeFontPadding: false,
     },
     inputfield: {
         width: SCREEN_WIDTH - 40,
         minHeight: 40,
-        backgroundColor: '#363636',
+        backgroundColor: colors.surface3,
         paddingHorizontal: 20,
-        borderRadius: 16,
+        borderRadius: radius.lg,
         alignSelf: 'center',
         justifyContent: 'center',
     },
     inputtitle: {
-      color: '#fff',
-      fontSize: 18,
+      color: colors.textPrimary,
+      fontSize: fontSizes.subtitle,
       fontWeight: '600'
     },
     buttonlayout: {
-        backgroundColor: '#00FFFF',
-        borderRadius: 20,
+        backgroundColor: colors.accent,
+        borderRadius: radius.xl,
         paddingVertical: 10,
         paddingHorizontal: 30,
         overflow: 'hidden',
@@ -110,9 +113,9 @@ return StyleSheet.create ({
         alignItems: 'center'
     },
     buttontext: {
-      fontSize: 16,
+      fontSize: fontSizes.body,
       fontWeight: '600',
-      color: '#000',
+      color: colors.textOnAccent,
       textAlign: 'center'
     },
     optionsitem: {
@@ -123,36 +126,36 @@ return StyleSheet.create ({
       marginBottom: 30,
   },
   timeselect: {
-    fontSize: 18,
+    fontSize: fontSizes.subtitle,
     fontWeight: '600',
-    color: '#000',
+    color: colors.textOnAccent,
   },
   settingsitem: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: fontSizes.body,
+    color: colors.textPrimary,
   },
   tagtext: {
-    color: 'cyan',
-    fontSize: 14,
+    color: colors.accent,
+    fontSize: fontSizes.small,
     backgroundColor: '#1A4851a5',
-    borderColor: '#00ffffa5',
+    borderColor: colors.accentSoft,
     borderWidth: 0.5,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 13,
+    borderRadius: radius.md,
     textTransform: 'lowercase',
     overflow: 'hidden',
     marginBottom: 1
 },
 erotictagtext: {
   color: 'magenta',
-  fontSize: 14,
+  fontSize: fontSizes.small,
   backgroundColor: '#3C1A41a5',
   borderColor: '#ff00ffa5',
   borderWidth: 0.5,
   paddingHorizontal: 16,
   paddingVertical: 6,
-  borderRadius: 13,
+  borderRadius: radius.md,
   textTransform: 'lowercase',
   overflow: 'hidden',
   marginBottom: 1
@@ -175,56 +178,56 @@ accountcontainer: {
 //         height: SCREEN_HEIGHT,
 //       },
 //     title: {
-//         fontSize: 18,
+//         fontSize: fontSizes.subtitle,
 //         fontWeight: 'bold',
-//         color: '#000',
+//         color: colors.textOnAccent,
 //       },
 //       infotext: {
-//         fontSize: 14,
+//         fontSize: fontSizes.small,
 //         color: '#000000a5',
 //       },
 //     paragraph: {
-//       fontSize: 14,
-//       color: '#000',
+//       fontSize: fontSizes.small,
+//       color: colors.textOnAccent,
 //     },
 //     subtext: {
-//       fontSize: 12,
+//       fontSize: fontSizes.caption,
 //       fontWeight: '600',
 //       color: '#000000a5',
 //     },
 //     itemtext: {
 //       marginLeft: 30,
-//         fontSize: 16,
+//         fontSize: fontSizes.body,
 //         fontWeight: '700'
 //     },
 //     textInputTitle: {
-//       color: '#fff',
+//       color: colors.textPrimary,
 //       fontWeight: 'normal',
 //     },
 //     inputfield: {
 //         width: SCREEN_WIDTH - 40,
 //         height: 40,
-//         backgroundColor: '#363636',
+//         backgroundColor: colors.surface3,
 //         padding: 10,
-//         borderRadius: 10,
+//         borderRadius: radius.md,
 //         alignSelf: 'center',
 //     },
 //     inputtitle: {
-//       color: '#fff',
-//       fontSize: 18,
+//       color: colors.textPrimary,
+//       fontSize: fontSizes.subtitle,
 //       fontWeight: '600'
 //     },
 //     buttonlayout: {
 //         backgroundColor: 'maroon',
-//         borderRadius: 20,
+//         borderRadius: radius.xl,
 //         paddingVertical: 10,
 //         paddingHorizontal: 30,
 //         overflow: 'hidden',
 //     },
 //     buttontext: {
-//       fontSize: 16,
+//       fontSize: fontSizes.body,
 //       fontWeight: '800',
-//       color: '#fff',
+//       color: colors.textPrimary,
 //       textAlign: 'center'
 //     },
 //     optionsitem: {
@@ -235,7 +238,7 @@ accountcontainer: {
 //       marginBottom: 30,
 //   },
 //   timeselect: {
-//     fontSize: 18,
+//     fontSize: fontSizes.subtitle,
 //     fontWeight: '600',
 //   },
 // });

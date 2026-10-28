@@ -4,6 +4,8 @@ import { Text } from '@/components/common/AppText';
 
 import ProgressTile from './ProgressTile';
 import { useInProgressStoriesPaginated } from '../../hooks/queries/useInProgressStories';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const StoryTileList = () => {
 
@@ -37,20 +39,20 @@ const StoryTileList = () => {
                     <RefreshControl
                         refreshing={isFetching}
                         onRefresh={onRefresh}
-                        tintColor="cyan"
+                        tintColor={colors.accent}
                     />
                 }
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
                 ListFooterComponent={
                     <View style={{ height: 100, paddingTop: 16 }}>
-                        {isFetchingNextPage ? <ActivityIndicator size="small" color="cyan" /> : null}
+                        {isFetchingNextPage ? <ActivityIndicator size="small" color={colors.accent} /> : null}
                     </View>
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         {isLoading ? (
-                            <ActivityIndicator size="small" color="cyan" />
+                            <ActivityIndicator size="small" color={colors.accent} />
                         ) : (
                             <>
                                 <Text style={styles.emptyText}>
@@ -76,13 +78,13 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     emptyText: {
-        color: '#fff',
-        fontSize: 15,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         fontWeight: '600',
     },
     emptyHint: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
         textAlign: 'center',
         lineHeight: 20,
     },

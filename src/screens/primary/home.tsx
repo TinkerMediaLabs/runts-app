@@ -82,7 +82,7 @@ const HomeScreen = ({ navigation }: any) => {
                         </Text>
                         <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
-                                <Ionicons name="person" size={20} color="#fff" />
+                                <Ionicons name="person" size={20} color={colors.textPrimary} />
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
@@ -94,7 +94,7 @@ const HomeScreen = ({ navigation }: any) => {
 
                     {isLoading || !nudge.decided ? (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
-                            <ActivityIndicator color="cyan" />
+                            <ActivityIndicator color={colors.accent} />
                         </View>
                     ) : (
                         <>

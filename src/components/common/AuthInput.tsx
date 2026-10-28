@@ -8,7 +8,11 @@ import { View, TouchableOpacity, StyleSheet, Dimensions, TextInputProps } from '
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
-import Feather from '@react-native-vector-icons/feather';
+import { fields } from '../../theme/fields';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
@@ -21,29 +25,24 @@ const fieldStyles = StyleSheet.create({
         marginBottom: 20,
     },
     label: {
-        fontSize: 13,
+        fontSize: fontSizes.small,
         fontWeight: '600',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         marginBottom: 8,
         letterSpacing: 0.3,
     },
     inputRow: {
+        ...fields.box,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1a1a1a',
-        borderRadius: 18,
-        borderWidth: 1,
-        borderColor: '#ffffff10',
-        paddingHorizontal: 18,
-        minHeight: 52,
     },
     inputRowFocused: {
-        borderColor: 'rgba(0,255,255,0.35)',
+        ...fields.boxFocused,
     },
     input: {
         flex: 1,
-        color: '#fff',
-        fontSize: 16,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         paddingVertical: 14,
         includeFontPadding: false,
     },
@@ -76,8 +75,8 @@ export const TextField = ({ label, value, onChangeText, mb, ...rest }: TextField
                     value={value}
                     onChangeText={onChangeText}
                     accessibilityLabel={label}
-                    placeholderTextColor="rgba(255,255,255,0.55)"
-                    selectionColor="#00ffff"
+                    placeholderTextColor={colors.textSecondary}
+                    selectionColor={colors.accent}
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
                     {...rest}
@@ -100,8 +99,8 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
                     value={value}
                     onChangeText={onChangeText}
                     accessibilityLabel={label}
-                    placeholderTextColor="rgba(255,255,255,0.55)"
-                    selectionColor="#00ffff"
+                    placeholderTextColor={colors.textSecondary}
+                    selectionColor={colors.accent}
                     secureTextEntry={!visible}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -117,10 +116,11 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
                     accessibilityRole="button"
                     accessibilityLabel={visible ? `Hide ${label}` : `Show ${label}`}
                 >
-                    <Feather
-                        name={visible ? 'eye' : 'eye-off'}
-                        size={18}
-                        color="rgba(255,255,255,0.6)"
+                    <FontAwesome5
+                        iconStyle="solid"
+                        name={visible ? 'eye' : 'eye-slash'}
+                        size={iconSize.sm}
+                        color={colors.textSecondary}
                     />
                 </TouchableOpacity>
             </View>

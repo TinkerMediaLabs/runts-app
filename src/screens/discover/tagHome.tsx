@@ -12,8 +12,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Screen from '@/components/common/Screen';
+import ScreenHeader from '@/components/common/ScreenHeader';
 import { spacing } from '../../theme/spacing';
-import useTypography from '../../theme/typography';
 import { CachedImage } from '../../components/common/CachedImage';
 import StoryTile from '../../components/story/StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
@@ -22,6 +22,11 @@ import TagRowView from '../../components/tag/TagRows';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { useTagHome } from '../../hooks/queries/useTagHome';
 import { Analytics } from '../../lib/analytics';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+import SectionTitle from '@/components/common/SectionTitle';
 
 const HERO_HEIGHT = 340;
 const HEADER_THRESHOLD_START = HERO_HEIGHT - 120;
@@ -33,7 +38,6 @@ const GenreHome = ({ navigation }: any) => {
     const route = useRoute();
     const { id: tagId, name: tagName }: any = route.params;
     const insets = useSafeAreaInsets();
-    const typo = useTypography();
 
     const { data: tag } = useTag(tagId);
     const { data: heroUri } = useStoryImage(tag?.heroImageUri);
@@ -43,7 +47,7 @@ const GenreHome = ({ navigation }: any) => {
     const scrollHandler = useAnimatedScrollHandler({ onScroll: (e) => { scrollY.value = e.contentOffset.y; } });
     const stickyStyle = useAnimatedStyle(() => ({
         opacity: interpolate(scrollY.value, [HEADER_THRESHOLD_START, HEADER_THRESHOLD_END], [0, 1], Extrapolation.CLAMP),
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
     }));
 
     useEffect(() => {
@@ -73,36 +77,30 @@ const GenreHome = ({ navigation }: any) => {
                     <View style={[styles.heroTopRow, { paddingTop: insets.top + 10 }]}>
                         <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()}
                             accessibilityRole="button" accessibilityLabel="Go back" style={styles.heroBubble} activeOpacity={0.7}>
-                            <FontAwesome5 name="chevron-left" size={16} color="#fff" iconStyle="solid" />
+                            <FontAwesome5 name="chevron-left" size={iconSize.sm} color={colors.textPrimary} iconStyle="solid" />
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.heroTitle}>{(tagName ?? '').toUpperCase()}</Text>
                 </View>
             ) : (
-                <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                    <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()}
-                        accessibilityRole="button" accessibilityLabel="Go back" style={styles.backBtn} activeOpacity={0.7}>
-                        <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle} numberOfLines={1}>{tagName}</Text>
-                </View>
+                <ScreenHeader title={tagName ?? ''} capitalize />
             )}
 
             {!home.ready ? (
-                <View style={styles.loadingContainer}><ActivityIndicator color="cyan" size="large" /></View>
+                <View style={styles.loadingContainer}><ActivityIndicator color={colors.accent} size="large" /></View>
             ) : (
                 <>
                     {tag?.description ? <Text style={styles.description}>{tag.description}</Text> : null}
                     {!hasStories && (
                         <View style={styles.emptyContainer}>
-                            <FontAwesome5 name="book-open" size={32} color="rgba(255,255,255,0.5)" iconStyle="solid" />
+                            <FontAwesome5 name="book-open" size={32} color={colors.textSecondary} iconStyle="solid" />
                             <Text style={styles.emptyText}>No stories in {tagName} yet</Text>
                             {home.relatedTags.length > 0 && <Text style={styles.emptyHint}>These genres might be a good place to start.</Text>}
                         </View>
                     )}
                     {renderRows(headRows, 0)}
                     {listRow && (
-                        <View style={styles.sectionHeader}><Text style={typo.title} accessibilityRole="header">{listTitle}</Text></View>
+                        <SectionTitle text={listTitle} />
                     )}
                 </>
             )}
@@ -119,7 +117,7 @@ const GenreHome = ({ navigation }: any) => {
                     <Animated.View style={[styles.heroStickyHeader, stickyStyle, { paddingTop: insets.top + 10 }]} pointerEvents="box-none">
                         <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()}
                             accessibilityRole="button" accessibilityLabel="Go back" style={styles.heroStickyBackBtn} activeOpacity={0.7}>
-                            <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
+                            <FontAwesome5 name="chevron-left" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
                         </TouchableOpacity>
                         <Text style={styles.heroStickyTitle} numberOfLines={1}>{tagName}</Text>
                         <View style={{ width: 34 }} />
@@ -132,7 +130,7 @@ const GenreHome = ({ navigation }: any) => {
                     ListHeaderComponent={Header}
                     ListFooterComponent={
                         <>
-                            {home.fetchingMore ? <View style={{ paddingVertical: 24 }}><ActivityIndicator color="cyan" /></View> : null}
+                            {home.fetchingMore ? <View style={{ paddingVertical: 24 }}><ActivityIndicator color={colors.accent} /></View> : null}
                             {home.ready ? renderRows(footRows, headRows.length) : null}
                             <View style={{ height: 40 }} />
                         </>
@@ -177,30 +175,6 @@ const GenreStoryTile = React.memo(({ item }: { item: any }) => {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-    header: {
-        flexDirection:     'row',
-        alignItems:        'center',
-        paddingHorizontal: spacing.margin,
-        paddingBottom:     14,
-        backgroundColor:   '#000000CC',
-        borderBottomColor: '#2a2a2a',
-    },
-    backBtn: {
-        padding:     8,
-        marginLeft:  -8,
-        marginRight: 8,
-    },
-    headerTitle: {
-        flex:          1,
-        fontSize:      24,
-        fontWeight:    '700',
-        color:         '#fff',
-        textTransform: 'capitalize',
-    },
-    sectionHeader: {
-        marginLeft:    spacing.margin,
-        paddingVertical: spacing.margin,
-    },
     loadingContainer: {
         flex:           1,
         justifyContent: 'center',
@@ -213,23 +187,23 @@ const styles = StyleSheet.create({
         gap:          16,
     },
     emptyText: {
-        fontSize: 15,
-        color:    'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.body,
+        color:    colors.textSecondary,
     },
     description: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
+        color: colors.textStrong,
+        fontSize: fontSizes.small,
         lineHeight: 20,
         marginHorizontal: spacing.margin,
         marginBottom: 8,
     },
     emptyHint: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.5)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
     },
     browseText: {
-        color:    'rgba(255,255,255,0.6)',
-        fontSize: 14,
+        color:    colors.textSecondary,
+        fontSize: fontSizes.small,
     },
 
     // ── Hero layout (Version 1) ─────────────────────────────────────────────
@@ -251,21 +225,21 @@ const styles = StyleSheet.create({
     },
     heroBubble: {
         backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 20,
+        borderRadius: radius.xl,
         paddingHorizontal: 12,
         paddingVertical: 8,
         alignItems: 'center',
         justifyContent: 'center',
     },
     heroBubbleText: {
-        color: '#fff',
-        fontSize: 14,
+        color: colors.textPrimary,
+        fontSize: fontSizes.small,
         fontWeight: '600',
     },
     heroTitle: {
         fontSize: 40,
         fontWeight: '900',
-        color: '#fff',
+        color: colors.textPrimary,
         letterSpacing: 1,
         paddingHorizontal: spacing.margin,
         paddingBottom: 24,
@@ -289,9 +263,9 @@ const styles = StyleSheet.create({
     },
     heroStickyTitle: {
         flex: 1,
-        fontSize: 17,
+        fontSize: fontSizes.subtitle,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
         textAlign: 'center',
         textTransform: 'capitalize',
     },

@@ -21,6 +21,11 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 
 import { CachedImage } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+import SectionTitle from '@/components/common/SectionTitle';
 const client = generateClient<Schema>();
 
 // ---------------------------------------------------------------------------
@@ -114,8 +119,8 @@ const ProgressCard = ({
                     <View style={styles.authorRow}>
                         <FontAwesome5
                             name="book-open"
-                            size={11}
-                            color="rgba(255,255,255,0.6)"
+                            size={iconSize.xs}
+                            color={colors.textSecondary}
                             iconStyle="solid"
                         />
                         <Text style={styles.author} numberOfLines={1}>
@@ -160,7 +165,7 @@ const ContinueListening = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.sectionTitle}>Continue Listening</Text>
+            <SectionTitle text="Continue Listening" />
 
             <FlatList
                 data={recentStories}
@@ -208,14 +213,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
         marginBottom: 8,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#fff',
-        marginBottom: 12,
-        paddingHorizontal: spacing.margin,
-        letterSpacing: 0.2,
-    },
     listContent: {
         paddingHorizontal: spacing.margin,
         paddingBottom: 4,
@@ -223,16 +220,16 @@ const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
         flexDirection: 'row',
-        backgroundColor: '#1c1c1c',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
     artwork: {
         width: 90,
         height: 90,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
     },
     info: {
         flex: 1,
@@ -244,9 +241,9 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     title: {
-        fontSize: 14,
+        fontSize: fontSizes.small,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
         lineHeight: 18,
     },
     authorRow: {
@@ -255,23 +252,23 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     author: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         flex: 1,
     },
     timeLeft: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
     progressTrack: {
         height: 2,
-        backgroundColor: '#333',
+        backgroundColor: colors.surface3,
         borderRadius: 1,
         overflow: 'hidden',
     },
     progressFill: {
         height: '100%',
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
         borderRadius: 1,
     },
     dotsRow: {
@@ -285,12 +282,12 @@ const styles = StyleSheet.create({
         width: 5,
         height: 5,
         borderRadius: 3,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: colors.fillStrong,
     },
     dotActive: {
         width: 5,
         borderRadius: 3,
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
     },
 });
 

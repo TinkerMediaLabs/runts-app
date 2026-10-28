@@ -13,6 +13,10 @@ import MenuHeader from '../../components/common/MenuHeader';
 import { spacing } from '../../theme/spacing';
 
 import Constants from 'expo-constants';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -39,11 +43,11 @@ const LinkRow = ({
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="link" accessibilityLabel={label}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={13} color="#ffffffa5" iconStyle="solid" />
+                <FontAwesome5 name={icon} size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
-        <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
+        <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
     </TouchableOpacity>
 );
 
@@ -51,7 +55,7 @@ const InfoRow = ({ icon, label, value }: { icon: any; label: string; value: stri
     <View style={styles.row}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={13} color="#ffffffa5" iconStyle="solid" />
+                <FontAwesome5 name={icon} size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
@@ -196,28 +200,28 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     heroTitle: {
-        fontSize: 26,
+        fontSize: fontSizes.headline,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         letterSpacing: 0.5,
     },
     heroSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         marginTop: 4,
         marginBottom: 16,
     },
     versionBadge: {
         paddingHorizontal: 12,
         paddingVertical: 4,
-        borderRadius: 20,
-        backgroundColor: '#1e1e1e',
+        borderRadius: radius.xl,
+        backgroundColor: colors.surface2,
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: colors.border,
     },
     versionBadgeText: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         fontWeight: '600',
     },
 
@@ -227,19 +231,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         marginBottom: 10,
         marginLeft: 4,
     },
     sectionCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
 
@@ -260,32 +264,32 @@ const styles = StyleSheet.create({
     rowIcon: {
         width: 30,
         height: 30,
-        borderRadius: 8,
-        backgroundColor: '#2a2a2a',
+        borderRadius: radius.sm,
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     rowLabel: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: fontSizes.body,
+        color: colors.textPrimary,
         fontWeight: '500',
     },
     rowValue: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
     },
     divider: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginLeft: 58,
     },
 
     // ── Footer ────────────────────────────────────────────────────────────────
     footer: {
         textAlign: 'center',
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 12,
+        color: colors.textSecondary,
+        fontSize: fontSizes.caption,
         lineHeight: 20,
         marginTop: 40,
         paddingHorizontal: spacing.margin * 2,

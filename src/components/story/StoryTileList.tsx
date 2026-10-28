@@ -20,6 +20,8 @@ import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useStory } from '../../hooks/queries/useStories';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { unwrap } from '@/lib/amplifyResult';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
 
@@ -146,10 +148,10 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
     const ListEmpty = () => (
         <View style={styles.emptyContainer}>
             {isLoading ? (
-                <ActivityIndicator size="small" color="cyan" />
+                <ActivityIndicator size="small" color={colors.accent} />
             ) : (
                 <EmptyState
-                    icon={<FontAwesome5 name="thumbtack" size={40} color="#ffffff80" iconStyle="solid" />}
+                    icon={<FontAwesome5 name="thumbtack" size={40} color={colors.textSecondary} iconStyle="solid" />}
                     title="Build your playlist"
                     body="Tap the pin on any story to add it here. Pinned stories play one after another and are saved to your phone for offline listening."
                     actionLabel="Find a story"
@@ -172,7 +174,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
                     <RefreshControl
                         refreshing={isFetching}
                         onRefresh={onRefresh}
-                        tintColor="cyan"
+                        tintColor={colors.accent}
                     />
                 }
                 showsVerticalScrollIndicator={false}
@@ -192,13 +194,13 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     emptyText: {
-        color: '#fff',
-        fontSize: 15,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         fontWeight: '600',
     },
     emptyHint: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
         textAlign: 'center',
         lineHeight: 20,
     },

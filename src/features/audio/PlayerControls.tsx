@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import Feather from '@expo/vector-icons/Feather';
+import Feather from '@react-native-vector-icons/feather';
 import { audioEngine } from '../audio/audioEngine';
 import { tapHaptic } from '../../lib/haptics';
 import { useTipTarget } from '../../tips/useTipTarget';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const SKIP_BACK_SECONDS = 15;
 const SKIP_FORWARD_SECONDS = 30;
@@ -36,7 +38,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
           accessibilityRole="button"
           accessibilityLabel={`Back ${SKIP_BACK_SECONDS} seconds`}
         >
-          <Feather name="rotate-ccw" size={28} color="#fff" />
+          <Feather name="rotate-ccw" size={28} color={colors.textPrimary} />
           <Text style={styles.skipLabel}>{SKIP_BACK_SECONDS}</Text>
         </TouchableOpacity>
 
@@ -63,7 +65,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
           accessibilityRole="button"
           accessibilityLabel={`Forward ${SKIP_FORWARD_SECONDS} seconds`}
         >
-          <Feather name="rotate-cw" size={28} color="#fff" />
+          <Feather name="rotate-cw" size={28} color={colors.textPrimary} />
           <Text style={styles.skipLabel}>{SKIP_FORWARD_SECONDS}</Text>
         </TouchableOpacity>
       </View>
@@ -78,7 +80,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
           accessibilityRole="button"
           accessibilityLabel="Next story"
         >
-          <Feather name="skip-forward" size={28} color="#fff" />
+          <Feather name="skip-forward" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
       )}
 
@@ -106,8 +108,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   skipLabel: {
-    color:    'rgba(255,255,255,0.75)',
-    fontSize: 12,
+    color:    colors.textStrong,
+    fontSize: fontSizes.caption,
     marginTop: 2,
   },
   next: {

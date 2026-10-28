@@ -1,9 +1,10 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
-import AntDesign from '@react-native-vector-icons/ant-design';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useIsPinned, useTogglePin } from '../../hooks/queries/usePinnedStories';
 import { useTipTarget } from '../../tips/useTipTarget';
 import { tapHaptic, successHaptic } from '../../lib/haptics';
+import { colors } from '@/theme/colors';
 
 type PinButtonProps = {
   storyId: string;
@@ -16,8 +17,8 @@ type PinButtonProps = {
 const PinButton = ({
   storyId,
   size = 20,
-  activeColor = 'cyan',
-  inactiveColor = 'rgba(255,255,255,0.75)',
+  activeColor = colors.accent,
+  inactiveColor = colors.textStrong,
   tipTarget,
 }: PinButtonProps) => {
   const tipRef = useTipTarget(tipTarget);
@@ -38,8 +39,9 @@ const PinButton = ({
       accessibilityLabel={isPinned ? 'Unpin story from playlist' : 'Pin story to playlist'}
       accessibilityState={{ selected: isPinned }}
     >
-      <AntDesign
-        name="pushpin"
+      <FontAwesome5
+        iconStyle="solid"
+        name="thumbtack"
         size={size}
         color={isPinned ? activeColor : inactiveColor}
       />

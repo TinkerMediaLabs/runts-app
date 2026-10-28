@@ -9,6 +9,9 @@ import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 import { useUnfollowAuthor } from '../../hooks/queries/useAuthorFollowing';
 
 import { CachedImage } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 interface AuthorTileProps {
   author: any;
   followRecordId: string;
@@ -72,7 +75,7 @@ export default function AuthorTile({
             accessibilityLabel={`Unfollow ${author?.name ?? 'author'}`}
           >
             {isPending ? (
-              <ActivityIndicator size="small" color="cyan" />
+              <ActivityIndicator size="small" color={colors.accent} />
             ) : (
               <Text style={styles.unfollowText}>Following</Text>
             )}
@@ -97,10 +100,10 @@ export default function AuthorTile({
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <FontAwesome5 name="book-open" size={10} color="rgba(255,255,255,0.4)" iconStyle="solid" />
+          <FontAwesome5 name="book-open" size={10} color={colors.textTertiary} iconStyle="solid" />
           <Text style={styles.statText}>{storyCount} {storyCount === 1 ? 'story' : 'stories'}</Text>
           <Text style={styles.statDot}>·</Text>
-          <FontAwesome5 name="headphones" size={10} color="rgba(255,255,255,0.4)" iconStyle="solid" />
+          <FontAwesome5 name="headphones" size={10} color={colors.textTertiary} iconStyle="solid" />
           <Text style={styles.statText}>{totalListens.toLocaleString()} listens</Text>
         </View>
       </View>
@@ -115,14 +118,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.border,
     gap: 14,
   },
   avatar: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface3,
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.15)',
     flexShrink: 0,
@@ -138,24 +141,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   name: {
-    fontSize: 16,
+    fontSize: fontSizes.body,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     flex: 1,
   },
   unfollowBtn: {
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.4)',
-    borderRadius: 14,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 4,
     minWidth: 80,
     alignItems: 'center',
   },
   unfollowText: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     fontWeight: '600',
-    color: 'cyan',
+    color: colors.accent,
   },
   genreRow: {
     flexDirection: 'row',
@@ -164,20 +167,20 @@ const styles = StyleSheet.create({
   },
   genreChip: {
     backgroundColor: 'rgba(0,255,255,0.08)',
-    borderRadius: 10,
+    borderRadius: radius.md,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderWidth: 0.5,
     borderColor: 'rgba(0,255,255,0.2)',
   },
   genreChipText: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     color: 'rgba(0,255,255,0.8)',
     fontWeight: '500',
   },
   bio: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
   statsRow: {
@@ -186,11 +189,11 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   statText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
   },
   statDot: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 12,
+    color: colors.textSecondary,
+    fontSize: fontSizes.caption,
   },
 });

@@ -16,6 +16,9 @@ import Animated, {
     withDelay,
     withSpring,
 } from "react-native-reanimated";
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
@@ -88,24 +91,24 @@ const Welcome = ({ navigation }: any) => {
                     {/* TITLE */}
                     <Animated.View style={[{ marginTop: 20 }, textOpacityStyle]}>
                     <Animated.View style={textTransformStyle}>
-                        <Text style={{ color: "#fff", fontSize: 24, fontWeight: "700", textAlign: "center" }}>
+                        <Text style={{ color: colors.textPrimary, fontSize: fontSizes.headline, fontWeight: "700", textAlign: "center" }}>
                             Welcome to Runts
                         </Text>
 
-                        <Text style={{ color: "#aaa", fontSize: 15, marginTop: 10, textAlign: "center" }}>
+                        <Text style={{ color: "#aaa", fontSize: fontSizes.body, marginTop: 10, textAlign: "center" }}>
                             Your home for audio short stories
                         </Text>
                     </Animated.View>
                     </Animated.View>
 
                     {/* DIVIDER */}
-                    <View style={{ width: "60%", height: 1, backgroundColor: "#333", marginVertical: 30 }} />
+                    <View style={{ width: "60%", height: 1, backgroundColor: colors.surface3, marginVertical: 30 }} />
 
                     {/* BIRTHDATE */}
-                    <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>
+                    <Text style={{ color: colors.textPrimary, fontSize: fontSizes.body, textAlign: "center" }}>
                         Select your birthdate to continue
                     </Text>
-                    <Text style={{ color: "#ffffff99", fontSize: 13, textAlign: "center", marginTop: 8, paddingHorizontal: 30, lineHeight: 18 }}>
+                    <Text style={{ color: "#ffffff99", fontSize: fontSizes.small, textAlign: "center", marginTop: 8, paddingHorizontal: 30, lineHeight: 18 }}>
                         We ask for your birthdate to confirm you're 18 or older before showing mature content. It's private and never shown to other listeners.
                     </Text>
 
@@ -118,13 +121,13 @@ const Welcome = ({ navigation }: any) => {
                             marginTop: 15,
                             paddingVertical: 12,
                             paddingHorizontal: 20,
-                            borderRadius: 12,
-                            backgroundColor: "#1c1c1e",
+                            borderRadius: radius.md,
+                            backgroundColor: colors.surface2,
                             borderWidth: 1,
-                            borderColor: "#333",
+                            borderColor: colors.border,
                         }}
                     >
-                        <Text style={{ color: "#fff", fontSize: 16 }}>
+                        <Text style={{ color: colors.textPrimary, fontSize: fontSizes.body }}>
                             {format(date, "MMMM do, yyyy")}
                         </Text>
                     </TouchableOpacity>
@@ -142,11 +145,11 @@ const Welcome = ({ navigation }: any) => {
                         style={{
                             backgroundColor: "#00C2C2",
                             paddingVertical: 14,
-                            borderRadius: 14,
+                            borderRadius: radius.lg,
                             marginHorizontal: 40,
                         }}
                     >
-                        <Text style={{ textAlign: "center", fontWeight: "600", color: "#000" }}>
+                        <Text style={{ textAlign: "center", fontWeight: "600", color: colors.textOnAccent }}>
                             Next
                         </Text>
                     </TouchableOpacity>

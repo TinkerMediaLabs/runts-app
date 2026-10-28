@@ -8,6 +8,9 @@ import { CachedImage } from '../common/CachedImage';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { letterOf } from '../../lib/discoverTags';
 import { Analytics } from '@/lib/analytics';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 export const CARD_W = 156;
 export const CARD_H = 100;   // minimum height: cards grow with the user's font size instead of clipping
@@ -51,15 +54,15 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 14, overflow: 'hidden', justifyContent: 'flex-end',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', backgroundColor: '#15181a',
+    borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderSubtle, backgroundColor: '#15181a',
   },
   letter: {
-    position: 'absolute', right: 8, top: -14, fontSize: 92, fontWeight: '800', color: '#ffffff', opacity: 0.07,
+    position: 'absolute', right: 8, top: -14, fontSize: 92, fontWeight: '800', color: colors.textPrimary, opacity: 0.07,
   },
   text: { padding: 10, gap: 2 },
-  name: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  count: { fontSize: 11, color: 'rgba(255,255,255,0.6)' },
+  name: { fontSize: fontSizes.body, fontWeight: '700', color: colors.textPrimary },
+  count: { fontSize: fontSizes.micro, color: colors.textSecondary },
 });
 
 export default React.memo(SubgenreCard);

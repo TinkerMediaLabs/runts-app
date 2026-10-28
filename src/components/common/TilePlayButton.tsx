@@ -17,6 +17,7 @@ import { useApp } from '@/context/AppContext';
 import { usePlayer } from '@/context/PlayerContext';
 
 import useOnPlay from '@/components/functions/OnPlay';
+import { fontSizes } from '@/theme/tokens';
 
 const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any) => {
 
@@ -54,13 +55,13 @@ const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any)
                 }}>
                     <FontAwesome5 
                         name='play'
-                        color='#ffffff'
+                        color={colors.textPrimary}
                         size={10}
                         style={{marginRight: 8}}
                         iconStyle="solid"
                     />
                     <Text style={{
-                        fontSize: 14,
+                        fontSize: fontSizes.small,
                         fontWeight: 'normal',
                         color: '#ffffffCC',
                     

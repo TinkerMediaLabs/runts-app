@@ -12,6 +12,9 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { fmtDuration } from '../../lib/storyDisplay';
 
 import { CachedImage } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 const MAX_ROWS = 4;
 
 const REASON_TEXT: Record<string, string> = {
@@ -38,7 +41,7 @@ const Row = ({ item, onPress }: { item: any; onPress: () => void }) => {
             {uri ? (
                 <CachedImage source={{ uri }} style={styles.thumb} accessible={false} />
             ) : (
-                <View style={[styles.thumb, { backgroundColor: '#1a1a1a' }]} />
+                <View style={[styles.thumb, { backgroundColor: colors.surface2 }]} />
             )}
             <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={styles.rowTitle}>{item.title}</Text>
@@ -113,7 +116,7 @@ const KeepGoingSheet = () => {
 const styles = StyleSheet.create({
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' },
     sheet: {
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
@@ -124,17 +127,17 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#333',
+        backgroundColor: colors.surface3,
         marginBottom: 16,
     },
-    title: { fontSize: 20, fontWeight: '700', color: '#fff' },
-    subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4, marginBottom: 16 },
+    title: { fontSize: fontSizes.title, fontWeight: '700', color: colors.textPrimary },
+    subtitle: { fontSize: fontSizes.small, color: colors.textStrong, marginTop: 4, marginBottom: 16 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, minHeight: 64 },
-    thumb: { width: 56, height: 56, borderRadius: 10 },
-    rowTitle: { fontSize: 15, fontWeight: '600', color: '#fff' },
-    rowMeta: { fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+    thumb: { width: 56, height: 56, borderRadius: radius.md },
+    rowTitle: { fontSize: fontSizes.body, fontWeight: '600', color: colors.textPrimary },
+    rowMeta: { fontSize: fontSizes.caption, color: colors.textSecondary, marginTop: 2 },
     notNow: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 24, marginTop: 8 },
-    notNowText: { fontSize: 14, color: 'rgba(255,255,255,0.7)' },
+    notNowText: { fontSize: fontSizes.small, color: colors.textStrong },
 });
 
 export default KeepGoingSheet;

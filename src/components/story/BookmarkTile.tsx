@@ -9,6 +9,10 @@ import { useDeleteBookmark } from '../../hooks/queries/useBookmarks';
 import { spacing } from '../../theme/spacing';
 
 import { CachedImage } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -95,7 +99,7 @@ export default function BookmarkTile({
         {/* Bookmark name + position */}
         <View style={styles.topRow}>
           <View style={styles.bookmarkBadge}>
-            <FontAwesome5 name={'bookmark' as any} size={9} color="cyan" iconStyle="solid" />
+            <FontAwesome5 name={'bookmark' as any} size={9} color={colors.accent} iconStyle="solid" />
             <Text style={styles.bookmarkName} numberOfLines={1}>
               {bookmark.name || 'My Bookmark'}
             </Text>
@@ -132,8 +136,8 @@ export default function BookmarkTile({
       >
         <FontAwesome5
           name={'times' as any}
-          size={13}
-          color="rgba(255,255,255,0.35)"
+          size={iconSize.xs}
+          color={colors.textTertiary}
           iconStyle="solid"
         />
       </TouchableOpacity>
@@ -153,14 +157,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.margin,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1e1e1e',
+    borderBottomColor: colors.borderSubtle,
     gap: 12,
   },
   artwork: {
     width: 64,
     height: 64,
-    borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    borderRadius: radius.md,
+    backgroundColor: colors.surface3,
     flexShrink: 0,
   },
   content: {
@@ -180,21 +184,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bookmarkName: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontWeight: '600',
-    color: 'cyan',
+    color: colors.accent,
     flex: 1,
   },
   position: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   storyTitle: {
-    fontSize: 14,
+    fontSize: fontSizes.small,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     lineHeight: 18,
   },
   metaRow: {
@@ -204,12 +208,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
   },
   metaDot: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
   },
   deleteBtn: {
     padding: 8,

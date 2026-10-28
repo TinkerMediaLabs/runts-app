@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import Feather from '@expo/vector-icons/Feather';
+import Feather from '@react-native-vector-icons/feather';
 import { selectHaptic } from '../../lib/haptics';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 type Choice = number | 'end' | null;
 
@@ -41,7 +44,7 @@ export default function SleepTimerButton({ minutesLeft, endOfStory, onSelect }: 
         accessibilityLabel={active ? `Sleep timer on. ${status}` : 'Sleep timer, off'}
         accessibilityHint="Opens choices to stop playback after a time or at the end of the story"
       >
-        <Feather name="moon" size={16} color={active ? 'cyan' : '#fff'} />
+        <Feather name="moon" size={16} color={active ? colors.accent : '#fff'} />
         <Text style={[styles.text, active && styles.textActive]}>{status}</Text>
       </TouchableOpacity>
 
@@ -62,7 +65,7 @@ export default function SleepTimerButton({ minutesLeft, endOfStory, onSelect }: 
                   accessibilityLabel={label}
                 >
                   <Text style={[styles.rowText, chosen && styles.rowTextActive]}>{label}</Text>
-                  {chosen ? <Feather name="check" size={18} color="cyan" /> : null}
+                  {chosen ? <Feather name="check" size={18} color={colors.accent} /> : null}
                 </TouchableOpacity>
               );
             })}
@@ -78,16 +81,16 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     minHeight: 44, paddingHorizontal: 16, borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: colors.fill,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
   },
-  buttonActive: { borderColor: 'cyan', backgroundColor: 'rgba(0,255,255,0.1)' },
-  text: { color: '#fff', fontSize: 14 },
-  textActive: { color: 'cyan' },
+  buttonActive: { borderColor: colors.accent, backgroundColor: 'rgba(0,255,255,0.1)' },
+  text: { color: colors.textPrimary, fontSize: fontSizes.small },
+  textActive: { color: colors.accent },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  card: { width: '100%', maxWidth: 340, backgroundColor: '#161616', borderRadius: 16, paddingVertical: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.2)' },
-  title: { color: '#fff', fontSize: 16, fontWeight: '600', paddingHorizontal: 20, paddingVertical: 12 },
+  card: { width: '100%', maxWidth: 340, backgroundColor: colors.surface1, borderRadius: radius.lg, paddingVertical: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  title: { color: colors.textPrimary, fontSize: fontSizes.body, fontWeight: '600', paddingHorizontal: 20, paddingVertical: 12 },
   row: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
-  rowText: { color: 'rgba(255,255,255,0.9)', fontSize: 16 },
-  rowTextActive: { color: 'cyan' },
+  rowText: { color: 'rgba(255,255,255,0.9)', fontSize: fontSizes.body },
+  rowTextActive: { color: colors.accent },
 });

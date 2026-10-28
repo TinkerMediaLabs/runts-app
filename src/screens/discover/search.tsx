@@ -24,11 +24,11 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import FontAwesome  from '@react-native-vector-icons/fontawesome';
 
 import Screen      from '@/components/common/Screen';
 import StoryTile   from '../../components/story/StoryTile';
 import SearchInput from '../../components/common/SearchInput';
+import ScreenHeader from '../../components/common/ScreenHeader';
 
 import { useStoryImage }  from '../../hooks/queries/useStoryImage';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
@@ -53,6 +53,10 @@ const { width } = Dimensions.get('window');
 import { useApp } from '@/context/AppContext';
 
 import { CachedImage } from '../../components/common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -168,8 +172,8 @@ const SearchAuthorItem = React.memo(({
       </View>
       <FontAwesome5
         name={'chevron-right' as any}
-        size={12}
-        color="rgba(255,255,255,0.5)"
+        size={iconSize.xs}
+        color={colors.textSecondary}
         iconStyle="solid"
       />
     </TouchableOpacity>
@@ -222,7 +226,7 @@ const FilterChip = ({
       <FontAwesome5
         name={icon}
         size={10}
-        color={active ? '#000' : 'rgba(255,255,255,0.5)'}
+        color={active ? '#000' : colors.textSecondary}
         iconStyle="solid"
         style={{ marginRight: 5 }}
       />
@@ -328,8 +332,8 @@ const SwipeableSheet = ({
             <View style={styles.sheetOptionLeft}>
               <FontAwesome5
                 name={opt.icon}
-                size={14}
-                color={current === opt.value ? 'cyan' : 'rgba(255,255,255,0.5)'}
+                size={iconSize.sm}
+                color={current === opt.value ? colors.accent : colors.textSecondary}
                 iconStyle="solid"
               />
               <Text style={[
@@ -340,7 +344,7 @@ const SwipeableSheet = ({
               </Text>
             </View>
             {current === opt.value && (
-              <FontAwesome name={'check' as any} size={14} color="cyan" />
+              <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
             )}
           </TouchableOpacity>
         ))}
@@ -384,7 +388,7 @@ const SwipeableSheet = ({
               {opt.label}
             </Text>
             {current === opt.value && (
-              <FontAwesome name={'check' as any} size={14} color="cyan" />
+              <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
             )}
           </TouchableOpacity>
         ))}
@@ -434,7 +438,7 @@ const GenreSheet = ({
             All Genres
           </Text>
           {current === null && (
-            <FontAwesome name={'check' as any} size={14} color="cyan" />
+            <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
           )}
         </TouchableOpacity>
         {tags.map(tag => (
@@ -454,7 +458,7 @@ const GenreSheet = ({
               {tag.name}
             </Text>
             {current === tag.id && (
-              <FontAwesome name={'check' as any} size={14} color="cyan" />
+              <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
             )}
           </TouchableOpacity>
         ))}
@@ -473,7 +477,7 @@ const EmptyState = ({ icon, title, subtitle }: {
   subtitle?: string;
 }) => (
   <View style={styles.emptyState}>
-    <FontAwesome5 name={icon} size={40} color="rgba(255,255,255,0.5)" iconStyle="solid" />
+    <FontAwesome5 name={icon} size={40} color={colors.textSecondary} iconStyle="solid" />
     <Text style={styles.emptyTitle}>{title}</Text>
     {subtitle ? <Text style={styles.emptySub}>{subtitle}</Text> : null}
   </View>
@@ -485,7 +489,6 @@ const EmptyState = ({ icon, title, subtitle }: {
 
 const SearchScreen = ({ navigation }: any) => {
 
-  const insets = useSafeAreaInsets();
 
   const { eroticEnabled } = useApp();
 
@@ -684,16 +687,7 @@ const filteredTagResults = useMemo(() => {
       >
 
         {/* ── Header ── */}
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <FontAwesome5 name={'chevron-left' as any} size={18} color="#fff" iconStyle="solid" />
-          </TouchableOpacity>
+        <ScreenHeader>
           <View style={{ flex: 1 }}>
             <SearchInput
               ref={inputRef}
@@ -705,7 +699,7 @@ const filteredTagResults = useMemo(() => {
               showClear
             />
           </View>
-        </View>
+        </ScreenHeader>
 
         {/* ── Tab bar ─────────────────────────────────────────────────────────
             Icons squish away as user scrolls via tabIconStyle.
@@ -784,7 +778,7 @@ const filteredTagResults = useMemo(() => {
           {activeTab === 'stories' && (
             storiesLoading ? (
               <View style={styles.loadingCenter}>
-                <ActivityIndicator color="cyan" />
+                <ActivityIndicator color={colors.accent} />
               </View>
             ) : (
               <AnimatedFlatList
@@ -802,7 +796,7 @@ const filteredTagResults = useMemo(() => {
                 contentContainerStyle={styles.listContent}
                 ListFooterComponent={
                   storiesFetchingMore
-                    ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+                    ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
                     : null
                 }
                 ListEmptyComponent={
@@ -823,7 +817,7 @@ const filteredTagResults = useMemo(() => {
           {activeTab === 'authors' && (
             authorsLoading ? (
               <View style={styles.loadingCenter}>
-                <ActivityIndicator color="cyan" />
+                <ActivityIndicator color={colors.accent} />
               </View>
             ) : (
              <AnimatedFlatList
@@ -841,7 +835,7 @@ const filteredTagResults = useMemo(() => {
               contentContainerStyle={styles.listContent}
               ListFooterComponent={
                   authorsFetchingMore
-                      ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+                      ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
                       : null
               }
               ListEmptyComponent={
@@ -862,7 +856,7 @@ const filteredTagResults = useMemo(() => {
           {activeTab === 'tags' && (
             tagsLoading ? (
               <View style={styles.loadingCenter}>
-                <ActivityIndicator color="cyan" />
+                <ActivityIndicator color={colors.accent} />
               </View>
             ) : (
              <AnimatedFlatList
@@ -882,7 +876,7 @@ const filteredTagResults = useMemo(() => {
                 contentContainerStyle={styles.listContent}
                 ListFooterComponent={
                     tagsFetchingMore
-                        ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+                        ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
                         : null
                 }
                 ListEmptyComponent={
@@ -935,25 +929,11 @@ const filteredTagResults = useMemo(() => {
 
 const styles = StyleSheet.create({
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.margin,
-    paddingBottom: 12,
-    gap: 10,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
   tabBar: {
     flexDirection: 'row',
     position: 'relative',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.border,
   },
   tab: {
     width: TAB_WIDTH,
@@ -962,22 +942,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabLabel: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
     letterSpacing: 0.3,
   },
   tabLabelActive: {
-    color: 'cyan',
+    color: colors.accent,
   },
   tabCount: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
     lineHeight: 16,
 },
 tabCountActive: {
-    color: 'cyan',
+    color: colors.accent,
 },
   tabIndicator: {
     position: 'absolute',
@@ -985,7 +965,7 @@ tabCountActive: {
     left: 0,
     width: TAB_WIDTH,
     height: 2,
-    backgroundColor: 'cyan',
+    backgroundColor: colors.accent,
     borderRadius: 1,
   },
 
@@ -1000,27 +980,27 @@ tabCountActive: {
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#1e1e1e',
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: 'cyan',
-    borderColor: 'cyan',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   filterChipText: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.textSecondary,
   },
   filterChipTextActive: {
-    color: '#000',
+    color: colors.textOnAccent,
   },
   filterDivider: {
     width: StyleSheet.hairlineWidth,
     height: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface3,
     marginHorizontal: 4,
   },
 
@@ -1040,14 +1020,14 @@ tabCountActive: {
     paddingHorizontal: spacing.margin,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1e1e1e',
+    borderBottomColor: colors.borderSubtle,
     gap: 14,
   },
   authorAvatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface3,
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.15)',
   },
@@ -1056,13 +1036,13 @@ tabCountActive: {
     gap: 3,
   },
   authorName: {
-    fontSize: 15,
+    fontSize: fontSizes.body,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
   },
   authorBio: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
     lineHeight: 17,
   },
   emptyState: {
@@ -1073,14 +1053,14 @@ tabCountActive: {
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: fontSizes.body,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   emptySub: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 19,
   },
@@ -1094,14 +1074,14 @@ tabCountActive: {
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#111',
+    backgroundColor: colors.surface1,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 12,
     borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
   },
   sheetHalf: {
     maxHeight: '50%',
@@ -1114,12 +1094,12 @@ tabCountActive: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.fillStrong,
   },
   sheetTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.subtitle,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     marginBottom: 16,
   },
   sheetOption: {
@@ -1128,7 +1108,7 @@ tabCountActive: {
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#1e1e1e',
+    borderBottomColor: colors.borderSubtle,
   },
   sheetOptionLeft: {
     flexDirection: 'row',
@@ -1136,12 +1116,12 @@ tabCountActive: {
     gap: 14,
   },
   sheetOptionText: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.6)',
+    fontSize: fontSizes.body,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   sheetOptionTextActive: {
-    color: 'cyan',
+    color: colors.accent,
     fontWeight: '700',
   },
   genreRow: {
@@ -1150,23 +1130,23 @@ tabCountActive: {
 },
 genreTile: {
     width: '48%',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
+    backgroundColor: colors.surface2,
+    borderRadius: radius.lg,
     borderWidth: 0.5,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 12,
 },
 genreTileName: {
-    fontSize: 15,
+    fontSize: fontSizes.body,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     marginBottom: 4,
     textTransform: 'capitalize',
 },
 genreTileCount: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
 },
 });
 

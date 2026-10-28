@@ -3,7 +3,6 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import FontAwesome  from '@react-native-vector-icons/fontawesome';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +15,9 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 import { CachedImageBackground } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
@@ -116,7 +118,7 @@ const HorzStoryTile = ({
                                 <FontAwesome5
                                     name="book-open"
                                     size={9}
-                                    color="rgba(255,255,255,0.5)"
+                                    color={colors.textSecondary}
                                     iconStyle="solid"
                                 />
                                 <Text style={styles.authorText} numberOfLines={1}>{author}</Text>
@@ -146,11 +148,10 @@ const HorzStoryTile = ({
                         {hasRating && (
                             <View style={styles.statsRow}>
                                 <View style={styles.ratingRow}>
-                                    <FontAwesome
+                                    <FontAwesome5
                                         name={'star' as any}
                                         size={9}
-                                        color="#C9A84C"
-                                    />
+                                        color={colors.gold} iconStyle="solid" />
                                     <Text style={styles.ratingText}>
                                         {(avgRating as number).toFixed(1)}
                                     </Text>
@@ -177,15 +178,15 @@ const styles = StyleSheet.create({
     card: {
         width:           CARD_WIDTH,
         height:          CARD_HEIGHT,
-        borderRadius:    14,
+        borderRadius:    radius.lg,
         overflow:        'hidden',
         justifyContent:  'flex-end',
-        backgroundColor: '#1c1c1c',
+        backgroundColor: colors.surface2,
         borderWidth:     0.5,
-        borderColor:     'rgba(255,255,255,0.1)',
+        borderColor:     colors.borderSubtle,
     },
     cardImage: {
-        borderRadius: 14,
+        borderRadius: radius.lg,
     },
 
     // ── NEW badge ──────────────────────────────────────────────────────────────
@@ -195,16 +196,16 @@ const styles = StyleSheet.create({
         left:           10,
         backgroundColor: '#141f1fa5',
         borderWidth: 1,
-        borderColor: '#00ffff',
-        borderRadius:   20,
+        borderColor: colors.accent,
+        borderRadius:   radius.xl,
         paddingHorizontal: 7,
         paddingVertical:   3,
         zIndex: 2,
     },
     newBadgeText: {
-        fontSize:   9,
+        fontSize:   fontSizes.micro,
         fontWeight: '800',
-        color:      '#fff',
+        color:      colors.textPrimary,
         letterSpacing: 0.4,
     },
 
@@ -217,14 +218,14 @@ const styles = StyleSheet.create({
         alignItems:     'center',
         gap:            3,
         backgroundColor: 'rgba(0,0,0,0.62)',
-        borderRadius:   20,
+        borderRadius:   radius.xl,
         paddingHorizontal: 7,
         paddingVertical:   3,
         borderWidth:    StyleSheet.hairlineWidth,
-        borderColor:    'rgba(255,255,255,0.1)',
+        borderColor:    colors.borderSubtle,
     },
     durationText: {
-        fontSize:   10,
+        fontSize:   fontSizes.micro,
         fontWeight: '600',
         letterSpacing: 0.2,
     },
@@ -238,8 +239,8 @@ const styles = StyleSheet.create({
 
     tagPill: {
         alignSelf:       'flex-start',
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius:    8,
+        backgroundColor: colors.fill,
+        borderRadius:    radius.sm,
         paddingHorizontal: 6,
         paddingVertical:   2,
     },
@@ -254,21 +255,21 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     authorText: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.5)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         flexShrink: 1,
     },
     tagPillText: {
-        fontSize:      10,
+        fontSize:      fontSizes.micro,
         fontWeight:    '600',
-        color:         'rgba(255,255,255,0.7)',
+        color:         colors.textStrong,
         textTransform: 'capitalize',
     },
 
     title: {
-        fontSize:   14,
+        fontSize:   fontSizes.small,
         fontWeight: '700',
-        color:      '#fff',
+        color:      colors.textPrimary,
         lineHeight: 18,
         flexShrink: 1,
     },
@@ -284,8 +285,8 @@ const styles = StyleSheet.create({
         gap:           3,
     },
     ratingText: {
-        fontSize:   10,
-        color:      '#C9A84C',
+        fontSize:   fontSizes.micro,
+        color:      colors.gold,
         fontWeight: '600',
     },
 });

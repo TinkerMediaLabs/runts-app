@@ -11,8 +11,11 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 
-import Feather from '@expo/vector-icons/Feather';
+import Feather from '@react-native-vector-icons/feather';
 import { useTipTarget } from '../../tips/useTipTarget';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -239,10 +242,10 @@ export default function OptionsModal({
         accessibilityState={{ expanded: visible }}
       >
         <Animated.View style={menuIconStyle}>
-          <Feather name="more-vertical" size={24} color="#fff" />
+          <Feather name="more-vertical" size={24} color={colors.textPrimary} />
         </Animated.View>
         <Animated.View style={closeIconStyle}>
-          <Feather name="x" size={22} color="#fff" />
+          <Feather name="x" size={22} color={colors.textPrimary} />
         </Animated.View>
       </TouchableOpacity>
 
@@ -257,7 +260,7 @@ export default function OptionsModal({
 const styles = StyleSheet.create({
 
   backdrop: {
-    backgroundColor: '#000',
+    backgroundColor: colors.surface0,
   },
 
   button: {
@@ -272,14 +275,14 @@ const styles = StyleSheet.create({
 
   card: {
     position: 'absolute',
-    backgroundColor: '#000000',
+    backgroundColor: colors.surface0,
     borderRadius: 16,
     paddingTop: OPTIONS_BUTTON_SIZE + 8,
     paddingBottom: 16,
     paddingHorizontal: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.borderSubtle,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.55,
@@ -289,13 +292,13 @@ const styles = StyleSheet.create({
 
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.fillFaint,
     marginVertical: 14,
   },
 
   sectionTitle: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 12,
+    color: colors.textSecondary,
+    fontSize: fontSizes.caption,
     fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
@@ -310,22 +313,22 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: radius.xl,
+    backgroundColor: colors.fillFaint,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.borderSubtle,
   },
   chipActive: {
     backgroundColor: 'rgba(0,255,255,0.12)',
-    borderColor: 'cyan',
+    borderColor: colors.accent,
   },
   chipText: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 13,
+    color: colors.textStrong,
+    fontSize: fontSizes.small,
     fontWeight: '600',
   },
   chipTextActive: {
-    color: 'cyan',
+    color: colors.accent,
   },
 
   dismissRow: {
@@ -335,8 +338,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   dismissText: {
-    color: '#ff6b6b',
-    fontSize: 14,
+    color: colors.danger,
+    fontSize: fontSizes.small,
     fontWeight: '600',
   },
 

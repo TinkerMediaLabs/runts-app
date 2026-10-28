@@ -11,6 +11,9 @@ import {
 } from 'react-native-reanimated';
 
 import { audioEngine } from './audioEngine';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const SLIDER_UPDATE_MS = 500; // update slider at most every 500ms
 
@@ -133,7 +136,7 @@ export default function ProgressBar({ progress, isErotic = false }: any) {
           height:          14,
           borderRadius:    20,
           overflow:        'hidden',
-          backgroundColor: isErotic ? '#ff7c2a' : 'cyan',  // ← orange or cyan
+          backgroundColor: isErotic ? '#ff7c2a' : colors.accent,  // ← orange or cyan
         }} />}
         renderBubble={() =>
           isSlidingState ? (
@@ -144,7 +147,7 @@ export default function ProgressBar({ progress, isErotic = false }: any) {
         }
        theme={{
           maximumTrackTintColor: '#2a2a2a',
-          minimumTrackTintColor: isErotic ? '#ff7c2a' : '#00ffff',  // ← orange or cyan
+          minimumTrackTintColor: isErotic ? '#ff7c2a' : colors.accent,  // ← orange or cyan
           bubbleBackgroundColor: '#000',
           bubbleTextColor:       '#fff',
           cacheTrackTintColor:   'rgba(255,255,255,0.2)',
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
   },
   time: {
     color: '#aaa',
-    fontSize: 24,
+    fontSize: fontSizes.headline,
     fontWeight: 'bold',
   },
   customThumb: {
@@ -184,13 +187,13 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: 'cyan',
+    backgroundColor: colors.accent,
   },
   customBubble: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     backgroundColor: 'rgba(0,0,0,0.85)',
-    borderRadius: 12,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },

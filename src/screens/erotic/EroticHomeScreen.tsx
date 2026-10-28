@@ -26,6 +26,10 @@ import { useAuthorNames } from '@/hooks/queries/useAuthorNames';
 import { useTagNames } from '@/hooks/queries/useTagNames';
 import { useStoryProgressMap } from '@/hooks/queries/useStoryProgressMap';
 import { isRecentlyPublished, formatNarratorDisplay } from '@/lib/storyDisplay';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const EROTIC_ORANGE = '#ff7c2a';
 const HEADER_MAX_HEIGHT = 56;
@@ -205,7 +209,7 @@ const headerTitleStyle = useAnimatedStyle(() => ({
           accessibilityLabel="Go back"
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
+          <FontAwesome5 name="chevron-left" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
         </TouchableOpacity>
 
         <Animated.Text style={[styles.headerTitle, headerTitleStyle]}>
@@ -305,7 +309,7 @@ const headerTitleStyle = useAnimatedStyle(() => ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surface0,
   },
   header: {
     flexDirection: 'row',
@@ -322,7 +326,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontWeight: '800',
-    color: '#fff',
+    color: colors.textPrimary,
     letterSpacing: 0.3,
   },
   browseButton: {
@@ -330,13 +334,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   browseButtonText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
   },
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: colors.borderSubtle,
     paddingHorizontal: 20,
   },
   tab: {
@@ -345,9 +349,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabLabel: {
-    fontSize: 14,
+    fontSize: fontSizes.small,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
   },
   tabLabelActive: {
     color: EROTIC_ORANGE,
@@ -367,9 +371,9 @@ const styles = StyleSheet.create({
     marginTop: 20
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 12,
@@ -381,7 +385,7 @@ const styles = StyleSheet.create({
   },
   genreGridTile: {
     width: '48%',
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: 'rgba(255,124,42,0.25)',
     //backgroundColor: 'rgba(255,124,42,0.06)',
@@ -390,14 +394,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   genreGridTileName: {
-    fontSize: 15,
+    fontSize: fontSizes.body,
     fontWeight: '700',
     color: EROTIC_ORANGE,
     marginBottom: 4,
   },
   genreGridTileCount: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
   },
   tagPillRow: {
     flexDirection: 'row',
@@ -407,14 +411,14 @@ const styles = StyleSheet.create({
   tagPill: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: radius.lg,
+    backgroundColor: colors.fillFaint,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.borderSubtle,
   },
   tagPillText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
+    fontSize: fontSizes.small,
+    color: colors.textStrong,
     fontWeight: '600',
   },
 });

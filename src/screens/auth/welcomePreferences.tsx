@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Screen from '@/components/common/Screen';
+import Button from '@/components/common/Button';
 import GenreChip from '../../components/common/GenreChip';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 
@@ -17,6 +18,9 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '../../context/AppContext';
 import { unwrap } from '@/lib/amplifyResult';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -98,7 +102,7 @@ const WelcomePreferences = ({ navigation, route }: any) => {
                 {/* ── Genre grid ── */}
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator color="cyan" size="large" />
+                        <ActivityIndicator color={colors.accent} size="large" />
                     </View>
                 ) : (
                     <ScrollView
@@ -128,32 +132,13 @@ const WelcomePreferences = ({ navigation, route }: any) => {
                         {selected.length}/3 selected
                     </Text>
 
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        disabled={!canContinue || saving}
+                    <Button
+                        label="Continue"
+                        loading={saving}
+                        disabled={!canContinue}
                         onPress={handleContinue}
-                        accessibilityRole="button"
-                        accessibilityLabel={saving ? 'Saving, please wait' : 'Continue'}
-                        accessibilityState={{ disabled: !canContinue || saving, busy: saving }}
-                        style={[
-                            styles.cta,
-                            (!canContinue || saving) && styles.ctaDisabled,
-                        ]}
-                    >
-                        {saving ? (
-                            <ActivityIndicator color="#000" />
-                        ) : (
-                            <>
-                                <Text style={styles.ctaText}>Continue</Text>
-                                <FontAwesome5
-                                    name="arrow-right"
-                                    size={14}
-                                    color="#000"
-                                    iconStyle="solid"
-                                />
-                            </>
-                        )}
-                    </TouchableOpacity>
+                        icon={<FontAwesome5 name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} iconStyle="solid" />}
+                    />
                 </Animated.View>
 
             </LinearGradient>
@@ -172,15 +157,15 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     title: {
-        fontSize: 30,
+        fontSize: fontSizes.display,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         letterSpacing: 0.2,
         marginBottom: 8,
     },
     subtitle: {
-        fontSize: 15,
-        color: 'rgba(255,255,255,0.5)',
+        fontSize: fontSizes.body,
+        color: colors.textSecondary,
         lineHeight: 22,
         marginBottom: 20,
     },
@@ -192,10 +177,10 @@ const styles = StyleSheet.create({
         width: 24,
         height: 4,
         borderRadius: 2,
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: colors.fill,
     },
     progressDotActive: {
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
     },
 
     loadingContainer: {
@@ -220,28 +205,9 @@ const styles = StyleSheet.create({
     },
     selectionCount: {
         textAlign: 'center',
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         fontWeight: '500',
-    },
-    cta: {
-        backgroundColor: 'cyan',
-        borderRadius: 16,
-        paddingVertical: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 10,
-        minHeight: 54,
-    },
-    ctaDisabled: {
-        opacity: 0.35,
-    },
-    ctaText: {
-        fontSize: 17,
-        fontWeight: '800',
-        color: '#000',
-        letterSpacing: 0.2,
     },
 });
 

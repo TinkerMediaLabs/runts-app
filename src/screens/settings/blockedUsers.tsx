@@ -9,6 +9,8 @@ import EmptyState from '../../components/common/EmptyState';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { showChip } from '@/lib/chip';
 import { useBlockedUsers, useUnblockUser } from '../../hooks/queries/useModeration';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 // People whose comments this listener has hidden, with a way to undo it.
 const BlockedUsersScreen = ({ navigation }: any) => {
@@ -17,10 +19,10 @@ const BlockedUsersScreen = ({ navigation }: any) => {
 
     return (
         <Screen>
-            <View style={{ flex: 1, backgroundColor: '#000' }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
                 <MenuHeader title="Blocked commenters" navigation={navigation} />
                 {isLoading ? (
-                    <View style={styles.center}><ActivityIndicator color="cyan" /></View>
+                    <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
                 ) : (
                     <FlatList
                         data={blocked}
@@ -58,14 +60,14 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: 20, paddingVertical: 14, minHeight: 56,
-        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,0.15)',
+        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
     },
-    name: { color: '#fff', fontSize: 16, flex: 1, marginRight: 12 },
+    name: { color: colors.textPrimary, fontSize: fontSizes.body, flex: 1, marginRight: 12 },
     button: {
         minHeight: 44, paddingHorizontal: 18, borderRadius: 22, justifyContent: 'center',
-        borderWidth: 1, borderColor: 'cyan',
+        borderWidth: 1, borderColor: colors.accent,
     },
-    buttonText: { color: 'cyan', fontSize: 14, fontWeight: '600' },
+    buttonText: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '600' },
 });
 
 export default BlockedUsersScreen;

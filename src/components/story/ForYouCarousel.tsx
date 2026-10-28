@@ -14,7 +14,6 @@ import Carousel       from 'react-native-reanimated-carousel';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import FontAwesome  from '@react-native-vector-icons/fontawesome';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -31,6 +30,10 @@ import { useApp } from '@/context/AppContext';
 import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 
 import { CachedImageBackground } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -204,8 +207,8 @@ const CarouselItem = ({
                             <Animated.View style={[styles.chevron, chevronStyle]}>
                                 <FontAwesome5
                                     name="chevron-down"
-                                    size={13}
-                                    color="rgba(255,255,255,0.6)"
+                                    size={iconSize.xs}
+                                    color={colors.textSecondary}
                                     iconStyle="solid"
                                 />
                             </Animated.View>
@@ -216,7 +219,7 @@ const CarouselItem = ({
                             <FontAwesome5
                                 name="book-open"
                                 size={10}
-                                color="rgba(255,255,255,0.55)"
+                                color={colors.textSecondary}
                                 iconStyle="solid"
                             />
                             <Text style={styles.metaText}>{author}</Text>
@@ -226,7 +229,7 @@ const CarouselItem = ({
                                     <FontAwesome5
                                         name="microphone"
                                         size={10}
-                                        color="rgba(255,255,255,0.55)"
+                                        color={colors.textSecondary}
                                         iconStyle="solid"
                                     />
                                     <Text style={styles.metaText}>{narratorDisplay}</Text>
@@ -250,12 +253,11 @@ const CarouselItem = ({
                             {hasRating && (
                                 <>
                                     <View style={styles.metaDot} />
-                                    <FontAwesome
+                                    <FontAwesome5
                                         name={'star' as any}
                                         size={10}
-                                        color="#C9A84C"
-                                    />
-                                    <Text style={[styles.metaText, { color: '#C9A84C' }]}>
+                                        color={colors.gold} iconStyle="solid" />
+                                    <Text style={[styles.metaText, { color: colors.gold }]}>
                                         {(avgRating as number).toFixed(1)}
                                     </Text>
                                 </>
@@ -274,7 +276,7 @@ const CarouselItem = ({
                                     <FontAwesome5
                                         name="headphones"
                                         size={10}
-                                        color="rgba(255,255,255,0.5)"
+                                        color={colors.textSecondary}
                                         iconStyle="solid"
                                     />
                                     <Text style={styles.metaText}>{fmtListens(numListens)}</Text>
@@ -309,7 +311,7 @@ const CarouselItem = ({
                                             accessibilityLabel="Share story"
                                             hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                                         >
-                                            <FontAwesome name="share" size={20} color="rgba(255,255,255,0.7)" />
+                                            <FontAwesome5 name="share" size={iconSize.md} color={colors.textStrong} iconStyle="solid" />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -402,15 +404,15 @@ const styles = StyleSheet.create({
 card: {
     width:           CARD_WIDTH,
     height:          CARD_HEIGHT,
-    borderRadius:    15,
+    borderRadius:    radius.lg,
     overflow:        'hidden',
     justifyContent:  'flex-end',
-    backgroundColor: '#171717',
+    backgroundColor: colors.surface1,
     borderWidth:     0.5,
-    borderColor:     'rgba(255,255,255,0.1)',
+    borderColor:     colors.borderSubtle,
 },
     cardImage: {
-        borderRadius: 15,
+        borderRadius: radius.lg,
     },
 
     // ── NEW badge ──────────────────────────────────────────────────────────────
@@ -419,17 +421,17 @@ card: {
         top:            12,
         left:           12,
         backgroundColor: '#141f1fa5',
-        borderRadius: 20,
+        borderRadius: radius.xl,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderWidth: 1,
-        borderColor: '#00ffff',
+        borderColor: colors.accent,
         zIndex: 2,
     },
     newBadgeText: {
-        fontSize:   10,
+        fontSize:   fontSizes.micro,
         fontWeight: '800',
-        color:      '#fff',
+        color:      colors.textPrimary,
         letterSpacing: 0.5,
     },
 
@@ -442,14 +444,14 @@ card: {
         alignItems:     'center',
         gap:            4,
         backgroundColor: 'rgba(0,0,0,0.65)',
-        borderRadius:   20,
+        borderRadius:   radius.xl,
         paddingHorizontal: 8,
         paddingVertical:   4,
         borderWidth:    StyleSheet.hairlineWidth,
-        borderColor:    'rgba(255,255,255,0.12)',
+        borderColor:    colors.borderSubtle,
     },
     durationText: {
-        fontSize:   11,
+        fontSize:   fontSizes.micro,
         fontWeight: '600',
         letterSpacing: 0.3,
     },
@@ -481,9 +483,9 @@ card: {
     },
     title: {
         flex:       1,
-        fontSize:   17,
+        fontSize:   fontSizes.subtitle,
         fontWeight: '700',
-        color:      '#fff',
+        color:      colors.textPrimary,
         marginRight: 8,
         letterSpacing: 0.1,
     },
@@ -498,25 +500,25 @@ card: {
         marginBottom:  3,
     },
     metaText: {
-        fontSize: 12,
-        color:    'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.caption,
+        color:    colors.textSecondary,
     },
     metaDot: {
         width:        3,
         height:       3,
         borderRadius: 1.5,
-        backgroundColor: 'rgba(255,255,255,0.25)',
+        backgroundColor: colors.fillStrong,
     },
 
     tagPill: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius:    10,
+        backgroundColor: colors.fill,
+        borderRadius:    radius.md,
         paddingHorizontal: 7,
         paddingVertical:   2,
     },
     tagPillText: {
-        fontSize:      11,
-        color:         'rgba(255,255,255,0.75)',
+        fontSize:      fontSizes.micro,
+        color:         colors.textStrong,
         fontWeight:    '600',
         textTransform: 'capitalize',
     },
@@ -533,8 +535,8 @@ card: {
         justifyContent:  'space-between',
     },
     summary: {
-        fontSize:  13,
-        color:     'rgba(255,255,255,0.75)',
+        fontSize:  fontSizes.small,
+        color:     colors.textStrong,
         lineHeight: 19,
     },
     actions: {

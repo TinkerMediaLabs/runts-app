@@ -27,6 +27,9 @@ import { Analytics } from '../../lib/analytics';
 import type { HomeSectionRow } from '../../lib/homeLayout';
 import useTypography from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import SectionTitle from '@/components/common/SectionTitle';
 
 type Props = { section: HomeSectionRow; index: number };
 
@@ -40,15 +43,6 @@ const useSettleWhen = (ready: boolean) => {
 const useSettleAfter = (ms: number) => {
   const settle = useContext(SettleContext);
   useEffect(() => { const t = setTimeout(settle, ms); return () => clearTimeout(t); }, [ms, settle]);
-};
-
-const SectionTitle = ({ text }: { text: string }) => {
-  const typo = useTypography();
-  return (
-    <View style={styles.titleWrap}>
-      <Text style={typo.title} accessibilityRole="header">{text}</Text>
-    </View>
-  );
 };
 
 // A plain row of stories under a title (new, hand-picked).
@@ -224,16 +218,15 @@ export default HomeSectionView;
 
 const styles = StyleSheet.create({
   hidden: { position: 'absolute', left: 0, right: 0, opacity: 0 },
-  titleWrap: { marginLeft: spacing.margin, paddingVertical: spacing.margin },
   authorHeader: {
     flexDirection: 'row', alignItems: 'center',
     marginHorizontal: spacing.margin, paddingTop: 8, paddingBottom: 20, gap: 14,
   },
   authorBlock: {
     marginTop: 28, marginBottom: 20, paddingTop: 24,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.18)',
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
   },
   authorPhoto: { width: 64, height: 64, borderRadius: 32 },
-  authorLabel: { fontSize: 12, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.6 },
-  authorBlurb: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  authorLabel: { fontSize: fontSizes.caption, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 },
+  authorBlurb: { fontSize: fontSizes.small, color: colors.textStrong, marginTop: 2 },
 });

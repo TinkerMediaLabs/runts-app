@@ -21,6 +21,8 @@ import { useStoriesByTitleLetterPaginated } from '../../hooks/queries/useStories
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames }       from '../../hooks/queries/useTagNames';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Enable LayoutAnimation on Android
@@ -191,7 +193,7 @@ const BrowseByTitle = ({ navigation }: any) => {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <Screen>
-            <View style={{ flex: 1, backgroundColor: '#000' }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
 
                 <MenuHeader title="Browse by Title" navigation={navigation} />
 
@@ -235,19 +237,19 @@ const BrowseByTitle = ({ navigation }: any) => {
                         <RefreshControl
                             refreshing={isRefetching}
                             onRefresh={refetch}
-                            tintColor="cyan"
+                            tintColor={colors.accent}
                         />
                     }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             {storiesLoading ? (
-                                <ActivityIndicator size="small" color="cyan" />
+                                <ActivityIndicator size="small" color={colors.accent} />
                             ) : (
                                 <>
                                     <FontAwesome5
                                         name={'book-open' as any}
                                         size={40}
-                                        color="#ffffff80"
+                                        color={colors.textSecondary}
                                         iconStyle="solid"
                                     />
                                     <Text style={styles.emptyText}>
@@ -259,7 +261,7 @@ const BrowseByTitle = ({ navigation }: any) => {
                     }
                     ListFooterComponent={
                         <View style={{ height: 120, paddingTop: 16 }}>
-                            {isFetchingNextPage ? <ActivityIndicator size="small" color="cyan" /> : null}
+                            {isFetchingNextPage ? <ActivityIndicator size="small" color={colors.accent} /> : null}
                         </View>
                     }
                 />
@@ -275,9 +277,9 @@ const styles = StyleSheet.create({
         marginTop:  80,
     },
     emptyText: {
-        color:     '#ffffffa5',
+        color:     colors.textSecondary,
         marginTop: 16,
-        fontSize:  16,
+        fontSize:  fontSizes.body,
     },
 });
 

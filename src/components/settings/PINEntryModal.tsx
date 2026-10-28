@@ -5,6 +5,9 @@ import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
 import { pinErrorMessage } from '@/lib/eroticPin';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 const SUPPORT_EMAIL = 'mailto:admin@tinkermedia.net';
@@ -205,23 +208,23 @@ const styles = StyleSheet.create({
         padding:         24,
     },
     card: {
-        backgroundColor: '#111',
-        borderRadius:    24,
+        backgroundColor: colors.surface1,
+        borderRadius:    radius.xl,
         borderWidth:     1,
-        borderColor:     '#2a2a2a',
+        borderColor:     colors.border,
         padding:         32,
         width:           width * 0.85,
         alignItems:      'center',
     },
     title: {
-        color:        '#fff',
-        fontSize:     22,
+        color:        colors.textPrimary,
+        fontSize:     fontSizes.title,
         fontWeight:   '700',
         marginBottom: 8,
     },
     subtitle: {
-        color:        'rgba(255,255,255,0.5)',
-        fontSize:     14,
+        color:        colors.textSecondary,
+        fontSize:     fontSizes.small,
         textAlign:    'center',
         marginBottom: 32,
         lineHeight:   20,
@@ -236,12 +239,12 @@ const styles = StyleSheet.create({
         height:          18,
         borderRadius:    9,
         borderWidth:     2,
-        borderColor:     '#444',
+        borderColor:     colors.border,
         backgroundColor: 'transparent',
     },
     dotFilled: {
-        backgroundColor: 'cyan',
-        borderColor:     'cyan',
+        backgroundColor: colors.accent,
+        borderColor:     colors.accent,
     },
     hiddenInput: {
         position: 'absolute',
@@ -250,8 +253,8 @@ const styles = StyleSheet.create({
         width:    0,
     },
     error: {
-        color:        '#ff6b6b',
-        fontSize:     13,
+        color:        colors.danger,
+        fontSize:     fontSizes.small,
         marginBottom: 16,
         textAlign:    'center',
     },
@@ -260,21 +263,21 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
     },
     forgotText: {
-        color:    'rgba(255,255,255,0.6)',
-        fontSize: 13,
+        color:    colors.textSecondary,
+        fontSize: fontSizes.small,
         textDecorationLine: 'underline',
     },
     cancelButton: {
         paddingVertical:   12,
         paddingHorizontal: 32,
-        borderRadius:      12,
-        backgroundColor:   '#1e1e1e',
+        borderRadius:      radius.md,
+        backgroundColor:   colors.surface2,
         borderWidth:       1,
-        borderColor:       '#333',
+        borderColor:       colors.border,
     },
     cancelText: {
         color:      '#aaa',
-        fontSize:   15,
+        fontSize:   fontSizes.body,
         fontWeight: '500',
     },
 });

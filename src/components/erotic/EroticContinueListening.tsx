@@ -12,6 +12,9 @@ import { useStoryImage }              from '@/hooks/queries/useStoryImage';
 import { usePlayer }                  from '@/context/PlayerContext';
 
 import { CachedImage } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 const client  = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 const TILE_W  = 160;
@@ -140,7 +143,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     sectionTitle: {
-        fontSize:       13,
+        fontSize:       fontSizes.small,
         fontWeight:     '700',
         color:          'rgba(255,124,42,0.7)',
         textTransform:  'uppercase',
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
     tile: {
         width:           TILE_W,
         height:          TILE_H,
-        borderRadius:    12,
+        borderRadius:    radius.md,
         overflow:        'hidden',
         borderWidth:     1,
         borderColor:     'rgba(255,124,42,0.2)',
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
         left:            0,
         right:           0,
         height:          3,
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: colors.fill,
     },
     progressFill: {
         height:          3,
@@ -193,13 +196,13 @@ const styles = StyleSheet.create({
         right:           8,
     },
     tileTitle: {
-        fontSize:   12,
+        fontSize:   fontSizes.caption,
         fontWeight: '700',
-        color:      '#fff',
+        color:      colors.textPrimary,
         marginBottom: 2,
     },
     tileRemaining: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         color:    'rgba(255,124,42,0.8)',
     },
 });

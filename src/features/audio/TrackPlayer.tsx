@@ -31,8 +31,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 
-import Feather from '@expo/vector-icons/Feather';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Feather from '@react-native-vector-icons/feather';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { colors } from '@/theme/colors';
 
@@ -57,6 +57,9 @@ import BookmarkModal    from './BookmarkModal';
 import { useCreateBookmark } from '../../hooks/queries/useBookmarks';
 
 import { CachedImage } from '../../components/common/CachedImage';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 70;
 const HERO_HEIGHT_RATIO = 0.46; // hero image takes ~46% of screen height
@@ -437,9 +440,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           <FontAwesome5
                               name={optimisticPlaying ? 'pause' : 'play'}
                               size={72}
-                              color="#fff"
-                              opacity={0.5}
-                          />
+                              color={colors.textPrimary}
+                              style={{ opacity: 0.5 }} iconStyle="solid" />
                       </Animated.View>
                   </TouchableOpacity>
               </View>
@@ -506,7 +508,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                             accessibilityLabel="Share story"
                             hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                           >
-                              <FontAwesome5 name="share" size={20} color="#fff" />
+                              <FontAwesome5 name="share" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
                           </TouchableWithoutFeedback>
                       </View>
                         <View style={styles.actionbutton}>
@@ -518,7 +520,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                             accessibilityLabel="Add bookmark"
                             accessibilityHint="Saves your current position"
                           >
-                            <FontAwesome5 name={'bookmark' as any} size={20} color="#fff" />
+                            <FontAwesome5 name={'bookmark' as any} size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -582,7 +584,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       <Text numberOfLines={1} style={styles.upNextMeta}>
                         {nextTrackInfo.artist ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}                      </Text>
                     </View>
-                    <Feather name="skip-forward" size={20} color="#fff" />
+                    <Feather name="skip-forward" size={20} color={colors.textPrimary} />
                   </View>
                 </TouchableOpacity>
               ) : null}
@@ -611,7 +613,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
               accessibilityRole="button"
               accessibilityLabel="Minimize player"
             >
-              <Feather name="chevron-down" size={28} color="#fff" />
+              <Feather name="chevron-down" size={28} color={colors.textPrimary} />
             </TouchableOpacity>
 
             {/* Options modal — rendered outside scroll so it overlays
@@ -674,7 +676,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
           >
             <FontAwesome5
                 name={optimisticPlaying ? 'pause' : 'play'}
-                size={16}
+                size={iconSize.sm}
                 color="#171717"
                 style={!optimisticPlaying ? { marginLeft: 2 } : undefined}
                 iconStyle="solid"
@@ -722,7 +724,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 <Feather
                   name={optimisticPlaying ? 'pause' : 'play'}
                   size={22}
-                  color="#fff"
+                  color={colors.textPrimary}
                 />
               </TouchableOpacity>
             </View>
@@ -753,8 +755,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   title: {
-    color: '#fff',
-    fontSize: 16,
+    color: colors.textPrimary,
+    fontSize: fontSizes.body,
   },
 mini: {
     position: 'absolute',
@@ -763,7 +765,7 @@ mini: {
     right: 16,
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: 'cyan',
+    borderColor: colors.accent,
     justifyContent: 'center',
     overflow: 'hidden',
     pointerEvents: 'auto',
@@ -786,17 +788,17 @@ mini: {
 },
   expanded: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000',
+    backgroundColor: colors.surface0,
   },
   artwork: {
     width: '100%',
     height: 320,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     marginTop: 20,
   },
   bigTitle: {
-    color: '#fff',
-    fontSize: 24,
+    color: colors.textPrimary,
+    fontSize: fontSizes.headline,
     fontWeight: '700',
   },
   artist: {
@@ -806,7 +808,7 @@ mini: {
   narrator: {
     color: '#888',
     marginTop: 2,
-    fontSize: 13,
+    fontSize: fontSizes.small,
   },
   actions: {
     flexDirection: 'row',
@@ -891,8 +893,8 @@ mini: {
   },
   // Genre pill — replaces the old plain cyan text tag
   genrePill: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 20,
+    backgroundColor: colors.fillFaint,
+    borderRadius: radius.xl,
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
@@ -900,9 +902,9 @@ mini: {
     backgroundColor: 'rgba(255,124,42,0.12)',
   },
   genrePillText: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.75)',
+    color: colors.textStrong,
     textTransform: 'capitalize',
   },
   genrePillTextErotic: {
@@ -914,16 +916,16 @@ mini: {
   // Up Next — replaces the old "second player controls" skip-next button
   upNextCard: {
     marginTop: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
+    backgroundColor: colors.fillFaint,
+    borderRadius: radius.lg,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.borderSubtle,
   },
   upNextLabel: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -936,17 +938,17 @@ mini: {
   upNextThumb: {
     width: 44,
     height: 44,
-    borderRadius: 8,
-    backgroundColor: '#222',
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface2,
   },
   upNextTitle: {
-    color: '#fff',
-    fontSize: 14,
+    color: colors.textPrimary,
+    fontSize: fontSizes.small,
     fontWeight: '600',
   },
   upNextMeta: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
+    color: colors.textSecondary,
+    fontSize: fontSizes.caption,
     marginTop: 2,
   },
   // Floating play/pause — appears once Up Next / controls scroll away
@@ -972,36 +974,36 @@ mini: {
     marginVertical: 20,
     padding: 20,
     marginHorizontal: 10,
-    borderRadius: 20,
-    backgroundColor: '#1a1a1a',
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
   },
   transcriptheader: {
     paddingBottom: 16,
-    color: '#fff',
-    fontSize: 20,
+    color: colors.textPrimary,
+    fontSize: fontSizes.title,
     fontWeight: '700',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
     marginBottom: 16,
   },
   transcript: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 24,
+    color: colors.textStrong,
+    fontSize: fontSizes.headline,
     lineHeight: 40,
   },
   sleepPill: {
     backgroundColor: 'rgba(0,0,0,0.45)',
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.border,
   },
   sleepPillText: {
-    fontSize: 12,
-    color: '#fff',
+    fontSize: fontSizes.caption,
+    color: colors.textPrimary,
     fontWeight: '600',
   },
 });

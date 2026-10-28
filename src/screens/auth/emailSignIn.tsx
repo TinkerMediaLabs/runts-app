@@ -5,8 +5,12 @@ import Animated, { FadeIn, FadeInUp, useSharedValue, useAnimatedStyle, withSprin
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import useStyles from '../../theme/authStyles';
+import Button from '@/components/common/Button';
 import { TextField, PasswordField } from '../../components/common/AuthInput';
 import { loginUser } from '../../services/auth';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const { width, height } = Dimensions.get('window');
 
@@ -78,12 +82,10 @@ const EmailSignIn = ({ navigation }: any) => {
                                 <Text style={s.forgotText}>Forgot password?</Text>
                             </TouchableOpacity>
 
-                            {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
+                            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity activeOpacity={0.9} onPress={handleSignIn} accessibilityRole="button" accessibilityLabel="Sign in">
-                                        <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Sign In</Text></View>
-                                    </TouchableOpacity>
+                                    <Button label="Sign In" onPress={handleSignIn} glow style={s.button} />
                                 </Animated.View>
                                 </Animated.View>
                             )}
@@ -111,15 +113,14 @@ const EmailSignIn = ({ navigation }: any) => {
 
 const s = StyleSheet.create({
     scroll:      { minHeight: height, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
-    heading:     { fontSize: 34, marginBottom: 32 },
-    errorBox:    { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 24 },
-    errorText:   { color: '#ff8a8a', fontSize: 13, textAlign: 'center' },
-    button:      { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18, elevation: 8 },
-    buttonText:  { width: '100%', fontSize: 16, fontWeight: '700' },
-    linkText:    { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 28 },
-    linkAccent:  { color: '#00ffff' },
-    backText:    { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 14 },
-    forgotText:  { color: 'rgba(0,255,255,0.6)', fontSize: 13 },
+    heading:     { fontSize: fontSizes.display, marginBottom: 32 },
+    errorBox:    { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: radius.lg, padding: 14, marginBottom: 24 },
+    errorText:   { color: '#ff8a8a', fontSize: fontSizes.small, textAlign: 'center' },
+    button:     { alignSelf: 'center', width: width * 0.86 },
+    linkText:    { fontSize: fontSizes.small, color: colors.textSecondary, alignSelf: 'center', marginTop: 28 },
+    linkAccent:  { color: colors.accent },
+    backText:    { fontSize: fontSizes.small, color: colors.textSecondary, alignSelf: 'center', marginTop: 14 },
+    forgotText:  { color: 'rgba(0,255,255,0.6)', fontSize: fontSizes.small },
 });
 
 export default EmailSignIn;

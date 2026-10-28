@@ -11,6 +11,8 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { useStories } from '../../hooks/queries/useStories';
 import { useTagNames } from '@/hooks/queries/useTagNames';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 export default function AuthorFollowingScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -64,7 +66,7 @@ const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="cyan" />
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -79,12 +81,12 @@ const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
           contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
           ListFooterComponent={
             isFetchingNextPage ? (
-              <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+              <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <FontAwesome5 name="user-friends" size={36} color="#ffffff80" iconStyle="solid" />
+              <FontAwesome5 name="user-friends" size={36} color={colors.textSecondary} iconStyle="solid" />
               <Text style={styles.emptyTitle}>Not following anyone yet</Text>
               <Text style={styles.emptySub}>
                 Follow authors from their profile page to see them here.
@@ -111,13 +113,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.subtitle,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
   },
   emptySub: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

@@ -18,6 +18,9 @@ import useTypography from '../../theme/typography';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { useTipTarget } from '../../tips/useTipTarget';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
@@ -33,7 +36,7 @@ const TABS: Tab[] = [
 const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subtitle: string }) => (
     <View style={styles.emptyState}>
         <View style={styles.emptyIconWrap}>
-            <FontAwesome5 name={icon} size={28} color="#ffffff80" iconStyle="solid" />
+            <FontAwesome5 name={icon} size={28} color={colors.textSecondary} iconStyle="solid" />
         </View>
         <Text style={styles.emptyTitle}>{title}</Text>
         <Text style={styles.emptySubtitle}>{subtitle}</Text>
@@ -65,7 +68,7 @@ const PlaylistScreen = () => {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
             <LinearGradient
                 colors={['#000', '#0f1112', '#000']}
                 start={{ x: 0, y: 0 }}
@@ -74,7 +77,7 @@ const PlaylistScreen = () => {
             >
 
                 {/* ── Header ── */}
-                <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+                <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
                     <View style={styles.headerRow}>
                         <Text style={styles.headerTitle}>My Library</Text>
 
@@ -92,8 +95,8 @@ const PlaylistScreen = () => {
                             >
                                 <FontAwesome5
                                 name="sort"
-                                size={14}
-                                color={reorderEnabled ? '#000' : '#ffffffa5'}
+                                size={iconSize.sm}
+                                color={reorderEnabled ? '#000' : colors.textSecondary}
                                 iconStyle="solid"
                                 />
                                 <Text style={[styles.reorderLabel, reorderEnabled && styles.reorderLabelActive]}>
@@ -136,7 +139,7 @@ const PlaylistScreen = () => {
                 {/* Reorder hint */}
                 {activeTab === 'pinned' && reorderEnabled && (
                     <View style={styles.reorderHint}>
-                        <FontAwesome5 name="grip-lines" size={11} color="#ffffff80" iconStyle="solid" />
+                        <FontAwesome5 name="grip-lines" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
                         <Text style={styles.reorderHintText}>Hold and drag items to reorder</Text>
                     </View>
                 )}
@@ -173,13 +176,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.margin * 2,
+        paddingHorizontal: spacing.margin,
         marginBottom: 16,
     },
     headerTitle: {
-        fontSize: 24,
+        fontSize: fontSizes.headline,
         fontWeight: '600',
-        color: '#fff',
+        color: colors.textPrimary,
         letterSpacing: 0.3,
     },
 
@@ -189,63 +192,63 @@ const styles = StyleSheet.create({
         gap: 6,
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: '#1a1a1a',
+        borderRadius: radius.xl,
+        backgroundColor: colors.surface2,
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: colors.border,
     },
     reorderButtonActive: {
-        backgroundColor: 'cyan',
-        borderColor: 'cyan',
+        backgroundColor: colors.accent,
+        borderColor: colors.accent,
     },
     reorderLabel: {
-        fontSize: 13,
+        fontSize: fontSizes.small,
         fontWeight: '600',
-        color: '#ffffffa5',
+        color: colors.textSecondary,
     },
     reorderLabelActive: {
-        color: '#000',
+        color: colors.textOnAccent,
     },
 
     reorderHint: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        paddingHorizontal: spacing.margin * 2,
+        paddingHorizontal: spacing.margin,
         paddingVertical: 8,
         backgroundColor: 'rgba(0,255,255,0.06)',
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: 'rgba(0,255,255,0.15)',
     },
     reorderHintText: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
 
     tabBar: {
         flexDirection: 'row',
         position: 'relative',
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: '#2a2a2a',
+        borderBottomColor: colors.border,
     },
     tab: {
         paddingVertical: 12,
         alignItems: 'center',
     },
     tabLabel: {
-        fontSize: 14,
+        fontSize: fontSizes.small,
         fontWeight: '500',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
     },
     tabLabelActive: {
-        color: '#fff',
+        color: colors.textPrimary,
         fontWeight: '700',
     },
     indicator: {
         position: 'absolute',
         bottom: -StyleSheet.hairlineWidth,
         height: 2,
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
         borderRadius: 1,
     },
 
@@ -264,23 +267,23 @@ const styles = StyleSheet.create({
     emptyIconWrap: {
         width: 64,
         height: 64,
-        borderRadius: 18,
-        backgroundColor: '#1a1a1a',
+        borderRadius: radius.xl,
+        backgroundColor: colors.surface2,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
     },
     emptyTitle: {
-        fontSize: 18,
+        fontSize: fontSizes.subtitle,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         marginBottom: 8,
     },
     emptySubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         textAlign: 'center',
         lineHeight: 20,
     },

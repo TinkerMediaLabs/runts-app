@@ -1,7 +1,11 @@
 import React, { forwardRef } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TextInput } from '@/components/common/AppTextInput';
-import { FontAwesome5 } from '@expo/vector-icons';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+import { colors } from '@/theme/colors';
 
 type SearchInputProps = {
   value: string;
@@ -40,7 +44,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           accessibilityLabel="Search"
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          <FontAwesome5 name="search" size={16} color={iconColor} />
+          <FontAwesome5 name="search" size={iconSize.sm} color={iconColor} iconStyle="solid" />
         </TouchableOpacity>
 
         {/* Input */}
@@ -66,7 +70,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
             accessibilityLabel="Clear search"
             hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           >
-            <FontAwesome5 name="times-circle" size={16} color={iconColor} />
+            <FontAwesome5 name="times-circle" size={iconSize.sm} color={iconColor} iconStyle="solid" />
           </TouchableOpacity>
         )}
       </View>
@@ -82,7 +86,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#e0e0e0',
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingHorizontal: 10,
   },
   iconLeft: {
@@ -93,8 +97,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: '#000',
+    fontSize: fontSizes.small,
+    color: colors.textOnAccent,
     paddingVertical: 0, // prevents weird vertical stretching
   },
 });

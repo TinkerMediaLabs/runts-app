@@ -5,8 +5,12 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, useSharedValue, useAnimatedStyl
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import useStyles from '../../theme/authStyles';
+import Button from '@/components/common/Button';
 import { TextField } from '../../components/common/AuthInput';
 import { confirmUserEmail, resendCode } from '../../services/auth';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const { width, height } = Dimensions.get('window');
 
@@ -71,7 +75,7 @@ const ConfirmEmail = ({ navigation, route }: any) => {
                             <Animated.View entering={FadeInDown.duration(700)}>
                                 <Text style={[styles.title, s.heading]}>Verify Email</Text>
                                 <Text style={s.subText}>
-                                    We sent a code to <Text style={{ color: '#00ffff' }}>{email}</Text>
+                                    We sent a code to <Text style={{ color: colors.accent }}>{email}</Text>
                                 </Text>
                             </Animated.View>
 
@@ -82,18 +86,16 @@ const ConfirmEmail = ({ navigation, route }: any) => {
                                 <TextField label="Verification Code" value={code} onChangeText={setCode} placeholder="Enter your code" keyboardType="number-pad" autoCapitalize="none" autoCorrect={false} maxLength={6} mb={32} />
                             </Animated.View>
 
-                            {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
+                            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity accessibilityRole="button" activeOpacity={0.9} onPress={handleConfirm}>
-                                        <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Verify Email</Text></View>
-                                    </TouchableOpacity>
+                                    <Button label="Verify Email" onPress={handleConfirm} glow style={s.button} />
                                 </Animated.View>
                                 </Animated.View>
                             )}
 
                             <Animated.View entering={FadeIn.delay(500).duration(900)}>
-                                {resending ? <ActivityIndicator size="small" color="rgba(255,255,255,0.35)" style={{ marginTop: 32 }} /> : (
+                                {resending ? <ActivityIndicator size="small" color={colors.textTertiary} style={{ marginTop: 32 }} /> : (
                                     <TouchableOpacity accessibilityRole="button" onPress={handleResend}>
                                         <Text style={s.linkText}>Didn't get a code? <Text style={s.linkAccent}>Resend</Text></Text>
                                     </TouchableOpacity>
@@ -117,17 +119,16 @@ const ConfirmEmail = ({ navigation, route }: any) => {
 
 const s = StyleSheet.create({
     scroll:      { minHeight: height, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
-    heading:     { fontSize: 34, marginBottom: 12 },
-    subText:     { fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 22, marginBottom: 36 },
-    errorBox:    { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 24 },
-    errorText:   { color: '#ff8a8a', fontSize: 13, textAlign: 'center' },
-    successBox:  { backgroundColor: '#00ffff15', borderWidth: 1, borderColor: '#00ffff40', borderRadius: 14, padding: 14, marginBottom: 24 },
-    successText: { color: '#00ffff', fontSize: 13, textAlign: 'center' },
-    button:      { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18, elevation: 8 },
-    buttonText:  { width: '100%', fontSize: 16, fontWeight: '700' },
-    linkText:    { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 28 },
-    linkAccent:  { color: '#00ffff' },
-    backText:    { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 14 },
+    heading:     { fontSize: fontSizes.display, marginBottom: 12 },
+    subText:     { fontSize: fontSizes.body, color: colors.textSecondary, lineHeight: 22, marginBottom: 36 },
+    errorBox:    { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: radius.lg, padding: 14, marginBottom: 24 },
+    errorText:   { color: '#ff8a8a', fontSize: fontSizes.small, textAlign: 'center' },
+    successBox:  { backgroundColor: '#00ffff15', borderWidth: 1, borderColor: colors.accentFaint, borderRadius: radius.lg, padding: 14, marginBottom: 24 },
+    successText: { color: colors.accent, fontSize: fontSizes.small, textAlign: 'center' },
+    button:     { alignSelf: 'center', width: width * 0.86 },
+    linkText:    { fontSize: fontSizes.small, color: colors.textSecondary, alignSelf: 'center', marginTop: 28 },
+    linkAccent:  { color: colors.accent },
+    backText:    { fontSize: fontSizes.small, color: colors.textSecondary, alignSelf: 'center', marginTop: 14 },
 });
 
 export default ConfirmEmail;

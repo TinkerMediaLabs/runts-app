@@ -1,16 +1,17 @@
 import React from 'react';
 import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Text } from '@/components/common/AppText';
 
 import Reveal from '../common/Reveal';
 import ForYouCarousel from '../story/ForYouCarousel';
 import HorizontalList from '../story/HorizontalList';
 import { FeaturedAuthorSection, HandPickedSection } from '../home/HomeSectionView';
 import { SubgenreRow } from '../discover/DiscoverSections';
-import useTypography from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
 import type { TagRow } from '../../lib/tagLayout';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import SectionTitle from '@/components/common/SectionTitle';
+import { spacing } from '../../theme/spacing';
 
 const DEFAULT_TITLES: Record<string, string> = {
   tagTrending: 'Trending this week',
@@ -18,15 +19,6 @@ const DEFAULT_TITLES: Record<string, string> = {
   tagNew: 'New',
   tagShort: 'Short & Sweet',
   tagMoreLike: 'If you like this',
-};
-
-const SectionTitle = ({ text }: { text: string }) => {
-  const typo = useTypography();
-  return (
-    <View style={styles.titleWrap}>
-      <Text style={typo.title} accessibilityRole="header">{text}</Text>
-    </View>
-  );
 };
 
 // Other genres that share many stories with this one, as the same cards the Discover tab uses.
@@ -69,12 +61,11 @@ const TagRowView = ({ row, index, tagMap, relatedTags }: Props) => {
 export default TagRowView;
 
 const styles = StyleSheet.create({
-  titleWrap: { marginLeft: spacing.margin, paddingVertical: spacing.margin },
   chips: { paddingHorizontal: spacing.margin, gap: 10, paddingBottom: 6 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 22,
-    paddingHorizontal: 16, paddingVertical: 10, minHeight: 44, backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 16, paddingVertical: 10, minHeight: 44, backgroundColor: colors.fillFaint,
   },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  chipText: { color: '#fff', fontSize: 14, fontWeight: '600', textTransform: 'capitalize', maxWidth: 160 },
+  chipText: { color: colors.textPrimary, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'capitalize', maxWidth: 160 },
 });

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { isCommentAllowed, COMMENT_REJECTED_MESSAGE } from '../../lib/commentFilter';
 import { successHaptic } from '../../lib/haptics';
 import { useRef } from 'react';
-import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import Button from '@/components/common/Button';
 import { TextInput } from '@/components/common/AppTextInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,8 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
@@ -30,6 +30,10 @@ import { Analytics } from '@/lib/analytics';
 import { unwrap } from '@/lib/amplifyResult';
 
 import { CachedImage } from '../../components/common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 
@@ -280,10 +284,11 @@ const handleSubmit = async () => {
                   accessibilityLabel={`${star} out of 10`}
                   accessibilityState={{ checked: selectedRating === star }}
                 >
-                  <FontAwesome
-                    name={selectedRating !== null && star <= selectedRating ? 'star' : 'star-o'}
-                    size={24}
-                    color="#C9A84C"
+                  <FontAwesome5
+                    name="star"
+                    iconStyle={selectedRating !== null && star <= selectedRating ? 'solid' : 'regular'}
+                    size={iconSize.md}
+                    color={colors.gold}
                   />
                 </TouchableOpacity>
               ))}
@@ -327,7 +332,7 @@ const handleSubmit = async () => {
               ref={commentInputRef}
               style={styles.commentInput}
               placeholder="Share your thoughts… (optional)"
-              placeholderTextColor="rgba(255,255,255,0.55)"
+              placeholderTextColor={colors.textSecondary}
               accessibilityLabel="Comment, optional"
               multiline
               maxLength={500}
@@ -350,7 +355,7 @@ const handleSubmit = async () => {
               >
                 <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
                   {postAnonymously && (
-                    <FontAwesome5 name="check" size={9} color="#000" iconStyle="solid" />
+                    <FontAwesome5 name="check" size={9} color={colors.textOnAccent} iconStyle="solid" />
                   )}
                 </View>
                 <Text style={styles.anonLabel}>Post anonymously</Text>
@@ -372,21 +377,12 @@ const handleSubmit = async () => {
             >
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <Button
+              label="Submit"
+              loading={isSubmitting}
               onPress={handleSubmit}
-              style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
-              activeOpacity={0.8}
-              disabled={isSubmitting}
-              accessibilityRole="button"
-              accessibilityLabel="Submit"
-              accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#000" />
-              ) : (
-                <Text style={styles.submitText}>Submit</Text>
-              )}
-            </TouchableOpacity>
+              style={{ minWidth: 140 }}
+            />
           </View>
 
         </Animated.View>
@@ -409,12 +405,12 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#111',
+    backgroundColor: colors.surface1,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '92%',
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
     overflow: 'hidden',
   },
 
@@ -426,26 +422,26 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.border,
   },
   artwork: {
     width: 56,
     height: 56,
-    borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    borderRadius: radius.md,
+    backgroundColor: colors.surface3,
   },
   finishedLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 4,
   },
   storyTitle: {
-    fontSize: 16,
+    fontSize: fontSizes.body,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     lineHeight: 20,
   },
 
@@ -456,9 +452,9 @@ const styles = StyleSheet.create({
   },
 
   sectionLabel: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 14,
@@ -466,7 +462,7 @@ const styles = StyleSheet.create({
 
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface3,
     marginVertical: 20,
   },
 
@@ -477,11 +473,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   starBtn: {
-    padding: 4,
+    padding: 2,
+    flexShrink: 1,
   },
   ratingHint: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 
@@ -495,10 +492,10 @@ const styles = StyleSheet.create({
     width: EMOJI_BTN_SIZE,
     alignItems: 'center',
     paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: '#1a1a1a',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
     gap: 4,
   },
   emojiBtnSelected: {
@@ -506,36 +503,36 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,255,255,0.6)',
   },
   emoji: {
-    fontSize: 24,
+    fontSize: fontSizes.headline,
   },
   emojiLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
     fontWeight: '500',
     textAlign: 'center',
   },
   emojiLabelSelected: {
-    color: 'cyan',
+    color: colors.accent,
   },
 
   // ── Comment ───────────────────────────────────────────────────────────────
   commentBox: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
+    backgroundColor: colors.surface2,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.border,
     padding: 14,
   },
   commentInput: {
-    color: '#fff',
-    fontSize: 14,
+    color: colors.textPrimary,
+    fontSize: fontSizes.small,
     lineHeight: 20,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   charCount: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.caption,
+    color: colors.textSecondary,
     textAlign: 'right',
     marginTop: 6,
   },
@@ -547,29 +544,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#2a2a2a',
+    borderTopColor: colors.border,
   },
   skipBtn: {
     paddingVertical: 10,
     paddingHorizontal: 20,
   },
   skipText: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.body,
+    color: colors.textSecondary,
     fontWeight: '500',
-  },
-  submitBtn: {
-    backgroundColor: 'cyan',
-    borderRadius: 20,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  submitText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#000',
   },
   anonRow: {
   flexDirection: 'row',
@@ -582,16 +566,16 @@ anonCheckbox: {
   height: 18,
   borderRadius: 4,
   borderWidth: 1.5,
-  borderColor: 'rgba(255,255,255,0.25)',
+  borderColor: colors.border,
   alignItems: 'center',
   justifyContent: 'center',
 },
 anonCheckboxActive: {
-  backgroundColor: 'cyan',
-  borderColor: 'cyan',
+  backgroundColor: colors.accent,
+  borderColor: colors.accent,
 },
 anonLabel: {
-  fontSize: 13,
-  color: 'rgba(255,255,255,0.55)',
+  fontSize: fontSizes.small,
+  color: colors.textSecondary,
 },
 });

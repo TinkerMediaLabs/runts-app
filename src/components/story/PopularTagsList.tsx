@@ -7,6 +7,10 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/types/types';
 import { Analytics } from '@/lib/analytics';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const VISIBLE_COUNT = 10;
 
@@ -105,8 +109,8 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
                     <Animated.View style={{ transform: [{ rotate: spin }] }}>
                         <FontAwesome5
                             name={'sync-alt' as any}
-                            size={12}
-                            color="cyan"
+                            size={iconSize.xs}
+                            color={colors.accent}
                             iconStyle="solid"
                         />
                     </Animated.View>
@@ -151,14 +155,14 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     title: {
-        fontSize:   18,
+        fontSize:   fontSizes.subtitle,
         fontWeight: 'bold',
-        color:      '#fff',
+        color:      colors.textPrimary,
         marginBottom: 20,
     },
     subtitle: {
-        fontSize: 12,
-        color:    'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.caption,
+        color:    colors.textSecondary,
     },
     refreshBtn: {
         flexDirection:     'row',
@@ -166,15 +170,15 @@ const styles = StyleSheet.create({
         gap:               6,
         paddingHorizontal: 12,
         paddingVertical:   7,
-        borderRadius:      20,
+        borderRadius:      radius.xl,
         backgroundColor:   'rgba(0,255,255,0.07)',
         borderWidth:       StyleSheet.hairlineWidth,
         borderColor:       'rgba(0,255,255,0.25)',
     },
     refreshText: {
-        fontSize:   12,
+        fontSize:   fontSizes.caption,
         fontWeight: '600',
-        color:      'cyan',
+        color:      colors.accent,
     },
 
     // ── Chips ─────────────────────────────────────────────────────────────────
@@ -186,14 +190,14 @@ const styles = StyleSheet.create({
     chip: {
         paddingHorizontal: 14,
         paddingVertical:   7,
-        borderRadius:      20,
-        backgroundColor:   'rgba(255,255,255,0.05)',
+        borderRadius:      radius.xl,
+        backgroundColor:   colors.fillFaint,
         borderWidth:       StyleSheet.hairlineWidth,
-        borderColor:       'rgba(255,255,255,0.15)',
+        borderColor:       colors.border,
     },
     chipText: {
-        fontSize:   13,
-        color:      'rgba(255,255,255,0.6)',
+        fontSize:   fontSizes.small,
+        color:      colors.textSecondary,
         fontWeight: '500',
     },
 });

@@ -19,6 +19,9 @@ import useStyles from '../../theme/authStyles';
 
 import { signInWithGoogle as googleSignIn, signInWithApple as appleSignIn } from '../../services/auth';
 import { signInWithRedirect } from 'aws-amplify/auth';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const { width, height } = Dimensions.get('window');
 
@@ -92,7 +95,7 @@ const SignIn = ({ navigation }: any) => {
             >
                 {signingIn ? (
                     <Animated.View entering={FadeIn.duration(300)}>
-                        <ActivityIndicator size="small" color="cyan" />
+                        <ActivityIndicator size="small" color={colors.accent} />
                     </Animated.View>
                 ) : (
                     <View
@@ -141,7 +144,7 @@ const SignIn = ({ navigation }: any) => {
                                         backgroundColor: '#ff444415',
                                         borderWidth: 1,
                                         borderColor: '#ff444440',
-                                        borderRadius: 18,
+                                        borderRadius: radius.xl,
                                         padding: 14,
                                         marginBottom: 16,
                                     }}
@@ -149,7 +152,7 @@ const SignIn = ({ navigation }: any) => {
                                     <Text
                                         style={{
                                             color: '#ff8a8a',
-                                            fontSize: 13,
+                                            fontSize: fontSizes.small,
                                             textAlign: 'center',
                                         }}
                                     >
@@ -179,8 +182,8 @@ const SignIn = ({ navigation }: any) => {
                                             {
                                                 marginVertical: 10,
                                                 justifyContent: 'center',
-                                                backgroundColor: '#00ffff',
-                                                borderRadius: 18,
+                                                backgroundColor: colors.accent,
+                                                borderRadius: radius.xl,
                                                 opacity: 0.8,
                                             },
                                         ]}
@@ -199,7 +202,7 @@ const SignIn = ({ navigation }: any) => {
                                                 styles.socialbuttontext,
                                                 {
                                                     width: width * 0.62,
-                                                    color: '#000',
+                                                    color: colors.textOnAccent,
                                                     fontWeight: '700',
                                                 },
                                             ]}
@@ -231,7 +234,7 @@ const SignIn = ({ navigation }: any) => {
                                             {
                                                 marginVertical: 10,
                                                 justifyContent: 'center',
-                                                borderRadius: 18,
+                                                borderRadius: radius.xl,
                                             },
                                         ]}
                                     >
@@ -270,11 +273,11 @@ const SignIn = ({ navigation }: any) => {
                                             styles.socialbuttonlayout,
                                             {
                                                 marginVertical: 10,
-                                                backgroundColor: '#000',
+                                                backgroundColor: colors.surface0,
                                                 borderWidth: 1,
                                                 borderColor: '#ffffff22',
                                                 justifyContent: 'center',
-                                                borderRadius: 18,
+                                                borderRadius: radius.xl,
                                             },
                                         ]}
                                     >
@@ -290,7 +293,7 @@ const SignIn = ({ navigation }: any) => {
                                             style={[
                                                 styles.socialbuttontext,
                                                 {
-                                                    backgroundColor: '#000',
+                                                    backgroundColor: colors.surface0,
                                                 },
                                             ]}
                                         >
@@ -315,8 +318,8 @@ const SignIn = ({ navigation }: any) => {
                             >
                                 <Text
                                     style={{
-                                        color: 'rgba(255,255,255,0.55)',
-                                        fontSize: 12,
+                                        color: colors.textSecondary,
+                                        fontSize: fontSizes.caption,
                                         textAlign: 'center',
                                         lineHeight: 18,
                                         paddingHorizontal: 10,
@@ -325,7 +328,7 @@ const SignIn = ({ navigation }: any) => {
                                     By continuing, you agree to our{' '}
                                     <Text
                                         accessibilityRole="link"
-                                        style={{ color: 'cyan', textDecorationLine: 'underline' }}
+                                        style={{ color: colors.accent, textDecorationLine: 'underline' }}
                                         onPress={() => Linking.openURL(TERMS_URL)}
                                     >
                                         Terms of Use
@@ -333,7 +336,7 @@ const SignIn = ({ navigation }: any) => {
                                     {' '}and{' '}
                                     <Text
                                         accessibilityRole="link"
-                                        style={{ color: 'cyan', textDecorationLine: 'underline' }}
+                                        style={{ color: colors.accent, textDecorationLine: 'underline' }}
                                         onPress={() => Linking.openURL(PRIVACY_URL)}
                                     >
                                         Privacy Policy
@@ -363,7 +366,7 @@ const SignIn = ({ navigation }: any) => {
                                         style={[
                                             styles.paragraph,
                                             {
-                                                color: '#ffffff88',
+                                                color: colors.textSecondary,
                                             },
                                         ]}
                                     >
@@ -383,7 +386,7 @@ const SignIn = ({ navigation }: any) => {
                                         style={[
                                             styles.paragraph,
                                             {
-                                                color: '#ffffff88',
+                                                color: colors.textSecondary,
                                             },
                                         ]}
                                     >

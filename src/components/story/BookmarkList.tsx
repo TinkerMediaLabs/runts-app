@@ -11,6 +11,8 @@ import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames } from '../../hooks/queries/useTagNames';
 import { usePlayer }       from '../../context/PlayerContext';
 import { useStoryImage }   from '../../hooks/queries/useStoryImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -66,7 +68,7 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="cyan" />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -91,16 +93,16 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="cyan" />
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} />
       }
       ListFooterComponent={
         isFetchingNextPage
-          ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+          ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
           : null
       }
       ListEmptyComponent={
         <EmptyState
-          icon={<FontAwesome5 name={'bookmark' as any} size={40} color="#ffffff80" iconStyle="solid" />}
+          icon={<FontAwesome5 name={'bookmark' as any} size={40} color={colors.textSecondary} iconStyle="solid" />}
           title="Save your place"
           body="While a story plays, tap the bookmark icon to mark a moment. Come back here to jump straight to it."
         />
@@ -127,13 +129,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.subtitle,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
   },
   emptySub: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

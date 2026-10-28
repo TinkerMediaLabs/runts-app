@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, TouchableWithoutFeedback, ActivityIndicator, ScrollView, Modal, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, Image, Linking } from 'react-native';
+import { View, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Modal, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, Image, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
@@ -10,6 +10,9 @@ import Constants from 'expo-constants';
 
 import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
+import { colors } from '../../theme/colors';
+import { fields } from '../../theme/fields';
+import Button from '../../components/common/Button';
 
 import { useApp } from '@/context/AppContext';
 import { spacing } from '../../theme/spacing';
@@ -23,6 +26,9 @@ import {
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -88,8 +94,8 @@ const SettingRow = ({
                 ) : (
                     <FontAwesome5
                         name={icon}
-                        size={14}
-                        color={'#ffffffa5'}
+                        size={iconSize.sm}
+                        color={colors.textSecondary}
                         iconStyle="solid"
                     />
                 )}
@@ -110,8 +116,8 @@ const SettingRow = ({
             {chevron && onPress && (
                 <FontAwesome5
                     name="chevron-right"
-                    size={11}
-                    color="#ffffff80"
+                    size={iconSize.xs}
+                    color={colors.textSecondary}
                     iconStyle="solid"
                 />
             )}
@@ -161,7 +167,7 @@ const Sheet = ({
                     <View style={styles.sheetHeader}>
                         <Text style={styles.sheetTitle}>{title}</Text>
                         <TouchableOpacity onPress={onClose} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel={`Close ${title}`}>
-                            <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
+                            <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
                         </TouchableOpacity>
                     </View>
                     {children}
@@ -190,16 +196,14 @@ const PasswordField = ({
                 <TextInput
                     style={{
                         flex: 1,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        fontSize: 15,
-                        color: '#fff',
+                        paddingHorizontal: 16,
+                        ...fields.text,
                     }}
                     value={value}
                     onChangeText={onChange}
                     placeholder={placeholder ?? ''}
                     accessibilityLabel={label}
-                    placeholderTextColor="#ffffff8c"
+                    placeholderTextColor={colors.textSecondary}
                     secureTextEntry={hidden}
                     maxLength={32}
                     autoCapitalize="none"
@@ -207,8 +211,8 @@ const PasswordField = ({
                 <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                     <FontAwesome5
                         name={hidden ? 'eye-slash' : 'eye'}
-                        size={14}
-                        color="#ffffffa5"
+                        size={iconSize.sm}
+                        color={colors.textSecondary}
                         iconStyle="solid"
                     />
                 </TouchableOpacity>
@@ -230,46 +234,33 @@ const ActionButton = ({
     destructive?: boolean;
     disabled?: boolean;
 }) => (
-    <TouchableOpacity
-        activeOpacity={0.8}
+    <Button
+        label={label}
         onPress={onPress}
-        disabled={disabled || loading}
-        accessibilityRole="button"
-        accessibilityLabel={loading ? `${label}, loading` : label}
-        accessibilityState={{ disabled: disabled || loading, busy: loading }}
-        style={[
-            styles.actionButton,
-            destructive && styles.actionButtonDestructive,
-            (disabled || loading) && styles.actionButtonDisabled,
-        ]}
-    >
-        {loading ? (
-            <ActivityIndicator size="small" color={destructive ? '#fff' : '#000'} />
-        ) : (
-            <Text style={[styles.actionButtonText, destructive && styles.actionButtonTextDestructive]}>
-                {label}
-            </Text>
-        )}
-    </TouchableOpacity>
+        loading={loading}
+        disabled={disabled}
+        variant={destructive ? 'danger' : 'primary'}
+        style={{ marginTop: 4 }}
+    />
 );
 
 const SuccessBanner = ({ message }: { message: string }) => (
     <View style={styles.successBanner} accessibilityLiveRegion="polite">
-        <FontAwesome5 name="check-circle" size={14} color="#00ffff" iconStyle="solid" />
+        <FontAwesome5 name="check-circle" size={iconSize.sm} color={colors.accent} iconStyle="solid" />
         <Text style={styles.successBannerText}>{message}</Text>
     </View>
 );
 
 const ErrorBanner = ({ message }: { message: string }) => (
     <View style={styles.dangerBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-        <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
+        <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
         <Text style={styles.dangerBannerText}>{message}</Text>
     </View>
 );
 
 const InfoBanner = ({ message }: { message: string }) => (
     <View style={styles.infoBanner}>
-        <FontAwesome5 name="info-circle" size={14} color="#ffffff88" iconStyle="solid" />
+        <FontAwesome5 name="info-circle" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
         <Text style={styles.infoBannerText}>{message}</Text>
     </View>
 );
@@ -587,12 +578,12 @@ const AccountScreen = ({ navigation }: any) => {
                 {success ? <SuccessBanner message={success} /> : null}
                 <Text style={styles.fieldLabel}>New name</Text>
                 <TextInput
-                    style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                    style={[styles.input, { marginBottom: 24, color: colors.textPrimary }]}
                     value={name}
                     onChangeText={setName}
                     placeholder="Your display name"
                     accessibilityLabel="New display name"
-                    placeholderTextColor="#ffffff8c"
+                    placeholderTextColor={colors.textSecondary}
                     maxLength={30}
                     autoCapitalize="words"
                 />
@@ -620,12 +611,12 @@ const AccountScreen = ({ navigation }: any) => {
                         </Text>
                         <Text style={styles.fieldLabel}>New email</Text>
                         <TextInput
-                            style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                            style={[styles.input, { marginBottom: 24, color: colors.textPrimary }]}
                             value={email}
                             onChangeText={setEmail}
                             placeholder="new@email.com"
                             accessibilityLabel="New email address"
-                            placeholderTextColor="#ffffff8c"
+                            placeholderTextColor={colors.textSecondary}
                             maxLength={60}
                             keyboardType="email-address"
                             autoCapitalize="none"
@@ -641,16 +632,16 @@ const AccountScreen = ({ navigation }: any) => {
                     <>
                         <Text style={styles.sheetNote}>
                             Enter the verification code sent to{' '}
-                            <Text style={{ color: '#00ffff' }}>{email}</Text>
+                            <Text style={{ color: colors.accent }}>{email}</Text>
                         </Text>
                         <Text style={styles.fieldLabel}>Verification code</Text>
                         <TextInput
-                            style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                            style={[styles.input, { marginBottom: 24, color: colors.textPrimary }]}
                             value={emailCode}
                             onChangeText={setEmailCode}
                             placeholder="000000"
                             accessibilityLabel="Verification code"
-                            placeholderTextColor="#ffffff8c"
+                            placeholderTextColor={colors.textSecondary}
                             maxLength={6}
                             keyboardType="number-pad"
                             autoCapitalize="none"
@@ -661,19 +652,18 @@ const AccountScreen = ({ navigation }: any) => {
                             loading={isLoading}
                             disabled={emailCode.trim().length === 0}
                         />
-                        <TouchableOpacity
+                        <Button
+                            label="← Back"
+                            variant="text"
+                            accessibilityLabel="Back"
+                            style={{ marginTop: 8 }}
                             onPress={() => {
                                 setEmailStep('input');
                                 setEmailCode('');
                                 setError('');
                                 setSuccess('');
                             }}
-                            style={styles.cancelButton}
-                            accessibilityRole="button"
-                            accessibilityLabel="Back"
-                        >
-                            <Text style={styles.cancelText}>← Back</Text>
-                        </TouchableOpacity>
+                        />
                     </>
                 )}
             </Sheet>
@@ -719,15 +709,13 @@ const AccountScreen = ({ navigation }: any) => {
                     onPress={handleSignOut}
                     loading={isLoading}
                 />
-                <TouchableOpacity onPress={close} style={styles.cancelButton} accessibilityRole="button" accessibilityLabel="Cancel">
-                    <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
+                <Button label="Cancel" variant="text" onPress={close} style={{ marginTop: 8 }} />
             </Sheet>
 
             {/* ── Delete Account sheet ── */}
             <Sheet visible={activeModal === 'delete'} onClose={close} title="Delete Account">
                 <View style={styles.dangerBanner}>
-                    <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
+                    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
                     <Text style={styles.dangerBannerText}>
                         This action is permanent and cannot be undone. All account data will be removed.
                     </Text>
@@ -743,12 +731,12 @@ const AccountScreen = ({ navigation }: any) => {
                     Type <Text style={{ color: '#ff4444bf' }}>delete</Text> to confirm
                 </Text>
                 <TextInput
-                    style={[styles.input, { marginBottom: 24, color: '#fff', borderColor: deleteConfirm.toLowerCase() === 'delete' ? '#ff4444' : '#333' }]}
+                    style={[styles.input, { marginBottom: 24, color: colors.textPrimary, borderColor: deleteConfirm.toLowerCase() === 'delete' ? '#ff4444' : colors.border }]}
                     value={deleteConfirm}
                     onChangeText={setDeleteConfirm}
                     placeholder="delete"
                     accessibilityLabel="Type delete to confirm"
-                    placeholderTextColor="#ffffff8c"
+                    placeholderTextColor={colors.textSecondary}
                     autoCapitalize="none"
                 />
                 <ActionButton
@@ -758,9 +746,7 @@ const AccountScreen = ({ navigation }: any) => {
                     destructive
                     disabled={deleteConfirm.toLowerCase() !== 'delete'}
                 />
-                <TouchableOpacity onPress={close} style={styles.cancelButton} accessibilityRole="button" accessibilityLabel="Cancel">
-                    <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
+                <Button label="Cancel" variant="text" onPress={close} style={{ marginTop: 8 }} />
             </Sheet>
 
         </Screen>
@@ -783,19 +769,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         marginBottom: 10,
         marginLeft: 4,
     },
     sectionCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
 
@@ -815,22 +801,22 @@ const styles = StyleSheet.create({
     rowIcon: {
         width: 30,
         height: 30,
-        borderRadius: 8,
-        backgroundColor: '#2a2a2a',
+        borderRadius: radius.sm,
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     rowIconDestructive: {
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
     },
     rowLabel: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: fontSizes.body,
+        color: colors.textPrimary,
         fontWeight: '500',
     },
     rowLabelDestructive: {
-        color: '#ffffffa5',
+        color: colors.textSecondary,
     },
     rowRight: {
         flexDirection: 'row',
@@ -839,12 +825,12 @@ const styles = StyleSheet.create({
         maxWidth: width * 0.4,
     },
     rowValue: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
     },
     divider: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginLeft: 58,
     },
 
@@ -853,13 +839,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#00ffff18',
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: '#00ffff40',
+        borderColor: colors.accentFaint,
         paddingHorizontal: 8,
         paddingVertical: 3,
     },
     badgeText: {
-        color: '#00ffff',
-        fontSize: 12,
+        color: colors.accent,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
     },
 
@@ -873,14 +859,14 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     sheet: {
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 24,
         paddingTop: 12,
         borderWidth: 1,
         borderBottomWidth: 0,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
     },
     sheetHandle: {
         width: 36,
@@ -897,85 +883,47 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     sheetTitle: {
-        fontSize: 18,
+        fontSize: fontSizes.subtitle,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     sheetNote: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 20,
         marginBottom: 20,
     },
 
     // ── Form fields ───────────────────────────────────────────────────────────
     fieldLabel: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         letterSpacing: 0.5,
         marginBottom: 8,
     },
     inputRow: {
+        ...fields.box,
+        paddingHorizontal: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1e1e1e',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#333',
     },
     input: {
-        backgroundColor: '#1e1e1e',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#333',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        fontSize: 15,
-        color: '#fff',
+        ...fields.box,
+        ...fields.text,
     },
     inputEye: {
         paddingHorizontal: 14,
     },
 
     // ── Buttons ───────────────────────────────────────────────────────────────
-    actionButton: {
-        backgroundColor: 'cyan',
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 4,
-    },
-    actionButtonDestructive: {
-        backgroundColor: '#cc2222',
-    },
-    actionButtonDisabled: {
-        opacity: 0.4,
-    },
-    actionButtonText: {
-        color: '#000',
-        fontSize: 15,
-        fontWeight: '700',
-    },
-    actionButtonTextDestructive: {
-        color: '#fff',
-    },
-    cancelButton: {
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    cancelText: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 14,
-    },
 
     // ── Notices ───────────────────────────────────────────────────────────────
     dangerBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: '#2d1111',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 1,
         borderColor: '#ff444440',
         padding: 12,
@@ -984,7 +932,7 @@ const styles = StyleSheet.create({
     },
     dangerBannerText: {
         flex: 1,
-        fontSize: 13,
+        fontSize: fontSizes.small,
         color: '#ff8888',
         lineHeight: 19,
     },
@@ -992,24 +940,24 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: '#00ffff12',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: '#00ffff40',
+        borderColor: colors.accentFaint,
         padding: 12,
         marginBottom: 24,
         gap: 10,
     },
     successBannerText: {
         flex: 1,
-        fontSize: 13,
-        color: '#00ffff',
+        fontSize: fontSizes.small,
+        color: colors.accent,
         lineHeight: 19,
     },
     infoBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: '#ffffff08',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 1,
         borderColor: '#ffffff20',
         padding: 12,
@@ -1018,16 +966,16 @@ const styles = StyleSheet.create({
     },
     infoBannerText: {
         flex: 1,
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 19,
     },
 
     // ── Footer ────────────────────────────────────────────────────────────────
     version: {
         textAlign: 'center',
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 12,
+        color: colors.textSecondary,
+        fontSize: fontSizes.caption,
         marginTop: 40,
     },
 });

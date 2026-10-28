@@ -5,8 +5,12 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, useSharedValue, useAnimatedStyl
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import useStyles from '../../theme/authStyles';
+import Button from '@/components/common/Button';
 import { TextField } from '../../components/common/AuthInput';
 import { sendPasswordResetCode } from '../../services/auth';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const { width, height } = Dimensions.get('window');
 
@@ -65,12 +69,10 @@ const ForgotPassword = ({ navigation }: any) => {
                                 <TextField label="Email" value={email} onChangeText={setEmail} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} mb={32} />
                             </Animated.View>
 
-                            {loading ? <ActivityIndicator size="small" color="#00ffff" /> : (
+                            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : (
                                 <Animated.View entering={FadeInUp.delay(300).duration(700)}>
                                 <Animated.View style={buttonAnimatedStyle}>
-                                    <TouchableOpacity accessibilityRole="button" activeOpacity={0.9} onPress={handleForgotPassword}>
-                                        <View style={[styles.buttonlayout, s.button]}><Text style={[styles.buttontext, s.buttonText]}>Send Reset Code</Text></View>
-                                    </TouchableOpacity>
+                                    <Button label="Send Reset Code" onPress={handleForgotPassword} glow style={s.button} />
                                 </Animated.View>
                                 </Animated.View>
                             )}
@@ -93,13 +95,12 @@ const ForgotPassword = ({ navigation }: any) => {
 
 const s = StyleSheet.create({
     scroll:     { minHeight: height, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
-    heading:    { fontSize: 34, marginBottom: 12 },
-    subText:    { fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 22, marginBottom: 36 },
-    errorBox:   { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: 14, padding: 14, marginBottom: 24 },
-    errorText:  { color: '#ff8a8a', fontSize: 13, textAlign: 'center' },
-    button:     { alignSelf: 'center', width: width * 0.86, borderRadius: 22, backgroundColor: '#00ffff', shadowColor: '#00ffff', shadowOpacity: 0.3, shadowRadius: 18, elevation: 8 },
-    buttonText: { width: '100%', fontSize: 16, fontWeight: '700' },
-    backText:   { fontSize: 14, color: 'rgba(255,255,255,0.55)', alignSelf: 'center', marginTop: 32 },
+    heading:    { fontSize: fontSizes.display, marginBottom: 12 },
+    subText:    { fontSize: fontSizes.body, color: colors.textSecondary, lineHeight: 22, marginBottom: 36 },
+    errorBox:   { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: radius.lg, padding: 14, marginBottom: 24 },
+    errorText:  { color: '#ff8a8a', fontSize: fontSizes.small, textAlign: 'center' },
+    button:     { alignSelf: 'center', width: width * 0.86 },
+    backText:   { fontSize: fontSizes.small, color: colors.textSecondary, alignSelf: 'center', marginTop: 32 },
 });
 
 export default ForgotPassword;

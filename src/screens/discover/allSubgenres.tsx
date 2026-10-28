@@ -1,22 +1,22 @@
 import React, { useMemo, useRef, useCallback } from 'react';
 import { View, SectionList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Screen from '@/components/common/Screen';
-import useTypography from '../../theme/typography';
+import ScreenHeader from '@/components/common/ScreenHeader';
 import { spacing } from '../../theme/spacing';
 import { useSubgenreIndex } from '../../hooks/queries/useDiscover';
 import { groupByLetter, type ListedTag } from '../../lib/discoverTags';
 import { Analytics } from '@/lib/analytics';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 // Every subgenre that has live stories, in alphabetical sections with a letter strip down the side. Loads more as
 // you scroll; tapping a letter jumps to it when that part of the list is loaded.
 const AllSubgenresScreen = () => {
   const navigation = useNavigation<any>();
-  const typo = useTypography();
   const insets = useSafeAreaInsets();
   const listRef = useRef<SectionList<ListedTag>>(null);
   const q = useSubgenreIndex();
@@ -42,17 +42,11 @@ const AllSubgenresScreen = () => {
 
   return (
     <Screen>
-      <View style={{ flex: 1, backgroundColor: '#000' }}>
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()}
-            accessibilityRole="button" accessibilityLabel="Go back" style={styles.back} activeOpacity={0.7}>
-            <FontAwesome5 name="chevron-left" size={18} color="#fff" iconStyle="solid" />
-          </TouchableOpacity>
-          <Text style={typo.title} accessibilityRole="header">All subgenres</Text>
-        </View>
+      <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
+        <ScreenHeader title="All subgenres" />
 
         {q.isLoading ? (
-          <View style={styles.center}><ActivityIndicator color="cyan" /></View>
+          <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
         ) : items.length === 0 ? (
           <View style={styles.center}><Text style={styles.empty}>No subgenres yet</Text></View>
         ) : (
@@ -69,7 +63,7 @@ const AllSubgenresScreen = () => {
               onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage(); }}
               onEndReachedThreshold={0.6}
               onScrollToIndexFailed={() => {}}
-              ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color="cyan" style={{ margin: 20 }} /> : <View style={{ height: 40 }} />}
+              ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={colors.accent} style={{ margin: 20 }} /> : <View style={{ height: 40 }} />}
               contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingRight: 28 }}
               showsVerticalScrollIndicator={false}
             />
@@ -89,20 +83,18 @@ const AllSubgenresScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: spacing.margin, paddingBottom: 12 },
-  back: { padding: 4 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty: { color: 'rgba(255,255,255,0.6)', fontSize: 15 },
-  sectionHeader: { backgroundColor: '#000', paddingHorizontal: spacing.margin, paddingVertical: 6 },
-  sectionLetter: { color: 'cyan', fontSize: 14, fontWeight: '700' },
+  empty: { color: colors.textSecondary, fontSize: fontSizes.body },
+  sectionHeader: { backgroundColor: colors.surface0, paddingHorizontal: spacing.margin, paddingVertical: 6 },
+  sectionLetter: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '700' },
   row: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 13, minHeight: 48, paddingHorizontal: spacing.margin,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderSubtle,
   },
-  name: { flex: 1, color: '#fff', fontSize: 16 },
-  count: { color: 'rgba(255,255,255,0.45)', fontSize: 13, marginLeft: 12 },
+  name: { flex: 1, color: colors.textPrimary, fontSize: fontSizes.body },
+  count: { color: colors.textTertiary, fontSize: fontSizes.small, marginLeft: 12 },
   strip: { position: 'absolute', right: 4, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', width: 24 },
-  stripLetter: { color: 'cyan', fontSize: 11, fontWeight: '700', paddingVertical: 1.5, paddingHorizontal: 4 },  // hidden from screen readers: sections have headers
+  stripLetter: { color: colors.accent, fontSize: fontSizes.micro, fontWeight: '700', paddingVertical: 1.5, paddingHorizontal: 4 },  // hidden from screen readers: sections have headers
 });
 
 export default AllSubgenresScreen;

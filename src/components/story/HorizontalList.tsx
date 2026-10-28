@@ -9,6 +9,9 @@ import { RootStackParamList } from '../../types/types';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import HorzStoryTile from './HorizontalTile';
 import { spacing } from '../../theme/spacing';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const CARD_WIDTH    = 200;
 const CARD_MARGIN   = spacing.margin;
@@ -43,7 +46,7 @@ const HorizontalList = ({ stories, tagId, tagName, showSeeMore }: HorizontalList
             <View style={styles.seeMoreBubble}>
                 <FontAwesome5
                     name="chevron-right"
-                    size={20}
+                    size={iconSize.md}
                     color="#888"
                     iconStyle="solid"
                 />
@@ -104,13 +107,13 @@ const styles = StyleSheet.create({
         width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 6,
     },
     seeMoreText: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '500',
         color: '#888',
         textAlign: 'center',
