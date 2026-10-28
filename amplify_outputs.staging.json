@@ -28,10 +28,14 @@
         "GOOGLE"
       ],
       "redirect_sign_in_uri": [
-        "runts://callback"
+        "runts://callback",
+        "runts-dev://callback",
+        "runts-staging://callback"
       ],
       "redirect_sign_out_uri": [
-        "runts://signout"
+        "runts://signout",
+        "runts-dev://signout",
+        "runts-staging://signout"
       ],
       "response_type": "code",
       "scopes": [
@@ -3345,6 +3349,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "tagType": {
+              "name": "tagType",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
             "stories": {
               "name": "stories",
               "isArray": true,
@@ -4140,6 +4151,22 @@
               "isRequired": false,
               "attributes": []
             },
+            "tagIds": {
+              "name": "tagIds",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "hideTagIds": {
+              "name": "hideTagIds",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
             "createdAt": {
               "name": "createdAt",
               "isArray": false,
@@ -4376,6 +4403,207 @@
               "properties": {
                 "fields": [
                   "id"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "groupClaim": "cognito:groups",
+                    "provider": "userPools",
+                    "allow": "groups",
+                    "operations": [
+                      "read"
+                    ],
+                    "groups": [
+                      "admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "TagInsight": {
+          "name": "TagInsight",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "liveCount": {
+              "name": "liveCount",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "relatedTagIds": {
+              "name": "relatedTagIds",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "relatedCounts": {
+              "name": "relatedCounts",
+              "isArray": true,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "sharedJson": {
+              "name": "sharedJson",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "computedAt": {
+              "name": "computedAt",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "trendingStoryIds": {
+              "name": "trendingStoryIds",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "trendingCounts": {
+              "name": "trendingCounts",
+              "isArray": true,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "trendingAt": {
+              "name": "trendingAt",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "name": {
+              "name": "name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "nameLower": {
+              "name": "nameLower",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "listFlag": {
+              "name": "listFlag",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "listens7": {
+              "name": "listens7",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "listens7At": {
+              "name": "listens7At",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "TagInsights",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "fields": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byListName",
+                "queryField": "listTagInsightByListFlagAndNameLower",
+                "fields": [
+                  "listFlag",
+                  "nameLower"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byListListens",
+                "queryField": "listTagInsightByListFlagAndListens7",
+                "fields": [
+                  "listFlag",
+                  "listens7"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "byListCount",
+                "queryField": "listTagInsightByListFlagAndLiveCount",
+                "fields": [
+                  "listFlag",
+                  "liveCount"
                 ]
               }
             },
@@ -4714,6 +4942,12 @@
               "isRequired": true
             }
           }
+        },
+        "deleteMyAccount": {
+          "name": "deleteMyAccount",
+          "isArray": false,
+          "type": "Boolean",
+          "isRequired": false
         }
       }
     }

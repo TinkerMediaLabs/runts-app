@@ -14,6 +14,7 @@ import {
 } from 'aws-amplify/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
+import { rememberSignInMethod } from '../lib/signInMethod';
 import { decodeAppleClaims, makeNonce, makeThrowawayPassword, fullNameOf } from '../lib/appleSignIn';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { generateClient } from 'aws-amplify/data';
@@ -78,6 +79,7 @@ export async function signInWithApple() {
     challengeResponse: JSON.stringify({ identityToken: cred.identityToken, authorizationCode: cred.authorizationCode, nonce }),
   });
   if (!done.isSignedIn) throw new Error('Apple sign-in was not completed.');
+  await rememberSignInMethod('apple');
 }
 
 // ─── SIGN UP ────────────────────────────────────────────
@@ -118,6 +120,7 @@ export async function loginUser(email: string, password: string) {
         throw error;
     }
     
+    if (result.isSignedIn) await rememberSignInMethod('email');
     return result;
 }
 

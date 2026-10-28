@@ -22,7 +22,11 @@ import {
     confirmUserAttribute,
     updatePassword,
     fetchAuthSession,
+    fetchUserAttributes,
 } from 'aws-amplify/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendPasswordResetCode, confirmNewPassword } from '../../services/auth';
+import { SIGN_IN_METHOD_KEY } from '../../lib/signInMethod';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
@@ -43,6 +47,7 @@ type ModalType =
     | 'name'
     | 'email'
     | 'password'
+    | 'setPassword'
     | 'signout'
     | 'delete'
     | null;
@@ -275,6 +280,7 @@ const AccountScreen = ({ navigation }: any) => {
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
+    const [accountEmail, setAccountEmail] = useState('');
 
     useEffect(() => {
         async function detectProvider() {
@@ -288,6 +294,7 @@ const AccountScreen = ({ navigation }: any) => {
 
                 if (identities && Array.isArray(identities) && identities.length > 0) {
                     const providerType = identities[0].providerType?.toLowerCase();
+                    fetchUserAttributes().then(a => setAccountEmail(a.email ?? '')).catch(() => {});
                     if (providerType === 'google') {
                         setAuthProvider('google');
                     } else if (providerType === 'signinwithapple') {
@@ -296,7 +303,10 @@ const AccountScreen = ({ navigation }: any) => {
                         setAuthProvider('email');
                     }
                 } else {
-                    setAuthProvider('email');
+                    // Sign in with Apple (native) leaves no provider in the token, so the app remembers it.
+                    const method = await AsyncStorage.getItem(SIGN_IN_METHOD_KEY).catch(() => null);
+                    setAuthProvider(method === 'apple' ? 'apple' : 'email');
+                    fetchUserAttributes().then(a => setAccountEmail(a.email ?? '')).catch(() => {});
                 }
             } catch (err) {
                 console.log('Provider detection error:', err);
@@ -321,6 +331,8 @@ const AccountScreen = ({ navigation }: any) => {
         setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        setSetPasswordStep('send');
+        setSetPasswordCode('');
         setDeleteConfirm('');
         setError('');
         setSuccess('');
@@ -335,6 +347,8 @@ const AccountScreen = ({ navigation }: any) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [oldPassword, setOldPassword]         = useState('');
     const [deleteConfirm, setDeleteConfirm]     = useState('');
+    const [setPasswordStep, setSetPasswordStep] = useState<'send' | 'verify'>('send');
+    const [setPasswordCode, setSetPasswordCode] = useState('');
 
     // ── Loading / feedback ────────────────────────────────────────────────────
     const [isLoading, setIsLoading] = useState(false);
@@ -441,6 +455,43 @@ const AccountScreen = ({ navigation }: any) => {
         setIsLoading(false);
     };
 
+    // ── Set a password (Apple and Google accounts) ─────────────────────────────
+    // These accounts have no password the person knows. A code is emailed, then they choose one, which lets them
+    // sign in with email and password on any device (for example after moving to Android).
+    const handleSendSetPasswordCode = async () => {
+        if (!accountEmail) { setError('We could not find your email address. Please try again later.'); return; }
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await sendPasswordResetCode(accountEmail);
+            setSetPasswordStep('verify');
+            setSuccess('A code has been sent to your email address.');
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Could not send the code. Please try again.');
+        }
+        setIsLoading(false);
+    };
+
+    const handleConfirmSetPassword = async () => {
+        if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return; }
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await confirmNewPassword(accountEmail, setPasswordCode.trim(), newPassword);
+            setSuccess('Your password is set. You can now sign in with your email and password on any device.');
+            setNewPassword('');
+            setConfirmPassword('');
+            setSetPasswordCode('');
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Invalid code or password. Please try again.');
+        }
+        setIsLoading(false);
+    };
+
     // ── Sign Out ──────────────────────────────────────────────────────────────
     const handleSignOut = async () => {
         setIsLoading(true);
@@ -525,16 +576,22 @@ const AccountScreen = ({ navigation }: any) => {
                         />
                     </Section>
 
-                    {/* ── Security — only for email users ── */}
-                    {!isSocialUser && (
-                        <Section title="Security">
+                    {/* ── Security — change password, or set one for Apple and Google accounts ── */}
+                    <Section title="Security">
+                        {isSocialUser ? (
+                            <SettingRow
+                                icon="key"
+                                label="Set a Password"
+                                onPress={() => open('setPassword')}
+                            />
+                        ) : (
                             <SettingRow
                                 icon="lock"
                                 label="Change Password"
                                 onPress={() => open('password')}
                             />
-                        </Section>
-                    )}
+                        )}
+                    </Section>
 
                     {/* ── Connected account — only for social users ── */}
                     {isSocialUser && (
@@ -696,6 +753,44 @@ const AccountScreen = ({ navigation }: any) => {
                     loading={isLoading}
                     disabled={oldPassword.length < 6 || newPassword.length < 6 || confirmPassword.length < 6}
                 />
+            </Sheet>
+
+            {/* ── Set a Password sheet — Apple and Google accounts ── */}
+            <Sheet visible={activeModal === 'setPassword'} onClose={close} title="Set a Password">
+                {error ? <ErrorBanner message={error} /> : null}
+                {success ? <SuccessBanner message={success} /> : null}
+                {setPasswordStep === 'send' ? (
+                    <>
+                        <Text style={styles.sheetNote}>
+                            Add a password so you can also sign in with your email on any device, including a new phone. We will email a code to{' '}
+                            <Text style={{ color: colors.accent }}>{accountEmail || 'your address'}</Text>.
+                        </Text>
+                        <ActionButton label="Send Code" onPress={handleSendSetPasswordCode} loading={isLoading} />
+                    </>
+                ) : (
+                    <>
+                        <Text style={styles.fieldLabel}>Code from your email</Text>
+                        <TextInput
+                            style={[styles.input, { marginBottom: 16, color: colors.textPrimary }]}
+                            value={setPasswordCode}
+                            onChangeText={setSetPasswordCode}
+                            placeholder="000000"
+                            accessibilityLabel="Code from your email"
+                            placeholderTextColor={colors.textSecondary}
+                            maxLength={6}
+                            keyboardType="number-pad"
+                            autoCapitalize="none"
+                        />
+                        <PasswordField label="New password" value={newPassword} onChange={setNewPassword} placeholder="••••••••" />
+                        <PasswordField label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} placeholder="••••••••" />
+                        <ActionButton
+                            label="Set Password"
+                            onPress={handleConfirmSetPassword}
+                            loading={isLoading}
+                            disabled={setPasswordCode.trim().length === 0 || newPassword.length < 6 || confirmPassword.length < 6}
+                        />
+                    </>
+                )}
             </Sheet>
 
             {/* ── Sign Out sheet ── */}
