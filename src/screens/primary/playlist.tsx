@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, TouchableOpacity, Animated, StyleSheet, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
+import Reanimated, { FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -145,7 +146,8 @@ const PlaylistScreen = () => {
                 )}
 
                 {/* ── Content ── */}
-                <View style={styles.content}>
+                {/* Each tab fades in on its own, so switching feels like one motion with the indicator. */}
+                <Reanimated.View key={activeTab} entering={FadeIn.duration(180)} style={styles.content}>
 
                     {activeTab === 'pinned' && (
                         <StoryTileList reorderEnabled={reorderEnabled} tabBarHeight={tabBarHeight} />
@@ -159,7 +161,7 @@ const PlaylistScreen = () => {
                         <BookmarkList tabBarHeight={tabBarHeight} />
                     )}
 
-                </View>
+                </Reanimated.View>
 
             </LinearGradient>
         </View>

@@ -1,4 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { SkeletonRows } from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -104,9 +107,7 @@ const History = ({ navigation }: any) => {
                 <MenuHeader title="History" navigation={navigation} />
 
                 {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator color={colors.accent} />
-                    </View>
+                    <SkeletonRows count={7} />
                 ) : (
                     <FlatList
                         data={finishedStories}
@@ -124,12 +125,11 @@ const History = ({ navigation }: any) => {
                         }
                         contentContainerStyle={{ paddingBottom: 100 }}
                         ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>No listening history yet.</Text>
-                                <Text style={styles.emptyHint}>
-                                    Stories you finish will appear here.
-                                </Text>
-                            </View>
+                            <EmptyState
+                                icon={<FontAwesome5 name="history" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                                title="No listening history yet"
+                                body="Stories you finish will appear here."
+                            />
                         }
                         ListFooterComponent={
                             <View style={{ height: 100, paddingTop: 16 }}>

@@ -3,6 +3,9 @@ import { View, FlatList, Dimensions, RefreshControl, ActivityIndicator, StyleShe
 import { Text } from '@/components/common/AppText';
 
 import ProgressTile from './ProgressTile';
+import EmptyState from '../common/EmptyState';
+import { SkeletonRows } from '../common/Skeleton';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useInProgressStoriesPaginated } from '../../hooks/queries/useInProgressStories';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
@@ -50,20 +53,13 @@ const StoryTileList = () => {
                     </View>
                 }
                 ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        {isLoading ? (
-                            <ActivityIndicator size="small" color={colors.accent} />
-                        ) : (
-                            <>
-                                <Text style={styles.emptyText}>
-                                    No stories in progress.
-                                </Text>
-                                <Text style={styles.emptyHint}>
-                                    Start listening to a story and it will appear here.
-                                </Text>
-                            </>
-                        )}
-                    </View>
+                    isLoading ? <SkeletonRows count={6} /> : (
+                        <EmptyState
+                            icon={<FontAwesome5 name="headphones" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                            title="No stories in progress"
+                            body="Start listening to a story and it will appear here."
+                        />
+                    )
                 }
             />
         </View>

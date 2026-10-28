@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
+import { SkeletonRows } from '../common/Skeleton';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import BookmarkTile        from './BookmarkTile';
@@ -65,13 +66,7 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
+  if (isLoading) return <SkeletonRows count={6} />;
 
   return (
     <FlatList

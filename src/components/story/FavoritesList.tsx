@@ -3,6 +3,7 @@ import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'r
 import { Text } from '@/components/common/AppText';
 
 import { useFocusEffect } from '@react-navigation/native';
+import { SkeletonRows } from '../common/Skeleton';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTile from './StoryTile';
@@ -106,13 +107,7 @@ const { data: tagMap = {} } = useTagNames(allTagIds);
     setIsFetching(false);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
+  if (isLoading) return <SkeletonRows count={6} />;
 
   return (
     <FlatList

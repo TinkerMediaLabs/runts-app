@@ -8,7 +8,7 @@ import { spacing } from '../../theme/spacing';
 
 import PrimaryGenreTilesList from '../../components/story/PrimaryGenreTiles';
 import SearchBar              from '../../components/common/SearchBar';
-import LoadingItem            from '../../components/common/LoadingItem';
+import { SkeletonGenreTiles, SkeletonCardRow } from '../../components/common/Skeleton';
 import Reveal                 from '../../components/common/Reveal';
 import { SubgenreRow, ExploreSubgenres, CatalogLinks } from '../../components/discover/DiscoverSections';
 
@@ -23,7 +23,8 @@ const { width } = Dimensions.get('window');
 const GIVE_UP_MS = 3000;   // show what is ready after this long even if a section is still loading
 
 // The Discover tab: search, then the sections the CMS set up (Discover layout). Sections load in parallel and
-// the screen appears once they are all in (or after a short wait), so nothing jumps down as data arrives.
+// appear top to bottom as each one is ready; a placeholder in the same shape holds the place of the next ones, so
+// a slow section never holds up the ones above it and nothing jumps down as data arrives.
 const BrowseScreen = ({ navigation }: any) => {
     const { eroticEnabled, profile } = useApp();
     const picked = useMemo(() => (profile?.preferredTagIds ?? []).filter(Boolean) as string[], [profile?.preferredTagIds]);
@@ -48,14 +49,30 @@ const BrowseScreen = ({ navigation }: any) => {
     const [gaveUp, setGaveUp] = useState(false);
     useEffect(() => { const t = setTimeout(() => setGaveUp(true), GIVE_UP_MS); return () => clearTimeout(t); }, []);
 
-    const pending =
-        layoutLoading || (has('discoverGenres') && primaryLoading) ||
-        (wantsPopular && popularQ.isLoading) || (wantsTry && (popularQ.isLoading || tasteQ.isLoading)) ||
-        (has('discoverShuffle') && exploreQ.isLoading) || (wantsBecause && (tasteQ.isLoading || becauseQ.isLoading)) ||
-        (featuredIds.length > 0 && featuredQ.isLoading);
-    const ready = !pending || gaveUp;
+    // Is this section still waiting for its data?
+    const sectionLoading = (s: any): boolean => {
+        switch (s.type) {
+            case 'discoverGenres':   return primaryLoading;
+            case 'discoverPopular':  return popularQ.isLoading;
+            case 'discoverFeatured': return featuredIds.length > 0 && featuredQ.isLoading;
+            case 'discoverShuffle':  return exploreQ.isLoading;
+            case 'discoverBecause':  return tasteQ.isLoading || becauseQ.isLoading;
+            case 'discoverTryNew':   return popularQ.isLoading || tasteQ.isLoading;
+            default:                 return false;
+        }
+    };
+    // Sections above this one are shown; this one and the next two show a placeholder. -1 = nothing is waiting.
+    const firstLoading = gaveUp || layoutLoading ? -1 : sections.findIndex(sectionLoading);
 
     const nonErotic = useMemo(() => (primaryTags ?? []).filter((t: any) => !t.isErotic), [primaryTags]);
+
+    const renderPlaceholder = (s: any) => {
+        switch (s.type) {
+            case 'discoverGenres':  return <SkeletonGenreTiles key={s.id} />;
+            case 'discoverCatalog': return null;
+            default:                return <SkeletonCardRow key={s.id} cardWidth={156} cardHeight={100} />;
+        }
+    };
 
     const renderSection = (s: any, i: number) => {
         switch (s.type) {
@@ -67,24 +84,24 @@ const BrowseScreen = ({ navigation }: any) => {
                 ) : null;
             case 'discoverPopular': {
                 const list = (popularQ.data ?? []).slice(0, s.limit ?? 12);
-                return list.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Popular right now'} tags={list} /></Reveal> : null;
+                return list.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Popular right now'} tags={list} /></Reveal> : null;
             }
             case 'discoverFeatured': {
                 const order = ((s.tagIds ?? []).filter(Boolean) as string[]);
                 const byId = new Map(featuredQ.tags.map(t => [t.id, t]));
                 const list = order.map(id => byId.get(id)).filter(Boolean) as any[];
-                return list.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Featured'} tags={list} /></Reveal> : null;
+                return list.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Featured'} tags={list} /></Reveal> : null;
             }
             case 'discoverShuffle':
-                return (exploreQ.data ?? []).length ? <Reveal key={s.id} index={i}><ExploreSubgenres pool={exploreQ.data!} title={s.title || 'Explore subgenres'} /></Reveal> : null;
+                return (exploreQ.data ?? []).length ? <Reveal key={s.id} duration={350}><ExploreSubgenres pool={exploreQ.data!} title={s.title || 'Explore subgenres'} /></Reveal> : null;
             case 'discoverBecause':
-                return becauseQ.tags.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Based on your listening'} tags={becauseQ.tags} /></Reveal> : null;
+                return becauseQ.tags.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Based on your listening'} tags={becauseQ.tags} /></Reveal> : null;
             case 'discoverTryNew': {
                 const list = pickTryNew(popularQ.data ?? [], tasteQ.data?.listenedTagIds ?? [], picked, s.limit ?? 10);
-                return list.length ? <Reveal key={s.id} index={i}><SubgenreRow title={s.title || 'Try something new'} tags={list} /></Reveal> : null;
+                return list.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Try something new'} tags={list} /></Reveal> : null;
             }
             case 'discoverCatalog':
-                return <Reveal key={s.id} index={i}><CatalogLinks title={s.title} /></Reveal>;
+                return <Reveal key={s.id} duration={350}><CatalogLinks title={s.title} /></Reveal>;
             default:
                 return null;
         }
@@ -108,18 +125,17 @@ const BrowseScreen = ({ navigation }: any) => {
 
                         <SearchBar />
 
-                        {!ready ? (
-                            <View style={{ padding: spacing.margin }}>
-                                <View style={{ flexDirection: 'row', marginBottom: 24 }}>
-                                    <LoadingItem width={156} height={100} radius={14} />
-                                    <LoadingItem width={156} height={100} radius={14} />
-                                </View>
-                                <LoadingItem width={width - 40} height={100} radius={15} />
-                                <LoadingItem width={width - 40} height={100} radius={15} />
-                                <LoadingItem width={width - 40} height={100} radius={15} />
+                        {layoutLoading && !gaveUp ? (
+                            <View>
+                                <SkeletonGenreTiles />
+                                <SkeletonCardRow cardWidth={156} cardHeight={100} />
+                                <SkeletonCardRow cardWidth={156} cardHeight={100} />
                             </View>
                         ) : (
-                            sections.map(renderSection)
+                            sections.map((s, i) => {
+                                if (firstLoading === -1 || i < firstLoading) return renderSection(s, i);
+                                return i < firstLoading + 3 ? renderPlaceholder(s) : null;
+                            })
                         )}
 
                         <View style={{ height: 100 }} />

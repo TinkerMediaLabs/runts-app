@@ -5,6 +5,8 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
+import { SkeletonRows } from '../../components/common/Skeleton';
+import SharedEmptyState from '../../components/common/EmptyState';
 import { View, FlatList, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, Modal, TouchableWithoutFeedback, ScrollView, InteractionManager } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -476,11 +478,11 @@ const EmptyState = ({ icon, title, subtitle }: {
   title: string;
   subtitle?: string;
 }) => (
-  <View style={styles.emptyState}>
-    <FontAwesome5 name={icon} size={40} color={colors.textSecondary} iconStyle="solid" />
-    <Text style={styles.emptyTitle}>{title}</Text>
-    {subtitle ? <Text style={styles.emptySub}>{subtitle}</Text> : null}
-  </View>
+  <SharedEmptyState
+    icon={<FontAwesome5 name={icon} size={40} color={colors.textSecondary} iconStyle="solid" />}
+    title={title}
+    body={subtitle}
+  />
 );
 
 // ---------------------------------------------------------------------------
@@ -777,9 +779,7 @@ const filteredTagResults = useMemo(() => {
 
           {activeTab === 'stories' && (
             storiesLoading ? (
-              <View style={styles.loadingCenter}>
-                <ActivityIndicator color={colors.accent} />
-              </View>
+              <SkeletonRows count={6} />
             ) : (
               <AnimatedFlatList
                 data={storyItems}
@@ -816,9 +816,7 @@ const filteredTagResults = useMemo(() => {
 
           {activeTab === 'authors' && (
             authorsLoading ? (
-              <View style={styles.loadingCenter}>
-                <ActivityIndicator color={colors.accent} />
-              </View>
+              <SkeletonRows count={6} />
             ) : (
              <AnimatedFlatList
               data={authorResults}
@@ -855,9 +853,7 @@ const filteredTagResults = useMemo(() => {
 
           {activeTab === 'tags' && (
             tagsLoading ? (
-              <View style={styles.loadingCenter}>
-                <ActivityIndicator color={colors.accent} />
-              </View>
+              <SkeletonRows count={6} />
             ) : (
              <AnimatedFlatList
                 data={filteredTagResults}

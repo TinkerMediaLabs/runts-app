@@ -1,4 +1,7 @@
 import React, { useMemo, useRef, useCallback } from 'react';
+import { SkeletonRows } from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { View, SectionList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useNavigation } from '@react-navigation/native';
@@ -46,9 +49,13 @@ const AllSubgenresScreen = () => {
         <ScreenHeader title="All subgenres" />
 
         {q.isLoading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
+          <SkeletonRows count={9} />
         ) : items.length === 0 ? (
-          <View style={styles.center}><Text style={styles.empty}>No subgenres yet</Text></View>
+          <EmptyState
+            icon={<FontAwesome5 name="tags" size={40} color={colors.textSecondary} iconStyle="solid" />}
+            title="No subgenres yet"
+            body="Check back soon."
+          />
         ) : (
           <View style={{ flex: 1 }}>
             <SectionList

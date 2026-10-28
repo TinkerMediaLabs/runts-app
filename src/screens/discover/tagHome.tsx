@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
+import { SkeletonRows } from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -87,16 +89,16 @@ const GenreHome = ({ navigation }: any) => {
             )}
 
             {!home.ready ? (
-                <View style={styles.loadingContainer}><ActivityIndicator color={colors.accent} size="large" /></View>
+                <SkeletonRows count={7} />
             ) : (
                 <>
                     {tag?.description ? <Text style={styles.description}>{tag.description}</Text> : null}
                     {!hasStories && (
-                        <View style={styles.emptyContainer}>
-                            <FontAwesome5 name="book-open" size={32} color={colors.textSecondary} iconStyle="solid" />
-                            <Text style={styles.emptyText}>No stories in {tagName} yet</Text>
-                            {home.relatedTags.length > 0 && <Text style={styles.emptyHint}>These genres might be a good place to start.</Text>}
-                        </View>
+                        <EmptyState
+                            icon={<FontAwesome5 name="book-open" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                            title={`No stories in ${tagName} yet`}
+                            body={home.relatedTags.length > 0 ? 'These genres might be a good place to start.' : 'Check back soon.'}
+                        />
                     )}
                     {renderRows(headRows, 0)}
                     {listRow && (

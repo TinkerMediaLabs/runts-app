@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, TouchableWithoutFeedback, View, Dimensions, ActivityIndicator } from 'react-native';
+import { ScrollView, TouchableWithoutFeedback, View, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { Ionicons } from '@react-native-vector-icons/ionicons';
@@ -13,6 +13,7 @@ import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
 import Reveal from '../../components/common/Reveal';
+import { SkeletonCarousel, SkeletonCardRow } from '../../components/common/Skeleton';
 
 import HomeSectionView from '../../components/home/HomeSectionView';
 import { useHomeLayout } from '../../hooks/queries/useHomeLayout';
@@ -34,6 +35,10 @@ const HomeScreen = ({ navigation }: any) => {
     const markSettled = useCallback((id: string) => setSettled(s => (s[id] ? s : { ...s, [id]: true })), []);
     const firstUnsettled = sections.findIndex(s => !settled[s.id]);
     const lastVisible = firstUnsettled === -1 ? sections.length : firstUnsettled;
+    // A placeholder sits right under what is already showing while the next section loads (and fills the screen
+    // while the layout itself loads), so the page never looks empty or stuck.
+    const topLoading = isLoading || !nudge.decided;
+    const waitingOn = sections[Math.max(firstUnsettled, 0)]?.type;
 
     const welcomeText = [
         "Discover a new world",
@@ -92,16 +97,15 @@ const HomeScreen = ({ navigation }: any) => {
                         <NewGenreNudge names={nudge.names} ids={nudge.ids} userId={nudge.userId} onDismiss={() => setNudgeHidden(true)} />
                     )}
 
-                    {isLoading || !nudge.decided ? (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
-                            <ActivityIndicator color={colors.accent} />
+                    {!topLoading && sections.map((section, i) => (
+                        <HomeSectionView key={section.id} section={section} index={i} visible={i <= lastVisible} onSettled={markSettled} />
+                    ))}
+
+                    {(topLoading || firstUnsettled !== -1) && (
+                        <View>
+                            {waitingOn === 'forYou' ? <SkeletonCarousel /> : <SkeletonCardRow />}
+                            {firstUnsettled <= 0 ? <SkeletonCardRow titleWidth={120} /> : null}
                         </View>
-                    ) : (
-                        <>
-                            {sections.map((section, i) => (
-                                <HomeSectionView key={section.id} section={section} index={i} visible={i <= lastVisible} onSettled={markSettled} />
-                            ))}
-                        </>
                     )}
 
                     <View style={{ height: 300 }} />

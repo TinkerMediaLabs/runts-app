@@ -20,7 +20,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
-import LoadingItem  from '../common/LoadingItem';
+import { Skeleton } from '../common/Skeleton';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import PinButton from '../common/PinButton';
 import { useTipTarget } from '../../tips/useTipTarget';
@@ -321,7 +321,7 @@ const CarouselItem = ({
 
                 </CachedImageBackground>
             ) : (
-                <LoadingItem width={CARD_WIDTH} height={CARD_HEIGHT} radius={15} />
+                <Skeleton width={CARD_WIDTH} height={CARD_HEIGHT} radius={radius.lg} />
             )}
         </View>
     );

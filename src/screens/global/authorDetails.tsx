@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { SkeletonAuthorPage } from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
 import { View, TouchableOpacity, FlatList, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -191,8 +193,8 @@ const CreatorProfile = () => {
     // ── Loading ───────────────────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator color={colors.accent} size="large" />
+            <View style={styles.root}>
+                <SkeletonAuthorPage />
             </View>
         );
     }
@@ -247,11 +249,11 @@ const CreatorProfile = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
                 ListEmptyComponent={
-                    <View style={{ alignItems: 'center', paddingTop: 40 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>
-                            No stories yet
-                        </Text>
-                    </View>
+                    <EmptyState
+                        icon={<FontAwesome5 name="book-open" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                        title="No stories yet"
+                        body="Check back soon for new stories from this author."
+                    />
                 }
 
                 ListHeaderComponent={

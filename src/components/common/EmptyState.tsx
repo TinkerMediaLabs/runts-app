@@ -7,7 +7,7 @@ import { fontSizes } from '@/theme/tokens';
 type Props = {
   icon: React.ReactNode;
   title: string;
-  body: string;
+  body?: string;
   // Optional step the listener can take right now.
   actionLabel?: string;
   onAction?: () => void;
@@ -19,7 +19,7 @@ export default function EmptyState({ icon, title, body, actionLabel, onAction }:
     <View style={styles.wrap}>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">{icon}</View>
       <Text style={styles.title} accessibilityRole="header">{title}</Text>
-      <Text style={styles.body}>{body}</Text>
+      {body ? <Text style={styles.body}>{body}</Text> : null}
       {actionLabel && onAction ? (
         <TouchableOpacity
           style={styles.button}

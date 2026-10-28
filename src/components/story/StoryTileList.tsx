@@ -11,6 +11,7 @@ import type { Schema } from '../../../amplify/data/resource';
 
 import StoryTile from './StoryTile';
 import EmptyState from '../common/EmptyState';
+import { SkeletonRows } from '../common/Skeleton';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { navigate } from '@/navigation/RootNavigator';
 import { useApp } from '@/context/AppContext';
@@ -93,7 +94,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     const { userId } = useApp();
 
-    const { data: pinnedPages, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = usePinnedStories();
+    const { data: pinnedPages, isPending, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = usePinnedStories();
     const pinnedStories = useMemo(() => pinnedPages?.pages.flatMap(p => p.items), [pinnedPages]);
 
     const [isFetching, setIsFetching] = useState(false);
@@ -133,6 +134,10 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         }
     };
 
+    // Draw straight from the loaded pins until a drag-to-reorder makes a local copy, so the list never lags a frame
+    // behind the data (that gap was the empty-state flash).
+    const listData = localData.length > 0 ? localData : (pinnedStories ?? []);
+
     const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<any>) => (
         <ScaleDecorator activeScale={1.02}>
             <PinnedStoryTile
@@ -145,10 +150,18 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         </ScaleDecorator>
     );
 
-    const ListEmpty = () => (
+    // The empty message is only for a list that finished loading and really has no pins. While the first load is
+    // under way (or has not started) the person sees placeholder rows, never "Build your playlist".
+    const ListEmpty = () => isPending ? <SkeletonRows count={6} /> : (
         <View style={styles.emptyContainer}>
-            {isLoading ? (
-                <ActivityIndicator size="small" color={colors.accent} />
+            {isError ? (
+                <EmptyState
+                    icon={<FontAwesome5 name="exclamation-circle" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                    title="We couldn't load your playlist"
+                    body="Check your connection and try again."
+                    actionLabel="Try again"
+                    onAction={() => { refetch(); }}
+                />
             ) : (
                 <EmptyState
                     icon={<FontAwesome5 name="thumbtack" size={40} color={colors.textSecondary} iconStyle="solid" />}
@@ -164,7 +177,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
     return (
         <View style={{ flex: 1 }}>
             <DraggableFlatList
-                data={localData}
+                data={listData}
                 onDragEnd={onDragEnd}
                 onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
                 onEndReachedThreshold={0.5}

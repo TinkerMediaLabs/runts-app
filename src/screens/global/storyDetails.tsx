@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { SkeletonStoryPage } from '../../components/common/Skeleton';
 import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Button from '@/components/common/Button';
@@ -515,8 +516,8 @@ const handleDelete = (id: string) => {
     // ── Loading state ─────────────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator color={colors.accent} size="large" />
+            <View style={styles.root}>
+                <SkeletonStoryPage />
             </View>
         );
     }
