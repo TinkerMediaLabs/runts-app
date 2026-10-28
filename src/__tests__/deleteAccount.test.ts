@@ -3,6 +3,7 @@ import { deleteAccount } from '../../amplify/functions/delete-account/core';
 const make = () => {
   const calls: string[] = [];
   const deps = {
+    revokeAppleToken: jest.fn(async (id: string) => { calls.push(`apple:${id}`); }),
     deleteProfileRow: jest.fn(async (id: string) => { calls.push(`row:${id}`); }),
     deleteSignInAccount: jest.fn(async (u: string) => { calls.push(`account:${u}`); }),
   };
@@ -10,19 +11,31 @@ const make = () => {
 };
 
 describe('deleteAccount', () => {
-  it('removes the profile data first, then the sign-in account', async () => {
+  it('revokes Apple first, then removes the profile data, then the sign-in account', async () => {
     const { calls, deps } = make();
     await expect(deleteAccount({ sub: 'u1', username: 'google_123' }, deps)).resolves.toBe(true);
-    expect(calls).toEqual(['row:u1', 'account:google_123']);
+    expect(calls).toEqual(['apple:u1', 'row:u1', 'account:google_123']);
   });
 
   it('refuses without a signed-in identity and touches nothing', async () => {
     for (const identity of [null, undefined, {}, { sub: 'u1' }, { username: 'x' }]) {
       const { deps } = make();
       await expect(deleteAccount(identity as any, deps)).rejects.toThrow('Not signed in.');
+      expect(deps.revokeAppleToken).not.toHaveBeenCalled();
       expect(deps.deleteProfileRow).not.toHaveBeenCalled();
       expect(deps.deleteSignInAccount).not.toHaveBeenCalled();
     }
+  });
+
+  it('deletes nothing when Apple cannot be reached, so the person can retry', async () => {
+    const { calls, deps } = make();
+    deps.revokeAppleToken.mockRejectedValueOnce(new Error('apple down'));
+    const identity = { sub: 'u1', username: 'a' };
+    await expect(deleteAccount(identity, deps)).rejects.toThrow('apple down');
+    expect(deps.deleteProfileRow).not.toHaveBeenCalled();
+    expect(deps.deleteSignInAccount).not.toHaveBeenCalled();
+    await expect(deleteAccount(identity, deps)).resolves.toBe(true);
+    expect(calls).toEqual(['apple:u1', 'row:u1', 'account:a']);   // the failed first attempt records nothing
   });
 
   it('does not remove the sign-in account when the data step fails', async () => {
@@ -38,6 +51,6 @@ describe('deleteAccount', () => {
     const identity = { sub: 'u1', username: 'a' };
     await expect(deleteAccount(identity, deps)).rejects.toThrow('cognito down');
     await expect(deleteAccount(identity, deps)).resolves.toBe(true);
-    expect(calls).toEqual(['row:u1', 'row:u1', 'account:a']);
+    expect(calls).toEqual(['apple:u1', 'row:u1', 'apple:u1', 'row:u1', 'account:a']);
   });
 });

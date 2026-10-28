@@ -10,7 +10,11 @@ import {
   getCurrentUser,
   fetchUserAttributes,
   fetchAuthSession,
+  confirmSignIn,
 } from 'aws-amplify/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
+import { decodeAppleClaims, makeNonce, makeThrowawayPassword, fullNameOf } from '../lib/appleSignIn';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
@@ -27,7 +31,9 @@ export async function signInWithGoogle() {
   await signInWithRedirect({ provider: 'Google' });
 }
 
-// ─── APPLE SIGN IN ───────────────────────────────────────────────────────────
+// ─── APPLE SIGN IN (native, iOS) ─────────────────────────────────────────────
+// Shows the Apple sheet, then signs the person in through our custom Cognito flow. The server checks Apple's
+// token and keeps Apple's refresh token so it can be revoked when the account is deleted.
 export async function signInWithApple() {
   try {
     await getCurrentUser();
@@ -35,7 +41,43 @@ export async function signInWithApple() {
   } catch {
     // No existing session
   }
-  await signInWithRedirect({ provider: 'Apple' });
+
+  const nonce = makeNonce(await Crypto.getRandomBytesAsync(16));
+  const cred = await AppleAuthentication.signInAsync({
+    requestedScopes: [
+      AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+      AppleAuthentication.AppleAuthenticationScope.EMAIL,
+    ],
+    nonce,
+  });
+  if (!cred.identityToken || !cred.authorizationCode) throw new Error('Apple did not return a sign-in token.');
+
+  const email = decodeAppleClaims(cred.identityToken).email;
+  if (!email) throw new Error('Apple did not share an email address.');
+  const name = fullNameOf(cred.fullName);
+
+  // First time: create the user (the server confirms it after checking the Apple token). Already exists: carry on.
+  try {
+    await signUp({
+      username: email,
+      password: makeThrowawayPassword(await Crypto.getRandomBytesAsync(16)),
+      options: {
+        userAttributes: { email, ...(name ? { name } : {}) },
+        clientMetadata: { appleIdentityToken: cred.identityToken, appleNonce: nonce },
+      },
+    });
+  } catch (e: any) {
+    if (e?.name !== 'UsernameExistsException') throw e;
+  }
+
+  const step = await signIn({ username: email, options: { authFlowType: 'CUSTOM_WITHOUT_SRP' } });
+  if (step.nextStep?.signInStep !== 'CONFIRM_SIGN_IN_WITH_CUSTOM_CHALLENGE') {
+    throw new Error('Unexpected sign-in step.');
+  }
+  const done = await confirmSignIn({
+    challengeResponse: JSON.stringify({ identityToken: cred.identityToken, authorizationCode: cred.authorizationCode, nonce }),
+  });
+  if (!done.isSignedIn) throw new Error('Apple sign-in was not completed.');
 }
 
 // ─── SIGN UP ────────────────────────────────────────────

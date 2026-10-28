@@ -18,6 +18,9 @@ import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
 import { deleteAccount } from './functions/delete-account/resource';
+import { appleVerifyChallenge } from './functions/apple-auth/verify-challenge/resource';
+import { applePreSignUp } from './functions/apple-auth/pre-signup/resource';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -26,7 +29,7 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
-import { Duration, Stack } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 
 const backend = defineBackend({
   auth,
@@ -48,6 +51,8 @@ const backend = defineBackend({
   tagInsights,
   dataHealth,
   deleteAccount,
+  appleVerifyChallenge,
+  applePreSignUp,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -447,3 +452,29 @@ watch(new cloudwatch.Alarm(alarmsStack, 'AppSyncServerErrors', {
   comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
   treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
 }));
+
+// ── Sign in with Apple: token table ───────────────────────────────────────
+// One row per user holding Apple's refresh token (so it can be revoked on account deletion), plus short-lived
+// "nonce used" rows that stop a sign-in being replayed. Deliberately NOT in the data schema: the app can never
+// read it, only the sign-in and delete functions. Own stack so it never depends on auth or data (no cycles).
+const appleStack = backend.createStack('AppleSignIn');
+const isProduction = process.env.AWS_BRANCH === 'production';
+const appleTable = new dynamodb.Table(appleStack, 'AppleTokens', {
+  partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+  timeToLiveAttribute: 'ttl',
+  pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: isProduction },
+  removalPolicy: isProduction ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+});
+backend.appleVerifyChallenge.addEnvironment('APPLE_TABLE_NAME', appleTable.tableName);
+appleTable.grantReadWriteData(backend.appleVerifyChallenge.resources.lambda);
+// The sign-up check looks users up by email and links a Google sign-in to an existing account. It can only name the
+// pool by wildcard here (the pool depends on this function), so it is limited to these two calls in this account.
+const preSignUpStack = Stack.of(backend.applePreSignUp.resources.lambda);
+backend.applePreSignUp.resources.lambda.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['cognito-idp:ListUsers', 'cognito-idp:AdminLinkProviderForUser', 'cognito-idp:AdminCreateUser', 'cognito-idp:AdminSetUserPassword'],
+  resources: [`arn:aws:cognito-idp:${preSignUpStack.region}:${preSignUpStack.account}:userpool/*`],
+}));
+// Account deletion reads the stored Apple token and revokes it.
+backend.deleteAccount.addEnvironment('APPLE_TABLE_NAME', appleTable.tableName);
+appleTable.grantReadWriteData(backend.deleteAccount.resources.lambda);

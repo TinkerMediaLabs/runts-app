@@ -41,6 +41,8 @@ export default ({ config }) => ({
   ios: {
     ...config.ios,
     bundleIdentifier: env.iosBundleId,
+    // Native Sign in with Apple.
+    usesAppleSignIn: true,
     infoPlist: {
       ...(config.ios?.infoPlist ?? {}),
       // Keeps audio playing when the screen locks or the app is in the background.

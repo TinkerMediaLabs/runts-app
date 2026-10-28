@@ -20,6 +20,22 @@ try {
   }
   console.log('[Amplify] user_pool_id:', config?.auth?.user_pool_id); // ← add
   BACKEND_ID = config?.data?.url ?? 'unknown';
+  // Return from the browser sign-in to this build's own app scheme (runts, runts-dev or runts-staging).
+  const scheme = Constants.expoConfig?.scheme;
+  const appScheme = Array.isArray(scheme) ? scheme[0] : scheme;
+  if (appScheme && config?.auth?.oauth) {
+    config = {
+      ...config,
+      auth: {
+        ...config.auth,
+        oauth: {
+          ...config.auth.oauth,
+          redirect_sign_in_uri: [`${appScheme}://callback`],
+          redirect_sign_out_uri: [`${appScheme}://signout`],
+        },
+      },
+    };
+  }
   Amplify.configure(config);
 } catch (e) {
   console.warn(`[Amplify] Could not load config for env: ${env}`, e);

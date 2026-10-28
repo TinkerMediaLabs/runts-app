@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
-import { View, TouchableOpacity, Dimensions, Linking, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Image } from 'react-native';
+import { View, TouchableOpacity, Dimensions, Linking, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Image, Platform } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { StatusBar } from 'expo-status-bar';
@@ -18,6 +18,7 @@ import Animated, {
 import useStyles from '../../theme/authStyles';
 
 import { signInWithGoogle as googleSignIn, signInWithApple as appleSignIn } from '../../services/auth';
+import { friendlyAppleError } from '../../lib/appleSignIn';
 import { signInWithRedirect } from 'aws-amplify/auth';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
@@ -73,9 +74,11 @@ const SignIn = ({ navigation }: any) => {
         try {
             await appleSignIn();
         } catch (err: any) {
-            console.log('Apple sign in error:', err);
-            setIsErr(true);
-            setErr(err?.message || 'Error signing in with Apple.');
+            const msg = friendlyAppleError(err);
+            if (msg) {            // empty when the person just closed the Apple sheet
+                setIsErr(true);
+                setErr(msg);
+            }
         } finally {
             setSigningIn(false);
         }
@@ -253,7 +256,8 @@ const SignIn = ({ navigation }: any) => {
                                 </TouchableOpacity>
                             </Animated.View>
 
-                            {/* APPLE */}
+                            {/* APPLE (iOS only: Apple only requires it there) */}
+                            {Platform.OS === 'ios' && (
                             <Animated.View
                                 entering={FadeInUp.delay(450).springify()}
                             >
@@ -302,6 +306,7 @@ const SignIn = ({ navigation }: any) => {
                                     </View>
                                 </TouchableOpacity>
                             </Animated.View>
+                            )}
                         </View>
 
                         {/* FOOTER */}

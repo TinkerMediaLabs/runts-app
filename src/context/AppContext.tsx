@@ -5,7 +5,7 @@ import {
     useEffect,
     ReactNode,
 } from 'react';
-import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { getCurrentUser, signOut, signInWithRedirect } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
@@ -28,6 +28,9 @@ import { Analytics } from '../lib/analytics';
 import { PurchasesService } from '../lib/purchases';
 import { Notifications } from '../lib/notifications';
 import { unwrap } from '@/lib/amplifyResult';
+
+// When the last automatic Google retry happened (see the sign-in failure handler below); stops a retry loop.
+let lastGoogleRetryAt = 0;
 
 const client = generateClient<Schema>();
 
@@ -322,6 +325,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 case 'signedIn':
                     refreshAuth();
                     break;
+                case 'signInWithRedirect_failure': {
+                    // The first Google sign-in for an email that already has an account links the two, and Cognito
+                    // reports that as an error once. Trying again signs the person in to the linked account.
+                    const reason = String((payload as any)?.data?.error?.message ?? (payload as any)?.message ?? '');
+                    if (/already found an entry for username/i.test(reason) && Date.now() - lastGoogleRetryAt > 60_000) {
+                        lastGoogleRetryAt = Date.now();
+                        signInWithRedirect({ provider: 'Google' }).catch(e => console.warn('Google retry failed:', e));
+                    }
+                    break;
+                }
                 case 'signedOut':
                     setUserId(null);
                     setIsAuthenticated(false);
