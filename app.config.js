@@ -41,6 +41,13 @@ export default ({ config }) => ({
   ios: {
     ...config.ios,
     bundleIdentifier: env.iosBundleId,
+    infoPlist: {
+      ...(config.ios?.infoPlist ?? {}),
+      // Keeps audio playing when the screen locks or the app is in the background.
+      UIBackgroundModes: ['audio'],
+      // The app only uses standard HTTPS encryption, so App Store Connect should not ask on every build.
+      ITSAppUsesNonExemptEncryption: false,
+    },
     googleServicesFile: './GoogleService-Info.plist', 
     // Universal Links — iOS intercepts tinkermedia.net/runts/* before opening browser
     associatedDomains: ['applinks:tinkermedia.net', 'applinks:www.tinkermedia.net'], 
@@ -49,6 +56,8 @@ export default ({ config }) => ({
   android: {
     ...config.android,
     package: env.androidPackage,
+    // The image picker adds microphone access by default; the app never records audio.
+    blockedPermissions: ['android.permission.RECORD_AUDIO'],
     googleServicesFile: './google-services.json', 
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,

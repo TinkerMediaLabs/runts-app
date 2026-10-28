@@ -18,7 +18,6 @@ import {
     updateUserAttribute,
     confirmUserAttribute,
     updatePassword,
-    deleteUser,
     fetchAuthSession,
 } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
@@ -28,10 +27,6 @@ import { unwrap } from '@/lib/amplifyResult';
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 
-// ---------------------------------------------------------------------------
-// Config — update this URL after deploying API Gateway
-// ---------------------------------------------------------------------------
-const DELETE_USER_API_URL = 'https://691umui6i9.execute-api.us-east-2.amazonaws.com/prod/delete-user';
 
 
 // ---------------------------------------------------------------------------
@@ -289,8 +284,6 @@ const AccountScreen = ({ navigation }: any) => {
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
-    const [cognitoUsername, setCognitoUsername] = useState<string | null>(null);
-    const [userPoolId, setUserPoolId] = useState<string | null>(null);
 
     useEffect(() => {
         async function detectProvider() {
@@ -301,18 +294,6 @@ const AccountScreen = ({ navigation }: any) => {
 
                 const payload = idToken.payload as any;
                 const identities = payload?.identities;
-
-                // Get cognito username for admin delete
-                setCognitoUsername(payload?.['cognito:username'] ?? null);
-
-                // Get user pool ID from the token's issuer URL
-                // Format: https://cognito-idp.us-east-2.amazonaws.com/us-east-2_XXXXXXX
-                const iss = payload?.iss as string;
-                if (iss) {
-                    const parts = iss.split('/');
-                    const poolId = parts[parts.length - 1];
-                    setUserPoolId(poolId ?? null);
-                }
 
                 if (identities && Array.isArray(identities) && identities.length > 0) {
                     const providerType = identities[0].providerType?.toLowerCase();
@@ -484,114 +465,22 @@ const AccountScreen = ({ navigation }: any) => {
     };
 
     // ── Delete Account ────────────────────────────────────────────────────────
-    // const handleDeleteAccount = async () => {
-    //     if (deleteConfirm.toLowerCase() !== 'delete') return;
-    //     setIsLoading(true);
-    //     setError('');
-    //     try {
-    //         // 1. Delete DynamoDB record first
-    //         if (userId) {
-    //             await client.models.User.delete({ id: userId });
-    //         }
-
-    //         if (isSocialUser) {
-    //             // 2a. For social users use Admin API via Lambda
-    //             // since deleteUser() requires aws.cognito.signin.user.admin scope
-    //             // which federated tokens don't include
-    //             if (!cognitoUsername || !userPoolId) {
-    //                 throw new Error('Unable to identify user for deletion.');
-    //             }
-
-    //             const response = await fetch(DELETE_USER_API_URL, {
-    //                 method: 'POST',
-    //                 headers: { 'Content-Type': 'application/json' },
-    //                 body: JSON.stringify({
-    //                     userPoolId,
-    //                     username: cognitoUsername,
-    //                 }),
-    //             });
-
-    //             const result = await response.json();
-
-    //             if (!response.ok || result.error) {
-    //                 throw new Error(result.error || 'Failed to delete account.');
-    //             }
-
-    //             // Sign out after successful deletion
-    //             await logout();
-    //         } else {
-    //             // 2b. For email users use standard Amplify deleteUser
-    //             await deleteUser();
-    //             await logout();
-    //         }
-
-    //         close();
-    //     } catch (err: any) {
-    //         console.log(err);
-    //         setError(err?.message || 'Error deleting account. Please try again.');
-    //     }
-    //     setIsLoading(false);
-    // };
-
+    // One server call removes the profile data, then the sign-in account (see amplify/functions/delete-account).
+    // If it fails, the account still exists and the user can simply try again.
     const handleDeleteAccount = async () => {
-    if (deleteConfirm.toLowerCase() !== 'delete') return;
-    setIsLoading(true);
-    setError('');
-    try {
-        // The delete-user API only accepts a signed-in Cognito ID token, so get it before touching any data.
-        const idToken = isSocialUser ? (await fetchAuthSession()).tokens?.idToken?.toString() : undefined;
-        if (isSocialUser && !idToken) {
-            throw new Error('Please sign in again before deleting your account.');
-        }
-
-        if (userId) {
-            await client.models.User.delete({ id: userId });
-        }
-
-        if (isSocialUser) {
-            if (!cognitoUsername || !userPoolId) {
-                throw new Error('Unable to identify user for deletion.');
-            }
-
-            console.log('Calling delete API with:', { userPoolId, username: cognitoUsername });
-
-            const response = await fetch(DELETE_USER_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: idToken! },
-                body: JSON.stringify({}),   // the server deletes the account named in the verified token
-            });
-
-            const rawText = await response.text();
-            console.log('API response status:', response.status);
-            console.log('API response raw:', rawText);
-
-            const result = JSON.parse(rawText);
-            console.log('API result:', JSON.stringify(result));
-
-            // API Gateway wraps Lambda response in another layer
-            const innerBody = typeof result.body === 'string' 
-                ? JSON.parse(result.body) 
-                : result.body;
-
-            console.log('Inner body:', JSON.stringify(innerBody));
-
-            if (result.statusCode >= 400 || innerBody?.error) {
-                throw new Error(innerBody?.error || 'Failed to delete account.');
-            }
-
+        if (deleteConfirm.toLowerCase() !== 'delete') return;
+        setIsLoading(true);
+        setError('');
+        try {
+            if (unwrap(await client.mutations.deleteMyAccount(), 'Delete account') !== true) throw new Error('Delete account failed');
             await logout();
-        } else {
-            await deleteUser();
-            await logout();
+            close();
+        } catch (err: any) {
+            console.warn('Delete account failed:', err);
+            setError('We could not delete your account. Please check your connection and try again.');
         }
-
-        close();
-    } catch (err: any) {
-        console.log('Delete error:', err);
-        setError(err?.message || 'Error deleting account. Please try again.');
-    }
-    setIsLoading(false);
-};
+        setIsLoading(false);
+    };
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
@@ -844,7 +733,10 @@ const AccountScreen = ({ navigation }: any) => {
                     </Text>
                 </View>
                 {isSocialUser && (
-                    <InfoBanner message={`Your ${providerLabel} account will be disconnected from Runts but not deleted.`} />
+                    <InfoBanner message={`Your ${providerLabel} account itself is not deleted, only your Runts account.`} />
+                )}
+                {authProvider === 'apple' && (
+                    <InfoBanner message="To also remove Runts from your Apple ID, open Settings, tap your name, then Sign in with Apple, choose Runts and tap Stop Using Apple ID." />
                 )}
                 {error ? <ErrorBanner message={error} /> : null}
                 <Text style={styles.fieldLabel}>

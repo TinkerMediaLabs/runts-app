@@ -4,8 +4,9 @@
  * Presents the premium offering and lets the user subscribe or dismiss.
  */
 
+import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, Alert, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -170,6 +171,11 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                 <Text style={styles.legalNote}>
                     Subscriptions renew automatically. Cancel anytime in your app store settings.
                 </Text>
+                <View style={styles.legalLinks}>
+                    <Text accessibilityRole="link" style={styles.legalLink} onPress={() => Linking.openURL(TERMS_URL)}>Terms</Text>
+                    <Text style={styles.legalNote}>  ·  </Text>
+                    <Text accessibilityRole="link" style={styles.legalLink} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>
+                </View>
             </View>
         </Modal>
     );
@@ -302,6 +308,8 @@ const styles = StyleSheet.create({
     },
 
     // ── Legal ─────────────────────────────────────────────────────────────────
+    legalLinks: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
+    legalLink: { fontSize: 11, color: 'cyan', textDecorationLine: 'underline', lineHeight: 16 },
     legalNote: {
         fontSize:   11,
         color:      'rgba(255,255,255,0.6)',

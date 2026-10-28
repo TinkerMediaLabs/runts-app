@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
 import { View, TouchableOpacity, Dimensions, Linking, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -321,8 +322,23 @@ const SignIn = ({ navigation }: any) => {
                                         paddingHorizontal: 10,
                                     }}
                                 >
-                                    By continuing, you agree to our Terms of Use
-                                    and Privacy Policy.
+                                    By continuing, you agree to our{' '}
+                                    <Text
+                                        accessibilityRole="link"
+                                        style={{ color: 'cyan', textDecorationLine: 'underline' }}
+                                        onPress={() => Linking.openURL(TERMS_URL)}
+                                    >
+                                        Terms of Use
+                                    </Text>
+                                    {' '}and{' '}
+                                    <Text
+                                        accessibilityRole="link"
+                                        style={{ color: 'cyan', textDecorationLine: 'underline' }}
+                                        onPress={() => Linking.openURL(PRIVACY_URL)}
+                                    >
+                                        Privacy Policy
+                                    </Text>
+                                    .
                                 </Text>
                             </View>
 

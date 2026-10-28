@@ -1,6 +1,7 @@
 // Premium tab — shown to non-subscribed users.
 // Shows plan options and calls to action to subscribe.
 
+import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, ScrollView, StyleSheet, Linking, Image, Alert, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
@@ -301,11 +302,11 @@ const PremiumScreen = () => {
 
                     {/* ── Legal ── */}
                     <View style={styles.legalRow}>
-                        <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL('https://www.tinkermedia.net/terms')}>
+                        <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL(TERMS_URL)}>
                             <Text style={styles.legalLink}>Terms</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>
-                        <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL('https://www.tinkermedia.net/privacy-policy')}>
+                        <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL(PRIVACY_URL)}>
                             <Text style={styles.legalLink}>Privacy Policy</Text>
                         </TouchableOpacity>
                         <Text style={styles.legalDot}>·</Text>

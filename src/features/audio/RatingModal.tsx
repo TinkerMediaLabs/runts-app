@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isCommentAllowed, COMMENT_REJECTED_MESSAGE } from '../../lib/commentFilter';
 import { successHaptic } from '../../lib/haptics';
 import { useRef } from 'react';
 import { View, Alert, AccessibilityInfo, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
@@ -148,6 +149,11 @@ export default function RatingModal({
 const handleSubmit = async () => {
   if (selectedRating === null && selectedReaction === null && !comment.trim()) {
     onClose();
+    return;
+  }
+
+  if (comment.trim() && !isCommentAllowed(comment)) {
+    Alert.alert('Comment not allowed', COMMENT_REJECTED_MESSAGE);
     return;
   }
 

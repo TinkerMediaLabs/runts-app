@@ -17,6 +17,7 @@ import { uploadUrl } from './functions/upload-url/resource';
 import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
+import { deleteAccount } from './functions/delete-account/resource';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -46,6 +47,7 @@ const backend = defineBackend({
   trendingSnapshot,
   tagInsights,
   dataHealth,
+  deleteAccount,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -262,6 +264,17 @@ reactionAggregatorFn.addToRolePolicy(new iam.PolicyStatement({
   resources: [`${reactionCountTable.tableArn}/index/*`],
 }));
 
+// ── delete-account ────────────────────────────────────────────────────────
+// The signed-in user deletes their own account: the User row (which fires user-cleanup below), then the Cognito user.
+const deleteAccountFn = backend.deleteAccount.resources.lambda as lambda.Function;
+deleteAccountFn.addEnvironment('USER_TABLE_NAME', userTable.tableName);
+deleteAccountFn.addEnvironment('USER_POOL_ID', backend.auth.resources.userPool.userPoolId);
+userTable.grantWriteData(deleteAccountFn);
+deleteAccountFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['cognito-idp:AdminDeleteUser'],
+  resources: [backend.auth.resources.userPool.userPoolArn],
+}));
+
 // ── user-cleanup ──────────────────────────────────────────────────────────
 // Account deletion only removes the User row from the app; this Lambda (fired by that row's REMOVE
 // stream record) deletes everything the user owned, reading each table through its userId index.
@@ -362,6 +375,7 @@ const allFunctions: Record<string, lambda.Function> = {
   trendingSnapshot: backend.trendingSnapshot.resources.lambda as lambda.Function,
   tagInsights: backend.tagInsights.resources.lambda as lambda.Function,
   dataHealth: dataHealthFn,
+  deleteAccount: backend.deleteAccount.resources.lambda as lambda.Function,
 };
 for (const [name, fn] of Object.entries(allFunctions)) {
   watch(new cloudwatch.Alarm(alarmsStack, `${name}Errors`, {
