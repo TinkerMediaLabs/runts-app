@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SkeletonStoryPage } from '../../components/common/Skeleton';
-import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator, Share, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Button from '@/components/common/Button';
 import { TextInput } from '@/components/common/AppTextInput';
@@ -358,6 +358,23 @@ const [editingComment, setEditingComment] = useState<{ id: string; content: stri
 const [postAnonymously, setPostAnonymously] = useState(false);
 const focus = useRef<TextInput>(null);
 
+// Keep the comment box above the keyboard. The page shrinks when the keyboard opens (KeyboardAvoidingView around
+// the scroll view below); this then scrolls the box into the visible part, because the scroll position alone
+// would leave it just under the keyboard.
+const pageScrollRef = useRef<any>(null);
+const commentBoxRef = useRef<View>(null);
+const scrollCommentIntoView = () => {
+  setTimeout(() => {
+    const box = commentBoxRef.current;
+    if (!box) return;
+    const keyboardTop = Keyboard.metrics()?.screenY ?? Dimensions.get('window').height * 0.55;
+    box.measureInWindow((_x, y, _w, h) => {
+      const overflow = y + h + 16 - keyboardTop;
+      if (overflow > 0) pageScrollRef.current?.scrollTo({ y: scrollY.value + overflow, animated: true });
+    });
+  }, 350);
+};
+
 const {
   data: commentPages,
   isLoading: commentsLoading,
@@ -566,10 +583,14 @@ const handleDelete = (id: string) => {
             </Animated.View>
             )}
             {/* ── Scrollable content ── */}
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Animated.ScrollView
+                ref={pageScrollRef}
                 onScroll={scrollHandler}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
                 <View style={{ height: HERO_HEIGHT - 40 }} />
@@ -800,8 +821,9 @@ const handleDelete = (id: string) => {
 
 {/* Edit mode — shown when editing an existing comment */}
 {editingComment ? (
-  <View style={styles.commentInput}>
+  <View ref={commentBoxRef} collapsable={false} style={styles.commentInput}>
     <TextInput
+        onFocus={scrollCommentIntoView}
         accessibilityLabel="Edit comment"
         accessibilityHint="Edit the text of your comment"
       style={styles.commentInputText}
@@ -817,10 +839,11 @@ const handleDelete = (id: string) => {
     </View>
   </View>
 ) : (
-  <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+  <View ref={commentBoxRef} collapsable={false}>
     <View style={styles.commentInput}>
       <TextInput
         ref={focus}
+        onFocus={scrollCommentIntoView}
         placeholder="Leave a comment…"
         placeholderTextColor={colors.textSecondary}
         accessibilityLabel="Leave a comment"
@@ -858,7 +881,7 @@ const handleDelete = (id: string) => {
         />
       )}
     </View>
-  </KeyboardAvoidingView>
+  </View>
 )}
 
 {/* Spoiler gate + comment list */}
@@ -917,6 +940,7 @@ const handleDelete = (id: string) => {
 
                 </Animated.View>
             </Animated.ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Back button */}
             {!showRatingModal && (

@@ -15,7 +15,6 @@ import Feather from '@react-native-vector-icons/feather';
 import { useTipTarget } from '../../tips/useTipTarget';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
-import { radius } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,16 +28,6 @@ export const OPTIONS_BUTTON_SIZE  = 40;
 const BUTTON_RIGHT     = 20; // heroHeader paddingHorizontal
 const BUTTON_EXTRA_TOP = 12; // extra offset below insets.top in heroHeader
 
-const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-const SLEEP_OPTIONS: { label: string; minutes: number | 'end' | null }[] = [
-  { label: 'Off', minutes: null },
-  { label: '15m', minutes: 15 },
-  { label: '30m', minutes: 30 },
-  { label: '45m', minutes: 45 },
-  { label: '60m', minutes: 60 },
-  { label: 'End of story', minutes: 'end' },
-];
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -49,12 +38,30 @@ interface OptionsModalProps {
   onClose: () => void;
   insetsTop: number;
   playbackRate: number;
-  onRateChange: (rate: number) => void;
   onDismiss: () => void;
   sleepMinutesLeft: number | null;
   sleepEndOfStory?: boolean;
-  onSleepTimer: (minutes: number | 'end' | null) => void;
+  isPinned: boolean;
+  onInfo: () => void;
+  onTogglePin: () => void;
+  onSpeed: () => void;
+  onSleep: () => void;
+  onShare: () => void;
+  onBookmark: () => void;
 }
+
+const MenuRow = ({ label, value, onPress }: { label: string; value?: string; onPress: () => void }) => (
+  <TouchableOpacity
+    style={styles.menuRow}
+    activeOpacity={0.6}
+    onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel={value ? `${label}, ${value}` : label}
+  >
+    <Text style={styles.menuText}>{label}</Text>
+    {value ? <Text style={styles.menuValue}>{value}</Text> : null}
+  </TouchableOpacity>
+);
 
 // ---------------------------------------------------------------------------
 // Component
@@ -66,11 +73,16 @@ export default function OptionsModal({
   onClose,
   insetsTop,
   playbackRate,
-  onRateChange,
   onDismiss,
   sleepMinutesLeft,
   sleepEndOfStory = false,
-  onSleepTimer,
+  isPinned,
+  onInfo,
+  onTogglePin,
+  onSpeed,
+  onSleep,
+  onShare,
+  onBookmark,
 }: OptionsModalProps) {
 
   const tipRef = useTipTarget('player-options');
@@ -132,15 +144,8 @@ export default function OptionsModal({
     position: 'absolute',
   }));
 
-  // Sleep timer "active" chip: highlight the option matching the value that
-  // was set (mirrors the previous logic — active while minutesLeft is within
-  // that option's ceiling and the timer is running).
-  const isSleepActive = (minutes: number | 'end' | null) =>
-    minutes === null
-      ? sleepMinutesLeft === null && !sleepEndOfStory
-      : minutes === 'end'
-        ? sleepEndOfStory
-        : sleepMinutesLeft !== null && minutes >= sleepMinutesLeft;
+  const sleepValue = sleepEndOfStory ? 'End of story' : sleepMinutesLeft !== null ? `${sleepMinutesLeft} min left` : 'Off';
+  const run = (fn: () => void) => () => { onClose(); fn(); };
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -167,51 +172,12 @@ export default function OptionsModal({
             cardStyle,
           ]}
         >
-          <Text style={styles.sectionTitle}>Playback Speed</Text>
-          <View style={styles.chipRow}>
-            {SPEEDS.map(speed => {
-              const isActive = playbackRate === speed;
-              return (
-                <TouchableOpacity
-                  key={speed}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                  activeOpacity={0.7}
-                  onPress={() => onRateChange(speed)}
-                  accessibilityRole="radio"
-                  accessibilityLabel={`Playback speed ${speed} times`}
-                  accessibilityState={{ checked: isActive }}
-                >
-                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                    {speed}x
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>Sleep Timer</Text>
-          <View style={styles.chipRow}>
-            {SLEEP_OPTIONS.map(({ label, minutes }) => {
-              const isActive = isSleepActive(minutes);
-              return (
-                <TouchableOpacity
-                  key={label}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                  activeOpacity={0.7}
-                  onPress={() => { onSleepTimer(minutes); onClose(); }}
-                  accessibilityRole="radio"
-                  accessibilityLabel={minutes === null ? 'Sleep timer off' : `Sleep timer ${label}`}
-                  accessibilityState={{ checked: isActive }}
-                >
-                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <MenuRow label="Story details" onPress={run(onInfo)} />
+          <MenuRow label={isPinned ? 'Unpin story' : 'Pin story'} onPress={run(onTogglePin)} />
+          <MenuRow label="Playback speed" value={`${playbackRate}x`} onPress={run(onSpeed)} />
+          <MenuRow label="Sleep timer" value={sleepValue} onPress={run(onSleep)} />
+          <MenuRow label="Share story" onPress={run(onShare)} />
+          <MenuRow label="Add bookmark" onPress={run(onBookmark)} />
 
           <View style={styles.divider} />
 
@@ -238,7 +204,7 @@ export default function OptionsModal({
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={visible ? 'Close player options' : 'Player options'}
-        accessibilityHint={visible ? undefined : 'Playback speed, sleep timer and close player'}
+        accessibilityHint={visible ? undefined : 'Story actions, playback speed, sleep timer and close player'}
         accessibilityState={{ expanded: visible }}
       >
         <Animated.View style={menuIconStyle}>
@@ -296,40 +262,14 @@ const styles = StyleSheet.create({
     marginVertical: 14,
   },
 
-  sectionTitle: {
-    color: colors.textSecondary,
-    fontSize: fontSizes.caption,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
-
-  chipRow: {
+  menuRow: {
+    minHeight: 44,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.xl,
-    backgroundColor: colors.fillFaint,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  chipActive: {
-    backgroundColor: 'rgba(0,255,255,0.12)',
-    borderColor: colors.accent,
-  },
-  chipText: {
-    color: colors.textStrong,
-    fontSize: fontSizes.small,
-    fontWeight: '600',
-  },
-  chipTextActive: {
-    color: colors.accent,
-  },
+  menuText: { color: colors.textStrong, fontSize: fontSizes.body },
+  menuValue: { color: colors.textSecondary, fontSize: fontSizes.small },
 
   dismissRow: {
     flexDirection: 'row',

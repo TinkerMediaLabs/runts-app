@@ -34,11 +34,11 @@ export function useDeepLink() {
                 // Erotic story + erotic disabled → show blocked screen
                 navigate('ContentBlocked', { storyId });
             } else {
-                navigate('StoryDetails', { id: storyId });
+                navigate('StoryScreen', { storyID: storyId });
             }
         } catch {
             // Story fetch failed — navigate normally, let the screen handle errors
-            navigate('StoryDetails', { id: storyId });
+            navigate('StoryScreen', { storyID: storyId });
         }
     }, [eroticEnabled]);
 

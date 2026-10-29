@@ -41,9 +41,10 @@ import { audioEngine } from '@/features/audio/audioEngine';
 
 import ProgressBar from './ProgressBar';
 import PlayerControls from './PlayerControls';
-import SleepTimerButton from './SleepTimerButton';
+import PlayerActionsBar from './PlayerActionsBar';
+import { PlaybackSpeedSheet, SleepTimerSheet } from './PlayerSheets';
 import OptionsModal, { OPTIONS_BUTTON_SIZE } from './OptionsModal';
-import PinButton from '../../components/common/PinButton';
+import { useIsPinned, useTogglePin } from '../../hooks/queries/usePinnedStories';
 
 import ImageColors from 'react-native-image-colors';
 import { useStory } from '@/hooks/queries/useStories';
@@ -99,6 +100,16 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const track = state.currentTrack;
   const [showOptions, setShowOptions] = useState(false);
+  const [showSpeed, setShowSpeed] = useState(false);
+  const [showSleep, setShowSleep] = useState(false);
+  const { data: isPinnedData } = useIsPinned(track?.id ?? '');
+  const { toggle: togglePin } = useTogglePin();
+  const isPinned = !!isPinnedData;
+  const openStoryDetails = () => {
+    if (!track) return;
+    navigate('StoryScreen', { storyID: track.id });
+    collapsePlayer();
+  };
 
   const [showBookmarkModal,  setShowBookmarkModal]  = useState(false);
   const [bookmarkPosition,   setBookmarkPosition]   = useState(0);
@@ -386,34 +397,13 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       {hasScenes && <SceneHero scenes={scenes} onSceneChange={announceScene} />}
                       <View style={[styles.overlay, hasScenes && { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
 
-                      {/* Pan-to-collapse zone + sleep timer pill — scrolls
-                          away with the hero image, distinct from the sticky
-                          chevron/options buttons below */}
+                      {/* Pan-to-collapse zone — scrolls away with the hero image,
+                          distinct from the sticky header buttons below */}
                       <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
                           <GestureDetector gesture={panGesture}>
                               <View style={styles.heroPanZone} />
                           </GestureDetector>
 
-                          {sleepMinutesLeft !== null && (
-                              <View
-                                  pointerEvents="none"
-                                  style={{
-                                      position: 'absolute',
-                                      top: insets.top + 14,
-                                      left: 0,
-                                      right: 0,
-                                      alignItems: 'center',
-                                  }}
-                              >
-                                  <View
-                                      style={styles.sleepPill}
-                                      accessible
-                                      accessibilityLabel={`Sleep timer, ${sleepMinutesLeft} minutes left`}
-                                  >
-                                      <Text style={styles.sleepPillText}>💤 {sleepMinutesLeft}m</Text>
-                                  </View>
-                              </View>
-                          )}
                       </View>
 
                       <LinearGradient
@@ -466,7 +456,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                           collapsePlayer();
                         }
                       }}>
-                        <Text style={styles.artist}>by {track.artist}</Text>
+                        <Text style={styles.artist}>{track.artist}</Text>
                       </TouchableWithoutFeedback>
                       {narratorDisplay ? (
                         <Text style={styles.narrator}>Narrated by {narratorDisplay}</Text>
@@ -497,36 +487,22 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       ) : <View />}
                     </TouchableWithoutFeedback>
 
-                      <View style={styles.actions}>
-                        <View style={styles.actionbutton}>
-                          <PinButton storyId={track.id} size={20} />
-                        </View>
-                        <View style={styles.actionbutton}>
-                          <TouchableWithoutFeedback
-                            onPress={handleShare}
-                            accessibilityRole="button"
-                            accessibilityLabel="Share story"
-                            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
-                          >
-                              <FontAwesome5 name="share" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
-                          </TouchableWithoutFeedback>
-                      </View>
-                        <View style={styles.actionbutton}>
-                          <TouchableOpacity
-                            onPress={handleBookmarkPress}
-                            activeOpacity={0.7}
-                            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
-                            accessibilityRole="button"
-                            accessibilityLabel="Add bookmark"
-                            accessibilityHint="Saves your current position"
-                          >
-                            <FontAwesome5 name={'bookmark' as any} size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
                     </View>
+
+                    <PlayerActionsBar
+                      storyId={track.id}
+                      onInfo={openStoryDetails}
+                      playbackRate={state.playbackRate}
+                      onSpeed={() => setShowSpeed(true)}
+                      sleepMinutesLeft={sleepMinutesLeft}
+                      sleepEndOfStory={sleepEndOfStory}
+                      onSleep={() => setShowSleep(true)}
+                      onShare={handleShare}
+                      onBookmark={handleBookmarkPress}
+                    />
                   </View>
 
+                   <View style={styles.controlsSpacing}>
                    <PlayerControls
                         isPlaying={optimisticPlaying}
                         pause={pause}
@@ -534,12 +510,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                         hasNext={false}
                         onNext={undefined}
                       />
-
-                  <SleepTimerButton
-                    minutesLeft={sleepMinutesLeft}
-                    endOfStory={sleepEndOfStory}
-                    onSelect={setSleepTimer}
-                  />
+                   </View>
 
                   {/* PROGRESS + PRIMARY PLAY BUTTON + UP NEXT */}
                   <View
@@ -624,17 +595,33 @@ export default function TrackPlayerWidget({ expanded }: any) {
               onClose={() => setShowOptions(false)}
               insetsTop={insets.top}
               playbackRate={state.playbackRate}
-              onRateChange={(rate: number) => {
-                setPlaybackRate(rate);
-                setShowOptions(false);
-              }}
               onDismiss={() => {
                 setShowOptions(false);
                 clearTrack();
               }}
               sleepMinutesLeft={sleepMinutesLeft}
               sleepEndOfStory={sleepEndOfStory}
-              onSleepTimer={(minutes) => setSleepTimer(minutes)}
+              isPinned={isPinned}
+              onInfo={openStoryDetails}
+              onTogglePin={() => togglePin(track.id, isPinned)}
+              onSpeed={() => setShowSpeed(true)}
+              onSleep={() => setShowSleep(true)}
+              onShare={handleShare}
+              onBookmark={handleBookmarkPress}
+            />
+
+            <PlaybackSpeedSheet
+              visible={showSpeed}
+              onClose={() => setShowSpeed(false)}
+              rate={state.playbackRate}
+              onSelect={setPlaybackRate}
+            />
+            <SleepTimerSheet
+              visible={showSleep}
+              onClose={() => setShowSleep(false)}
+              minutesLeft={sleepMinutesLeft}
+              endOfStory={sleepEndOfStory}
+              onSelect={setSleepTimer}
             />
 
 
@@ -884,12 +871,17 @@ mini: {
     alignItems: 'center',
     marginBottom: 10,
   },
+  stickyCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 20,
+  },
   actionbutton: {},
   actioncontainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 14,
   },
   // Genre pill — replaces the old plain cyan text tag
   genrePill: {
@@ -911,7 +903,10 @@ mini: {
     color: '#ff7c2a',
   },
   controlbox: {
-    marginTop: 8,
+    marginTop: 20,
+  },
+  controlsSpacing: {
+    marginTop: 24,
   },
   // Up Next — replaces the old "second player controls" skip-next button
   upNextCard: {

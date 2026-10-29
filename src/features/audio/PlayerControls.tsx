@@ -9,9 +9,10 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 
 const SKIP_BACK_SECONDS = 15;
-const SKIP_FORWARD_SECONDS = 30;
+const SKIP_FORWARD_SECONDS = 15;
 
-export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNext }: any) {
+// The centre play/pause button is hidden for now: the artwork already toggles playback. Flip to true to bring it back.
+export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNext, showPlay = false }: any) {
   const tipRef = useTipTarget('player-skip');
 
   const toggle = async () => {
@@ -38,11 +39,12 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
           accessibilityRole="button"
           accessibilityLabel={`Back ${SKIP_BACK_SECONDS} seconds`}
         >
-          <Feather name="rotate-ccw" size={28} color={colors.textPrimary} />
+          <Feather name="rotate-ccw" size={44} color={colors.textPrimary} />
           <Text style={styles.skipLabel}>{SKIP_BACK_SECONDS}</Text>
         </TouchableOpacity>
 
-        {/* Play/pause — always centered */}
+        {/* Play/pause — always centered; hidden unless showPlay */}
+        {showPlay ? (
         <TouchableOpacity
           onPress={toggle}
           style={styles.play}
@@ -55,6 +57,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
             color="#ffff"
           />
         </TouchableOpacity>
+        ) : <View style={styles.gap} />}
 
         {/* Forward 30 seconds */}
         <TouchableOpacity
@@ -65,7 +68,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
           accessibilityRole="button"
           accessibilityLabel={`Forward ${SKIP_FORWARD_SECONDS} seconds`}
         >
-          <Feather name="rotate-cw" size={28} color={colors.textPrimary} />
+          <Feather name="rotate-cw" size={44} color={colors.textPrimary} />
           <Text style={styles.skipLabel}>{SKIP_FORWARD_SECONDS}</Text>
         </TouchableOpacity>
       </View>
@@ -104,14 +107,19 @@ const styles = StyleSheet.create({
     borderRadius:      40,
   },
   skip: {
-    alignItems:        'center',
-    paddingHorizontal: 12,
+    width:          64,
+    height:         64,
+    alignItems:     'center',
+    justifyContent: 'center',
   },
+  // The number sits inside the arrow so both skip buttons are the same size and line up with each other.
   skipLabel: {
-    color:    colors.textStrong,
-    fontSize: fontSizes.caption,
-    marginTop: 2,
+    position:   'absolute',
+    color:      colors.textPrimary,
+    fontSize:   fontSizes.small,
+    fontWeight: '700',
   },
+  gap: { width: 56 },
   next: {
     position: 'absolute',
     right:    0,

@@ -53,7 +53,7 @@ const EroticContinueTile = ({ storyId, progressSeconds }: {
     const remainingMn = Math.ceil(remaining / 60);
 
     const handlePress = () => {
-        navigation.navigate('StoryDetails', { id: storyId });
+        navigation.navigate('StoryScreen', { storyID: storyId });
     };
 
     const handlePlay = () => {
