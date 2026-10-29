@@ -83,6 +83,7 @@ export default ({ config }) => ({
 plugins: [
     ...(config.plugins ?? []),
     '@sentry/react-native/expo',
+    './plugins/withAndroidAuto', // lists the app in Android Auto
     [
         'expo-build-properties',
         {

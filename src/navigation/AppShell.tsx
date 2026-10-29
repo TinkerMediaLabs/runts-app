@@ -12,10 +12,12 @@ import TipOverlay from '@/tips/TipOverlay';
 import { setTipsFlag } from '@/tips/tipsStore';
 
 import { useDeepLink } from '@/hooks/useDeepLink';
+import { useCarBrowseTree } from '@/hooks/useCarBrowseTree';
 
 export default function AppShell({ children }: any) {
 
   useDeepLink();
+  useCarBrowseTree();
 
   const { expanded } = usePlayerUI();
   const { state, keepGoingStoryId } = usePlayer();
