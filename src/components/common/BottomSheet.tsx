@@ -53,8 +53,8 @@ const styles = StyleSheet.create({
   wrapper: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface1,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 12,
     borderWidth: 1,
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.fillStrong,
     alignSelf: 'center', marginBottom: 20,
   },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   title: { fontSize: fontSizes.subtitle, fontWeight: '700', color: colors.textPrimary },
 });

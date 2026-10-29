@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Modal, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, Image, Linking } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, Dimensions, Platform, Image, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 
 import MenuHeader from '../../components/common/MenuHeader';
@@ -33,6 +32,7 @@ import { unwrap } from '@/lib/amplifyResult';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Sheet from '@/components/common/BottomSheet';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -138,49 +138,6 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 );
 
 const RowDivider = () => <View style={styles.divider} />;
-
-const Sheet = ({
-    visible,
-    onClose,
-    title,
-    children,
-}: {
-    visible: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-}) => {
-    const insets = useSafeAreaInsets();
-    return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
-        >
-            <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
-                <View style={styles.sheetBackdrop} />
-            </TouchableWithoutFeedback>
-
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.sheetWrapper}
-                pointerEvents="box-none"
-            >
-                <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
-                    <View style={styles.sheetHandle} />
-                    <View style={styles.sheetHeader}>
-                        <Text style={styles.sheetTitle}>{title}</Text>
-                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel={`Close ${title}`}>
-                            <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
-                        </TouchableOpacity>
-                    </View>
-                    {children}
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
-    );
-};
 
 const PasswordField = ({
     label,
@@ -555,7 +512,8 @@ const AccountScreen = ({ navigation }: any) => {
                                         : 'https://play.google.com/store/account/subscriptions';
                                     Linking.openURL(url);
                                 } else {
-                                    navigation.navigate('Premium' as any);
+                                    // The Premium tab lives inside the tab bar (route "Root"); Account is a sibling screen, so go in through Root.
+                                    navigation.navigate('Root' as any, { screen: 'Premium' });
                                 }
                             }}
                         />
@@ -945,43 +903,6 @@ const styles = StyleSheet.create({
     },
 
     // ── Bottom sheet ──────────────────────────────────────────────────────────
-    sheetBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-    },
-    sheetWrapper: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    sheet: {
-        backgroundColor: colors.surface1,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 24,
-        paddingTop: 12,
-        borderWidth: 1,
-        borderBottomWidth: 0,
-        borderColor: colors.border,
-    },
-    sheetHandle: {
-        width: 36,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: '#ffffff30',
-        alignSelf: 'center',
-        marginBottom: 20,
-    },
-    sheetHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    sheetTitle: {
-        fontSize: fontSizes.subtitle,
-        fontWeight: '700',
-        color: colors.textPrimary,
-    },
     sheetNote: {
         fontSize: fontSizes.small,
         color: colors.textSecondary,

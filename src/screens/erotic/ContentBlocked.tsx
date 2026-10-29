@@ -21,22 +21,19 @@ const ContentBlocked = () => {
     const navigation = useNavigation<any>();
     const insets     = useSafeAreaInsets();
 
+    // The tab bar is the "Root" screen and the settings screen is "AppSettingsScreen" (the old names, "Main" and
+    // "AppSettings", do not exist and left this screen stuck).
     const handleGoToSettings = () => {
-        // Navigate to settings and close this screen
         navigation.reset({
-            index: 0,
-            routes: [{ name: 'Main' }],
+            index: 1,
+            routes: [{ name: 'Root' }, { name: 'AppSettingsScreen' }],
         });
-        // Small delay so the tab navigator is mounted before pushing settings
-        setTimeout(() => {
-            navigation.navigate('AppSettings');
-        }, 100);
     };
 
     const handleGoHome = () => {
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Main' }],
+            routes: [{ name: 'Root' }],
         });
     };
 
