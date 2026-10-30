@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -13,7 +14,7 @@ import { PlayerProvider } from './src/context/PlayerContext';
 import Navigation from './src/navigation';
 import useCachedResources from './src/hooks/useCachedResources';
 import TrackPlayer from '@rntp/player';
-import { configureAmplify, BACKEND_ID } from './src/lib/amplifyConfig';
+import { configureAmplify, BACKEND_ID, CAR_PROGRESS_URL } from './src/lib/amplifyConfig';
 import * as WebBrowser from 'expo-web-browser';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { queryClient, queryPersister, shouldPersistQuery, PERSIST_MAX_AGE } from './src/lib/queryClient';
@@ -66,6 +67,11 @@ function App() {
                     contentType:              'speech',
                     handleAudioBecomingNoisy: true,
                     android:                  { wakeMode: 'network' },
+                    // Car playback with the app closed: the library posts progress itself. The pass header is
+                    // supplied once the user is signed in (see useCarPass). Android only.
+                    ...(Platform.OS === 'android' && CAR_PROGRESS_URL
+                        ? { progressSync: { intervalSeconds: 15, http: { url: CAR_PROGRESS_URL, headers: {} } } }
+                        : {}),
                 });
             } catch (error) {
                 Sentry.captureException(error);

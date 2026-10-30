@@ -13,11 +13,13 @@ import { setTipsFlag } from '@/tips/tipsStore';
 
 import { useDeepLink } from '@/hooks/useDeepLink';
 import { useCarBrowseTree } from '@/hooks/useCarBrowseTree';
+import { useCarPass } from '@/hooks/useCarPass';
 
 export default function AppShell({ children }: any) {
 
   useDeepLink();
   useCarBrowseTree();
+  useCarPass();
 
   const { expanded } = usePlayerUI();
   const { state, keepGoingStoryId } = usePlayer();

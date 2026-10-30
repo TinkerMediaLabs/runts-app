@@ -3,6 +3,7 @@ import { eroticPin } from '../functions/erotic-pin/resource';
 import { uploadUrl } from '../functions/upload-url/resource';
 import { deleteAccount } from '../functions/delete-account/resource';
 import { audioLinks } from '../functions/audio-links/resource';
+import { carPass } from '../functions/car-pass/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -714,6 +715,12 @@ Comment: a
     .returns(a.string())
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(audioLinks)),
+  // A 30-day "car pass" for the player library's own progress posts while the app is closed in a car (see functions/car-pass).
+  getCarPass: a
+    .mutation()
+    .returns(a.string())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(carPass)),
   // The signed-in user deletes their own account: profile data first, then the sign-in account (see functions/delete-account).
   deleteMyAccount: a
     .mutation()

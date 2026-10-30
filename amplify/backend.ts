@@ -19,6 +19,8 @@ import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
 import { deleteAccount } from './functions/delete-account/resource';
 import { audioLinks } from './functions/audio-links/resource';
+import { carProgress } from './functions/car-progress/resource';
+import { carPass } from './functions/car-pass/resource';
 import { appleVerifyChallenge } from './functions/apple-auth/verify-challenge/resource';
 import { applePreSignUp } from './functions/apple-auth/pre-signup/resource';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -58,6 +60,8 @@ const backend = defineBackend({
   dataHealth,
   deleteAccount,
   audioLinks,
+  carProgress,
+  carPass,
   appleVerifyChallenge,
   applePreSignUp,
 });
@@ -121,6 +125,33 @@ const audioCdn = new cloudfront.Distribution(cdnStack, 'AudioCdn', {
 const audioLinksFn = backend.audioLinks.resources.lambda as lambda.Function;
 audioLinksFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
 audioLinksFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
+
+// ── car-progress / car-pass ───────────────────────────────────────────────
+// While a story plays from the car with the app closed, the player library posts progress to car-progress's web
+// address. It cannot sign in, so it sends a 30-day "car pass" (issued by car-pass, progress only). The address is
+// published in the app's backend outputs (custom.carProgressUrl) so every environment finds its own.
+const carProgressFn = backend.carProgress.resources.lambda as lambda.Function;
+const carInProgressTable = backend.data.resources.tables['UserInProgressStory'];
+const carPinnedTable     = backend.data.resources.tables['UserPinnedStory'];
+const carFinishedTable   = backend.data.resources.tables['UserFinishedStory'];
+carProgressFn.addEnvironment('IN_PROGRESS_TABLE_NAME', carInProgressTable.tableName);
+carProgressFn.addEnvironment('PINNED_TABLE_NAME', carPinnedTable.tableName);
+carProgressFn.addEnvironment('FINISHED_TABLE_NAME', carFinishedTable.tableName);
+carProgressFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+carProgressFn.addEnvironment('USER_TABLE_NAME', userTable.tableName);
+carInProgressTable.grantReadWriteData(carProgressFn);
+carPinnedTable.grantReadWriteData(carProgressFn);
+carFinishedTable.grantReadWriteData(carProgressFn);
+storyTable.grantReadData(carProgressFn);
+userTable.grantWriteData(carProgressFn);
+// The lookups go through each table's byUserAndStory index; for these tables the grants above do not cover
+// index access, so allow Query on the indexes explicitly.
+carProgressFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [carInProgressTable, carPinnedTable, carFinishedTable].map(t => `${t.tableArn}/index/*`),
+}));
+const carProgressUrl = carProgressFn.addFunctionUrl({ authType: lambda.FunctionUrlAuthType.NONE });
+backend.addOutput({ custom: { carProgressUrl: carProgressUrl.url } });
 
 // ── erotic-pin ────────────────────────────────────────────────────────────
 const eroticPinFn = backend.eroticPin.resources.lambda as lambda.Function;
