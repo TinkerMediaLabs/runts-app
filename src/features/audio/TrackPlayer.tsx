@@ -107,7 +107,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
   const isPinned = !!isPinnedData;
   const openStoryDetails = () => {
     if (!track) return;
-    navigate('StoryScreen', { storyID: track.id });
+    navigate('StoryScreen', { storyID: track.id, source: 'player' });
     collapsePlayer();
   };
 

@@ -234,6 +234,12 @@ const StoryScreen = ({ navigation }: any) => {
     const insets     = useSafeAreaInsets();
     const route      = useRoute();
     const { storyID }: any = route.params;
+    const openSource: string = (route.params as any)?.source ?? 'direct';
+    // Funnel: one "opened" per visit to this story, labelled with where the listener came from.
+    useEffect(() => {
+        if (storyID) Analytics.storyOpened({ storyId: storyID, source: openSource });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storyID]);
 
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: story, isLoading } = useStory(storyID);

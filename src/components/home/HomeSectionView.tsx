@@ -24,6 +24,7 @@ import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 import { Analytics } from '../../lib/analytics';
+import { StorySourceContext } from '../../hooks/useStorySource';
 import type { HomeSectionRow } from '../../lib/homeLayout';
 import useTypography from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
@@ -208,7 +209,9 @@ const HomeSectionView = ({ section, index, visible, onSettled }: Props & { visib
         pointerEvents={visible ? 'auto' : 'none'}
         importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
       >
-        <SectionContent section={section} index={index} />
+        <StorySourceContext.Provider value={`home:${section.type}`}>
+          <SectionContent section={section} index={index} />
+        </StorySourceContext.Provider>
       </Animated.View>
     </SettleContext.Provider>
   );

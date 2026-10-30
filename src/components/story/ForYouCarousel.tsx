@@ -15,9 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/types';
+import { useOpenStory } from '@/hooks/useStorySource';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import { Skeleton } from '../common/Skeleton';
@@ -92,7 +90,7 @@ const CarouselItem = ({
     const cardTipRef = useTipTarget(isFirst ? 'foryou-card' : null);
     React.useEffect(() => () => { if (isFirst) setTipsFlag('foryouExpanded', false); }, [isFirst]);
 
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const openStory = useOpenStory();
 
     const { data: resolvedImageUri } = useStoryImage(
         imageUri?.startsWith('stories/') ? imageUri : null
@@ -184,7 +182,7 @@ const CarouselItem = ({
                     </Animated.View>
 
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
+                        onPress={() => openStory(id, 'for_you')}
                         style={styles.imageTap}
                         activeOpacity={1}
                         accessibilityRole="button"

@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEroticInProgressStories } from '@/hooks/queries/useInProgressStories';
 import { useStoryImage }              from '@/hooks/queries/useStoryImage';
 import { usePlayer }                  from '@/context/PlayerContext';
+import { Analytics }                  from '@/lib/analytics';
 
 import { CachedImage } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
@@ -53,10 +54,11 @@ const EroticContinueTile = ({ storyId, progressSeconds }: {
     const remainingMn = Math.ceil(remaining / 60);
 
     const handlePress = () => {
-        navigation.navigate('StoryScreen', { storyID: storyId });
+        navigation.navigate('StoryScreen', { storyID: storyId, source: 'continue' });
     };
 
     const handlePlay = () => {
+        Analytics.noteSource(story.id, 'continue');
         playTrack({
             id:      story.id,
             title:   story.title ?? '',

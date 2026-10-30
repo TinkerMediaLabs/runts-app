@@ -12,9 +12,7 @@ import Animated, {
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/types';
+import { useOpenStory } from '@/hooks/useStorySource';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
@@ -58,7 +56,7 @@ const StoryTile = ({
 
     const tileTipRef = useTipTarget(tipTarget);
 
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const openStory = useOpenStory();
 
     const progress = useStoryProgress(id);
     const durationDisplay = getDurationDisplay(
@@ -228,7 +226,7 @@ const StoryTile = ({
 
                             {/* Full artwork → story screen */}
                             <TouchableWithoutFeedback
-                                onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
+                                onPress={() => openStory(id)}
                                 accessibilityRole="button"
                                 accessibilityLabel={`Open ${title}`}
                             >

@@ -5,9 +5,7 @@ import { Text } from '@/components/common/AppText';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/types';
+import { useOpenStory } from '@/hooks/useStorySource';
 
 import LoadingItem from '../common/LoadingItem';
 import { spacing } from '../../theme/spacing';
@@ -41,7 +39,7 @@ const HorzStoryTile = ({
     progressSeconds = 0,
 }: any) => {
 
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const openStory = useOpenStory();
 
     const { data: resolvedImageUri } = useStoryImage(
         imageUri?.startsWith('stories/') ? imageUri : null
@@ -54,7 +52,7 @@ const HorzStoryTile = ({
     return (
         <TouchableOpacity
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
+            onPress={() => openStory(id)}
             style={styles.wrapper}
             accessibilityRole="button"
             accessibilityLabel={[

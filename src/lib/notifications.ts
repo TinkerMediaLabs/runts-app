@@ -44,7 +44,7 @@ function addNotificationTapListener(): void {
         const storyId = data?.storyId as string | undefined;
 
         if (storyId) {
-            navigate('StoryScreen', { storyID: storyId });
+            navigate('StoryScreen', { storyID: storyId, source: 'notification' });
         }
     });
 }
@@ -54,7 +54,7 @@ async function checkColdStartNotification(): Promise<void> {
     const storyId = response?.notification.request.content.data?.storyId as string | undefined;
 
     if (storyId) {
-        navigate('StoryScreen', { storyID: storyId });
+        navigate('StoryScreen', { storyID: storyId, source: 'notification' });
     }
 }
 

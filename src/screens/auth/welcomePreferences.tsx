@@ -18,6 +18,7 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '../../context/AppContext';
 import { unwrap } from '@/lib/amplifyResult';
+import { Analytics } from '@/lib/analytics';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
@@ -60,6 +61,7 @@ const WelcomePreferences = ({ navigation, route }: any) => {
                 preferredTagIds: selected,
             }), 'Save your preferences');
 
+            Analytics.onboardingCompleted();
             await refreshAuth();
         } catch (e: any) {
             console.error('WelcomePreferences error:', e?.message ?? e);

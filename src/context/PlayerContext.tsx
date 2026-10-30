@@ -279,6 +279,8 @@ export const PlayerProvider = ({ children }: any) => {
             // ─────────────────────────────────────────────────────────────────────
 
             await audioEngine.play(track);
+            // Every real start counts (first listens and resumes); `resumed` tells them apart.
+            Analytics.storyPlayStarted({ storyId: track.id, title: track.title, author: track.artist, resumed: savedSeconds > 0 });
 
             const playlist = await withTimeout(loadPlaylist(track.id), 4000, [] as any[]);
             const index    = playlist.findIndex((s: any) => s.id === track.id);
@@ -305,11 +307,6 @@ export const PlayerProvider = ({ children }: any) => {
                 queryClient.invalidateQueries({ queryKey: ['story', track.id] });
                 try {
                     await client.mutations.incrementListenCount({ storyId: track.id });
-                    Analytics.storyPlayStarted({           // ← add
-                        storyId: track.id,
-                        title:   track.title,
-                        author:  track.artist,
-                    });
                 } catch (err) {
                     console.warn('incrementListenCount error:', err);
                 }
@@ -373,12 +370,13 @@ export const PlayerProvider = ({ children }: any) => {
 
         try {
             const saved = await getInProgressSeconds(storyId);
+            Analytics.noteSource(storyId, 'car');
+            Analytics.storyPlayStarted({ storyId, title: track.title, author: track.artist, resumed: saved > 0 });
             if (saved > 0) {
                 if (audioEngine.getCurrentPosition() < 5) await audioEngine.seek(saved);
             } else {
                 queryClient.invalidateQueries({ queryKey: ['story', storyId] });
                 client.mutations.incrementListenCount({ storyId }).catch(err => console.warn('incrementListenCount error:', err));
-                Analytics.storyPlayStarted({ storyId, title: track.title, author: track.artist });
             }
             const playlist = await withTimeout(loadPlaylist(storyId), 4000, [] as any[]);
             const index = playlist.findIndex((s: any) => s.id === storyId);
@@ -470,7 +468,7 @@ export const PlayerProvider = ({ children }: any) => {
         // The Keep going sheet takes over from here when there are suggestions; it opens the story page
         // itself if there are none.
         if (finishedStoryId && !currentTrackRef.current && keepGoingStoryId !== finishedStoryId) {
-            navigate('StoryScreen', { storyID: finishedStoryId });
+            navigate('StoryScreen', { storyID: finishedStoryId, source: 'story_end' });
         }
     };
 
@@ -637,6 +635,7 @@ export const PlayerProvider = ({ children }: any) => {
         if (nextIndex >= playlistRef.current.length) return;
         const next = playlistRef.current[nextIndex];
         if (!next) return;
+        Analytics.noteSource(next.id, 'next');
         await playTrack({
             id:      next.id,
             title:   next.title ?? '',

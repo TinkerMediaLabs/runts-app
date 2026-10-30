@@ -506,7 +506,7 @@ const SearchScreen = ({ navigation }: any) => {
   useEffect(() => {
       if (debouncedQuery.length > 0) {
           const tab = activeTab === 'tags' ? 'genres' : activeTab;
-          Analytics.searchPerformed(debouncedQuery, tab);
+          Analytics.searchPerformed({ tab, queryLength: debouncedQuery.length });
       }
   }, [debouncedQuery]);
 

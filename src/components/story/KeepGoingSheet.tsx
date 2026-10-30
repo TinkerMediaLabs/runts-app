@@ -69,7 +69,7 @@ const KeepGoingSheet = () => {
         if (!story || isLoading || items.length > 0) return;
         const id = keepGoingStoryId;
         dismissKeepGoing();
-        navigate('StoryScreen', { storyID: id });
+        navigate('StoryScreen', { storyID: id, source: 'story_end' });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [keepGoingStoryId, state.pendingRatingStoryId, state.currentTrack, story, isLoading, items.length]);
 
@@ -96,7 +96,7 @@ const KeepGoingSheet = () => {
                         item={item}
                         onPress={() => {
                             dismissKeepGoing();
-                            navigate('StoryScreen', { storyID: item.id });
+                            navigate('StoryScreen', { storyID: item.id, source: 'keep_going' });
                         }}
                     />
                 ))}

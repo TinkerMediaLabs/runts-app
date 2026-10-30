@@ -47,7 +47,7 @@ const ProgressCard = ({
 }: {
     inProgressRecord: any;
 }) => {
-    const onPlay = useOnPlay();
+    const onPlay = useOnPlay('continue');
     const [story, setStory] = useState<any>(null);
 
     useEffect(() => {

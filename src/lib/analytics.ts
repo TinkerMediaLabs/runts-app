@@ -12,11 +12,14 @@
 
 import rudderClient from '@rudderstack/rudder-sdk-react-native';
 import Constants from 'expo-constants';
+import { createOnce, createSourceMemory } from './analyticsRules';
 
 const WRITE_KEY: string  = Constants.expoConfig?.extra?.rudderWriteKey  ?? '';
 const DATA_PLANE: string = Constants.expoConfig?.extra?.rudderDataPlane ?? '';
 
 let initialised = false;
+const sources = createSourceMemory();   // story id -> where the listener came from
+const firstShownThisSession = createOnce();
 
 // ---------------------------------------------------------------------------
 // Init + Identity
@@ -58,14 +61,30 @@ interface StoryEventProps {
     genre?:     string;
     duration?:  number;
     isErotic?:  boolean;
+    source?:    string;   // where the story was opened or started from (see analyticsRules)
+    resumed?:   boolean;  // play_started: continued from saved progress rather than a first listen
+}
+
+// The funnel: story_opened -> story_play_started -> story_completed. All three carry the same `source`.
+function noteSource(storyId: string | undefined | null, source: string): void {
+    sources.note(storyId, source);
+}
+
+function storyOpened(props: { storyId: string; source: string }): void {
+    sources.note(props.storyId, props.source);
+    track('story_opened', props);
 }
 
 function storyPlayStarted(props: StoryEventProps): void {
-    track('story_play_started', props);
+    track('story_play_started', { ...props, source: props.source ?? sources.get(props.storyId) });
 }
 
 function storyCompleted(props: StoryEventProps): void {
-    track('story_completed', props);
+    track('story_completed', { ...props, source: props.source ?? sources.get(props.storyId) });
+}
+
+function onboardingCompleted(): void {
+    track('onboarding_completed', {});
 }
 
 function storyPinned(props: Pick<StoryEventProps, 'storyId' | 'title'>): void {
@@ -112,12 +131,15 @@ function authorUnfollowed(authorId: string, authorName?: string): void {
 // Discovery events
 // ---------------------------------------------------------------------------
 
-function searchPerformed(query: string, tab: 'stories' | 'authors' | 'genres'): void {
-    track('search_performed', { query, tab });
+// The text typed is not sent, only how long it was.
+function searchPerformed(props: { tab: 'stories' | 'authors' | 'genres'; queryLength: number }): void {
+    track('search_performed', props);
 }
 
 // A Home section was included in the layout the listener was shown (RudderStack does the reporting).
+// Sent once per section per app session, not on every Home load.
 function homeSectionShown(props: { sectionId: string; type: string; position: number }): void {
+    if (!firstShownThisSession(props.sectionId)) return;
     track('home_section_shown', props);
 }
 
@@ -159,8 +181,11 @@ export const Analytics = {
     init,
     identify,
     reset,
+    noteSource,
+    storyOpened,
     storyPlayStarted,
     storyCompleted,
+    onboardingCompleted,
     storyPinned,
     storyUnpinned,
     storyRated,
