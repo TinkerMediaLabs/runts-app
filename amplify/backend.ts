@@ -18,10 +18,16 @@ import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
 import { deleteAccount } from './functions/delete-account/resource';
+import { audioLinks } from './functions/audio-links/resource';
 import { appleVerifyChallenge } from './functions/apple-auth/verify-challenge/resource';
 import { applePreSignUp } from './functions/apple-auth/pre-signup/resource';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -51,6 +57,7 @@ const backend = defineBackend({
   tagInsights,
   dataHealth,
   deleteAccount,
+  audioLinks,
   appleVerifyChallenge,
   applePreSignUp,
 });
@@ -90,6 +97,30 @@ const uploadUrlFn = backend.uploadUrl.resources.lambda as lambda.Function;
 const storageBucket = backend.storage.resources.bucket;
 uploadUrlFn.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
 ['stories/*', 'authors/*', 'narrators/*'].forEach(prefix => storageBucket.grantPut(uploadUrlFn, prefix));
+
+// ── audio-links / audio CDN ───────────────────────────────────────────────
+// Story audio is served through CloudFront with signed links that last 7 days (the old bucket links die in
+// about an hour). The bucket itself stays private: only this CDN can read it. Files are not moved. The
+// public half of the signing key is committed (cloudfront-public-key.pem); the private half is an Amplify
+// secret read only by the audio-links function.
+const cdnStack = backend.storage.stack;
+const audioPublicKey = new cloudfront.PublicKey(cdnStack, 'AudioPublicKey', {
+  encodedKey: readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'cloudfront-public-key.pem'), 'utf8'),
+});
+const audioKeyGroup = new cloudfront.KeyGroup(cdnStack, 'AudioKeyGroup', { items: [audioPublicKey] });
+const audioCdn = new cloudfront.Distribution(cdnStack, 'AudioCdn', {
+  comment: 'Runts story audio',
+  defaultBehavior: {
+    origin: origins.S3BucketOrigin.withOriginAccessControl(storageBucket),
+    viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+    allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+    cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+    trustedKeyGroups: [audioKeyGroup],
+  },
+});
+const audioLinksFn = backend.audioLinks.resources.lambda as lambda.Function;
+audioLinksFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
+audioLinksFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
 
 // ── erotic-pin ────────────────────────────────────────────────────────────
 const eroticPinFn = backend.eroticPin.resources.lambda as lambda.Function;

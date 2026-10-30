@@ -2,6 +2,7 @@ import { incrementListens } from '../functions/increment-listens/resource';
 import { eroticPin } from '../functions/erotic-pin/resource';
 import { uploadUrl } from '../functions/upload-url/resource';
 import { deleteAccount } from '../functions/delete-account/resource';
+import { audioLinks } from '../functions/audio-links/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -706,6 +707,13 @@ Comment: a
     .returns(a.string())
     .authorization(allow => [allow.group('admin')])
     .handler(a.handler.function(uploadUrl)),
+  // Signed 7-day CDN links for story audio (see functions/audio-links). Returns JSON: { expiresAt, links: [{ path, url }] }.
+  getAudioLinks: a
+    .mutation()
+    .arguments({ paths: a.string().array().required() })
+    .returns(a.string())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(audioLinks)),
   // The signed-in user deletes their own account: profile data first, then the sign-in account (see functions/delete-account).
   deleteMyAccount: a
     .mutation()
