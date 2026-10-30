@@ -2,6 +2,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../amplify/data/resource';
 import { audioLinks, isCdnPath } from './audioLinks';
+import { fetchTrendingSnapshot, fetchAllTimePopular, TREND_DEFAULT_DAYS } from './trending';
 import { resumePoint, type CarStory } from '../features/audio/carBrowseTree';
 
 // Loads what the car list shows: the same index queries the phone uses (newest-listened first for in-progress,
@@ -11,16 +12,29 @@ import { resumePoint, type CarStory } from '../features/audio/carBrowseTree';
 
 const FETCH_IN_PROGRESS = 30;
 const FETCH_PINNED = 40;
+const FETCH_TRENDING = 25;
+const TRENDING_TTL_MS = 10 * 60 * 1000;
 
-export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ continueListening: CarStory[]; playlist: CarStory[] }> {
+// Trending is the same for everyone and changes hourly, so the car list does not re-read it on every refresh.
+let trendingCache: { at: number; stories: any[] } | null = null;
+async function loadTrending(): Promise<any[]> {
+  if (trendingCache && Date.now() - trendingCache.at < TRENDING_TTL_MS) return trendingCache.stories;
+  const recent = await fetchTrendingSnapshot(TREND_DEFAULT_DAYS, FETCH_TRENDING);
+  const stories = recent.length ? recent : await fetchAllTimePopular(FETCH_TRENDING);
+  if (stories.length) trendingCache = { at: Date.now(), stories };
+  return stories;
+}
+
+export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ continueListening: CarStory[]; playlist: CarStory[]; trending: CarStory[] }> {
   const client = generateClient<Schema>();
   const { userId } = await getCurrentUser();
 
-  const [inProg, pinned]: any[] = await Promise.all([
+  const [inProg, pinned, trendingStories]: any[] = await Promise.all([
     (client.models.UserInProgressStory as any).listUserInProgressStoryByUserIdAndLastListenedAt(
       { userId }, { sortDirection: 'DESC', limit: FETCH_IN_PROGRESS }),
     (client.models.UserPinnedStory as any).listUserPinnedStoryByUserIdAndSortOrder(
       { userId }, { sortDirection: 'ASC', limit: FETCH_PINNED }),
+    loadTrending(),
   ]);
   if (inProg.errors?.length) throw new Error(inProg.errors[0].message);
   if (pinned.errors?.length) throw new Error(pinned.errors[0].message);
@@ -31,6 +45,14 @@ export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ co
   const ids = [...new Set([...inProgIds, ...pinnedIds])];
 
   const stories = new Map<string, any>();
+  // Trending stories arrive whole; ones already in progress or pinned stay in those folders only.
+  const mine = new Set(ids);
+  const trendingIds: string[] = [];
+  for (const t of trendingStories as any[]) {
+    if (!t?.id || mine.has(t.id) || stories.has(t.id)) continue;
+    stories.set(t.id, t);
+    trendingIds.push(t.id);
+  }
   await Promise.all(ids.map(async id => {
     const { data } = await client.models.Story.get({ id });
     if (data) stories.set(id, data);
@@ -53,7 +75,7 @@ export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ co
     return !(s.primaryTagId && premiumTag.get(s.primaryTagId));
   };
 
-  const keepIds = ids.filter(id => playable(stories.get(id)));
+  const keepIds = [...ids, ...trendingIds].filter(id => playable(stories.get(id)));
   const authorIds = [...new Set(keepIds.map(id => stories.get(id).authorId).filter(Boolean))] as string[];
   const authorName = new Map<string, string>();
   await Promise.all(authorIds.map(async id => {
@@ -83,5 +105,5 @@ export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ co
   };
   const keep = new Set(keepIds);
   const build = (list: string[]) => list.filter(id => keep.has(id)).map(toCar).filter((x): x is CarStory => !!x);
-  return { continueListening: build(inProgIds), playlist: build(pinnedIds) };
+  return { continueListening: build(inProgIds), playlist: build(pinnedIds), trending: build(trendingIds) };
 }

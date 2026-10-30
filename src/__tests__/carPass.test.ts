@@ -46,6 +46,10 @@ describe('car progress receiver', () => {
     expect((await post({ mediaId: 'playlist:s1', position: 61.9, duration: 1000 })).status).toBe(204);
     expect(calls).toEqual([['save', { userId: 'u1', owner: 'u1::bob', storyId: 's1', position: 61 }]]);
   });
+  it('saves the position of a story started from the Trending folder', async () => {
+    expect((await post({ mediaId: 'trending:s1', position: 30, duration: 1000 })).status).toBe(204);
+    expect(calls).toEqual([['save', { userId: 'u1', owner: 'u1::bob', storyId: 's1', position: 30 }]]);
+  });
   it('marks the story finished near the end', async () => {
     await post({ mediaId: 'continue:s2', position: 1000 - FINISH_WITHIN_SECONDS, duration: 1000 });
     expect(calls).toEqual([['finish', { userId: 'u1', owner: 'u1::bob', storyId: 's2' }]]);

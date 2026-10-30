@@ -5,7 +5,7 @@ import { verifyPass } from './pass';
 // end-of-story steps the phone performs. Pure logic with injected storage so it can be tested.
 
 export const FINISH_WITHIN_SECONDS = 25;
-const MEDIA_ID = /^(continue|playlist):([A-Za-z0-9_-]{1,64})$/;
+const MEDIA_ID = /^(continue|playlist|trending):([A-Za-z0-9_-]{1,64})$/;
 
 export type ProgressDeps = {
   secret: string;
