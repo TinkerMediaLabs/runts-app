@@ -84,6 +84,7 @@ plugins: [
     ...(config.plugins ?? []),
     '@sentry/react-native/expo',
     './plugins/withAndroidAuto', // lists the app in Android Auto
+    './plugins/withCarPlay',     // lists the app in Apple CarPlay (iOS only)
     [
         'expo-build-properties',
         {
