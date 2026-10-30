@@ -4943,6 +4943,27 @@
             }
           }
         },
+        "getAudioLinks": {
+          "name": "getAudioLinks",
+          "isArray": false,
+          "type": "String",
+          "isRequired": false,
+          "arguments": {
+            "paths": {
+              "name": "paths",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "isArrayNullable": false
+            }
+          }
+        },
+        "getCarPass": {
+          "name": "getCarPass",
+          "isArray": false,
+          "type": "String",
+          "isRequired": false
+        },
         "deleteMyAccount": {
           "name": "deleteMyAccount",
           "isArray": false,
@@ -4997,5 +5018,8 @@
       }
     ]
   },
-  "version": "1.4"
+  "version": "1.4",
+  "custom": {
+    "carProgressUrl": "https://ca4fdyqqhnuy4lf7sobaz2uxsi0djowf.lambda-url.us-east-2.on.aws/"
+  }
 }
