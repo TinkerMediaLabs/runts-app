@@ -1,7 +1,7 @@
 // Shared helpers for story card display logic (ForYouCarousel, HorizontalTile,
 // StoryDetails, etc.)
 
-export const NEW_STORY_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
+export const NEW_STORY_WINDOW_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
 
 export function isRecentlyPublished(publishedAt: string | null | undefined): boolean {
   if (!publishedAt) return false;

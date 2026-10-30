@@ -26,7 +26,8 @@ describe('getDurationDisplay', () => {
 
 describe('isRecentlyPublished', () => {
   it('is true for yesterday', () => expect(isRecentlyPublished(new Date(Date.now() - 86400000).toISOString())).toBe(true));
-  it('is false after two weeks', () => expect(isRecentlyPublished(new Date(Date.now() - 20 * 86400000).toISOString())).toBe(false));
+  it('is true four days ago', () => expect(isRecentlyPublished(new Date(Date.now() - 4 * 86400000).toISOString())).toBe(true));
+  it('is false after five days', () => expect(isRecentlyPublished(new Date(Date.now() - 6 * 86400000).toISOString())).toBe(false));
   it('is false for missing or invalid dates', () => {
     expect(isRecentlyPublished(undefined)).toBe(false);
     expect(isRecentlyPublished('nope')).toBe(false);

@@ -262,6 +262,8 @@ const StoryScreen = ({ navigation }: any) => {
 
      const primaryTag = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? storyTags[0] ?? null;
      const isLocked   = useIsLocked(story, primaryTag);
+    const primaryTagPill   = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? null;
+    const secondaryTagPill = storyTags.find((t: any) => t.id === story?.secondaryTagId) ?? null;
     const [showPaywall, setShowPaywall] = useState(false);
 
 
@@ -622,6 +624,25 @@ const handleDelete = (id: string) => {
                     ) : null}
                 </View>
 
+                    {/* Primary + secondary tag, same pill as the story tiles */}
+                    {(primaryTagPill || secondaryTagPill) ? (
+                        <View style={styles.tilePillRow}>
+                            {[primaryTagPill, secondaryTagPill].filter(Boolean).map((tag: any) => (
+                                <TouchableOpacity
+                                    key={tag.id}
+                                    style={styles.tilePill}
+                                    activeOpacity={0.7}
+                                    onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Tag ${tag.name}`}
+                                    accessibilityHint="Opens stories with this tag"
+                                >
+                                    <Text style={styles.tilePillText}>{tag.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : null}
+
                     </Reveal>
 
                     <Reveal index={1}>
@@ -766,7 +787,10 @@ const handleDelete = (id: string) => {
 
                     {/* Description */}
                     {story?.description ? (
-                        <Text style={styles.description}>{story.description}</Text>
+                        <>
+                            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Synopsis</Text>
+                            <Text style={styles.description}>{story.description}</Text>
+                        </>
                     ) : null}
 
                     {/* Credit */}
@@ -794,6 +818,8 @@ const handleDelete = (id: string) => {
                         </View>
                     )}
 
+                    <MoreLikeThis story={story} />
+
                     {/* ── Reaction aggregate ── */}
                     {topReactions.length > 0 && (
                         <View style={styles.reactionsSection}>
@@ -810,8 +836,6 @@ const handleDelete = (id: string) => {
                             </View>
                         </View>
                     )}
-
-                    <MoreLikeThis story={story} />
 
                     <View style={styles.separator} />
 {/* ── Discussion ── */}
@@ -1109,6 +1133,24 @@ const styles = StyleSheet.create({
     tagsSection: {
         marginTop: 20,
         marginBottom: 30
+    },
+    tilePillRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: 14,
+    },
+    tilePill: {
+        backgroundColor:   colors.fill,
+        borderRadius:      radius.md,
+        paddingHorizontal: 9,
+        paddingVertical:   4,
+    },
+    tilePillText: {
+        fontSize:      fontSizes.caption,
+        fontWeight:    '600',
+        color:         colors.textStrong,
+        textTransform: 'capitalize',
     },
     tagsWrap: {
         flexDirection: 'row',
