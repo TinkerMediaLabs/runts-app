@@ -11,6 +11,7 @@ export type CarStory = {
   audioUrl: string;      // signed CDN link (7 days)
   artworkUrl?: string;
   duration?: number;     // seconds
+  startSeconds?: number; // where to resume (see resumePoint)
 };
 
 export type CarTreeInput = {
@@ -29,14 +30,28 @@ export const storyIdFromMediaId = (mediaId: string): string | null => {
   return m ? m[2] : null;
 };
 
-const toItem = (folder: 'continue' | 'playlist') => (s: CarStory): BrowseItem => ({
-  mediaId: carMediaId(folder, s.id),
-  title: s.title,
-  artist: s.artist,
-  artworkUrl: s.artworkUrl,
-  url: s.audioUrl,
-  duration: s.duration,
-});
+// Resume only when it is useful: not the first few seconds, and not a story that is effectively finished.
+export const MIN_RESUME_SECONDS = 5;
+export const NEAR_END_SECONDS = 15;
+export function resumePoint(progressSeconds?: number | null, durationSeconds?: number | null): number | undefined {
+  if (!progressSeconds || progressSeconds < MIN_RESUME_SECONDS) return undefined;
+  if (durationSeconds && progressSeconds >= durationSeconds - NEAR_END_SECONDS) return undefined;
+  return Math.floor(progressSeconds);
+}
+
+// startPositionSeconds is read by our patch of the player library (patches/@rntp+player+5.0.0.patch).
+const toItem = (folder: 'continue' | 'playlist') => (s: CarStory): BrowseItem => {
+  const item: BrowseItem & { startPositionSeconds?: number } = {
+    mediaId: carMediaId(folder, s.id),
+    title: s.title,
+    artist: s.artist,
+    artworkUrl: s.artworkUrl,
+    url: s.audioUrl,
+    duration: s.duration,
+  };
+  if (s.startSeconds) item.startPositionSeconds = s.startSeconds;
+  return item;
+};
 
 const note = (mediaId: string, title: string): BrowseCategory => ({
   mediaId: `${mediaId}-folder`,

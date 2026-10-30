@@ -1,8 +1,13 @@
 diff --git a/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt b/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt
-index 964c96b..ff60345 100644
+index 964c96b..e7918bf 100644
 --- a/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt
 +++ b/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayerPlaybackService.kt
-@@ -22,6 +22,7 @@ import androidx.media3.common.MediaMetadata
+@@ -18,10 +18,12 @@ import androidx.media3.common.AudioAttributes
+ import androidx.media3.common.C
+ import androidx.media3.common.ForwardingPlayer
+ import androidx.media3.common.MediaItem
++import androidx.media3.common.C
+ import androidx.media3.common.MediaMetadata
  import androidx.media3.common.Player
  import androidx.media3.common.util.UnstableApi
  import androidx.media3.datasource.DataSource
@@ -10,7 +15,7 @@ index 964c96b..ff60345 100644
  import androidx.media3.datasource.DataSpec
  import androidx.media3.datasource.DefaultHttpDataSource
  import androidx.media3.datasource.cache.CacheDataSource
-@@ -92,8 +93,11 @@ class TrackPlayerPlaybackService: MediaLibraryService(), MediaLibraryService.Med
+@@ -92,8 +94,11 @@ class TrackPlayerPlaybackService: MediaLibraryService(), MediaLibraryService.Med
        )
        .build()
  
@@ -24,3 +29,60 @@ index 964c96b..ff60345 100644
      )
  
      val dataSourceFactory: DataSource.Factory = config.cacheMaxSizeBytes?.let { maxBytes ->
+@@ -540,6 +545,35 @@ class TrackPlayerPlaybackService: MediaLibraryService(), MediaLibraryService.Med
+     return Futures.immediateFuture(resolved)
+   }
+ 
++  // When the car starts a story that has saved progress, begin there instead of at 0:00. Only applies when the
++  // controller did not ask for a position itself.
++  @OptIn(UnstableApi::class)
++  override fun onSetMediaItems(
++    mediaSession: MediaSession,
++    controller: MediaSession.ControllerInfo,
++    mediaItems: MutableList<MediaItem>,
++    startIndex: Int,
++    startPositionMs: Long
++  ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
++    val browseTree = BrowseTree.load(this)
++    val resolved = mediaItems.map { requested ->
++      if (requested.localConfiguration != null) return@map requested
++      browseTree.findItem(requested.mediaId)?.toMediaItem() ?: requested
++    }.toMutableList()
++
++    var index = startIndex
++    var position = startPositionMs
++    val target = if (startIndex == C.INDEX_UNSET) 0 else startIndex
++    if (position == C.TIME_UNSET && target in mediaItems.indices) {
++      val resume = browseTree.findItem(mediaItems[target].mediaId)?.startPositionSeconds
++      if (resume != null && resume > 0) {
++        position = (resume * 1000).toLong()
++        index = target
++      }
++    }
++    return Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(resolved, index, position))
++  }
++
+   // endregion
+ 
+   // region Session Commands
+diff --git a/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/models/BrowseTree.kt b/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/models/BrowseTree.kt
+index 1db67f3..3029f3c 100644
+--- a/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/models/BrowseTree.kt
++++ b/node_modules/@rntp/player/android/src/main/java/com/doublesymmetry/trackplayer/models/BrowseTree.kt
+@@ -33,6 +33,8 @@ data class BrowseMediaItem(
+   val artworkUrl: String? = null,
+   val duration: Double? = null,
+   val isLive: Boolean? = null,
++  // Where to start when the car plays this item (seconds). Lets "Continue listening" resume mid-story.
++  val startPositionSeconds: Double? = null,
+   val children: List<BrowseMediaItem>? = null,
+ ) {
+   val isPlayable: Boolean get() = url != null
+@@ -131,6 +133,7 @@ data class BrowseTree(
+           artworkUrl = if (itemMap.hasKey("artworkUrl")) itemMap.getString("artworkUrl") else null,
+           duration = if (itemMap.hasKey("duration")) itemMap.getDouble("duration") else null,
+           isLive = if (itemMap.hasKey("isLive")) itemMap.getBoolean("isLive") else null,
++          startPositionSeconds = if (itemMap.hasKey("startPositionSeconds")) itemMap.getDouble("startPositionSeconds") else null,
+           children = children,
+         ))
+       }

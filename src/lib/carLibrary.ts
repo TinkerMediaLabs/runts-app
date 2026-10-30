@@ -2,7 +2,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../amplify/data/resource';
 import { audioLinks, isCdnPath } from './audioLinks';
-import type { CarStory } from '../features/audio/carBrowseTree';
+import { resumePoint, type CarStory } from '../features/audio/carBrowseTree';
 
 // Loads what the car list shows: the same index queries the phone uses (newest-listened first for in-progress,
 // pin order for the playlist), capped, so cost does not grow with the catalog or a person's history.
@@ -26,6 +26,7 @@ export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ co
   if (pinned.errors?.length) throw new Error(pinned.errors[0].message);
 
   const inProgIds: string[] = (inProg.data ?? []).map((r: any) => r.storyId);
+  const progress = new Map<string, number>((inProg.data ?? []).map((r: any) => [r.storyId, r.progressSeconds ?? 0]));
   const pinnedIds: string[] = (pinned.data ?? []).map((r: any) => r.storyId);
   const ids = [...new Set([...inProgIds, ...pinnedIds])];
 
@@ -77,6 +78,7 @@ export async function loadCarStories(opts: { isPremium: boolean }): Promise<{ co
       audioUrl,
       artworkUrl: s.imageUri ? links[s.imageUri] : undefined,
       duration: s.duration ?? undefined,
+      startSeconds: resumePoint(progress.get(id), s.duration),
     };
   };
   const keep = new Set(keepIds);

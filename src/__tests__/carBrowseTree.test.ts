@@ -1,4 +1,4 @@
-import { buildCarBrowseTree, carMediaId, storyIdFromMediaId, MAX_CONTINUE, MAX_PLAYLIST, type CarStory } from '../features/audio/carBrowseTree';
+import { buildCarBrowseTree, resumePoint, carMediaId, storyIdFromMediaId, MAX_CONTINUE, MAX_PLAYLIST, type CarStory } from '../features/audio/carBrowseTree';
 
 const story = (n: number, extra: Partial<CarStory> = {}): CarStory => ({
   id: `s${n}`, title: `Story ${n}`, artist: 'A', audioUrl: `https://cdn/s${n}.mp3`, ...extra,
@@ -49,5 +49,33 @@ describe('car browse tree', () => {
     const ids = tree.flatMap(c => [c.mediaId, ...c.items.map(i => i.mediaId)]);
     expect(new Set(ids).size).toBe(ids.length);
     tree.forEach(c => expect(c.items.length).toBeGreaterThan(0));
+  });
+
+  it('passes a resume position to the car only when there is one', () => {
+    const tree = buildCarBrowseTree({ signedIn: true, continueListening: [story(1, { startSeconds: 120 }), story(2)] });
+    const [a, b]: any[] = tree[0].items;
+    expect(a.startPositionSeconds).toBe(120);
+    expect('startPositionSeconds' in b).toBe(false);
+  });
+});
+
+describe('resumePoint', () => {
+  it('ignores the first few seconds and missing progress', () => {
+    expect(resumePoint(undefined, 600)).toBeUndefined();
+    expect(resumePoint(null, 600)).toBeUndefined();
+    expect(resumePoint(0, 600)).toBeUndefined();
+    expect(resumePoint(4, 600)).toBeUndefined();
+  });
+  it('resumes in the middle, rounded down', () => {
+    expect(resumePoint(5, 600)).toBe(5);
+    expect(resumePoint(120.9, 600)).toBe(120);
+  });
+  it('starts over when the story is effectively finished', () => {
+    expect(resumePoint(590, 600)).toBeUndefined();
+    expect(resumePoint(585, 600)).toBeUndefined();
+    expect(resumePoint(584, 600)).toBe(584);
+  });
+  it('still resumes when the duration is unknown', () => {
+    expect(resumePoint(300, undefined)).toBe(300);
   });
 });
