@@ -1150,13 +1150,11 @@
                     "provider": "userPools",
                     "ownerField": "owner",
                     "allow": "owner",
-                    "identityClaim": "cognito:username",
                     "operations": [
-                      "create",
-                      "update",
-                      "delete",
-                      "read"
-                    ]
+                      "read",
+                      "delete"
+                    ],
+                    "identityClaim": "cognito:username"
                   },
                   {
                     "allow": "private",
@@ -4839,6 +4837,39 @@
         }
       },
       "nonModels": {
+        "CommentWriteResult": {
+          "name": "CommentWriteResult",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "content": {
+              "name": "content",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "userName": {
+              "name": "userName",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            }
+          }
+        },
         "EroticPinResult": {
           "name": "EroticPinResult",
           "fields": {
@@ -4943,6 +4974,56 @@
             }
           }
         },
+        "postComment": {
+          "name": "postComment",
+          "isArray": false,
+          "type": {
+            "nonModel": "CommentWriteResult"
+          },
+          "isRequired": false,
+          "arguments": {
+            "storyId": {
+              "name": "storyId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "content": {
+              "name": "content",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "anonymous": {
+              "name": "anonymous",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false
+            }
+          }
+        },
+        "editComment": {
+          "name": "editComment",
+          "isArray": false,
+          "type": {
+            "nonModel": "CommentWriteResult"
+          },
+          "isRequired": false,
+          "arguments": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "content": {
+              "name": "content",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            }
+          }
+        },
         "getAudioLinks": {
           "name": "getAudioLinks",
           "isArray": false,
@@ -4988,12 +5069,6 @@
               "list",
               "write",
               "delete"
-            ]
-          },
-          "profile-pictures/*": {
-            "authenticated": [
-              "get",
-              "list"
             ]
           },
           "stories/*": {
