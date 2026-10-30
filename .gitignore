@@ -29,6 +29,8 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+# Public half of the audio CDN signing key: safe to commit and needed to build the backend. (Never commit the private key.)
+!amplify/cloudfront-public-key.pem
 
 # local env files
 .env*.local
