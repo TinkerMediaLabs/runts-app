@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { usePlaybackState, useIsPlaying, PlaybackState } from '@rntp/player';
+import TrackPlayer, { usePlaybackState, useIsPlaying, PlaybackState, Event } from '@rntp/player';
 import { audioEngine } from '@/features/audio/audioEngine';
 import { usePlayerUI } from '@/context/PlayerUIContext';
 import { generateClient } from 'aws-amplify/data';
@@ -16,6 +16,8 @@ import { Analytics } from '@/lib/analytics';
 import { findFinished, findPinned, findInProgress, findRating } from '@/lib/userStoryLookups';
 import { unwrap, warnOnErrors } from '@/lib/amplifyResult';
 import { withTimeout } from '@/lib/withTimeout';
+import { storyIdFromMediaId } from '@/features/audio/carBrowseTree';
+import { endedNaturally } from '@/lib/carPlayback';
 
 const client = generateClient<Schema>();
 
@@ -86,6 +88,8 @@ export const PlayerProvider = ({ children }: any) => {
     const currentTrackRef  = useRef<Track | null>(null);
     const isPlayingRef     = useRef(false);
     const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+    // Last sampled position of the current story, to tell whether a car-queue change was a natural ending.
+    const lastPositionRef   = useRef<{ id: string; position: number; duration: number } | null>(null);
 
     // ── Playback state listener for track completion ──────────────────────────
     const playbackState = usePlaybackState();
@@ -104,16 +108,19 @@ export const PlayerProvider = ({ children }: any) => {
         prevPlaybackStateRef.current = playbackState;
     }, [playbackState]);
 
-    const handleTrackEnd = async () => {
-        const storyId = currentTrackRef.current?.id;
+    // `opts.track` finishes a specific story (used when the car queue moves on by itself); `midQueue` skips the
+    // autoplay / close-player step because the car's own queue is already playing the next story.
+    const handleTrackEnd = async (opts?: { track?: Track | null; midQueue?: boolean }) => {
+        const track = opts?.track ?? currentTrackRef.current;
+        const storyId = track?.id;
         if (!storyId) return;
 
         stopProgressTracking();
 
         Analytics.storyCompleted({
             storyId,
-            title: currentTrackRef.current?.title ?? '',
-            author: currentTrackRef.current?.artist,
+            title: track?.title ?? '',
+            author: track?.artist,
         });
 
         try {
@@ -131,8 +138,8 @@ export const PlayerProvider = ({ children }: any) => {
                 setState(prev => ({
                     ...prev,
                     pendingRatingStoryId: storyId,
-                    pendingRatingTitle:   currentTrackRef.current?.title ?? '',
-                    pendingRatingArtwork: currentTrackRef.current?.artwork ?? '',
+                    pendingRatingTitle:   track?.title ?? '',
+                    pendingRatingArtwork: track?.artwork ?? '',
                 }));
 
                 try {
@@ -157,8 +164,8 @@ export const PlayerProvider = ({ children }: any) => {
                         setState(prev => ({
                             ...prev,
                             pendingRatingStoryId: storyId,
-                            pendingRatingTitle:   currentTrackRef.current?.title ?? '',
-                            pendingRatingArtwork: currentTrackRef.current?.artwork ?? '',
+                            pendingRatingTitle:   track?.title ?? '',
+                            pendingRatingArtwork: track?.artwork ?? '',
                         }));
                     }
                 } catch (err) {
@@ -169,7 +176,8 @@ export const PlayerProvider = ({ children }: any) => {
             // ── Find the next pinned story BEFORE unpinning this one ─────────
             // The playlist window is built from this story's pin, so it must be
             // loaded while the pin still exists.
-            const playlistBefore = await loadPlaylist(storyId);
+            // (Car queue: skip this, so it cannot overwrite the playlist info of the story that is now playing.)
+            const playlistBefore = opts?.midQueue ? [] : await loadPlaylist(storyId);
             const finishedIndex  = playlistBefore.findIndex((s: any) => s.id === storyId);
             if (finishedIndex >= 0) playlistIndexRef.current = finishedIndex;
             const hasNextToPlay  = finishedIndex >= 0 && finishedIndex < playlistBefore.length - 1;
@@ -189,6 +197,8 @@ export const PlayerProvider = ({ children }: any) => {
             queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
             queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
             queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
+
+            if (opts?.midQueue) return;
 
             // ── Autoplay next in playlist or stop ─────────────────────────────
             const autoplay = await getAutoplayEnabled();
@@ -216,6 +226,7 @@ export const PlayerProvider = ({ children }: any) => {
             try {
                 const position = audioEngine.getCurrentPosition();
                 if (position > 0) {
+                    lastPositionRef.current = { id: storyId, position, duration: audioEngine.getDuration() };
                     await upsertInProgressStory(storyId, position);
                     queryClient.invalidateQueries({ queryKey: ['storyProgress', storyId] });
                     queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
@@ -319,6 +330,76 @@ export const PlayerProvider = ({ children }: any) => {
             console.error('PLAY ERROR', err);
         }
     };
+
+    // ── Car playback ──────────────────────────────────────────────────────────
+    // In a car the native player starts a story from the car list and moves through the folder by itself, without
+    // the app. When the app is running it hears each change here and takes over bookkeeping exactly as for a
+    // story started on the phone: current track, resume position, progress saving, playlist info, and marking
+    // the previous story finished if it ended on its own.
+    const adoptCarStory = async (storyId: string) => {
+        const prev = currentTrackRef.current;
+        if (prev?.id === storyId) return;
+
+        const last = lastPositionRef.current;
+        if (prev && last && last.id === prev.id && endedNaturally(last.position, last.duration)) {
+            handleTrackEnd({ track: prev, midQueue: true }); // not awaited: it only needs the old track
+        }
+        stopProgressTracking();
+
+        let story: any = null;
+        let authorName: string | undefined;
+        try {
+            story = (await client.models.Story.get({ id: storyId })).data;
+            if (story?.authorId) authorName = (await client.models.Author.get({ id: story.authorId })).data?.name ?? undefined;
+        } catch (err) {
+            console.warn('[Car] could not load the story the car started', err);
+        }
+        if (!story?.audioUri) return;
+
+        const track: Track = {
+            id: storyId,
+            title: story.title,
+            url: story.audioUri,
+            artwork: story.imageUri ?? undefined,
+            artist: authorName,
+        };
+        currentTrackRef.current = track;
+        isPlayingRef.current = true;
+        lastPlayedStoryIdRef.current = storyId;
+        lastPositionRef.current = null;
+        audioEngine.adopt(track);
+        setKeepGoingStoryId(null);
+        setState(prev => ({ ...prev, currentTrack: track, isPlaying: true, playError: null }));
+
+        try {
+            const saved = await getInProgressSeconds(storyId);
+            if (saved > 0) {
+                if (audioEngine.getCurrentPosition() < 5) await audioEngine.seek(saved);
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['story', storyId] });
+                client.mutations.incrementListenCount({ storyId }).catch(err => console.warn('incrementListenCount error:', err));
+                Analytics.storyPlayStarted({ storyId, title: track.title, author: track.artist });
+            }
+            const playlist = await withTimeout(loadPlaylist(storyId), 4000, [] as any[]);
+            const index = playlist.findIndex((s: any) => s.id === storyId);
+            playlistIndexRef.current = index;
+            setHasNextTrack(index >= 0 && index < playlist.length - 1);
+        } catch (err) {
+            console.warn('[Car] could not finish setting up the story', err);
+        }
+        if (currentTrackRef.current?.id === storyId) startProgressTracking(storyId);
+    };
+
+    // The listener is added once; this ref always points at the latest version of the function above.
+    const adoptCarStoryRef = useRef(adoptCarStory);
+    adoptCarStoryRef.current = adoptCarStory;
+    useEffect(() => {
+        const sub = TrackPlayer.addEventListener(Event.MediaItemTransition, (e) => {
+            const id = storyIdFromMediaId(e.item?.mediaId ?? '');
+            if (id) adoptCarStoryRef.current(id);
+        });
+        return () => sub.remove();
+    }, []);
 
     // ── Controls ──────────────────────────────────────────────────────────────
     const pause = async () => {

@@ -177,6 +177,14 @@ class AudioEngine {
     }
   }
 
+// The car started this story natively (the app only learns about it afterwards): record it as current so
+  // recovery, resume and the rest of the engine treat it like a story started from the phone.
+  adopt(track: Track) {
+    this.currentTrack = track;
+    this.playingLocal = false;
+    if (this.localMode === 'remote') this.localMode = 'uri';
+  }
+
 async play(track: Track) {
   try {
     if (this.currentTrack?.id === track.id) {
