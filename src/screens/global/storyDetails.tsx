@@ -72,7 +72,7 @@ import {
   useUpdateComment,
   useDeleteComment,
 } from '../../hooks/queries/useComments';
-import { COMMENT_REJECTED_MESSAGE } from '../../lib/commentFilter';
+import { commentErrorMessage } from '../../lib/commentErrors';
 import { useBlockedUsers, useBlockUser, useReportComment, type ReportReason } from '../../hooks/queries/useModeration';
 import { showChip } from '@/lib/chip';
 
@@ -430,11 +430,11 @@ const handlePost = () => {
     {
       storyId: storyID,
       content: trimmed,
-      userName: postAnonymously ? 'Anonymous' : (profile?.name ?? 'Anonymous'),
+      anonymous: postAnonymously,
     },
     {
       onSuccess: () => setComment(''),
-      onError: (e: any) => showChip(e?.message === COMMENT_REJECTED_MESSAGE ? COMMENT_REJECTED_MESSAGE : "Couldn't post your comment. Please try again.", 'error'),
+      onError: (e: any) => showChip(commentErrorMessage(e, "Couldn't post your comment. Please try again."), 'error'),
     }
   );
 };
@@ -445,7 +445,7 @@ const handleEditSave = () => {
     { id: editingComment.id, content: editingComment.content, storyId: storyID },
     {
       onSuccess: () => setEditingComment(null),
-      onError: (e: any) => showChip(e?.message === COMMENT_REJECTED_MESSAGE ? COMMENT_REJECTED_MESSAGE : "Couldn't save your edit. Please try again.", 'error'),
+      onError: (e: any) => showChip(commentErrorMessage(e, "Couldn't save your edit. Please try again."), 'error'),
     }
   );
 };

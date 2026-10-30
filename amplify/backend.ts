@@ -19,6 +19,7 @@ import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
 import { deleteAccount } from './functions/delete-account/resource';
 import { audioLinks } from './functions/audio-links/resource';
+import { commentWrite } from './functions/comment-write/resource';
 import { carProgress } from './functions/car-progress/resource';
 import { carPass } from './functions/car-pass/resource';
 import { appleVerifyChallenge } from './functions/apple-auth/verify-challenge/resource';
@@ -60,6 +61,7 @@ const backend = defineBackend({
   dataHealth,
   deleteAccount,
   audioLinks,
+  commentWrite,
   carProgress,
   carPass,
   appleVerifyChallenge,
@@ -125,6 +127,21 @@ const audioCdn = new cloudfront.Distribution(cdnStack, 'AudioCdn', {
 const audioLinksFn = backend.audioLinks.resources.lambda as lambda.Function;
 audioLinksFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
 audioLinksFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
+
+// ── comment-write ─────────────────────────────────────────────────────────
+// The only writer of comments (postComment / editComment). Reads stories and users, and reads and writes comments.
+const commentWriteFn = backend.commentWrite.resources.lambda as lambda.Function;
+commentWriteFn.addEnvironment('COMMENT_TABLE_NAME', commentTable.tableName);
+commentWriteFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+commentWriteFn.addEnvironment('USER_TABLE_NAME', userTable.tableName);
+commentTable.grantReadWriteData(commentWriteFn);
+storyTable.grantReadData(commentWriteFn);
+userTable.grantReadData(commentWriteFn);
+// The posting-rate check queries the comment table's byUserAndCreatedAt index; table grants do not cover indexes.
+commentWriteFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [`${commentTable.tableArn}/index/*`],
+}));
 
 // ── car-progress / car-pass ───────────────────────────────────────────────
 // While a story plays from the car with the app closed, the player library posts progress to car-progress's web

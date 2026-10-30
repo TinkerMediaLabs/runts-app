@@ -24,7 +24,6 @@ import type { Schema } from '../../../amplify/data/resource';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
-import { useApp } from '@/context/AppContext';
 
 import { Analytics } from '@/lib/analytics';
 import { unwrap } from '@/lib/amplifyResult';
@@ -86,7 +85,6 @@ export default function RatingModal({
   const insets = useSafeAreaInsets();
   const footerBottomPadding = insets.bottom + 16;
 
-  const { profile } = useApp();
 
   const [selectedRating,   setSelectedRating]   = useState<number | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
@@ -194,11 +192,10 @@ const handleSubmit = async () => {
 
     // Comment — always new
     if (comment.trim()) {
-      await run('comment', () => client.models.Comment.create({
-          userId,
+      await run('comment', () => client.mutations.postComment({
           storyId,
           content: comment.trim(),
-          userName: postAnonymously ? 'Anonymous' : (profile?.name ?? 'Anonymous'),
+          anonymous: postAnonymously,
         }),
         () => setComment(''));
     }
