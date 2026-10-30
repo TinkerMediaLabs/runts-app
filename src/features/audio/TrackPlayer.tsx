@@ -257,23 +257,24 @@ export default function TrackPlayerWidget({ expanded }: any) {
     }
   };
 
-  // Pause icon stays visible for at least 5s so the user has time to notice
-  // there are controls here, whether the player just opened or playback
-  // just started.
+  // The play/pause icon shows for 3s every time the player opens or is maximized from the mini player (and when
+  // playback starts), then fades, so people notice the artwork is a button. While paused it stays visible.
   const heroControlsOpacity = useSharedValue(1);
 
   useEffect(() => {
     if (!track) return;
     if (optimisticPlaying) {
       heroControlsOpacity.value = 1;
+      // Nothing to fade while the full player is closed; it restarts the moment it is maximized.
+      if (!expanded) return;
       const timer = setTimeout(() => {
         heroControlsOpacity.value = withTiming(0, { duration: 400 });
-      }, 5000);
+      }, 3000);
       return () => clearTimeout(timer);
     } else {
       heroControlsOpacity.value = withTiming(1, { duration: 200 });
     }
-  }, [optimisticPlaying, track]);
+  }, [optimisticPlaying, track, expanded]);
 
   const heroControlsStyle = useAnimatedStyle(() => ({
     opacity: heroControlsOpacity.value,
