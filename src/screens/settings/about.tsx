@@ -137,7 +137,7 @@ const AboutScreen = ({ navigation }: any) => {
                         {/* <LinkRow
                             icon="question-circle"
                             label="FAQ"
-                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts/faq')}
+                            onPress={() => Linking.openURL('https://www.tinkermedia.net/runts/faq')}
                         />
                         <RowDivider /> */}
                         <LinkRow
@@ -158,7 +158,7 @@ const AboutScreen = ({ navigation }: any) => {
                         <LinkRow
                             icon="globe"
                             label="Website"
-                            onPress={() => Linking.openURL('http://www.tinkermedia.net/runts')}
+                            onPress={() => Linking.openURL('https://www.tinkermedia.net/runts')}
                         />
                         <RowDivider />
                         {/* <LinkRow

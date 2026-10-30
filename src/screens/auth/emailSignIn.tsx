@@ -44,7 +44,6 @@ const EmailSignIn = ({ navigation }: any) => {
         try {
             await loginUser(email.replace(/ /g, ''), password);
        } catch (err: any) {
-            console.log('Sign in error name:', err?.name, 'message:', err?.message);
             if (err?.name === 'UserNotConfirmedException') {
                 navigation.navigate('ConfirmEmail', { email: email.replace(/ /g, '') });
             } else {

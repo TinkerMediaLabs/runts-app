@@ -111,7 +111,6 @@ export async function loginUser(email: string, password: string) {
     }
     
     const result = await signIn({ username: email, password });
-    console.log('[loginUser] nextStep:', result.nextStep?.signInStep, 'isSignedIn:', result.isSignedIn);
     
     // Only throw if sign-in failed AND next step is CONFIRM_SIGN_UP
     if (!result.isSignedIn && result.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
