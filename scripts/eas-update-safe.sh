@@ -27,7 +27,7 @@ case $ENV in
     ;;
   staging)
     CONFIG_FILE="amplify_outputs.staging.json"
-    EXPECTED_URL="5ojmsd7i5nbq5foh2wefkdhj3e"
+    EXPECTED_URL="nflzecthnfb2noim4kgzmddjre"
     BRANCH="staging"
     ;;
   dev)
