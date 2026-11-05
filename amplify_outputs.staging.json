@@ -45,7 +45,7 @@
         "profile",
         "aws.cognito.signin.user.admin"
       ],
-      "domain": "364c5a8537c7be8ba9e3.auth.us-east-2.amazoncognito.com"
+      "domain": "runts-auth-staging.auth.us-east-2.amazoncognito.com"
     },
     "unauthenticated_identities_enabled": true
   },
