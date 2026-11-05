@@ -71,7 +71,7 @@ fi
 echo "Verified $ENV config is active (matches $EXPECTED_URL)"
 echo "Publishing to branch: $BRANCH"
 
-eas update --branch "$BRANCH" --message "$MESSAGE" --platform ios
-eas update --branch "$BRANCH" --message "$MESSAGE" --platform android
+APP_ENV=$([ "$ENV" = dev ] && echo development || echo "$ENV") eas update --branch "$BRANCH" --message "$MESSAGE" --platform ios
+APP_ENV=$([ "$ENV" = dev ] && echo development || echo "$ENV") eas update --branch "$BRANCH" --message "$MESSAGE" --platform android
 
 echo "Publish complete."
