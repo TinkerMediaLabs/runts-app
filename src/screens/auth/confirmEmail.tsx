@@ -41,8 +41,9 @@ const ConfirmEmail = ({ navigation, route }: any) => {
         setLoading(true); setError('');
         btnScale.value = withSequence(withTiming(0.96, { duration: 100 }), withSpring(1));
         try {
-            await confirmUserEmail(email, code.trim());
-            navigation.navigate('EmailSignIn');
+            const { signedIn } = await confirmUserEmail(email, code.trim());
+            // Signed in: the app switches to the signed-in screens on its own. Otherwise ask them to sign in.
+            if (!signedIn) navigation.navigate('EmailSignIn');
         } catch (err: any) {
             setError(err?.message || 'Invalid code. Please try again.');
         }

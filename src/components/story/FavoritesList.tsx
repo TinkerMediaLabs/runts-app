@@ -21,6 +21,9 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 
+// The star rating on each favorite is hidden for now. Set this to true to bring it back.
+const SHOW_RATING_BADGE = false;
+
 // ---------------------------------------------------------------------------
 // Story row — resolves S3 image before rendering
 // ---------------------------------------------------------------------------
@@ -50,10 +53,12 @@ const FavoriteStoryRow = ({ story, authorMap, tagMap }: any) => {
         sequenceNumber={story.sequenceNumber}
       />
       {/* Rating badge */}
-      <View style={styles.ratingBadge}>
-        <FontAwesome5 name="star" size={iconSize.xs} color={colors.gold} iconStyle="solid" />
-        <Text style={styles.ratingText}>{story.userRating} / 10</Text>
-      </View>
+      {SHOW_RATING_BADGE && (
+        <View style={styles.ratingBadge}>
+          <FontAwesome5 name="star" size={iconSize.xs} color={colors.gold} iconStyle="solid" />
+          <Text style={styles.ratingText}>{story.userRating} / 10</Text>
+        </View>
+      )}
     </View>
   );
 };

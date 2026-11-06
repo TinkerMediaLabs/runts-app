@@ -46,6 +46,12 @@ const fieldStyles = StyleSheet.create({
         paddingVertical: 14,
         includeFontPadding: false,
     },
+    // Hidden password: bigger dots with space between them, so each typed character can be counted.
+    inputDots: {
+        fontSize: fontSizes.title,
+        letterSpacing: 4,
+        paddingVertical: 12,
+    },
     eyeBtn: {
         paddingLeft: 10,
         paddingVertical: 4,
@@ -95,7 +101,7 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
             <Text style={fieldStyles.label}>{label}</Text>
             <View style={[fieldStyles.inputRow, focused && fieldStyles.inputRowFocused]}>
                 <TextInput
-                    style={fieldStyles.input}
+                    style={[fieldStyles.input, !visible && value.length > 0 && fieldStyles.inputDots]}
                     value={value}
                     onChangeText={onChangeText}
                     accessibilityLabel={label}

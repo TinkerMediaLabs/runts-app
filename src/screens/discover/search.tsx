@@ -869,7 +869,7 @@ const filteredTagResults = useMemo(() => {
                     if (hasMoreTags && !tagsFetchingMore) fetchMoreTags();
                 }}
                 onEndReachedThreshold={0.4}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={styles.genreListContent}
                 ListFooterComponent={
                     tagsFetchingMore
                         ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
@@ -1001,6 +1001,11 @@ tabCountActive: {
   },
 
   listContent: {
+    paddingBottom: 120,
+  },
+  // Genre tiles sit in a grid, so give them room under the tab bar.
+  genreListContent: {
+    paddingTop: 16,
     paddingBottom: 120,
   },
   loadingCenter: {

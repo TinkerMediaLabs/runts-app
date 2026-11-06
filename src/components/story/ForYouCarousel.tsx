@@ -213,7 +213,7 @@ const CarouselItem = ({
                         </View>
 
                         {/* Author + Narrator */}
-                        <View style={styles.metaRow}>
+                        <View style={[styles.metaRow, styles.authorRow]}>
                             <FontAwesome5
                                 name="book-open"
                                 size={10}
@@ -477,7 +477,7 @@ card: {
         flexDirection:  'row',
         alignItems:     'flex-start',
         justifyContent: 'space-between',
-        marginBottom:   5,
+        marginBottom:   2,
     },
     title: {
         flex:       1,
@@ -496,6 +496,10 @@ card: {
         alignItems:    'center',
         gap:           5,
         marginBottom:  3,
+    },
+    // Author sits close under the title; the genre tags get more room below it.
+    authorRow: {
+        marginBottom: 8,
     },
     metaText: {
         fontSize: fontSizes.caption,

@@ -1144,7 +1144,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 6,
-        marginBottom: 14,
+        // Padding, not margin: the Reveal wrapper around this row can trim a bottom margin, which left the genre
+        // pills touching the row of stats below them.
+        paddingBottom: 18,
     },
     tilePill: {
         backgroundColor:   colors.fill,

@@ -11,6 +11,7 @@ import {
   fetchUserAttributes,
   fetchAuthSession,
   confirmSignIn,
+  autoSignIn,
 } from 'aws-amplify/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
@@ -87,13 +88,28 @@ export async function registerUser(email: string, password: string) {
   return signUp({
     username: email,
     password,
-    options: { userAttributes: { email } },
+    // Lets the person be signed in as soon as they verify the email code, without typing the password again.
+    options: { userAttributes: { email }, autoSignIn: true },
   });
 }
 
 // ─── CONFIRM EMAIL ──────────────────────────────────────
-export async function confirmUserEmail(email: string, code: string) {
-  return confirmSignUp({ username: email, confirmationCode: code });
+// Returns whether the person ended up signed in. Amplify keeps the sign-up password in memory for this, so it only
+// works when the sign-up started in this session; otherwise the person signs in themselves.
+export async function confirmUserEmail(email: string, code: string): Promise<{ signedIn: boolean }> {
+  const result = await confirmSignUp({ username: email, confirmationCode: code });
+  if (result.nextStep?.signUpStep === 'COMPLETE_AUTO_SIGN_IN') {
+    try {
+      const done = await autoSignIn();
+      if (done.isSignedIn) {
+        await rememberSignInMethod('email');
+        return { signedIn: true };
+      }
+    } catch {
+      // Fall through to the sign-in screen.
+    }
+  }
+  return { signedIn: false };
 }
 
 // ─── RESEND CODE ────────────────────────────────────────

@@ -9,12 +9,17 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 
+// The "saved" icon is hidden for now: on story tiles it pushed the genre tags off the tile. Set this to true to bring
+// it back. The progress bar while saving and the retry button after a failure still show.
+const SHOW_SAVED_ICON = false;
+
 // Shows where a story's offline download stands: saved, saving with progress, or failed with a retry.
 export default function DownloadBadge({ storyId }: { storyId: string }) {
   const { status, progress } = useDownloadState(storyId);
   if (status === 'none') return null;
 
   if (status === 'complete') {
+    if (!SHOW_SAVED_ICON) return null;
     return (
       <View style={styles.row} accessible accessibilityLabel="Saved for offline listening">
         <FontAwesome5 name="download" size={iconSize.xs} color={colors.accent} iconStyle="solid" />
