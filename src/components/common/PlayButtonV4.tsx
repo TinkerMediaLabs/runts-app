@@ -6,9 +6,11 @@ import useTypography from '@/theme/typography';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 
-import { FontAwesome5 } from '@expo/vector-icons';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import useOnPlay from '@/components/functions/OnPlay';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 
 const PlayButtonV4 = ({ style, id, title, audioUri, imageUri, author, isLocked = false, onLocked }: any) => {
@@ -31,19 +33,19 @@ const PlayButtonV4 = ({ style, id, title, audioUri, imageUri, author, isLocked =
                 gap: 8,
                 paddingVertical: 6,
                 paddingHorizontal: 30,
-                backgroundColor: isLocked ? '#2a2a2a' : '#00ffff',
+                backgroundColor: isLocked ? '#2a2a2a' : colors.accent,
                 margin: 10,
                 borderRadius: 30,
             }}>
                 <FontAwesome5
                     name={isLocked ? 'lock' : 'play'}
-                    size={14}
+                    size={iconSize.sm}
                     color={isLocked ? '#ffffff50' : '#000000'}
                     iconStyle="solid"
                 />
                 <Text style={{
                     color: isLocked ? '#ffffff50' : '#000000',
-                    fontSize: 18,
+                    fontSize: fontSizes.subtitle,
                     fontWeight: 'bold',
                 }}>
                     {isLocked ? 'Premium' : 'Play'}

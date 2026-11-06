@@ -30,22 +30,23 @@ export function useComments(storyId: string) {
 }
 
 // ── Post a new comment ────────────────────────────────────────────────────
+// Goes through the postComment mutation (functions/comment-write): the server takes the author from the
+// sign-in and re-checks length, the word filter and the posting rate.
 export function usePostComment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       storyId,
       content,
-      userName,
+      anonymous,
     }: {
       storyId: string;
       content: string;
-      userName: string;
+      anonymous?: boolean;
     }) => {
       if (!isCommentAllowed(content)) throw new Error(COMMENT_REJECTED_MESSAGE);
       const client = generateClient<Schema>();
-      const { userId } = await getCurrentUser();
-      return unwrap(await client.models.Comment.create({ userId, storyId, content, userName }), 'Post comment');
+      return unwrap(await client.mutations.postComment({ storyId, content, anonymous: !!anonymous }), 'Post comment');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });
@@ -68,7 +69,7 @@ export function useUpdateComment() {
     }) => {
       if (!isCommentAllowed(content)) throw new Error(COMMENT_REJECTED_MESSAGE);
       const client = generateClient<Schema>();
-      return unwrap(await client.models.Comment.update({ id, content }), 'Edit comment');
+      return unwrap(await client.mutations.editComment({ id, content }), 'Edit comment');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });

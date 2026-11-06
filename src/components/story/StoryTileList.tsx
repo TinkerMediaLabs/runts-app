@@ -11,6 +11,7 @@ import type { Schema } from '../../../amplify/data/resource';
 
 import StoryTile from './StoryTile';
 import EmptyState from '../common/EmptyState';
+import { SkeletonRows } from '../common/Skeleton';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { navigate } from '@/navigation/RootNavigator';
 import { useApp } from '@/context/AppContext';
@@ -20,6 +21,8 @@ import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useStory } from '../../hooks/queries/useStories';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { unwrap } from '@/lib/amplifyResult';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
 
@@ -91,7 +94,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     const { userId } = useApp();
 
-    const { data: pinnedPages, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = usePinnedStories();
+    const { data: pinnedPages, isPending, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = usePinnedStories();
     const pinnedStories = useMemo(() => pinnedPages?.pages.flatMap(p => p.items), [pinnedPages]);
 
     const [isFetching, setIsFetching] = useState(false);
@@ -131,6 +134,10 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         }
     };
 
+    // Draw straight from the loaded pins until a drag-to-reorder makes a local copy, so the list never lags a frame
+    // behind the data (that gap was the empty-state flash).
+    const listData = localData.length > 0 ? localData : (pinnedStories ?? []);
+
     const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<any>) => (
         <ScaleDecorator activeScale={1.02}>
             <PinnedStoryTile
@@ -143,13 +150,21 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         </ScaleDecorator>
     );
 
-    const ListEmpty = () => (
+    // The empty message is only for a list that finished loading and really has no pins. While the first load is
+    // under way (or has not started) the person sees placeholder rows, never "Build your playlist".
+    const ListEmpty = () => isPending ? <SkeletonRows count={6} /> : (
         <View style={styles.emptyContainer}>
-            {isLoading ? (
-                <ActivityIndicator size="small" color="cyan" />
+            {isError ? (
+                <EmptyState
+                    icon={<FontAwesome5 name="exclamation-circle" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                    title="We couldn't load your playlist"
+                    body="Check your connection and try again."
+                    actionLabel="Try again"
+                    onAction={() => { refetch(); }}
+                />
             ) : (
                 <EmptyState
-                    icon={<FontAwesome5 name="thumbtack" size={40} color="#ffffff80" iconStyle="solid" />}
+                    icon={<FontAwesome5 name="thumbtack" size={40} color={colors.textSecondary} iconStyle="solid" />}
                     title="Build your playlist"
                     body="Tap the pin on any story to add it here. Pinned stories play one after another and are saved to your phone for offline listening."
                     actionLabel="Find a story"
@@ -162,7 +177,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
     return (
         <View style={{ flex: 1 }}>
             <DraggableFlatList
-                data={localData}
+                data={listData}
                 onDragEnd={onDragEnd}
                 onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
                 onEndReachedThreshold={0.5}
@@ -172,7 +187,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
                     <RefreshControl
                         refreshing={isFetching}
                         onRefresh={onRefresh}
-                        tintColor="cyan"
+                        tintColor={colors.accent}
                     />
                 }
                 showsVerticalScrollIndicator={false}
@@ -192,13 +207,13 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     emptyText: {
-        color: '#fff',
-        fontSize: 15,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         fontWeight: '600',
     },
     emptyHint: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
         textAlign: 'center',
         lineHeight: 20,
     },

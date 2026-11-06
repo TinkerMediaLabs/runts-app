@@ -1,4 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { SkeletonRows } from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -13,6 +16,8 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { spacing } from '../../theme/spacing';
 import { useTag } from '../../hooks/queries/useTagNames';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
 
@@ -98,13 +103,11 @@ const History = ({ navigation }: any) => {
 
     return (
         <Screen>
-            <View style={{ flex: 1, backgroundColor: '#000' }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
                 <MenuHeader title="History" navigation={navigation} />
 
                 {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator color="cyan" />
-                    </View>
+                    <SkeletonRows count={7} />
                 ) : (
                     <FlatList
                         data={finishedStories}
@@ -117,21 +120,20 @@ const History = ({ navigation }: any) => {
                             <RefreshControl
                                 refreshing={isFetching}
                                 onRefresh={onRefresh}
-                                tintColor="cyan"
+                                tintColor={colors.accent}
                             />
                         }
                         contentContainerStyle={{ paddingBottom: 100 }}
                         ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>No listening history yet.</Text>
-                                <Text style={styles.emptyHint}>
-                                    Stories you finish will appear here.
-                                </Text>
-                            </View>
+                            <EmptyState
+                                icon={<FontAwesome5 name="history" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                                title="No listening history yet"
+                                body="Stories you finish will appear here."
+                            />
                         }
                         ListFooterComponent={
                             <View style={{ height: 100, paddingTop: 16 }}>
-                                {isFetchingNextPage ? <ActivityIndicator color="cyan" /> : null}
+                                {isFetchingNextPage ? <ActivityIndicator color={colors.accent} /> : null}
                             </View>
                         }
                     />
@@ -154,13 +156,13 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     emptyText: {
-        color: '#fff',
-        fontSize: 15,
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
         fontWeight: '600',
     },
     emptyHint: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
         textAlign: 'center',
         lineHeight: 20,
     },

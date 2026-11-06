@@ -5,6 +5,8 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import useStyles from '@/theme/styles';
 import { navigate }       from '@/navigation/RootNavigator';
 import { collapsePlayer } from '@/features/audio/Playerref';
+import { fontSizes } from '@/theme/tokens';
+import { colors } from '@/theme/colors';
 
 const BasicTagsList = ({ tags }: any) => {
     const styles = useStyles();
@@ -14,8 +16,8 @@ const BasicTagsList = ({ tags }: any) => {
             <Text style={{
                 marginTop:    20,
                 paddingBottom: 20,
-                color:        '#fff',
-                fontSize:     20,
+                color:        colors.textPrimary,
+                fontSize:     fontSizes.title,
                 fontWeight:   'bold',
                 borderColor:  '#5f5f5f',
             }}>

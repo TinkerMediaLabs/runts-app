@@ -28,7 +28,15 @@ async function fetchInProgressPage(erotic: boolean, token: string | null) {
   if (res.errors?.length) throw new Error(res.errors[0].message);
   const rows: any[] = res.data ?? [];
   const storyResults = await Promise.all(rows.map(r => client.models.Story.get({ id: r.storyId })));
-  const items = rows.filter((_, i) => (storyResults[i]?.data?.isErotic === 'true') === erotic);
+  // A row whose story is gone (deleted) can't be shown, and would still count as a card; so leave it out, and
+  // show each story once.
+  const seen = new Set<string>();
+  const items = rows.filter((r, i) => {
+    const story = storyResults[i]?.data;
+    if (!story || seen.has(r.storyId)) return false;
+    seen.add(r.storyId);
+    return (story.isErotic === 'true') === erotic;
+  });
   return { items, nextToken: (res.nextToken ?? null) as string | null };
 }
 

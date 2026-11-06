@@ -3,7 +3,8 @@ import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'r
 import { Text } from '@/components/common/AppText';
 
 import { useFocusEffect } from '@react-navigation/native';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
+import { SkeletonRows } from '../common/Skeleton';
+import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTile from './StoryTile';
 import EmptyState from '../common/EmptyState';
@@ -16,6 +17,12 @@ import {
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames }    from '../../hooks/queries/useTagNames';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+
+// The star rating on each favorite is hidden for now. Set this to true to bring it back.
+const SHOW_RATING_BADGE = false;
 
 // ---------------------------------------------------------------------------
 // Story row — resolves S3 image before rendering
@@ -46,10 +53,12 @@ const FavoriteStoryRow = ({ story, authorMap, tagMap }: any) => {
         sequenceNumber={story.sequenceNumber}
       />
       {/* Rating badge */}
-      <View style={styles.ratingBadge}>
-        <FontAwesome name="star" size={11} color="#C9A84C" />
-        <Text style={styles.ratingText}>{story.userRating} / 10</Text>
-      </View>
+      {SHOW_RATING_BADGE && (
+        <View style={styles.ratingBadge}>
+          <FontAwesome5 name="star" size={iconSize.xs} color={colors.gold} iconStyle="solid" />
+          <Text style={styles.ratingText}>{story.userRating} / 10</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -103,31 +112,25 @@ const { data: tagMap = {} } = useTagNames(allTagIds);
     setIsFetching(false);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color="cyan" />
-      </View>
-    );
-  }
+  if (isLoading) return <SkeletonRows count={6} />;
 
   return (
     <FlatList
       data={stories}
       onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
       onEndReachedThreshold={0.4}
-      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} /> : null}
+      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} /> : null}
     keyExtractor={item => item.id ?? item.userRating.toString()}      renderItem={({ item }) => (
         <FavoriteStoryRow story={item} authorMap={authorMap} tagMap={tagMap} />
       )}
       refreshControl={
-        <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor="cyan" />
+        <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
       }
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
       ListEmptyComponent={
         <EmptyState
-          icon={<FontAwesome name="star-o" size={40} color="#ffffff80" />}
+          icon={<FontAwesome5 name="star" size={40} color={colors.textSecondary} iconStyle="regular" />}
           title="Your favorites will live here"
           body={`Rate a story ${threshold} stars or higher after you listen and it shows up here, so your best ones are easy to find again.`}
           actionLabel="Find a story"
@@ -153,8 +156,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   ratingText: {
-    fontSize: 12,
-    color: '#C9A84C',
+    fontSize: fontSizes.caption,
+    color: colors.gold,
     fontWeight: '600',
   },
   empty: {
@@ -165,13 +168,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.subtitle,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
+    color: colors.textSecondary,
   },
   emptySub: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

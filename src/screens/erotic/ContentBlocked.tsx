@@ -6,6 +6,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
@@ -17,22 +21,19 @@ const ContentBlocked = () => {
     const navigation = useNavigation<any>();
     const insets     = useSafeAreaInsets();
 
+    // The tab bar is the "Root" screen and the settings screen is "AppSettingsScreen" (the old names, "Main" and
+    // "AppSettings", do not exist and left this screen stuck).
     const handleGoToSettings = () => {
-        // Navigate to settings and close this screen
         navigation.reset({
-            index: 0,
-            routes: [{ name: 'Main' }],
+            index: 1,
+            routes: [{ name: 'Root' }, { name: 'AppSettingsScreen' }],
         });
-        // Small delay so the tab navigator is mounted before pushing settings
-        setTimeout(() => {
-            navigation.navigate('AppSettings');
-        }, 100);
     };
 
     const handleGoHome = () => {
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Main' }],
+            routes: [{ name: 'Root' }],
         });
     };
 
@@ -83,8 +84,8 @@ const ContentBlocked = () => {
                     >
                         <FontAwesome5
                             name={'cog' as any}
-                            size={14}
-                            color="#fff"
+                            size={iconSize.sm}
+                            color={colors.textPrimary}
                             iconStyle="solid"
                             style={{ marginRight: 8 }}
                         />
@@ -114,7 +115,7 @@ const ContentBlocked = () => {
 const styles = StyleSheet.create({
     root: {
         flex:            1,
-        backgroundColor: '#000',
+        backgroundColor: colors.surface0,
     },
     content: {
         flex:           1,
@@ -134,23 +135,23 @@ const styles = StyleSheet.create({
         marginBottom:    28,
     },
     title: {
-        fontSize:      26,
+        fontSize:      fontSizes.headline,
         fontWeight:    '800',
-        color:         '#fff',
+        color:         colors.textPrimary,
         textAlign:     'center',
         marginBottom:  12,
         letterSpacing: 0.2,
     },
     body: {
-        fontSize:     15,
-        color:        'rgba(255,255,255,0.5)',
+        fontSize:     fontSizes.body,
+        color:        colors.textSecondary,
         textAlign:    'center',
         lineHeight:   23,
         marginBottom: 40,
     },
     primaryButton: {
         width:        width - 64,
-        borderRadius: 14,
+        borderRadius: radius.lg,
         overflow:     'hidden',
         marginBottom: 12,
     },
@@ -162,21 +163,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 32,
     },
     primaryButtonText: {
-        color:      '#fff',
-        fontSize:   16,
+        color:      colors.textPrimary,
+        fontSize:   fontSizes.body,
         fontWeight: '700',
     },
     secondaryButton: {
         paddingVertical:   14,
         paddingHorizontal: 32,
-        borderRadius:      14,
+        borderRadius:      radius.lg,
         borderWidth:       1,
-        borderColor:       '#2a2a2a',
-        backgroundColor:   '#111',
+        borderColor:       colors.border,
+        backgroundColor:   colors.surface1,
     },
     secondaryButtonText: {
-        color:      'rgba(255,255,255,0.5)',
-        fontSize:   15,
+        color:      colors.textSecondary,
+        fontSize:   fontSizes.body,
         fontWeight: '500',
     },
 });

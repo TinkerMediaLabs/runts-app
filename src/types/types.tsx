@@ -7,7 +7,7 @@ export type RootStackParamList = {
     ForgotPassword: undefined;
     ConfirmEmail: undefined;
     ForgotPasswordCon: undefined;
-    StoryScreen: { storyID: string };
+    StoryScreen: { storyID: string; source?: string };
     UserScreen: undefined;
     AboutScreen: undefined;
     AccountScreen: undefined;

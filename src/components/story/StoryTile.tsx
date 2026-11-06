@@ -12,9 +12,7 @@ import Animated, {
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/types';
+import { useOpenStory } from '@/hooks/useStorySource';
 
 import PlayButtonV2 from '../common/PlayButtonV2';
 import PinButton from '../common/PinButton';
@@ -26,6 +24,10 @@ import { getDurationDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
 
 
 import { CachedImage } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 
@@ -54,7 +56,7 @@ const StoryTile = ({
 
     const tileTipRef = useTipTarget(tipTarget);
 
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const openStory = useOpenStory();
 
     const progress = useStoryProgress(id);
     const durationDisplay = getDurationDisplay(
@@ -120,7 +122,7 @@ const StoryTile = ({
                     accessibilityLabel={`Reorder ${title}`}
                     accessibilityHint="Press and hold, then drag to move this story in your playlist"
                 >
-                    <FontAwesome5 name="grip-lines" size={16} color="#ffffff80" iconStyle="solid" />
+                    <FontAwesome5 name="grip-lines" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
                 </TouchableOpacity>
             )}
 
@@ -165,7 +167,7 @@ const StoryTile = ({
                             ) : null}
 
                             <View style={styles.metaRow}>
-                                <FontAwesome5 name="book-open" size={11} color="#ffffff80" iconStyle="solid" />
+                                <FontAwesome5 name="book-open" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
                                 <Text style={styles.author} numberOfLines={1}>{author}</Text>
                             </View>
 
@@ -175,7 +177,7 @@ const StoryTile = ({
                                 <View style={styles.metaRow}>
                                     <FontAwesome5
                                         name={durationDisplay.icon}
-                                        size={11}
+                                        size={iconSize.xs}
                                         color={durationDisplay.color}
                                         iconStyle="solid"
                                     />
@@ -208,8 +210,8 @@ const StoryTile = ({
                         <Animated.View style={[styles.chevron, chevronStyle]}>
                             <FontAwesome5
                                 name="chevron-down"
-                                size={11}
-                                color="#ffffff80"
+                                size={iconSize.xs}
+                                color={colors.textSecondary}
                                 iconStyle="solid"
                             />
                         </Animated.View>
@@ -224,7 +226,7 @@ const StoryTile = ({
 
                             {/* Full artwork → story screen */}
                             <TouchableWithoutFeedback
-                                onPress={() => navigation.navigate('StoryScreen', { storyID: id })}
+                                onPress={() => openStory(id)}
                                 accessibilityRole="button"
                                 accessibilityLabel={`Open ${title}`}
                             >
@@ -267,7 +269,7 @@ const StoryTile = ({
                                         accessibilityRole="button"
                                         accessibilityLabel="Share story"
                                     >
-                                        <FontAwesome5 name="share" size={19} color="#ffffff70" iconStyle="solid" />
+                                        <FontAwesome5 name="share" size={iconSize.md} color="#ffffff70" iconStyle="solid" />
                                     </TouchableOpacity>
                                 </View>
                                     <PlayButtonV2
@@ -308,10 +310,10 @@ const styles = StyleSheet.create({
 
     card: {
         flex: 1,
-        backgroundColor: '#1c1c1c',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 0.5,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
 
@@ -324,8 +326,8 @@ const styles = StyleSheet.create({
     },
     artwork: {
         height: 60,
-        borderRadius: 10,
-        backgroundColor: '#2a2a2a',
+        borderRadius: radius.md,
+        backgroundColor: colors.surface3,
         alignSelf: 'flex-start',
         // width is animated — don't set it here
     },
@@ -334,9 +336,9 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     title: {
-        fontSize: 15,
+        fontSize: fontSizes.body,
         fontWeight: '600',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     metaRow: {
         flexDirection: 'row',
@@ -350,12 +352,12 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     author: {
-        fontSize: 12,
-        color: '#ffffffa5',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         flex: 1,
     },
     durationText: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
     },
     chevron: {
@@ -368,15 +370,15 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     tagPill: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        borderRadius: 10,
+        backgroundColor: colors.fillFaint,
+        borderRadius: radius.md,
         paddingHorizontal: 8,
         paddingVertical: 3,
     },
     tagPillText: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
-        color: 'rgba(255,255,255,0.75)',
+        color: colors.textStrong,
         textTransform: 'capitalize',
     },
 
@@ -385,7 +387,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     expandedInner: {
-       borderTopColor: '#2a2a2a',
+       borderTopColor: colors.border,
         paddingTop: 6,
         paddingHorizontal: 12,
         paddingBottom: 16,
@@ -394,14 +396,14 @@ const styles = StyleSheet.create({
     expandedImage: {
         width: '100%',
         height: 200,
-        borderRadius: 10,
+        borderRadius: radius.md,
     },
     ogBadge: {
         position: 'absolute',
         top: 8,
         right: 8,
         backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 20,
+        borderRadius: radius.xl,
         padding: 6,
         borderWidth: 1,
         borderColor: 'rgba(0,255,255,0.4)',
@@ -418,21 +420,21 @@ const styles = StyleSheet.create({
     universeText: {
         fontSize: 12.5,
         fontWeight: '700',
-        color: '#ffffffa5',
+        color: colors.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     universeDot: {
         color: 'rgba(0,255,255,0.4)',
-        fontSize: 13,
+        fontSize: fontSizes.small,
     },
     summary: {
-        fontSize: 13,
-        color: '#ffffffa5',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 20,
     },
     spiceRating: {
-        fontSize: 13,
+        fontSize: fontSizes.small,
         marginBottom: 4,
     },
     actions: {

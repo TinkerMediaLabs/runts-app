@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Share, Image } from 'react-native';
+import { SkeletonStoryPage } from '../../components/common/Skeleton';
+import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator, Share, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import Button from '@/components/common/Button';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import { useRoute } from '@react-navigation/native';
@@ -27,7 +29,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import FontAwesome  from '@react-native-vector-icons/fontawesome';
 
 import { formatRelative, parseISO } from 'date-fns';
 import TimeConversion from '../../components/functions/TimeConversion';
@@ -71,11 +72,15 @@ import {
   useUpdateComment,
   useDeleteComment,
 } from '../../hooks/queries/useComments';
-import { COMMENT_REJECTED_MESSAGE } from '../../lib/commentFilter';
+import { commentErrorMessage } from '../../lib/commentErrors';
 import { useBlockedUsers, useBlockUser, useReportComment, type ReportReason } from '../../hooks/queries/useModeration';
 import { showChip } from '@/lib/chip';
 
 import { CachedImage } from '../../components/common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -106,7 +111,7 @@ const REACTION_EMOJIS: Record<string, string> = {
 
     const StatPill = ({ icon, value, color }: { icon: any; value: string; color?: string }) => (
         <View style={styles.statPill}>
-            <FontAwesome5 name={icon} size={12} color={color ?? 'rgba(255,255,255,0.6)'} iconStyle="solid" />
+            <FontAwesome5 name={icon} size={iconSize.xs} color={color ?? colors.textSecondary} iconStyle="solid" />
             <Text style={[styles.statText, color ? { color } : null]}>{value}</Text>
         </View>
     );
@@ -188,7 +193,7 @@ const REACTION_EMOJIS: Record<string, string> = {
         <View style={styles.commentCard}>
             <View style={styles.commentHeader}>
             <View style={styles.commentAvatar}>
-                <FontAwesome5 name="user" size={14} color="rgba(255,255,255,0.4)" iconStyle="solid" />
+                <FontAwesome5 name="user" size={iconSize.sm} color={colors.textTertiary} iconStyle="solid" />
             </View>
             <View style={{ flex: 1 }}>
                 <Text style={styles.commentUser}>{item.userName ?? 'Anonymous'}</Text>
@@ -208,7 +213,7 @@ const REACTION_EMOJIS: Record<string, string> = {
                     accessibilityRole="button"
                     accessibilityLabel={`Report or block ${item.userName ?? 'this commenter'}`}
                 >
-                    <FontAwesome5 name="ellipsis-h" size={16} color="rgba(255,255,255,0.7)" iconStyle="solid" />
+                    <FontAwesome5 name="ellipsis-h" size={iconSize.sm} color={colors.textStrong} iconStyle="solid" />
                 </TouchableOpacity>
             )}
             </View>
@@ -229,6 +234,12 @@ const StoryScreen = ({ navigation }: any) => {
     const insets     = useSafeAreaInsets();
     const route      = useRoute();
     const { storyID }: any = route.params;
+    const openSource: string = (route.params as any)?.source ?? 'direct';
+    // Funnel: one "opened" per visit to this story, labelled with where the listener came from.
+    useEffect(() => {
+        if (storyID) Analytics.storyOpened({ storyId: storyID, source: openSource });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storyID]);
 
     // ── Real data ─────────────────────────────────────────────────────────────
     const { data: story, isLoading } = useStory(storyID);
@@ -257,6 +268,8 @@ const StoryScreen = ({ navigation }: any) => {
 
      const primaryTag = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? storyTags[0] ?? null;
      const isLocked   = useIsLocked(story, primaryTag);
+    const primaryTagPill   = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? null;
+    const secondaryTagPill = storyTags.find((t: any) => t.id === story?.secondaryTagId) ?? null;
     const [showPaywall, setShowPaywall] = useState(false);
 
 
@@ -353,6 +366,23 @@ const [editingComment, setEditingComment] = useState<{ id: string; content: stri
 const [postAnonymously, setPostAnonymously] = useState(false);
 const focus = useRef<TextInput>(null);
 
+// Keep the comment box above the keyboard. The page shrinks when the keyboard opens (KeyboardAvoidingView around
+// the scroll view below); this then scrolls the box into the visible part, because the scroll position alone
+// would leave it just under the keyboard.
+const pageScrollRef = useRef<any>(null);
+const commentBoxRef = useRef<View>(null);
+const scrollCommentIntoView = () => {
+  setTimeout(() => {
+    const box = commentBoxRef.current;
+    if (!box) return;
+    const keyboardTop = Keyboard.metrics()?.screenY ?? Dimensions.get('window').height * 0.55;
+    box.measureInWindow((_x, y, _w, h) => {
+      const overflow = y + h + 16 - keyboardTop;
+      if (overflow > 0) pageScrollRef.current?.scrollTo({ y: scrollY.value + overflow, animated: true });
+    });
+  }, 350);
+};
+
 const {
   data: commentPages,
   isLoading: commentsLoading,
@@ -406,11 +436,11 @@ const handlePost = () => {
     {
       storyId: storyID,
       content: trimmed,
-      userName: postAnonymously ? 'Anonymous' : (profile?.name ?? 'Anonymous'),
+      anonymous: postAnonymously,
     },
     {
       onSuccess: () => setComment(''),
-      onError: (e: any) => showChip(e?.message === COMMENT_REJECTED_MESSAGE ? COMMENT_REJECTED_MESSAGE : "Couldn't post your comment. Please try again.", 'error'),
+      onError: (e: any) => showChip(commentErrorMessage(e, "Couldn't post your comment. Please try again."), 'error'),
     }
   );
 };
@@ -421,7 +451,7 @@ const handleEditSave = () => {
     { id: editingComment.id, content: editingComment.content, storyId: storyID },
     {
       onSuccess: () => setEditingComment(null),
-      onError: (e: any) => showChip(e?.message === COMMENT_REJECTED_MESSAGE ? COMMENT_REJECTED_MESSAGE : "Couldn't save your edit. Please try again.", 'error'),
+      onError: (e: any) => showChip(commentErrorMessage(e, "Couldn't save your edit. Please try again."), 'error'),
     }
   );
 };
@@ -511,8 +541,8 @@ const handleDelete = (id: string) => {
     // ── Loading state ─────────────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator color="cyan" size="large" />
+            <View style={styles.root}>
+                <SkeletonStoryPage />
             </View>
         );
     }
@@ -561,10 +591,14 @@ const handleDelete = (id: string) => {
             </Animated.View>
             )}
             {/* ── Scrollable content ── */}
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Animated.ScrollView
+                ref={pageScrollRef}
                 onScroll={scrollHandler}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
                 <View style={{ height: HERO_HEIGHT - 40 }} />
@@ -584,17 +618,36 @@ const handleDelete = (id: string) => {
                         accessibilityLabel={`Author ${author?.name ?? ''}`}
                         accessibilityHint="Opens author page"
                     >
-                        <FontAwesome5 name="book-open" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+                        <FontAwesome5 name="book-open" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
                         <Text style={styles.author}>{author?.name ?? ''}</Text>
                     </TouchableOpacity>
 
                     {narratorDisplay ? (
                         <View style={[styles.authorRow, { marginTop: 4 }]}>
-                            <FontAwesome5 name="microphone" size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+                            <FontAwesome5 name="microphone" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
                             <Text style={styles.author}>{narratorDisplay}</Text>
                         </View>
                     ) : null}
                 </View>
+
+                    {/* Primary + secondary tag, same pill as the story tiles */}
+                    {(primaryTagPill || secondaryTagPill) ? (
+                        <View style={styles.tilePillRow}>
+                            {[primaryTagPill, secondaryTagPill].filter(Boolean).map((tag: any) => (
+                                <TouchableOpacity
+                                    key={tag.id}
+                                    style={styles.tilePill}
+                                    activeOpacity={0.7}
+                                    onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Tag ${tag.name}`}
+                                    accessibilityHint="Opens stories with this tag"
+                                >
+                                    <Text style={styles.tilePillText}>{tag.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : null}
 
                     </Reveal>
 
@@ -612,7 +665,7 @@ const handleDelete = (id: string) => {
                             <StatPill
                                 icon="star"
                                 value={`${story.avgRating.toFixed(1)} (${story.numRatings ?? 0})`}
-                                color="#C9A84C"
+                                color={colors.gold}
                             />
                         )}
                         <StatPill icon="headphones" value={`${story?.numListens ?? 0} listens`} />
@@ -640,7 +693,7 @@ const handleDelete = (id: string) => {
                                         <MaterialDesignIcons
                                             name={userRating ? 'account-star' : 'account-star-outline'}
                                             size={24}
-                                            color="#C9A84C"
+                                            color={colors.gold}
                                         />
                                         <Text style={styles.personalRatingText}>
                                             {userRating ? userRating.rating : 'Rate'}
@@ -649,7 +702,7 @@ const handleDelete = (id: string) => {
 )}
 
                            <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                                <FontAwesome name="share" size={22} color="#fff" />
+                                <FontAwesome5 name="share" size={22} color={colors.textPrimary} iconStyle="solid" />
                             </TouchableOpacity>
                         </View>
 
@@ -740,7 +793,10 @@ const handleDelete = (id: string) => {
 
                     {/* Description */}
                     {story?.description ? (
-                        <Text style={styles.description}>{story.description}</Text>
+                        <>
+                            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Synopsis</Text>
+                            <Text style={styles.description}>{story.description}</Text>
+                        </>
                     ) : null}
 
                     {/* Credit */}
@@ -768,6 +824,8 @@ const handleDelete = (id: string) => {
                         </View>
                     )}
 
+                    <MoreLikeThis story={story} />
+
                     {/* ── Reaction aggregate ── */}
                     {topReactions.length > 0 && (
                         <View style={styles.reactionsSection}>
@@ -785,8 +843,6 @@ const handleDelete = (id: string) => {
                         </View>
                     )}
 
-                    <MoreLikeThis story={story} />
-
                     <View style={styles.separator} />
 {/* ── Discussion ── */}
 <Text style={styles.sectionLabel}>
@@ -795,8 +851,9 @@ const handleDelete = (id: string) => {
 
 {/* Edit mode — shown when editing an existing comment */}
 {editingComment ? (
-  <View style={styles.commentInput}>
+  <View ref={commentBoxRef} collapsable={false} style={styles.commentInput}>
     <TextInput
+        onFocus={scrollCommentIntoView}
         accessibilityLabel="Edit comment"
         accessibilityHint="Edit the text of your comment"
       style={styles.commentInputText}
@@ -807,21 +864,18 @@ const handleDelete = (id: string) => {
       autoFocus
     />
     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-      <TouchableOpacity onPress={() => setEditingComment(null)} style={[styles.postBtn, { backgroundColor: '#2a2a2a' }]} accessibilityRole="button" accessibilityLabel="Cancel editing comment">
-        <Text style={[styles.postBtnText, { color: '#fff' }]}>Cancel</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={handleEditSave} style={styles.postBtn} disabled={updating} accessibilityRole="button" accessibilityLabel="Save comment" accessibilityState={{ disabled: updating }}>
-        <Text style={styles.postBtnText}>{updating ? 'Saving…' : 'Save'}</Text>
-      </TouchableOpacity>
+      <Button label="Cancel" size="small" variant="secondary" onPress={() => setEditingComment(null)} accessibilityLabel="Cancel editing comment" />
+      <Button label="Save" size="small" loading={updating} onPress={handleEditSave} accessibilityLabel="Save comment" />
     </View>
   </View>
 ) : (
-  <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+  <View ref={commentBoxRef} collapsable={false}>
     <View style={styles.commentInput}>
       <TextInput
         ref={focus}
+        onFocus={scrollCommentIntoView}
         placeholder="Leave a comment…"
-        placeholderTextColor="rgba(255,255,255,0.55)"
+        placeholderTextColor={colors.textSecondary}
         accessibilityLabel="Leave a comment"
         style={styles.commentInputText}
         maxLength={500}
@@ -841,32 +895,29 @@ const handleDelete = (id: string) => {
             >
             <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
                 {postAnonymously && (
-                <FontAwesome5 name="check" size={9} color="#000" iconStyle="solid" />
+                <FontAwesome5 name="check" size={9} color={colors.textOnAccent} iconStyle="solid" />
                 )}
             </View>
             <Text style={styles.anonLabel}>Post anonymously</Text>
         </TouchableOpacity>
       {comment.length > 0 && (
-        <TouchableOpacity
-          style={styles.postBtn}
-          activeOpacity={0.8}
+        <Button
+          label="Post"
+          size="small"
+          loading={posting}
           onPress={handlePost}
-          disabled={posting}
-          accessibilityRole="button"
-          accessibilityLabel={posting ? 'Posting comment' : 'Post comment'}
-          accessibilityState={{ disabled: posting }}
-        >
-          <Text style={styles.postBtnText}>{posting ? 'Posting…' : 'Post'}</Text>
-        </TouchableOpacity>
+          accessibilityLabel="Post comment"
+          style={{ alignSelf: 'flex-end', marginTop: 10 }}
+        />
       )}
     </View>
-  </KeyboardAvoidingView>
+  </View>
 )}
 
 {/* Spoiler gate + comment list */}
 {seeSpoilers ? (
   commentsLoading ? (
-    <ActivityIndicator color="cyan" style={{ marginTop: 20 }} />
+    <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />
   ) : (
     <FlatList
       data={visibleComments}
@@ -882,7 +933,7 @@ const handleDelete = (id: string) => {
       keyExtractor={item => item.id}
       scrollEnabled={false}
       ListEmptyComponent={
-        <Text style={{ color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginTop: 20 }}>
+        <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 20 }}>
           No comments yet. Be the first!
         </Text>
       }
@@ -890,10 +941,10 @@ const handleDelete = (id: string) => {
         <View style={{ paddingVertical: 16, alignItems: 'center' }}>
           {hasMoreComments ? (
             loadingMoreComments ? (
-              <ActivityIndicator color="cyan" />
+              <ActivityIndicator color={colors.accent} />
             ) : (
               <TouchableOpacity onPress={() => fetchMoreComments()} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Load more comments">
-                <Text style={{ color: 'cyan', fontSize: 14 }}>Load more comments</Text>
+                <Text style={{ color: colors.accent, fontSize: fontSizes.small }}>Load more comments</Text>
               </TouchableOpacity>
             )
           ) : null}
@@ -911,7 +962,7 @@ const handleDelete = (id: string) => {
     accessibilityLabel="Spoiler warning. Show comments"
     accessibilityHint="Comments may reveal the story"
   >
-    <FontAwesome5 name="exclamation-triangle" size={16} color="#ff8888" iconStyle="solid" />
+    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff8888" iconStyle="solid" />
     <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
     <Text style={styles.spoilerSub}>Tap to view comments</Text>
   </TouchableOpacity>
@@ -919,6 +970,7 @@ const handleDelete = (id: string) => {
 
                 </Animated.View>
             </Animated.ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Back button */}
             {!showRatingModal && (
@@ -954,7 +1006,7 @@ const styles = StyleSheet.create({
 
     root: {
         flex: 1,
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
     },
 
     heroImage: {
@@ -986,9 +1038,9 @@ const styles = StyleSheet.create({
     },
     stickyTitle: {
         flex: 1,
-        fontSize: 15,
+        fontSize: fontSizes.body,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
     },
 
     backButtonAbsolute: {
@@ -998,7 +1050,7 @@ const styles = StyleSheet.create({
     },
 
     contentCard: {
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: spacing.margin,
@@ -1011,9 +1063,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     title: {
-        fontSize: 24,
+        fontSize: fontSizes.headline,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         lineHeight: 30,
         letterSpacing: 0.2,
     },
@@ -1023,8 +1075,8 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     author: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.65)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         textTransform: 'capitalize',
     },
 
@@ -1038,16 +1090,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: '#1e1e1e',
-        borderRadius: 20,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.xl,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
     },
     statText: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
 
     actionsRow: {
@@ -1067,26 +1119,46 @@ const styles = StyleSheet.create({
 
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginBottom: 20
 
     },
 
     summary: {
-        fontSize: 15,
-        color: 'rgba(255,255,255,0.85)',
+        fontSize: fontSizes.body,
+        color: colors.textStrong,
         lineHeight: 24,
         marginBottom: 12,
     },
     description: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 22,
     },
 
     tagsSection: {
         marginTop: 20,
         marginBottom: 30
+    },
+    tilePillRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        // Padding, not margin: the Reveal wrapper around this row can trim a bottom margin, which left the genre
+        // pills touching the row of stats below them.
+        paddingBottom: 18,
+    },
+    tilePill: {
+        backgroundColor:   colors.fill,
+        borderRadius:      radius.md,
+        paddingHorizontal: 9,
+        paddingVertical:   4,
+    },
+    tilePillText: {
+        fontSize:      fontSizes.caption,
+        fontWeight:    '600',
+        color:         colors.textStrong,
+        textTransform: 'capitalize',
     },
     tagsWrap: {
         flexDirection: 'row',
@@ -1097,14 +1169,14 @@ const styles = StyleSheet.create({
     tagChip: {
         paddingHorizontal: 14,
         paddingVertical: 6,
-        borderRadius: 20,
+        borderRadius: radius.xl,
         backgroundColor: '#1A4851a5',
         borderWidth: 0.5,
-        borderColor: '#00ffffa5',
+        borderColor: colors.accentSoft,
     },
     tagChipText: {
-        color: 'cyan',
-        fontSize: 13,
+        color: colors.accent,
+        fontSize: fontSizes.small,
         textTransform: 'lowercase',
     },
 
@@ -1123,63 +1195,49 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: '#1e1e1e',
-        borderRadius: 20,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.xl,
         paddingHorizontal: 12,
         paddingVertical: 7,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
     },
     reactionEmoji: {
-        fontSize: 18,
+        fontSize: fontSizes.subtitle,
     },
     reactionCount: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         fontWeight: '600',
     },
 
     sectionLabel: {
-        fontSize: 13,
+        fontSize: fontSizes.small,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 0.8,
         marginBottom: 12,
     },
 
     commentInput: {
-        backgroundColor: '#1c1c1c',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         padding: 14,
         marginBottom: 16,
     },
     commentInputText: {
-        color: '#fff',
-        fontSize: 14,
+        color: colors.textPrimary,
+        fontSize: fontSizes.small,
         minHeight: 40,
     },
-    postBtn: {
-        alignSelf: 'flex-end',
-        marginTop: 10,
-        backgroundColor: 'cyan',
-        borderRadius: 12,
-        paddingHorizontal: 20,
-        paddingVertical: 7,
-    },
-    postBtnText: {
-        color: '#000',
-        fontWeight: '700',
-        fontSize: 13,
-    },
-
     spoilerGate: {
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
-        borderRadius: 14,
+        borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: 'rgba(255,100,100,0.3)',
         backgroundColor: 'rgba(255,100,100,0.06)',
@@ -1188,19 +1246,19 @@ const styles = StyleSheet.create({
     },
     spoilerTitle: {
         color: '#ff8888',
-        fontSize: 16,
+        fontSize: fontSizes.body,
         fontWeight: '700',
     },
     spoilerSub: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
     },
 
     commentCard: {
-        backgroundColor: '#1c1c1c',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         padding: 14,
         marginBottom: 10,
         gap: 8,
@@ -1214,48 +1272,48 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
     },
     commentUser: {
-        fontSize: 14,
+        fontSize: fontSizes.small,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
         textTransform: 'capitalize',
     },
     commentDate: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
     commentRating: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
         marginLeft: 'auto',
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         paddingHorizontal: 8,
         paddingVertical: 3,
-        borderRadius: 10,
+        borderRadius: radius.md,
     },
     commentRatingText: {
-        fontSize: 12,
-        color: '#C9A84C',
+        fontSize: fontSizes.caption,
+        color: colors.gold,
         fontWeight: '600',
     },
     commentContent: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
+        fontSize: fontSizes.small,
+        color: colors.textStrong,
         lineHeight: 20,
     },
     ownBadge: {
-        fontSize: 12,
-        color: 'cyan',
+        fontSize: fontSizes.caption,
+        color: colors.accent,
         fontWeight: '600',
         backgroundColor: 'rgba(0,255,255,0.1)',
         paddingHorizontal: 8,
         paddingVertical: 3,
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 0.5,
         borderColor: 'rgba(0,255,255,0.3)',
     },
@@ -1270,17 +1328,17 @@ const styles = StyleSheet.create({
         height: 18,
         borderRadius: 4,
         borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.25)',
+        borderColor: colors.border,
         alignItems: 'center',
         justifyContent: 'center',
     },
         anonCheckboxActive: {
-        backgroundColor: 'cyan',
-        borderColor: 'cyan',
+        backgroundColor: colors.accent,
+        borderColor: colors.accent,
     },
         anonLabel: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
     },
     tagChipErotic: {
         backgroundColor: 'rgba(255,124,42,0.12)',
@@ -1297,12 +1355,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
 },
 metaLineText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: fontSizes.small,
+    color: colors.textSecondary,
 },
 metaLineDot: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 13,
+    color: colors.textSecondary,
+    fontSize: fontSizes.small,
 },
 universeRow: {
     flexDirection: 'row',
@@ -1311,27 +1369,27 @@ universeRow: {
     marginBottom: 16,
 },
 universeText: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontWeight: '700',
-    color: 'cyan',
+    color: colors.accent,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
 },
 universeDot: {
     color: 'rgba(0,255,255,0.4)',
-    fontSize: 13,
+    fontSize: fontSizes.small,
 },
 warningChip: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     backgroundColor: 'rgba(255,68,68,0.1)',
     borderWidth: 0.5,
     borderColor: 'rgba(255,68,68,0.4)',
 },
 warningChipText: {
     color: '#ff8888',
-    fontSize: 13,
+    fontSize: fontSizes.small,
 },
 personalRatingPill: {
     flexDirection: 'row',
@@ -1339,16 +1397,16 @@ personalRatingPill: {
     gap: 5,
 },
 personalRatingText: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontWeight: '700',
-    color: '#C9A84C',
+    color: colors.gold,
 },
 ogPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: 'rgba(0,255,255,0.1)',
-    borderRadius: 20,
+    borderRadius: radius.xl,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderWidth: 1,
@@ -1359,9 +1417,9 @@ ogIcon: {
     height: 14,
 },
 ogPillText: {
-    fontSize: 12,
+    fontSize: fontSizes.caption,
     fontWeight: '700',
-    color: 'cyan',
+    color: colors.accent,
 },
 });
 

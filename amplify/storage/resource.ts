@@ -4,8 +4,8 @@ export const storage = defineStorage({
   name: 'runtsStorage',
   access: (allow) => ({
     'profile-pictures/{entity_id}/*': [
+      // Owner only: profile photos are private and never shown to other listeners.
       allow.entity('identity').to(['read', 'write', 'delete']),
-      allow.authenticated.to(['read']),
     ],
     // Read-only for signed-in app users. Writes happen only through the admin-only
     // getUploadUrl mutation (functions/upload-url), which the CMS uses.

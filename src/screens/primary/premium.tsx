@@ -5,6 +5,7 @@ import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, ScrollView, StyleSheet, Linking, Image, Alert, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import Button from '@/components/common/Button';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
@@ -22,6 +23,11 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+import SectionLabel from '@/components/common/SectionLabel';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -118,7 +124,7 @@ const PlanCard = ({
 
             {selected && (
                 <View style={styles.planCheck}>
-                    <FontAwesome5 name="check" size={10} color="#000" iconStyle="solid" />
+                    <FontAwesome5 name="check" size={10} color={colors.textOnAccent} iconStyle="solid" />
                 </View>
             )}
         </TouchableOpacity>
@@ -128,7 +134,7 @@ const PlanCard = ({
 const FeatureRow = ({ icon, title, description }: Feature) => (
     <View style={styles.featureRow}>
         <View style={styles.featureIcon}>
-            <FontAwesome5 name={icon} size={15} color="cyan" iconStyle="solid" />
+            <FontAwesome5 name={icon} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
         </View>
         <View style={{ flex: 1 }}>
             <Text style={styles.featureTitle}>{title}</Text>
@@ -211,7 +217,7 @@ const PremiumScreen = () => {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
             <LinearGradient
                 colors={['#0a0a14', '#0f1112', '#000']}
                 start={{ x: 0, y: 0 }}
@@ -240,7 +246,7 @@ const PremiumScreen = () => {
                     {/* ── Plan picker ── */}
                     {offeringsLoading ? (
                         <View style={styles.offeringsLoader}>
-                            <ActivityIndicator color="cyan" />
+                            <ActivityIndicator color={colors.accent} />
                         </View>
                     ) : (
                         <View style={styles.planRow}>
@@ -264,24 +270,13 @@ const PremiumScreen = () => {
                     )}
 
                     {/* ── CTA ── */}
-                    <TouchableOpacity
-                        activeOpacity={0.85}
+                    <Button
+                        label="Start Premium"
+                        loading={isLoading}
+                        disabled={offeringsLoading || !selectedPkg}
                         onPress={handleSubscribe}
-                        disabled={isLoading || offeringsLoading || !selectedPkg}
-                        accessibilityRole="button"
-                        accessibilityLabel={isLoading ? 'Starting premium, loading' : 'Start Premium'}
-                        accessibilityState={{ disabled: isLoading || offeringsLoading || !selectedPkg, busy: isLoading }}
-                        style={[
-                            styles.ctaButton,
-                            (isLoading || offeringsLoading || !selectedPkg) && { opacity: 0.5 },
-                        ]}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="#000" />
-                        ) : (
-                            <Text style={styles.ctaText}>Start Premium</Text>
-                        )}
-                    </TouchableOpacity>
+                        style={{ marginBottom: 14 }}
+                    />
 
                     <Text style={styles.renewalNote}>
                         Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
@@ -289,7 +284,7 @@ const PremiumScreen = () => {
 
                     {/* ── Features ── */}
                     <View style={styles.featuresSection}>
-                        <Text style={styles.sectionTitle}>What's included</Text>
+                        <SectionLabel text="What's included" />
                         <View style={styles.featuresCard}>
                             {FEATURES.map((f, i) => (
                                 <React.Fragment key={f.title}>
@@ -336,15 +331,15 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     heroTitle: {
-        fontSize: 28,
+        fontSize: fontSizes.display,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         letterSpacing: 0.3,
         marginBottom: 10,
     },
     heroSubtitle: {
-        fontSize: 15,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.body,
+        color: colors.textSecondary,
         textAlign: 'center',
         lineHeight: 22,
         paddingHorizontal: 10,
@@ -364,55 +359,55 @@ const styles = StyleSheet.create({
     },
     planCard: {
         flex: 1,
-        backgroundColor: '#1a1a1a',
-        borderRadius: 16,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         padding: 16,
         alignItems: 'center',
         position: 'relative',
     },
     planCardSelected: {
         backgroundColor: 'rgba(0,255,255,0.08)',
-        borderColor: 'cyan',
+        borderColor: colors.accent,
     },
     planBadge: {
         position: 'absolute',
         top: -10,
         backgroundColor: '#8F7900',
-        borderRadius: 20,
+        borderRadius: radius.xl,
         paddingHorizontal: 10,
         paddingVertical: 3,
     },
     planBadgeText: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         letterSpacing: 0.5,
     },
     planPeriodShort: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         letterSpacing: 1,
         marginTop: 8,
         marginBottom: 8,
     },
     planPrice: {
-        fontSize: 24,
+        fontSize: fontSizes.headline,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         marginBottom: 4,
     },
     planPerMonth: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
     planPerMonthSelected: {
         color: 'rgba(0,255,255,0.6)',
     },
     planTextSelected: {
-        color: 'cyan',
+        color: colors.accent,
     },
     planCheck: {
         position: 'absolute',
@@ -421,29 +416,14 @@ const styles = StyleSheet.create({
         width: 18,
         height: 18,
         borderRadius: 9,
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',
     },
 
-    ctaButton: {
-        backgroundColor: 'cyan',
-        borderRadius: 14,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginBottom: 14,
-        minHeight: 52,
-        justifyContent: 'center',
-    },
-    ctaText: {
-        fontSize: 17,
-        fontWeight: '800',
-        color: '#000',
-        letterSpacing: 0.3,
-    },
     renewalNote: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         textAlign: 'center',
         lineHeight: 17,
         marginBottom: 36,
@@ -453,20 +433,11 @@ const styles = StyleSheet.create({
     featuresSection: {
         marginBottom: 32,
     },
-    sectionTitle: {
-        fontSize: 12,
-        fontWeight: '600',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
-        marginBottom: 10,
-        marginLeft: 4,
-    },
     featuresCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
     featureRow: {
@@ -478,7 +449,7 @@ const styles = StyleSheet.create({
     featureIcon: {
         width: 32,
         height: 32,
-        borderRadius: 9,
+        borderRadius: radius.sm,
         backgroundColor: 'rgba(0,255,255,0.08)',
         borderWidth: 1,
         borderColor: 'rgba(0,255,255,0.15)',
@@ -487,19 +458,19 @@ const styles = StyleSheet.create({
         marginTop: 1,
     },
     featureTitle: {
-        fontSize: 15,
+        fontSize: fontSizes.body,
         fontWeight: '600',
-        color: '#fff',
+        color: colors.textPrimary,
         marginBottom: 3,
     },
     featureDescription: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 19,
     },
     featureDivider: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginLeft: 62,
     },
 
@@ -511,13 +482,13 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     legalLink: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         textDecorationLine: 'underline',
     },
     legalDot: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
 });
 

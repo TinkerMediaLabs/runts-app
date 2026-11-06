@@ -5,6 +5,7 @@ import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
 import { unwrap } from '@/lib/amplifyResult';
+import { showChip } from '@/lib/chip';
 
 
 const PAGE_SIZE = 20;
@@ -95,6 +96,7 @@ export function useCreateBookmark() {
         },
        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+            showChip('Bookmark saved');
             Analytics.storyBookmarked({
                 storyId:         variables.storyId,
                 positionSeconds: variables.positionSeconds,

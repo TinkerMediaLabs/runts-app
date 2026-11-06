@@ -14,6 +14,8 @@ import Animated, {
 
 import Screen from '@/components/common/Screen';
 import useStyles from '@/theme/styles';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 const Waiting = () => {
     const styles = useStyles();
@@ -89,7 +91,7 @@ const Waiting = () => {
                     {
                         justifyContent: 'center',
                         alignItems: 'center',
-                        backgroundColor: '#000',
+                        backgroundColor: colors.surface0,
                     },
                 ]}
             >
@@ -133,7 +135,7 @@ const Waiting = () => {
                                     {
                                         width: 14,
                                         height: 14,
-                                        backgroundColor: '#000',
+                                        backgroundColor: colors.surface0,
                                         borderRadius: 9,
                                     },
                                 ]}
@@ -144,7 +146,7 @@ const Waiting = () => {
                                     {
                                         width: 14,
                                         height: 14,
-                                        backgroundColor: '#000',
+                                        backgroundColor: colors.surface0,
                                         borderRadius: 9,
                                     },
                                 ]}
@@ -152,7 +154,7 @@ const Waiting = () => {
                         </View>
                     </View>
 
-                    <Text style={{ color: 'rgba(255,255,255,0.55)', marginTop: 24, fontSize: 13 }}>
+                    <Text style={{ color: colors.textSecondary, marginTop: 24, fontSize: fontSizes.small }}>
                         loading
                     </Text>
                 </Animated.View>

@@ -4,6 +4,7 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { colors } from '@/theme/colors';
 import { useApp } from '@/context/AppContext';
 import useOnPlay from '@/components/functions/OnPlay';
+import { iconSize } from '@/theme/tokens';
 
 const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isPremium = false }: any) => {
     const onPlay = useOnPlay();
@@ -28,7 +29,7 @@ const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isPremium 
             ]}>
                 <FontAwesome5
                     name="play"
-                    size={14}
+                    size={iconSize.sm}
                     color="#171717"
                     style={{ marginLeft: 2 }}
                     iconStyle="solid"

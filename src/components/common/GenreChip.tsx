@@ -3,6 +3,10 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Animated, { FadeInDown, Layout, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 // A selectable genre tile (onboarding and the edit-your-genres screen).
 
@@ -21,7 +25,7 @@ const GenreChip = ({
         transform: [{ scale: withSpring(scale.value, { damping: 12, stiffness: 180 }) }],
     }));
 
-    const baseColor  = color ?? '#00ffff';
+    const baseColor  = color ?? colors.accent;
     const bgColor    = selected ? baseColor : 'rgba(255,255,255,0.05)';
     const borderColor = selected ? baseColor : 'rgba(255,255,255,0.1)';
     const textColor  = selected ? '#000' : '#ffffffb0';
@@ -46,7 +50,7 @@ const GenreChip = ({
                 {icon && (
                     <FontAwesome5
                         name={icon as any}
-                        size={14}
+                        size={iconSize.sm}
                         color={iconColor}
                         iconStyle="solid"
                         style={{ marginBottom: 6 }}
@@ -55,7 +59,7 @@ const GenreChip = ({
                 <Text style={[styles.chipText, { color: textColor }]}>{name}</Text>
                 {selected && (
                     <View style={styles.chipCheck}>
-                        <FontAwesome5 name="check" size={8} color="#000" iconStyle="solid" />
+                        <FontAwesome5 name="check" size={8} color={colors.textOnAccent} iconStyle="solid" />
                     </View>
                 )}
             </TouchableOpacity>
@@ -72,7 +76,7 @@ const styles = StyleSheet.create({
 
     chip: {
         borderWidth: 1,
-        borderRadius: 14,
+        borderRadius: radius.lg,
         paddingVertical: 18,
         paddingHorizontal: 14,
         alignItems: 'center',
@@ -82,7 +86,7 @@ const styles = StyleSheet.create({
     },
 
     chipText: {
-        fontSize: 14,
+        fontSize: fontSizes.small,
         fontWeight: '600',
         textAlign: 'center',
         textTransform: 'capitalize',

@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '@/theme/colors';
 
 export default function Screen({ children, style } : any) {
   const insets = useSafeAreaInsets();
@@ -10,7 +11,7 @@ export default function Screen({ children, style } : any) {
         {
           flex: 1,
           paddingBottom: insets.bottom,
-          backgroundColor: '#000',
+          backgroundColor: colors.surface0,
         },
         style,
       ]}

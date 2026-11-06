@@ -2,12 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Text } from '@/components/common/AppText';
+import Button from '@/components/common/Button';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { useApp } from '@/context/AppContext';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 import { findNewGenres, markGenresSeen } from '../../lib/genreNudge';
 import { spacing } from '../../theme/spacing';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 // "New genre" note at the top of Home. It checks once per visit; if a genre was added since the listener
 // last looked, it says so and offers the edit-genres screen. It only decides while the sections below are
@@ -46,14 +51,12 @@ const NewGenreNudge = ({ names, ids, userId, onDismiss }: { names: string[]; ids
         <Text style={styles.title}>{label}</Text>
         <Text style={styles.body}>Want it in your For You list?</Text>
       </View>
-      <TouchableOpacity
-        style={styles.btn}
-        onPress={() => { dismiss(); navigation.navigate('EditGenresScreen'); }}
-        accessibilityRole="button"
+      <Button
+        label="Choose"
+        size="small"
         accessibilityLabel="Choose your genres"
-      >
-        <Text style={styles.btnText}>Choose</Text>
-      </TouchableOpacity>
+        onPress={() => { dismiss(); navigation.navigate('EditGenresScreen'); }}
+      />
       <TouchableOpacity
         style={styles.close}
         onPress={dismiss}
@@ -61,7 +64,7 @@ const NewGenreNudge = ({ names, ids, userId, onDismiss }: { names: string[]; ids
         accessibilityRole="button"
         accessibilityLabel="Dismiss"
       >
-        <FontAwesome5 name="times" size={16} color="rgba(255,255,255,0.65)" iconStyle="solid" />
+        <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
       </TouchableOpacity>
     </View>
   );
@@ -72,12 +75,10 @@ export default NewGenreNudge;
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    marginHorizontal: spacing.margin, marginBottom: 14, padding: 14, borderRadius: 14,
+    marginHorizontal: spacing.margin, marginBottom: 14, padding: 14, borderRadius: radius.lg,
     backgroundColor: 'rgba(0,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(0,255,255,0.3)',
   },
-  title: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  body: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 2 },
-  btn: { backgroundColor: 'cyan', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14, minHeight: 36, justifyContent: 'center' },
-  btnText: { color: '#000', fontWeight: '800', fontSize: 14 },
+  title: { color: colors.textPrimary, fontSize: fontSizes.body, fontWeight: '700' },
+  body: { color: colors.textStrong, fontSize: fontSizes.small, marginTop: 2 },
   close: { padding: 4 },
 });

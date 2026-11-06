@@ -20,6 +20,9 @@ import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useDeleteInProgressStory } from '../../hooks/queries/useInProgressStories';
 
 import { useTag } from '../../hooks/queries/useTagNames';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -115,8 +118,8 @@ const ProgressTile = ({
                     >
                         <FontAwesome5
                             name="times"
-                            size={12}
-                            color="rgba(255,255,255,0.4)"
+                            size={iconSize.xs}
+                            color={colors.textTertiary}
                             iconStyle="solid"
                         />
                     </TouchableOpacity>
@@ -134,14 +137,14 @@ const styles = StyleSheet.create({
     },
     progressTrack: {
         height: 2,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         borderRadius: 1,
         overflow: 'hidden',
         marginBottom: 6,
     },
     progressFill: {
         height: '100%',
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
         borderRadius: 1,
     },
     metaRow: {
@@ -150,8 +153,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     metaText: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
     deleteBtn: {
         padding: 4,

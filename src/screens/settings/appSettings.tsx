@@ -46,6 +46,10 @@ import PINSetupModal from '../../components/settings/PINSetupModal';
 import { Notifications } from '../../lib/notifications';
 import { resetTips } from '../../tips/tipsStore';
 import { showChip } from '../../lib/chip';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
@@ -98,8 +102,8 @@ const ToggleRow = ({
             <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
                 <FontAwesome5
                     name={icon}
-                    size={14}
-                    color={iconColor ?? '#ffffffa5'}
+                    size={iconSize.sm}
+                    color={iconColor ?? colors.textSecondary}
                     iconStyle="solid"
                 />
             </View>
@@ -117,7 +121,7 @@ const ToggleRow = ({
             onValueChange={disabled ? undefined : onChange}
             disabled={disabled}
             trackColor={{ false: '#333', true: iconColor ? `${iconColor}66` : 'rgba(0,255,255,0.4)' }}
-            thumbColor={value ? (iconColor ?? 'cyan') : '#888'}
+            thumbColor={value ? (iconColor ?? colors.accent) : '#888'}
             ios_backgroundColor="#333"
         />
     </View>
@@ -143,13 +147,13 @@ const SelectRow = ({
     >
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={14} color="#ffffffa5" iconStyle="solid" />
+                <FontAwesome5 name={icon} size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
         <View style={styles.rowRight}>
             <Text style={styles.rowValue}>{value}</Text>
-            <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
+            <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
         </View>
     </TouchableOpacity>
 );
@@ -183,13 +187,13 @@ const ActionRow = ({
             <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
                 <FontAwesome5
                     name={icon}
-                    size={14}
-                    color={iconColor ?? '#ffffffa5'}
+                    size={iconSize.sm}
+                    color={iconColor ?? colors.textSecondary}
                     iconStyle="solid"
                 />
             </View>
             <View style={{ flex: 1 }}>
-                <Text style={[styles.rowLabel, destructive && { color: '#ff6b6b' }]}>{label}</Text>
+                <Text style={[styles.rowLabel, destructive && { color: colors.danger }]}>{label}</Text>
                 {description ? <Text style={styles.rowDescription}>{description}</Text> : null}
             </View>
         </View>
@@ -199,7 +203,7 @@ const ActionRow = ({
                     <Text style={styles.badgeText}>{badge}</Text>
                 </View>
             ) : null}
-            <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
+            <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
         </View>
     </TouchableOpacity>
 );
@@ -236,7 +240,7 @@ const Sheet = ({
                         accessibilityRole="button"
                         accessibilityLabel="Close"
                     >
-                        <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
+                        <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
                     </TouchableOpacity>
                 </View>
                 {children}
@@ -266,7 +270,7 @@ const OptionPill = ({
             {label}
         </Text>
         {active && (
-            <FontAwesome5 name="check" size={13} color="cyan" iconStyle="solid" style={{ marginLeft: 8 }} />
+            <FontAwesome5 name="check" size={iconSize.xs} color={colors.accent} iconStyle="solid" style={{ marginLeft: 8 }} />
         )}
     </TouchableOpacity>
 );
@@ -310,7 +314,7 @@ const EroticSection = ({
                 >
                     <View style={styles.rowLeft}>
                         <View style={[styles.rowIcon, { backgroundColor: `${EROTIC_ORANGE}22` }]}>
-                            <FontAwesome5 name="lock" size={14} color={EROTIC_ORANGE} iconStyle="solid" />
+                            <FontAwesome5 name="lock" size={iconSize.sm} color={EROTIC_ORANGE} iconStyle="solid" />
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.rowLabel}>Locked</Text>
@@ -319,7 +323,7 @@ const EroticSection = ({
                             </Text>
                         </View>
                     </View>
-                    <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
+                    <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
                 </TouchableOpacity>
             </Section>
         );
@@ -550,7 +554,7 @@ const AppSettings = ({ navigation }: any) => {
                         <View style={styles.row}>
                             <View style={styles.rowLeft}>
                                 <View style={styles.rowIcon}>
-                                    <FontAwesome5 name="hdd" size={14} color="#ffffffa5" iconStyle="solid" />
+                                    <FontAwesome5 name="hdd" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
                                 </View>
                                 <Text style={styles.rowLabel}>Storage Used</Text>
                             </View>
@@ -729,19 +733,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         marginBottom: 10,
         marginLeft: 4,
     },
     sectionCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
 
@@ -762,20 +766,20 @@ const styles = StyleSheet.create({
     rowIcon: {
         width: 30,
         height: 30,
-        borderRadius: 8,
-        backgroundColor: '#2a2a2a',
+        borderRadius: radius.sm,
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     rowLabel: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: fontSizes.body,
+        color: colors.textPrimary,
         fontWeight: '500',
     },
     rowDescription: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         marginTop: 2,
         lineHeight: 17,
     },
@@ -785,12 +789,12 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     rowValue: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
     },
     divider: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginLeft: 58,
     },
 
@@ -804,7 +808,7 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         color: '#ff7c2a',
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
     },
 
@@ -818,14 +822,14 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 24,
         paddingTop: 12,
         borderWidth: 1,
         borderBottomWidth: 0,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
     },
     sheetHandle: {
         width: 36,
@@ -842,13 +846,13 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     sheetTitle: {
-        fontSize: 18,
+        fontSize: fontSizes.subtitle,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     sheetNote: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 20,
         marginBottom: 20,
     },
@@ -859,30 +863,30 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: 14,
         paddingHorizontal: 16,
-        borderRadius: 12,
-        backgroundColor: '#1e1e1e',
+        borderRadius: radius.md,
+        backgroundColor: colors.surface2,
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: colors.border,
         marginBottom: 8,
     },
     optionPillActive: {
         backgroundColor: 'rgba(0,255,255,0.08)',
-        borderColor: 'cyan',
+        borderColor: colors.accent,
     },
     optionPillText: {
-        fontSize: 15,
+        fontSize: fontSizes.body,
         color: '#ccc',
         fontWeight: '500',
     },
     optionPillTextActive: {
-        color: 'cyan',
+        color: colors.accent,
         fontWeight: '600',
     },
 
     version: {
         textAlign: 'center',
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 12,
+        color: colors.textSecondary,
+        fontSize: fontSizes.caption,
         marginTop: 40,
     },
 });

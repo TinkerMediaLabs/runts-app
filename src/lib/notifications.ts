@@ -44,7 +44,7 @@ function addNotificationTapListener(): void {
         const storyId = data?.storyId as string | undefined;
 
         if (storyId) {
-            navigate('StoryScreen', { storyID: storyId });
+            navigate('StoryScreen', { storyID: storyId, source: 'notification' });
         }
     });
 }
@@ -54,7 +54,7 @@ async function checkColdStartNotification(): Promise<void> {
     const storyId = response?.notification.request.content.data?.storyId as string | undefined;
 
     if (storyId) {
-        navigate('StoryScreen', { storyID: storyId });
+        navigate('StoryScreen', { storyID: storyId, source: 'notification' });
     }
 }
 
@@ -120,7 +120,6 @@ async function registerToken(userId: string): Promise<void> {
             });
         }
 
-        console.log('[Notifications] Token registered:', pushToken);
 
     } catch (err) {
         console.warn('[Notifications] registerToken failed:', err);
@@ -145,7 +144,6 @@ async function unregisterToken(userId: string): Promise<void> {
             await (client.models as any).UserDevice.delete({ id: record.id });
         }
 
-        console.log('[Notifications] Token unregistered for user:', userId);
 
     } catch (err) {
         console.warn('[Notifications] unregisterToken failed:', err);

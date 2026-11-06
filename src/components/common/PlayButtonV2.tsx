@@ -4,6 +4,7 @@ import { Text } from '@/components/common/AppText';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import useOnPlay from '@/components/functions/OnPlay';
 import { useApp } from '@/context/AppContext';
+import { fontSizes } from '@/theme/tokens';
 
 function TimeConversion(duration: number): string {
     if (!duration) return '';
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
     },
     time: {
         color:    '#00ffffa6',
-        fontSize: 12,
+        fontSize: fontSizes.caption,
     },
 });
 

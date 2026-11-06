@@ -17,6 +17,12 @@ import { uploadProfilePicture } from '../../services/auth';
 import { useFollowingCount } from '../../hooks/queries/useAuthorFollowing';
 
 import { CachedImage } from '../../components/common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+import SectionLabel from '@/components/common/SectionLabel';
+import EditNameSheet from '@/components/settings/EditNameSheet';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -37,7 +43,7 @@ type NavTile = {
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <SectionLabel text={title} />
         <View style={styles.sectionCard}>{children}</View>
     </View>
 );
@@ -48,14 +54,14 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={description ? `${title}, ${description}` : title}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={14} color="#ffffffa5" iconStyle="solid" />
+                <FontAwesome5 name={icon} size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
             </View>
             <View>
                 <Text style={styles.rowLabel}>{title}</Text>
                 <Text style={styles.rowDescription}>{description}</Text>
             </View>
         </View>
-        <FontAwesome5 name="chevron-right" size={11} color="#ffffff80" iconStyle="solid" />
+        <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
     </TouchableOpacity>
 );
 
@@ -78,6 +84,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [editingName, setEditingName] = useState(false);
 
     const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -165,9 +172,7 @@ const ProfileScreen = ({ navigation }: any) => {
             await updateProfilePic(s3Url);
 
        } catch (err: any) {
-        console.log('Photo upload error full:', JSON.stringify(err));
-        console.log('Photo upload error message:', err?.message);
-        console.log('Photo upload error name:', err?.name);
+        console.log('Photo upload failed:', err?.name);
         Alert.alert('Error', err?.message || 'Failed to update profile photo. Please try again.');
     } finally {
             setUploadingPhoto(false);
@@ -269,12 +274,12 @@ const ProfileScreen = ({ navigation }: any) => {
                                         width: AVATAR_SIZE,
                                         height: AVATAR_SIZE,
                                         borderRadius: AVATAR_SIZE / 2,
-                                        backgroundColor: '#2a2a2a',
+                                        backgroundColor: colors.surface3,
                                         justifyContent: 'center',
                                         alignItems: 'center',
                                     }
                                 ]}>
-                                    <ActivityIndicator color="cyan" />
+                                    <ActivityIndicator color={colors.accent} />
                                 </View>
                             ) : (
                                 <CachedImage
@@ -297,13 +302,23 @@ const ProfileScreen = ({ navigation }: any) => {
                                 accessibilityState={{ busy: uploadingPhoto }}
                                 hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                             >
-                                <FontAwesome5 name="camera" size={11} color="#000" iconStyle="solid" />
+                                <FontAwesome5 name="camera" size={iconSize.xs} color={colors.textOnAccent} iconStyle="solid" />
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={styles.heroName}>
-                            {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
-                        </Text>
+                        <TouchableOpacity
+                            style={styles.heroNameRow}
+                            activeOpacity={0.7}
+                            onPress={() => setEditingName(true)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Display name ${profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}. Edit`}
+                            hitSlop={{ top: 10, bottom: 10, left: 14, right: 14 }}
+                        >
+                            <Text style={styles.heroName}>
+                                {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
+                            </Text>
+                            <FontAwesome5 name="pen" size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
+                        </TouchableOpacity>
 
                         {/* Stats row */}
                         <View style={styles.statsRow}>
@@ -347,6 +362,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
                 </Animated.ScrollView>
             </LinearGradient>
+            <EditNameSheet visible={editingName} onClose={() => setEditingName(false)} />
         </Screen>
     );
 };
@@ -368,7 +384,7 @@ const styles = StyleSheet.create({
         marginBottom: 14,
     },
     avatar: {
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         borderWidth: 2,
         borderColor: 'rgba(0,255,255,0.2)',
     },
@@ -379,26 +395,32 @@ const styles = StyleSheet.create({
         width: 26,
         height: 26,
         borderRadius: 13,
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
         borderColor: '#12121a',
     },
-    heroName: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#fff',
+    heroNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
         marginBottom: 20,
+    },
+    heroName: {
+        fontSize: fontSizes.title,
+        fontWeight: '700',
+        color: colors.textPrimary,
     },
 
     // Stats
     statsRow: {
         flexDirection: 'row',
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         width: width - spacing.margin * 4,
         paddingVertical: 16,
     },
@@ -407,20 +429,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     statValue: {
-        fontSize: 20,
+        fontSize: fontSizes.title,
         fontWeight: '700',
-        color: 'cyan',
+        color: colors.accent,
         opacity: 0.85,
     },
     statLabel: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         marginTop: 2,
         fontWeight: '500',
     },
     statSeparator: {
         width: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginVertical: 4,
     },
 
@@ -429,20 +451,11 @@ const styles = StyleSheet.create({
         marginTop: 24,
         paddingHorizontal: spacing.margin,
     },
-    sectionTitle: {
-        fontSize: 12,
-        fontWeight: '600',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
-        marginBottom: 10,
-        marginLeft: 4,
-    },
     sectionCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
 
@@ -464,25 +477,25 @@ const styles = StyleSheet.create({
     rowIcon: {
         width: 30,
         height: 30,
-        borderRadius: 8,
-        backgroundColor: '#2a2a2a',
+        borderRadius: radius.sm,
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     rowLabel: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: fontSizes.body,
+        color: colors.textPrimary,
         fontWeight: '500',
     },
     rowDescription: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
         marginTop: 2,
     },
     divider: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginLeft: 58,
     },
 
@@ -492,13 +505,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 14,
-        borderRadius: 14,
-        backgroundColor: '#1a1a1a',
+        borderRadius: radius.lg,
+        backgroundColor: colors.surface2,
         borderWidth: 1,
         borderColor: '#1a1a1a',
     },
     signOutText: {
-        fontSize: 15,
+        fontSize: fontSizes.body,
         fontWeight: '600',
         color: 'gray',
     },

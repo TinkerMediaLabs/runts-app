@@ -7,6 +7,8 @@ import { useApp } from '@/context/AppContext';
 import { useRecommendations } from '../../hooks/queries/useRecommendations';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { spacing } from '../../theme/spacing';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 type Props = {
     story: any;
@@ -45,9 +47,9 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     label: {
-        fontSize: 13,
+        fontSize: fontSizes.small,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 0.8,
         marginBottom: 12,

@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
 import { useTipTarget } from '../../tips/useTipTarget';
+import { radius } from '@/theme/tokens';
 
 const SearchBar = () => {
 
@@ -33,7 +34,7 @@ const SearchBar = () => {
                 <View ref={tipRef} collapsable={false} style={
                     {alignItems: 'center', 
                     paddingHorizontal: 10, 
-                    borderRadius: 8, 
+                    borderRadius: radius.sm, 
                     flexDirection: 'row', 
                     backgroundColor: '#e0e0e0', 
                     height: 40, 

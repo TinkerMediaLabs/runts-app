@@ -5,6 +5,9 @@ import { TextInput } from '@/components/common/AppTextInput';
 import { useApp } from '@/context/AppContext';
 import { pinErrorMessage } from '@/lib/eroticPin';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
@@ -227,10 +230,10 @@ const styles = StyleSheet.create({
         padding:         24,
     },
     card: {
-        backgroundColor: '#111',
-        borderRadius:    24,
+        backgroundColor: colors.surface1,
+        borderRadius:    radius.xl,
         borderWidth:     1,
-        borderColor:     '#2a2a2a',
+        borderColor:     colors.border,
         padding:         32,
         width:           width * 0.85,
         alignItems:      'center',
@@ -244,20 +247,20 @@ const styles = StyleSheet.create({
         width:           8,
         height:          8,
         borderRadius:    4,
-        backgroundColor: '#333',
+        backgroundColor: colors.surface3,
     },
     stepDotActive: {
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
     },
     title: {
-        color:        '#fff',
-        fontSize:     22,
+        color:        colors.textPrimary,
+        fontSize:     fontSizes.title,
         fontWeight:   '700',
         marginBottom: 8,
     },
     subtitle: {
-        color:        'rgba(255,255,255,0.5)',
-        fontSize:     14,
+        color:        colors.textSecondary,
+        fontSize:     fontSizes.small,
         textAlign:    'center',
         marginBottom: 20,
         lineHeight:   20,
@@ -266,14 +269,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,200,0,0.08)',
         borderWidth:     1,
         borderColor:     'rgba(255,200,0,0.2)',
-        borderRadius:    12,
+        borderRadius:    radius.md,
         padding:         12,
         marginBottom:    24,
         width:           '100%',
     },
     warningText: {
         color:      'rgba(255,200,0,0.8)',
-        fontSize:   12,
+        fontSize:   fontSizes.caption,
         lineHeight: 18,
         textAlign:  'center',
     },
@@ -291,12 +294,12 @@ const styles = StyleSheet.create({
         height:          18,
         borderRadius:    9,
         borderWidth:     2,
-        borderColor:     '#444',
+        borderColor:     colors.border,
         backgroundColor: 'transparent',
     },
     dotFilled: {
-        backgroundColor: 'cyan',
-        borderColor:     'cyan',
+        backgroundColor: colors.accent,
+        borderColor:     colors.accent,
     },
     hiddenInput: {
         position: 'absolute',
@@ -305,23 +308,23 @@ const styles = StyleSheet.create({
         width:    0,
     },
     error: {
-        color:        '#ff6b6b',
-        fontSize:     13,
+        color:        colors.danger,
+        fontSize:     fontSizes.small,
         marginBottom: 16,
         textAlign:    'center',
     },
     cancelButton: {
         paddingVertical:   12,
         paddingHorizontal: 32,
-        borderRadius:      12,
-        backgroundColor:   '#1e1e1e',
+        borderRadius:      radius.md,
+        backgroundColor:   colors.surface2,
         borderWidth:       1,
-        borderColor:       '#333',
+        borderColor:       colors.border,
         marginTop:         8,
     },
     cancelText: {
         color:      '#aaa',
-        fontSize:   15,
+        fontSize:   fontSizes.body,
         fontWeight: '500',
     },
 });

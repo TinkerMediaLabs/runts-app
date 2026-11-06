@@ -4,6 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/common/AppText';
 import { subscribeChip, ChipMessage } from '@/lib/chip';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 
 const SHOW_MS = 2200;
 const ANIM_MS = 180;
@@ -46,7 +49,7 @@ export default function ActionChip() {
 
     if (!chip) return null;
 
-    const accent = chip.kind === 'error' ? '#ff5a5f' : '#00ffff';
+    const accent = chip.kind === 'error' ? '#ff5a5f' : colors.accent;
 
     return (
         <View pointerEvents="none" style={[styles.wrapper, { top: insets.top + 8 }]}>
@@ -74,14 +77,14 @@ const styles = StyleSheet.create({
     chip: {
         backgroundColor: 'rgba(28,28,30,0.96)',
         borderWidth: 1,
-        borderRadius: 18,
+        borderRadius: radius.xl,
         paddingHorizontal: 16,
         paddingVertical: 8,
         maxWidth: '88%',
     },
     text: {
-        color: '#fff',
-        fontSize: 13,
+        color: colors.textPrimary,
+        fontSize: fontSizes.small,
         fontWeight: '600',
         textAlign: 'center',
     },

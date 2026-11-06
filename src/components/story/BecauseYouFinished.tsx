@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text } from '@/components/common/AppText';
 import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
@@ -12,7 +11,7 @@ import { useStory } from '../../hooks/queries/useStories';
 import { useRecommendations } from '../../hooks/queries/useRecommendations';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { spacing } from '../../theme/spacing';
-import useTypography from '../../theme/typography';
+import SectionTitle from '@/components/common/SectionTitle';
 
 const MIN_ITEMS = 3;
 
@@ -35,7 +34,6 @@ function useLatestFinishedStoryId() {
 // as the story page, seeded by the last story finished, so its cost does not grow with the catalog.
 // Renders nothing until the listener has finished a story and there are enough fresh suggestions.
 const BecauseYouFinished = () => {
-    const typo = useTypography();
     const { eroticEnabled } = useApp();
     const { data: storyId } = useLatestFinishedStoryId();
     const { data: story } = useStory(storyId ?? '');
@@ -46,9 +44,7 @@ const BecauseYouFinished = () => {
 
     return (
         <View style={styles.wrap}>
-            <Text style={[typo.title, styles.label]} accessibilityRole="header" numberOfLines={1}>
-                Because you finished {story.title}
-            </Text>
+            <SectionTitle text={`Because you finished ${story.title}`} numberOfLines={1} />
             <HorizontalList
                 stories={items}
                 tagId={story.primaryTagId ?? undefined}
@@ -61,10 +57,5 @@ const BecauseYouFinished = () => {
 export default BecauseYouFinished;
 
 const styles = StyleSheet.create({
-    wrap: { paddingVertical: spacing.margin },
-    label: {
-        marginLeft: spacing.margin,
-        marginRight: spacing.margin,
-        marginBottom: spacing.margin,
-    },
+    wrap: { paddingBottom: spacing.margin },
 });

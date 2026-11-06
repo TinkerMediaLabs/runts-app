@@ -5,6 +5,13 @@ import { Text } from '@/components/common/AppText';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useDownloadState } from '../../hooks/useDownloadState';
 import { retryDownload } from '../../hooks/queries/useDownloads';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+
+// The "saved" icon is hidden for now: on story tiles it pushed the genre tags off the tile. Set this to true to bring
+// it back. The progress bar while saving and the retry button after a failure still show.
+const SHOW_SAVED_ICON = false;
 
 // Shows where a story's offline download stands: saved, saving with progress, or failed with a retry.
 export default function DownloadBadge({ storyId }: { storyId: string }) {
@@ -12,9 +19,10 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
   if (status === 'none') return null;
 
   if (status === 'complete') {
+    if (!SHOW_SAVED_ICON) return null;
     return (
       <View style={styles.row} accessible accessibilityLabel="Saved for offline listening">
-        <FontAwesome5 name="download" size={11} color="cyan" iconStyle="solid" />
+        <FontAwesome5 name="download" size={iconSize.xs} color={colors.accent} iconStyle="solid" />
       </View>
     );
   }
@@ -37,7 +45,7 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
       accessibilityRole="button"
       accessibilityLabel="Download failed. Retry"
     >
-      <FontAwesome5 name="redo" size={11} color="#ff8a80" iconStyle="solid" />
+      <FontAwesome5 name="redo" size={iconSize.xs} color="#ff8a80" iconStyle="solid" />
       <Text style={[styles.text, { color: '#ff8a80' }]}>Retry download</Text>
     </TouchableOpacity>
   );
@@ -45,7 +53,7 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  track: { width: 44, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', overflow: 'hidden' },
-  fill: { height: 4, backgroundColor: 'cyan' },
-  text: { color: 'rgba(255,255,255,0.75)', fontSize: 11 },
+  track: { width: 44, height: 4, borderRadius: 2, backgroundColor: colors.fillStrong, overflow: 'hidden' },
+  fill: { height: 4, backgroundColor: colors.accent },
+  text: { color: colors.textStrong, fontSize: fontSizes.micro },
 });

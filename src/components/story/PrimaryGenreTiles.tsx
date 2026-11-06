@@ -13,6 +13,8 @@ import { Analytics } from '@/lib/analytics';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 import { CachedImageBackground } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { radius } from '@/theme/tokens';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -60,7 +62,7 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
                 <CachedImageBackground
                     source={imageSource}
                     style={styles_local.tileImage}
-                    imageStyle={{ borderRadius: 15 }}
+                    imageStyle={{ borderRadius: radius.lg }}
                 >
                     <LinearGradient
                         colors={['#000000a5', '#000000a5', 'transparent']}
@@ -136,7 +138,7 @@ const GenreTilesList = ({ primaryTags, navigation, eroticEnabled }: any) => {
                                             <ImageBackground
                                                 source={require('../../../assets/images/genres/eroticTile.jpg')}
                                                 style={styles_local.tileImage}
-                                                imageStyle={{ borderRadius: 15 }}
+                                                imageStyle={{ borderRadius: radius.lg }}
                                             >
                                                 <LinearGradient
                                                     colors={['#000000a5', '#000000a5', 'transparent']}
@@ -171,24 +173,24 @@ const styles_local = StyleSheet.create({
         marginVertical: 10,
         width: width - 40,
         alignSelf: 'center',
-        borderRadius: 15,
+        borderRadius: radius.lg,
         overflow: 'hidden',
     },
     tileImage: {
         width: '100%',
         height: 160,
-        borderRadius: 15,
+        borderRadius: radius.lg,
         justifyContent: 'flex-end',
     },
     tileGradient: {
         width: '100%',
         height: '100%',
-        borderRadius: 15,
+        borderRadius: radius.lg,
         justifyContent: 'flex-end',
         paddingHorizontal: 16,
     },
     tileFallback: {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: colors.surface2,
         justifyContent: 'flex-end',
         paddingHorizontal: 16,
         paddingBottom: 10,

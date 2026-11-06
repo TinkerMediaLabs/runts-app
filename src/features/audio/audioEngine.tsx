@@ -3,6 +3,7 @@ import { getUrl } from 'aws-amplify/storage';
 import { onlineManager } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getLocalFilePath } from '../../lib/offlineStorage';
+import { audioLinks, isCdnPath } from '../../lib/audioLinks';
 
 export type Track = {
   id: string;
@@ -51,6 +52,17 @@ async function resolveAudioUrl(url: string, localMode: LocalMode = 'uri'): Promi
   // No connection and no saved copy: say so plainly instead of handing the player a link that cannot load.
   if (!onlineManager.isOnline()) {
     throw new Error("This story isn't saved on your phone, so it can't play offline. Pin it while online to save it.");
+  }
+
+  // Preferred: a 7-day CDN link (stable, supports seeking, shared with the car list). If the backend cannot
+  // give one, fall through to the old direct bucket link so playback never depends on the CDN alone.
+  if (isCdnPath(url)) {
+    try {
+      const cdn = await audioLinks.getOne(url);
+      if (cdn) return cdn;
+    } catch (e) {
+      console.warn('audioEngine: CDN link unavailable, using bucket link', e);
+    }
   }
 
   const cached = signedUrlCache.get(url);
@@ -145,6 +157,7 @@ class AudioEngine {
         try {
           const position = this.getCurrentPosition();
           signedUrlCache.delete(track.url);
+          audioLinks.forget(track.url);
           const freshUrl = await resolveAudioUrl(track.url);
           await TrackPlayer.setMediaItems([{
             url:     freshUrl,
@@ -164,6 +177,14 @@ class AudioEngine {
     }
   }
 
+// The car started this story natively (the app only learns about it afterwards): record it as current so
+  // recovery, resume and the rest of the engine treat it like a story started from the phone.
+  adopt(track: Track) {
+    this.currentTrack = track;
+    this.playingLocal = false;
+    if (this.localMode === 'remote') this.localMode = 'uri';
+  }
+
 async play(track: Track) {
   try {
     if (this.currentTrack?.id === track.id) {
@@ -174,7 +195,6 @@ async play(track: Track) {
     if (this.localMode === 'remote') this.localMode = 'uri';
     const resolvedUrl = await resolveAudioUrl(track.url, this.localMode);
     this.playingLocal = resolvedUrl.startsWith('file://') || resolvedUrl.startsWith('/');
-    console.log('audioEngine.play: resolvedUrl =', resolvedUrl);
 
     await TrackPlayer.stop();
     await new Promise(resolve => setTimeout(resolve, 100));

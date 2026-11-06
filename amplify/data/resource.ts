@@ -2,6 +2,9 @@ import { incrementListens } from '../functions/increment-listens/resource';
 import { eroticPin } from '../functions/erotic-pin/resource';
 import { uploadUrl } from '../functions/upload-url/resource';
 import { deleteAccount } from '../functions/delete-account/resource';
+import { audioLinks } from '../functions/audio-links/resource';
+import { commentWrite } from '../functions/comment-write/resource';
+import { carPass } from '../functions/car-pass/resource';
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
@@ -146,7 +149,9 @@ Comment: a
     index('userId').sortKeys(['createdAt']).name('byUserAndCreatedAt'),   // account cleanup (user-cleanup)
   ])
   .authorization(allow => [
-    allow.owner(),
+    // Comments are created and edited only through the postComment / editComment mutations (functions/comment-write),
+    // which check the author, length, word filter and posting rate. The author can still read and delete their own.
+    allow.owner().to(['read', 'delete']),
     allow.authenticated().to(['read']),
     allow.group('admin').to(['read', 'delete']),   // moderation: remove reported comments from the CMS
   ]),
@@ -421,6 +426,13 @@ Comment: a
     .authorization(allow => [
       allow.group('admin').to(['read']),
     ]),
+
+  CommentWriteResult: a.customType({
+    id: a.string().required(),
+    content: a.string().required(),
+    userName: a.string().required(),
+    createdAt: a.string().required(),
+  }),
 
   EroticPinResult: a.customType({
     ok: a.boolean().required(),
@@ -706,6 +718,40 @@ Comment: a
     .returns(a.string())
     .authorization(allow => [allow.group('admin')])
     .handler(a.handler.function(uploadUrl)),
+  // Post or edit a comment. The author comes from the sign-in; length, word filter and posting rate are checked
+  // on the server (see functions/comment-write). `anonymous` posts as "Anonymous" instead of the profile name.
+  postComment: a
+    .mutation()
+    .arguments({
+      storyId: a.string().required(),
+      content: a.string().required(),
+      anonymous: a.boolean(),
+    })
+    .returns(a.ref('CommentWriteResult'))
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(commentWrite)),
+  editComment: a
+    .mutation()
+    .arguments({
+      id: a.string().required(),
+      content: a.string().required(),
+    })
+    .returns(a.ref('CommentWriteResult'))
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(commentWrite)),
+  // Signed 7-day CDN links for story audio (see functions/audio-links). Returns JSON: { expiresAt, links: [{ path, url }] }.
+  getAudioLinks: a
+    .mutation()
+    .arguments({ paths: a.string().array().required() })
+    .returns(a.string())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(audioLinks)),
+  // A 30-day "car pass" for the player library's own progress posts while the app is closed in a car (see functions/car-pass).
+  getCarPass: a
+    .mutation()
+    .returns(a.string())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(carPass)),
   // The signed-in user deletes their own account: profile data first, then the sign-in account (see functions/delete-account).
   deleteMyAccount: a
     .mutation()

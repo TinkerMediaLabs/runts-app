@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, TouchableWithoutFeedback, ActivityIndicator, ScrollView, Modal, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, Image, Linking } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, Dimensions, Platform, Image, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 
 import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
+import { colors } from '../../theme/colors';
+import { fields, passwordDots } from '../../theme/fields';
+import Button from '../../components/common/Button';
 
 import { useApp } from '@/context/AppContext';
 import { spacing } from '../../theme/spacing';
@@ -19,10 +21,19 @@ import {
     confirmUserAttribute,
     updatePassword,
     fetchAuthSession,
+    fetchUserAttributes,
 } from 'aws-amplify/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendPasswordResetCode, confirmNewPassword } from '../../services/auth';
+import { SIGN_IN_METHOD_KEY } from '../../lib/signInMethod';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
+import Sheet from '@/components/common/BottomSheet';
+import EditNameSheet from '@/components/settings/EditNameSheet';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -37,6 +48,7 @@ type ModalType =
     | 'name'
     | 'email'
     | 'password'
+    | 'setPassword'
     | 'signout'
     | 'delete'
     | null;
@@ -88,8 +100,8 @@ const SettingRow = ({
                 ) : (
                     <FontAwesome5
                         name={icon}
-                        size={14}
-                        color={'#ffffffa5'}
+                        size={iconSize.sm}
+                        color={colors.textSecondary}
                         iconStyle="solid"
                     />
                 )}
@@ -110,8 +122,8 @@ const SettingRow = ({
             {chevron && onPress && (
                 <FontAwesome5
                     name="chevron-right"
-                    size={11}
-                    color="#ffffff80"
+                    size={iconSize.xs}
+                    color={colors.textSecondary}
                     iconStyle="solid"
                 />
             )}
@@ -127,49 +139,6 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 );
 
 const RowDivider = () => <View style={styles.divider} />;
-
-const Sheet = ({
-    visible,
-    onClose,
-    title,
-    children,
-}: {
-    visible: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-}) => {
-    const insets = useSafeAreaInsets();
-    return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
-        >
-            <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
-                <View style={styles.sheetBackdrop} />
-            </TouchableWithoutFeedback>
-
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.sheetWrapper}
-                pointerEvents="box-none"
-            >
-                <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
-                    <View style={styles.sheetHandle} />
-                    <View style={styles.sheetHeader}>
-                        <Text style={styles.sheetTitle}>{title}</Text>
-                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel={`Close ${title}`}>
-                            <FontAwesome5 name="times" size={16} color="#ffffffa5" iconStyle="solid" />
-                        </TouchableOpacity>
-                    </View>
-                    {children}
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
-    );
-};
 
 const PasswordField = ({
     label,
@@ -190,16 +159,15 @@ const PasswordField = ({
                 <TextInput
                     style={{
                         flex: 1,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        fontSize: 15,
-                        color: '#fff',
+                        paddingHorizontal: 16,
+                        ...fields.text,
+                        ...(hidden && value.length > 0 ? passwordDots : null),
                     }}
                     value={value}
                     onChangeText={onChange}
                     placeholder={placeholder ?? ''}
                     accessibilityLabel={label}
-                    placeholderTextColor="#ffffff8c"
+                    placeholderTextColor={colors.textSecondary}
                     secureTextEntry={hidden}
                     maxLength={32}
                     autoCapitalize="none"
@@ -207,8 +175,8 @@ const PasswordField = ({
                 <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
                     <FontAwesome5
                         name={hidden ? 'eye-slash' : 'eye'}
-                        size={14}
-                        color="#ffffffa5"
+                        size={iconSize.sm}
+                        color={colors.textSecondary}
                         iconStyle="solid"
                     />
                 </TouchableOpacity>
@@ -230,46 +198,33 @@ const ActionButton = ({
     destructive?: boolean;
     disabled?: boolean;
 }) => (
-    <TouchableOpacity
-        activeOpacity={0.8}
+    <Button
+        label={label}
         onPress={onPress}
-        disabled={disabled || loading}
-        accessibilityRole="button"
-        accessibilityLabel={loading ? `${label}, loading` : label}
-        accessibilityState={{ disabled: disabled || loading, busy: loading }}
-        style={[
-            styles.actionButton,
-            destructive && styles.actionButtonDestructive,
-            (disabled || loading) && styles.actionButtonDisabled,
-        ]}
-    >
-        {loading ? (
-            <ActivityIndicator size="small" color={destructive ? '#fff' : '#000'} />
-        ) : (
-            <Text style={[styles.actionButtonText, destructive && styles.actionButtonTextDestructive]}>
-                {label}
-            </Text>
-        )}
-    </TouchableOpacity>
+        loading={loading}
+        disabled={disabled}
+        variant={destructive ? 'danger' : 'primary'}
+        style={{ marginTop: 4 }}
+    />
 );
 
 const SuccessBanner = ({ message }: { message: string }) => (
     <View style={styles.successBanner} accessibilityLiveRegion="polite">
-        <FontAwesome5 name="check-circle" size={14} color="#00ffff" iconStyle="solid" />
+        <FontAwesome5 name="check-circle" size={iconSize.sm} color={colors.accent} iconStyle="solid" />
         <Text style={styles.successBannerText}>{message}</Text>
     </View>
 );
 
 const ErrorBanner = ({ message }: { message: string }) => (
     <View style={styles.dangerBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-        <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
+        <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
         <Text style={styles.dangerBannerText}>{message}</Text>
     </View>
 );
 
 const InfoBanner = ({ message }: { message: string }) => (
     <View style={styles.infoBanner}>
-        <FontAwesome5 name="info-circle" size={14} color="#ffffff88" iconStyle="solid" />
+        <FontAwesome5 name="info-circle" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
         <Text style={styles.infoBannerText}>{message}</Text>
     </View>
 );
@@ -280,10 +235,11 @@ const InfoBanner = ({ message }: { message: string }) => (
 
 const AccountScreen = ({ navigation }: any) => {
 
-    const { userId, logout, profile, setProfile, isPremium } = useApp();
+    const { logout, profile, isPremium } = useApp();
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
+    const [accountEmail, setAccountEmail] = useState('');
 
     useEffect(() => {
         async function detectProvider() {
@@ -297,6 +253,7 @@ const AccountScreen = ({ navigation }: any) => {
 
                 if (identities && Array.isArray(identities) && identities.length > 0) {
                     const providerType = identities[0].providerType?.toLowerCase();
+                    fetchUserAttributes().then(a => setAccountEmail(a.email ?? '')).catch(() => {});
                     if (providerType === 'google') {
                         setAuthProvider('google');
                     } else if (providerType === 'signinwithapple') {
@@ -305,7 +262,10 @@ const AccountScreen = ({ navigation }: any) => {
                         setAuthProvider('email');
                     }
                 } else {
-                    setAuthProvider('email');
+                    // Sign in with Apple (native) leaves no provider in the token, so the app remembers it.
+                    const method = await AsyncStorage.getItem(SIGN_IN_METHOD_KEY).catch(() => null);
+                    setAuthProvider(method === 'apple' ? 'apple' : 'email');
+                    fetchUserAttributes().then(a => setAccountEmail(a.email ?? '')).catch(() => {});
                 }
             } catch (err) {
                 console.log('Provider detection error:', err);
@@ -323,20 +283,20 @@ const AccountScreen = ({ navigation }: any) => {
     const open  = (modal: ModalType) => setActiveModal(modal);
     const close = () => {
         setActiveModal(null);
-        setName('');
         setEmail('');
         setEmailCode('');
         setEmailStep('input');
         setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        setSetPasswordStep('send');
+        setSetPasswordCode('');
         setDeleteConfirm('');
         setError('');
         setSuccess('');
     };
 
     // ── Form state ────────────────────────────────────────────────────────────
-    const [name, setName]                       = useState('');
     const [email, setEmail]                     = useState('');
     const [emailCode, setEmailCode]             = useState('');
     const [emailStep, setEmailStep]             = useState<'input' | 'verify'>('input');
@@ -344,46 +304,13 @@ const AccountScreen = ({ navigation }: any) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [oldPassword, setOldPassword]         = useState('');
     const [deleteConfirm, setDeleteConfirm]     = useState('');
+    const [setPasswordStep, setSetPasswordStep] = useState<'send' | 'verify'>('send');
+    const [setPasswordCode, setSetPasswordCode] = useState('');
 
     // ── Loading / feedback ────────────────────────────────────────────────────
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError]         = useState('');
     const [success, setSuccess]     = useState('');
-
-    // ── Update Display Name ───────────────────────────────────────────────────
-    const handleUpdateName = async () => {
-        if (!name.trim()) return;
-        setIsLoading(true);
-        setError('');
-        setSuccess('');
-        try {
-            // Update Cognito attribute
-            await updateUserAttribute({
-                userAttribute: {
-                    attributeKey: 'name',
-                    value: name.trim(),
-                },
-            });
-
-            // Also update DynamoDB
-            if (userId) {
-                unwrap(await client.models.User.update({
-                    id: userId,
-                    name: name.trim(),
-                }), 'Update name');
-            }
-
-            // Update local AppContext state
-            setProfile(profile ? { ...profile, name: name.trim() } : null);
-
-            setSuccess('Your display name has been updated.');
-            setName('');
-        } catch (err: any) {
-            console.log(err);
-            setError(err?.message || 'Error updating name. Please try again.');
-        }
-        setIsLoading(false);
-    };
 
     // ── Update Email — step 1: send code ─────────────────────────────────────
     const handleUpdateEmail = async () => {
@@ -446,6 +373,43 @@ const AccountScreen = ({ navigation }: any) => {
         } catch (err: any) {
             console.log(err);
             setError(err?.message || 'Error updating password. Please try again.');
+        }
+        setIsLoading(false);
+    };
+
+    // ── Set a password (Apple and Google accounts) ─────────────────────────────
+    // These accounts have no password the person knows. A code is emailed, then they choose one, which lets them
+    // sign in with email and password on any device (for example after moving to Android).
+    const handleSendSetPasswordCode = async () => {
+        if (!accountEmail) { setError('We could not find your email address. Please try again later.'); return; }
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await sendPasswordResetCode(accountEmail);
+            setSetPasswordStep('verify');
+            setSuccess('A code has been sent to your email address.');
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Could not send the code. Please try again.');
+        }
+        setIsLoading(false);
+    };
+
+    const handleConfirmSetPassword = async () => {
+        if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return; }
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await confirmNewPassword(accountEmail, setPasswordCode.trim(), newPassword);
+            setSuccess('Your password is set. You can now sign in with your email and password on any device.');
+            setNewPassword('');
+            setConfirmPassword('');
+            setSetPasswordCode('');
+        } catch (err: any) {
+            console.log(err);
+            setError(err?.message || 'Invalid code or password. Please try again.');
         }
         setIsLoading(false);
     };
@@ -513,7 +477,8 @@ const AccountScreen = ({ navigation }: any) => {
                                         : 'https://play.google.com/store/account/subscriptions';
                                     Linking.openURL(url);
                                 } else {
-                                    navigation.navigate('Premium' as any);
+                                    // The Premium tab lives inside the tab bar (route "Root"); Account is a sibling screen, so go in through Root.
+                                    navigation.navigate('Root' as any, { screen: 'Premium' });
                                 }
                             }}
                         />
@@ -534,16 +499,22 @@ const AccountScreen = ({ navigation }: any) => {
                         />
                     </Section>
 
-                    {/* ── Security — only for email users ── */}
-                    {!isSocialUser && (
-                        <Section title="Security">
+                    {/* ── Security — change password, or set one for Apple and Google accounts ── */}
+                    <Section title="Security">
+                        {isSocialUser ? (
+                            <SettingRow
+                                icon="key"
+                                label="Set a Password"
+                                onPress={() => open('setPassword')}
+                            />
+                        ) : (
                             <SettingRow
                                 icon="lock"
                                 label="Change Password"
                                 onPress={() => open('password')}
                             />
-                        </Section>
-                    )}
+                        )}
+                    </Section>
 
                     {/* ── Connected account — only for social users ── */}
                     {isSocialUser && (
@@ -582,27 +553,7 @@ const AccountScreen = ({ navigation }: any) => {
             </LinearGradient>
 
             {/* ── Update Name sheet ── */}
-            <Sheet visible={activeModal === 'name'} onClose={close} title="Update Display Name">
-                {error ? <ErrorBanner message={error} /> : null}
-                {success ? <SuccessBanner message={success} /> : null}
-                <Text style={styles.fieldLabel}>New name</Text>
-                <TextInput
-                    style={[styles.input, { marginBottom: 24, color: '#fff' }]}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Your display name"
-                    accessibilityLabel="New display name"
-                    placeholderTextColor="#ffffff8c"
-                    maxLength={30}
-                    autoCapitalize="words"
-                />
-                <ActionButton
-                    label="Save Name"
-                    onPress={handleUpdateName}
-                    loading={isLoading}
-                    disabled={name.trim().length === 0}
-                />
-            </Sheet>
+            <EditNameSheet visible={activeModal === 'name'} onClose={close} />
 
             {/* ── Update Email sheet — email users only ── */}
             <Sheet
@@ -620,12 +571,12 @@ const AccountScreen = ({ navigation }: any) => {
                         </Text>
                         <Text style={styles.fieldLabel}>New email</Text>
                         <TextInput
-                            style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                            style={[styles.input, { marginBottom: 24, color: colors.textPrimary }]}
                             value={email}
                             onChangeText={setEmail}
                             placeholder="new@email.com"
                             accessibilityLabel="New email address"
-                            placeholderTextColor="#ffffff8c"
+                            placeholderTextColor={colors.textSecondary}
                             maxLength={60}
                             keyboardType="email-address"
                             autoCapitalize="none"
@@ -641,16 +592,16 @@ const AccountScreen = ({ navigation }: any) => {
                     <>
                         <Text style={styles.sheetNote}>
                             Enter the verification code sent to{' '}
-                            <Text style={{ color: '#00ffff' }}>{email}</Text>
+                            <Text style={{ color: colors.accent }}>{email}</Text>
                         </Text>
                         <Text style={styles.fieldLabel}>Verification code</Text>
                         <TextInput
-                            style={[styles.input, { marginBottom: 24, color: '#fff' }]}
+                            style={[styles.input, { marginBottom: 24, color: colors.textPrimary }]}
                             value={emailCode}
                             onChangeText={setEmailCode}
                             placeholder="000000"
                             accessibilityLabel="Verification code"
-                            placeholderTextColor="#ffffff8c"
+                            placeholderTextColor={colors.textSecondary}
                             maxLength={6}
                             keyboardType="number-pad"
                             autoCapitalize="none"
@@ -661,19 +612,18 @@ const AccountScreen = ({ navigation }: any) => {
                             loading={isLoading}
                             disabled={emailCode.trim().length === 0}
                         />
-                        <TouchableOpacity
+                        <Button
+                            label="← Back"
+                            variant="text"
+                            accessibilityLabel="Back"
+                            style={{ marginTop: 8 }}
                             onPress={() => {
                                 setEmailStep('input');
                                 setEmailCode('');
                                 setError('');
                                 setSuccess('');
                             }}
-                            style={styles.cancelButton}
-                            accessibilityRole="button"
-                            accessibilityLabel="Back"
-                        >
-                            <Text style={styles.cancelText}>← Back</Text>
-                        </TouchableOpacity>
+                        />
                     </>
                 )}
             </Sheet>
@@ -708,6 +658,44 @@ const AccountScreen = ({ navigation }: any) => {
                 />
             </Sheet>
 
+            {/* ── Set a Password sheet — Apple and Google accounts ── */}
+            <Sheet visible={activeModal === 'setPassword'} onClose={close} title="Set a Password">
+                {error ? <ErrorBanner message={error} /> : null}
+                {success ? <SuccessBanner message={success} /> : null}
+                {setPasswordStep === 'send' ? (
+                    <>
+                        <Text style={styles.sheetNote}>
+                            Add a password so you can also sign in with your email on any device, including a new phone. We will email a code to{' '}
+                            <Text style={{ color: colors.accent }}>{accountEmail || 'your address'}</Text>.
+                        </Text>
+                        <ActionButton label="Send Code" onPress={handleSendSetPasswordCode} loading={isLoading} />
+                    </>
+                ) : (
+                    <>
+                        <Text style={styles.fieldLabel}>Code from your email</Text>
+                        <TextInput
+                            style={[styles.input, { marginBottom: 16, color: colors.textPrimary }]}
+                            value={setPasswordCode}
+                            onChangeText={setSetPasswordCode}
+                            placeholder="000000"
+                            accessibilityLabel="Code from your email"
+                            placeholderTextColor={colors.textSecondary}
+                            maxLength={6}
+                            keyboardType="number-pad"
+                            autoCapitalize="none"
+                        />
+                        <PasswordField label="New password" value={newPassword} onChange={setNewPassword} placeholder="••••••••" />
+                        <PasswordField label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} placeholder="••••••••" />
+                        <ActionButton
+                            label="Set Password"
+                            onPress={handleConfirmSetPassword}
+                            loading={isLoading}
+                            disabled={setPasswordCode.trim().length === 0 || newPassword.length < 6 || confirmPassword.length < 6}
+                        />
+                    </>
+                )}
+            </Sheet>
+
             {/* ── Sign Out sheet ── */}
             <Sheet visible={activeModal === 'signout'} onClose={close} title="Sign Out">
                 {error ? <ErrorBanner message={error} /> : null}
@@ -719,15 +707,13 @@ const AccountScreen = ({ navigation }: any) => {
                     onPress={handleSignOut}
                     loading={isLoading}
                 />
-                <TouchableOpacity onPress={close} style={styles.cancelButton} accessibilityRole="button" accessibilityLabel="Cancel">
-                    <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
+                <Button label="Cancel" variant="text" onPress={close} style={{ marginTop: 8 }} />
             </Sheet>
 
             {/* ── Delete Account sheet ── */}
             <Sheet visible={activeModal === 'delete'} onClose={close} title="Delete Account">
                 <View style={styles.dangerBanner}>
-                    <FontAwesome5 name="exclamation-triangle" size={14} color="#ff4444bf" iconStyle="solid" />
+                    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
                     <Text style={styles.dangerBannerText}>
                         This action is permanent and cannot be undone. All account data will be removed.
                     </Text>
@@ -743,12 +729,12 @@ const AccountScreen = ({ navigation }: any) => {
                     Type <Text style={{ color: '#ff4444bf' }}>delete</Text> to confirm
                 </Text>
                 <TextInput
-                    style={[styles.input, { marginBottom: 24, color: '#fff', borderColor: deleteConfirm.toLowerCase() === 'delete' ? '#ff4444' : '#333' }]}
+                    style={[styles.input, { marginBottom: 24, color: colors.textPrimary, borderColor: deleteConfirm.toLowerCase() === 'delete' ? '#ff4444' : colors.border }]}
                     value={deleteConfirm}
                     onChangeText={setDeleteConfirm}
                     placeholder="delete"
                     accessibilityLabel="Type delete to confirm"
-                    placeholderTextColor="#ffffff8c"
+                    placeholderTextColor={colors.textSecondary}
                     autoCapitalize="none"
                 />
                 <ActionButton
@@ -758,9 +744,7 @@ const AccountScreen = ({ navigation }: any) => {
                     destructive
                     disabled={deleteConfirm.toLowerCase() !== 'delete'}
                 />
-                <TouchableOpacity onPress={close} style={styles.cancelButton} accessibilityRole="button" accessibilityLabel="Cancel">
-                    <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
+                <Button label="Cancel" variant="text" onPress={close} style={{ marginTop: 8 }} />
             </Sheet>
 
         </Screen>
@@ -783,19 +767,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.margin,
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
         letterSpacing: 1,
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         marginBottom: 10,
         marginLeft: 4,
     },
     sectionCard: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 14,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
         overflow: 'hidden',
     },
 
@@ -815,22 +799,22 @@ const styles = StyleSheet.create({
     rowIcon: {
         width: 30,
         height: 30,
-        borderRadius: 8,
-        backgroundColor: '#2a2a2a',
+        borderRadius: radius.sm,
+        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     rowIconDestructive: {
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
     },
     rowLabel: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: fontSizes.body,
+        color: colors.textPrimary,
         fontWeight: '500',
     },
     rowLabelDestructive: {
-        color: '#ffffffa5',
+        color: colors.textSecondary,
     },
     rowRight: {
         flexDirection: 'row',
@@ -839,12 +823,12 @@ const styles = StyleSheet.create({
         maxWidth: width * 0.4,
     },
     rowValue: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
     },
     divider: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
         marginLeft: 58,
     },
 
@@ -853,129 +837,54 @@ const styles = StyleSheet.create({
         backgroundColor: '#00ffff18',
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: '#00ffff40',
+        borderColor: colors.accentFaint,
         paddingHorizontal: 8,
         paddingVertical: 3,
     },
     badgeText: {
-        color: '#00ffff',
-        fontSize: 12,
+        color: colors.accent,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
     },
 
     // ── Bottom sheet ──────────────────────────────────────────────────────────
-    sheetBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-    },
-    sheetWrapper: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    sheet: {
-        backgroundColor: '#111',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 24,
-        paddingTop: 12,
-        borderWidth: 1,
-        borderBottomWidth: 0,
-        borderColor: '#2a2a2a',
-    },
-    sheetHandle: {
-        width: 36,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: '#ffffff30',
-        alignSelf: 'center',
-        marginBottom: 20,
-    },
-    sheetHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    sheetTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#fff',
-    },
     sheetNote: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 20,
         marginBottom: 20,
     },
 
     // ── Form fields ───────────────────────────────────────────────────────────
     fieldLabel: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         fontWeight: '600',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         letterSpacing: 0.5,
         marginBottom: 8,
     },
     inputRow: {
+        ...fields.box,
+        paddingHorizontal: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1e1e1e',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#333',
     },
     input: {
-        backgroundColor: '#1e1e1e',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#333',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        fontSize: 15,
-        color: '#fff',
+        ...fields.box,
+        ...fields.text,
     },
     inputEye: {
         paddingHorizontal: 14,
     },
 
     // ── Buttons ───────────────────────────────────────────────────────────────
-    actionButton: {
-        backgroundColor: 'cyan',
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 4,
-    },
-    actionButtonDestructive: {
-        backgroundColor: '#cc2222',
-    },
-    actionButtonDisabled: {
-        opacity: 0.4,
-    },
-    actionButtonText: {
-        color: '#000',
-        fontSize: 15,
-        fontWeight: '700',
-    },
-    actionButtonTextDestructive: {
-        color: '#fff',
-    },
-    cancelButton: {
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    cancelText: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 14,
-    },
 
     // ── Notices ───────────────────────────────────────────────────────────────
     dangerBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: '#2d1111',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 1,
         borderColor: '#ff444440',
         padding: 12,
@@ -984,7 +893,7 @@ const styles = StyleSheet.create({
     },
     dangerBannerText: {
         flex: 1,
-        fontSize: 13,
+        fontSize: fontSizes.small,
         color: '#ff8888',
         lineHeight: 19,
     },
@@ -992,24 +901,24 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: '#00ffff12',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: '#00ffff40',
+        borderColor: colors.accentFaint,
         padding: 12,
         marginBottom: 24,
         gap: 10,
     },
     successBannerText: {
         flex: 1,
-        fontSize: 13,
-        color: '#00ffff',
+        fontSize: fontSizes.small,
+        color: colors.accent,
         lineHeight: 19,
     },
     infoBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: '#ffffff08',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: 1,
         borderColor: '#ffffff20',
         padding: 12,
@@ -1018,16 +927,16 @@ const styles = StyleSheet.create({
     },
     infoBannerText: {
         flex: 1,
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        fontSize: fontSizes.small,
+        color: colors.textSecondary,
         lineHeight: 19,
     },
 
     // ── Footer ────────────────────────────────────────────────────────────────
     version: {
         textAlign: 'center',
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 12,
+        color: colors.textSecondary,
+        fontSize: fontSizes.caption,
         marginTop: 40,
     },
 });

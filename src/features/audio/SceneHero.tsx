@@ -6,6 +6,7 @@ import { audioEngine } from './audioEngine';
 import { useStoryImage } from '@/hooks/queries/useStoryImage';
 import { sceneIndexAt, type StoryScene } from '@/hooks/queries/useStoryScenes';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { colors } from '@/theme/colors';
 
 const POLL_MS = 400;
 const FADE_OUT_MS = 500;
@@ -94,7 +95,7 @@ export default function SceneHero({ scenes, onSceneChange }: Props) {
 
     return (
         <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface0 }]} />
             {shownUrl ? (
                 <Animated.Image source={{ uri: shownUrl }} style={[StyleSheet.absoluteFill, imageStyle]} resizeMode="contain" fadeDuration={0} />
             ) : null}

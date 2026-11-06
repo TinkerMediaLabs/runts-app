@@ -11,6 +11,9 @@ import { spacing } from '../../theme/spacing';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 import { CachedImageBackground } from '../common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
@@ -94,18 +97,18 @@ const styles = StyleSheet.create({
     card: {
         width:           CARD_WIDTH,
         height:          CARD_HEIGHT,
-        borderRadius:    14,
+        borderRadius:    radius.lg,
         overflow:        'hidden',
         justifyContent:  'flex-end',
-        backgroundColor: '#1c1c1c',
+        backgroundColor: colors.surface2,
         borderWidth:     0.5,
-        borderColor:     'rgba(255,255,255,0.1)',
+        borderColor:     colors.borderSubtle,
     },
     cardImage: {
-        borderRadius: 14,
+        borderRadius: radius.lg,
     },
     cardFallback: {
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
     },
 
     info: {
@@ -114,15 +117,15 @@ const styles = StyleSheet.create({
         gap:               5,
     },
     title: {
-        fontSize:   20,
+        fontSize:   fontSizes.title,
         fontWeight: '700',
-        color:      '#fff',
+        color:      colors.textPrimary,
         lineHeight: 18,
         flexShrink: 1,
     },
     countText: {
-        fontSize:   11,
-        color:      'rgba(255,255,255,0.5)',
+        fontSize:   fontSizes.micro,
+        color:      colors.textSecondary,
         fontWeight: '600',
     },
 });

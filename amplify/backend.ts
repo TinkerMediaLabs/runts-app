@@ -18,7 +18,19 @@ import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
 import { deleteAccount } from './functions/delete-account/resource';
+import { audioLinks } from './functions/audio-links/resource';
+import { commentWrite } from './functions/comment-write/resource';
+import { carProgress } from './functions/car-progress/resource';
+import { carPass } from './functions/car-pass/resource';
+import { appleVerifyChallenge } from './functions/apple-auth/verify-challenge/resource';
+import { applePreSignUp } from './functions/apple-auth/pre-signup/resource';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -26,7 +38,7 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
-import { Duration, Stack } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 
 const backend = defineBackend({
   auth,
@@ -48,6 +60,12 @@ const backend = defineBackend({
   tagInsights,
   dataHealth,
   deleteAccount,
+  audioLinks,
+  commentWrite,
+  carProgress,
+  carPass,
+  appleVerifyChallenge,
+  applePreSignUp,
 });
 
 const storyTable         = backend.data.resources.tables['Story'];
@@ -85,6 +103,72 @@ const uploadUrlFn = backend.uploadUrl.resources.lambda as lambda.Function;
 const storageBucket = backend.storage.resources.bucket;
 uploadUrlFn.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
 ['stories/*', 'authors/*', 'narrators/*'].forEach(prefix => storageBucket.grantPut(uploadUrlFn, prefix));
+
+// ── audio-links / audio CDN ───────────────────────────────────────────────
+// Story audio is served through CloudFront with signed links that last 7 days (the old bucket links die in
+// about an hour). The bucket itself stays private: only this CDN can read it. Files are not moved. The
+// public half of the signing key is committed (cloudfront-public-key.pem); the private half is an Amplify
+// secret read only by the audio-links function.
+const cdnStack = backend.storage.stack;
+const audioPublicKey = new cloudfront.PublicKey(cdnStack, 'AudioPublicKey', {
+  encodedKey: readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'cloudfront-public-key.pem'), 'utf8'),
+});
+const audioKeyGroup = new cloudfront.KeyGroup(cdnStack, 'AudioKeyGroup', { items: [audioPublicKey] });
+const audioCdn = new cloudfront.Distribution(cdnStack, 'AudioCdn', {
+  comment: 'Runts story audio',
+  defaultBehavior: {
+    origin: origins.S3BucketOrigin.withOriginAccessControl(storageBucket),
+    viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+    allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+    cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+    trustedKeyGroups: [audioKeyGroup],
+  },
+});
+const audioLinksFn = backend.audioLinks.resources.lambda as lambda.Function;
+audioLinksFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
+audioLinksFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
+
+// ── comment-write ─────────────────────────────────────────────────────────
+// The only writer of comments (postComment / editComment). Reads stories and users, and reads and writes comments.
+const commentWriteFn = backend.commentWrite.resources.lambda as lambda.Function;
+commentWriteFn.addEnvironment('COMMENT_TABLE_NAME', commentTable.tableName);
+commentWriteFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+commentWriteFn.addEnvironment('USER_TABLE_NAME', userTable.tableName);
+commentTable.grantReadWriteData(commentWriteFn);
+storyTable.grantReadData(commentWriteFn);
+userTable.grantReadData(commentWriteFn);
+// The posting-rate check queries the comment table's byUserAndCreatedAt index; table grants do not cover indexes.
+commentWriteFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [`${commentTable.tableArn}/index/*`],
+}));
+
+// ── car-progress / car-pass ───────────────────────────────────────────────
+// While a story plays from the car with the app closed, the player library posts progress to car-progress's web
+// address. It cannot sign in, so it sends a 30-day "car pass" (issued by car-pass, progress only). The address is
+// published in the app's backend outputs (custom.carProgressUrl) so every environment finds its own.
+const carProgressFn = backend.carProgress.resources.lambda as lambda.Function;
+const carInProgressTable = backend.data.resources.tables['UserInProgressStory'];
+const carPinnedTable     = backend.data.resources.tables['UserPinnedStory'];
+const carFinishedTable   = backend.data.resources.tables['UserFinishedStory'];
+carProgressFn.addEnvironment('IN_PROGRESS_TABLE_NAME', carInProgressTable.tableName);
+carProgressFn.addEnvironment('PINNED_TABLE_NAME', carPinnedTable.tableName);
+carProgressFn.addEnvironment('FINISHED_TABLE_NAME', carFinishedTable.tableName);
+carProgressFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+carProgressFn.addEnvironment('USER_TABLE_NAME', userTable.tableName);
+carInProgressTable.grantReadWriteData(carProgressFn);
+carPinnedTable.grantReadWriteData(carProgressFn);
+carFinishedTable.grantReadWriteData(carProgressFn);
+storyTable.grantReadData(carProgressFn);
+userTable.grantWriteData(carProgressFn);
+// The lookups go through each table's byUserAndStory index; for these tables the grants above do not cover
+// index access, so allow Query on the indexes explicitly.
+carProgressFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [carInProgressTable, carPinnedTable, carFinishedTable].map(t => `${t.tableArn}/index/*`),
+}));
+const carProgressUrl = carProgressFn.addFunctionUrl({ authType: lambda.FunctionUrlAuthType.NONE });
+backend.addOutput({ custom: { carProgressUrl: carProgressUrl.url } });
 
 // ── erotic-pin ────────────────────────────────────────────────────────────
 const eroticPinFn = backend.eroticPin.resources.lambda as lambda.Function;
@@ -447,3 +531,29 @@ watch(new cloudwatch.Alarm(alarmsStack, 'AppSyncServerErrors', {
   comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
   treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
 }));
+
+// ── Sign in with Apple: token table ───────────────────────────────────────
+// One row per user holding Apple's refresh token (so it can be revoked on account deletion), plus short-lived
+// "nonce used" rows that stop a sign-in being replayed. Deliberately NOT in the data schema: the app can never
+// read it, only the sign-in and delete functions. Own stack so it never depends on auth or data (no cycles).
+const appleStack = backend.createStack('AppleSignIn');
+const isProduction = process.env.AWS_BRANCH === 'production';
+const appleTable = new dynamodb.Table(appleStack, 'AppleTokens', {
+  partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+  timeToLiveAttribute: 'ttl',
+  pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: isProduction },
+  removalPolicy: isProduction ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+});
+backend.appleVerifyChallenge.addEnvironment('APPLE_TABLE_NAME', appleTable.tableName);
+appleTable.grantReadWriteData(backend.appleVerifyChallenge.resources.lambda);
+// The sign-up check looks users up by email and links a Google sign-in to an existing account. It can only name the
+// pool by wildcard here (the pool depends on this function), so it is limited to these two calls in this account.
+const preSignUpStack = Stack.of(backend.applePreSignUp.resources.lambda);
+backend.applePreSignUp.resources.lambda.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['cognito-idp:ListUsers', 'cognito-idp:AdminLinkProviderForUser', 'cognito-idp:AdminCreateUser', 'cognito-idp:AdminSetUserPassword'],
+  resources: [`arn:aws:cognito-idp:${preSignUpStack.region}:${preSignUpStack.account}:userpool/*`],
+}));
+// Account deletion reads the stored Apple token and revokes it.
+backend.deleteAccount.addEnvironment('APPLE_TABLE_NAME', appleTable.tableName);
+appleTable.grantReadWriteData(backend.deleteAccount.resources.lambda);

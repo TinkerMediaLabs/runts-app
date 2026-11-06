@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { View, TouchableWithoutFeedback, TouchableOpacity, ScrollView, Modal, Dimensions, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+
+// Flip to true to show the Popularity and Date chips again once they filter the list.
+const SHOW_UNBUILT_FILTERS = false;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,7 +81,7 @@ const LetterItem = React.memo(({ letter, index, selectedIndex, onPress }: Letter
 
     const color = anim.interpolate({
         inputRange:  [0, 1],
-        outputRange: ['rgba(255,255,255,0.55)', 'cyan'],
+        outputRange: [colors.textSecondary, colors.accent],
     });
 
     return (
@@ -222,13 +228,18 @@ const LetterBrowser = ({
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
-                        <Text style={styles.chipText}>Any Popularity</Text>
-                    </TouchableOpacity>
+                    {/* Not built yet: they look like filters but do nothing, so they stay hidden until they work. */}
+                    {SHOW_UNBUILT_FILTERS && (
+                        <>
+                            <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
+                                <Text style={styles.chipText}>Any Popularity</Text>
+                            </TouchableOpacity>
 
-                    <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
-                        <Text style={styles.chipText}>Any Date</Text>
-                    </TouchableOpacity>
+                            <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
+                                <Text style={styles.chipText}>Any Date</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </ScrollView>
             </View>
 
@@ -257,7 +268,7 @@ const styles = StyleSheet.create({
         width:           4,
         height:          4,
         borderRadius:    2,
-        backgroundColor: 'cyan',
+        backgroundColor: colors.accent,
         marginTop:       4,
     },
 
@@ -272,25 +283,25 @@ const styles = StyleSheet.create({
         paddingVertical:   5,
         paddingHorizontal: 12,
         marginHorizontal:  4,
-        borderRadius:      20,
-        backgroundColor:   '#2a2a2a',
+        borderRadius:      radius.xl,
+        backgroundColor:   colors.surface3,
         borderWidth:       1,
-        borderColor:       '#444',
+        borderColor:       colors.border,
     },
     chipActive: {
         backgroundColor: 'rgba(0,255,255,0.12)',
-        borderColor:     'cyan',
+        borderColor:     colors.accent,
     },
     chipText: {
         color:    '#aaa',
-        fontSize: 13,
+        fontSize: fontSizes.small,
     },
     chipTextActive: {
-        color: 'cyan',
+        color: colors.accent,
     },
     chipX: {
-        color:    'cyan',
-        fontSize: 15,
+        color:    colors.accent,
+        fontSize: fontSizes.body,
     },
 
     modalBackdrop: {
@@ -300,43 +311,43 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.75)',
     },
     modalCard: {
-        borderRadius:      20,
-        backgroundColor:   '#111',
+        borderRadius:      radius.xl,
+        backgroundColor:   colors.surface1,
         paddingVertical:   28,
         paddingHorizontal: 20,
         width:             width * 0.8,
         alignItems:        'center',
         borderWidth:       1,
-        borderColor:       '#2a2a2a',
+        borderColor:       colors.border,
     },
     modalTitle: {
         fontWeight:    '700',
-        fontSize:      18,
-        color:         '#fff',
+        fontSize:      fontSizes.subtitle,
+        color:         colors.textPrimary,
         marginBottom:  20,
         letterSpacing: 0.5,
     },
     modalOption: {
         marginVertical:  5,
         alignItems:      'center',
-        borderRadius:    12,
-        backgroundColor: '#1e1e1e',
+        borderRadius:    radius.md,
+        backgroundColor: colors.surface2,
         width:           width * 0.65,
         paddingVertical: 13,
         borderWidth:     1,
-        borderColor:     '#333',
+        borderColor:     colors.border,
     },
     modalOptionActive: {
         backgroundColor: 'rgba(0,255,255,0.12)',
-        borderColor:     'cyan',
+        borderColor:     colors.accent,
     },
     modalOptionText: {
         fontWeight: '500',
-        fontSize:   16,
+        fontSize:   fontSizes.body,
         color:      '#ccc',
     },
     modalOptionTextActive: {
-        color:      'cyan',
+        color:      colors.accent,
         fontWeight: '700',
     },
 });

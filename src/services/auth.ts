@@ -10,7 +10,13 @@ import {
   getCurrentUser,
   fetchUserAttributes,
   fetchAuthSession,
+  confirmSignIn,
+  autoSignIn,
 } from 'aws-amplify/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
+import { rememberSignInMethod } from '../lib/signInMethod';
+import { decodeAppleClaims, makeNonce, makeThrowawayPassword, fullNameOf } from '../lib/appleSignIn';
 import { uploadData, getUrl } from 'aws-amplify/storage';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
@@ -27,7 +33,9 @@ export async function signInWithGoogle() {
   await signInWithRedirect({ provider: 'Google' });
 }
 
-// ─── APPLE SIGN IN ───────────────────────────────────────────────────────────
+// ─── APPLE SIGN IN (native, iOS) ─────────────────────────────────────────────
+// Shows the Apple sheet, then signs the person in through our custom Cognito flow. The server checks Apple's
+// token and keeps Apple's refresh token so it can be revoked when the account is deleted.
 export async function signInWithApple() {
   try {
     await getCurrentUser();
@@ -35,7 +43,44 @@ export async function signInWithApple() {
   } catch {
     // No existing session
   }
-  await signInWithRedirect({ provider: 'Apple' });
+
+  const nonce = makeNonce(await Crypto.getRandomBytesAsync(16));
+  const cred = await AppleAuthentication.signInAsync({
+    requestedScopes: [
+      AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+      AppleAuthentication.AppleAuthenticationScope.EMAIL,
+    ],
+    nonce,
+  });
+  if (!cred.identityToken || !cred.authorizationCode) throw new Error('Apple did not return a sign-in token.');
+
+  const email = decodeAppleClaims(cred.identityToken).email;
+  if (!email) throw new Error('Apple did not share an email address.');
+  const name = fullNameOf(cred.fullName);
+
+  // First time: create the user (the server confirms it after checking the Apple token). Already exists: carry on.
+  try {
+    await signUp({
+      username: email,
+      password: makeThrowawayPassword(await Crypto.getRandomBytesAsync(16)),
+      options: {
+        userAttributes: { email, ...(name ? { name } : {}) },
+        clientMetadata: { appleIdentityToken: cred.identityToken, appleNonce: nonce },
+      },
+    });
+  } catch (e: any) {
+    if (e?.name !== 'UsernameExistsException') throw e;
+  }
+
+  const step = await signIn({ username: email, options: { authFlowType: 'CUSTOM_WITHOUT_SRP' } });
+  if (step.nextStep?.signInStep !== 'CONFIRM_SIGN_IN_WITH_CUSTOM_CHALLENGE') {
+    throw new Error('Unexpected sign-in step.');
+  }
+  const done = await confirmSignIn({
+    challengeResponse: JSON.stringify({ identityToken: cred.identityToken, authorizationCode: cred.authorizationCode, nonce }),
+  });
+  if (!done.isSignedIn) throw new Error('Apple sign-in was not completed.');
+  await rememberSignInMethod('apple');
 }
 
 // ─── SIGN UP ────────────────────────────────────────────
@@ -43,13 +88,28 @@ export async function registerUser(email: string, password: string) {
   return signUp({
     username: email,
     password,
-    options: { userAttributes: { email } },
+    // Lets the person be signed in as soon as they verify the email code, without typing the password again.
+    options: { userAttributes: { email }, autoSignIn: true },
   });
 }
 
 // ─── CONFIRM EMAIL ──────────────────────────────────────
-export async function confirmUserEmail(email: string, code: string) {
-  return confirmSignUp({ username: email, confirmationCode: code });
+// Returns whether the person ended up signed in. Amplify keeps the sign-up password in memory for this, so it only
+// works when the sign-up started in this session; otherwise the person signs in themselves.
+export async function confirmUserEmail(email: string, code: string): Promise<{ signedIn: boolean }> {
+  const result = await confirmSignUp({ username: email, confirmationCode: code });
+  if (result.nextStep?.signUpStep === 'COMPLETE_AUTO_SIGN_IN') {
+    try {
+      const done = await autoSignIn();
+      if (done.isSignedIn) {
+        await rememberSignInMethod('email');
+        return { signedIn: true };
+      }
+    } catch {
+      // Fall through to the sign-in screen.
+    }
+  }
+  return { signedIn: false };
 }
 
 // ─── RESEND CODE ────────────────────────────────────────
@@ -67,7 +127,6 @@ export async function loginUser(email: string, password: string) {
     }
     
     const result = await signIn({ username: email, password });
-    console.log('[loginUser] nextStep:', result.nextStep?.signInStep, 'isSignedIn:', result.isSignedIn);
     
     // Only throw if sign-in failed AND next step is CONFIRM_SIGN_UP
     if (!result.isSignedIn && result.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
@@ -76,6 +135,7 @@ export async function loginUser(email: string, password: string) {
         throw error;
     }
     
+    if (result.isSignedIn) await rememberSignInMethod('email');
     return result;
 }
 

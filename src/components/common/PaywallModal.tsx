@@ -17,6 +17,10 @@ import {
     type PurchasesOffering,
     type PurchasesPackage,
 } from '@/lib/purchases';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -94,7 +98,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.lockBadge}>
-                        <FontAwesome5 name="lock" size={14} color="cyan" iconStyle="solid" />
+                        <FontAwesome5 name="lock" size={iconSize.sm} color={colors.accent} iconStyle="solid" />
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.title}>Premium Story</Text>
@@ -105,7 +109,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                         )}
                     </View>
                     <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                        <FontAwesome5 name="times" size={16} color="#ffffff99" iconStyle="solid" />
+                        <FontAwesome5 name="times" size={iconSize.sm} color="#ffffff99" iconStyle="solid" />
                     </TouchableOpacity>
                 </View>
 
@@ -114,7 +118,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                     {FEATURES.map(f => (
                         <View key={f.icon} style={styles.featureRow}>
                             <View style={styles.featureIcon}>
-                                <FontAwesome5 name={f.icon as any} size={11} color="cyan" iconStyle="solid" />
+                                <FontAwesome5 name={f.icon as any} size={iconSize.xs} color={colors.accent} iconStyle="solid" />
                             </View>
                             <Text style={styles.featureText}>{f.text}</Text>
                         </View>
@@ -123,7 +127,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
 
                 {/* Offerings */}
                 {offeringsLoading ? (
-                    <ActivityIndicator color="cyan" style={{ marginVertical: 20 }} />
+                    <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} />
                 ) : (
                     <View style={styles.packages}>
                         {annualPkg && (
@@ -136,7 +140,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                                 accessibilityLabel={`Subscribe annually, ${annualPkg.product.priceString} per year, best value`}
                             >
                                 {purchasing ? (
-                                    <ActivityIndicator color="#000" />
+                                    <ActivityIndicator color={colors.textOnAccent} />
                                 ) : (
                                     <>
                                         <View>
@@ -195,14 +199,14 @@ const styles = StyleSheet.create({
         bottom:          0,
         left:            0,
         right:           0,
-        backgroundColor: '#111',
+        backgroundColor: colors.surface1,
         borderTopLeftRadius:  24,
         borderTopRightRadius: 24,
         paddingHorizontal: 24,
         paddingTop:       12,
         borderWidth:      1,
         borderBottomWidth: 0,
-        borderColor:      '#2a2a2a',
+        borderColor:      colors.border,
     },
     handle: {
         width:           36,
@@ -223,7 +227,7 @@ const styles = StyleSheet.create({
     lockBadge: {
         width:           36,
         height:          36,
-        borderRadius:    10,
+        borderRadius:    radius.md,
         backgroundColor: 'rgba(0,255,255,0.1)',
         borderWidth:     1,
         borderColor:     'rgba(0,255,255,0.2)',
@@ -231,13 +235,13 @@ const styles = StyleSheet.create({
         alignItems:      'center',
     },
     title: {
-        fontSize:   16,
+        fontSize:   fontSizes.body,
         fontWeight: '700',
-        color:      '#fff',
+        color:      colors.textPrimary,
     },
     subtitle: {
-        fontSize: 12,
-        color:    'rgba(255,255,255,0.5)',
+        fontSize: fontSizes.caption,
+        color:    colors.textSecondary,
         marginTop: 2,
     },
 
@@ -260,8 +264,8 @@ const styles = StyleSheet.create({
         alignItems:      'center',
     },
     featureText: {
-        fontSize: 13,
-        color:    'rgba(255,255,255,0.7)',
+        fontSize: fontSizes.small,
+        color:    colors.textStrong,
     },
 
     // ── Packages ──────────────────────────────────────────────────────────────
@@ -270,8 +274,8 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     packagePrimary: {
-        backgroundColor: 'cyan',
-        borderRadius:    14,
+        backgroundColor: colors.accent,
+        borderRadius:    radius.lg,
         paddingVertical: 14,
         paddingHorizontal: 20,
         flexDirection:   'row',
@@ -280,39 +284,39 @@ const styles = StyleSheet.create({
         minHeight:       52,
     },
     packagePrimaryLabel: {
-        fontSize:   15,
+        fontSize:   fontSizes.body,
         fontWeight: '700',
-        color:      '#000',
+        color:      colors.textOnAccent,
     },
     packagePrimaryNote: {
-        fontSize: 12,
+        fontSize: fontSizes.caption,
         color:    'rgba(0,0,0,0.6)',
         marginTop: 2,
     },
     packagePrimaryPrice: {
-        fontSize:   15,
+        fontSize:   fontSizes.body,
         fontWeight: '700',
-        color:      '#000',
+        color:      colors.textOnAccent,
     },
     packageSecondary: {
         borderWidth:  1,
-        borderColor:  '#2a2a2a',
-        borderRadius: 14,
+        borderColor:  colors.border,
+        borderRadius: radius.lg,
         paddingVertical: 12,
         alignItems:   'center',
     },
     packageSecondaryText: {
-        fontSize:   14,
-        color:      'rgba(255,255,255,0.6)',
+        fontSize:   fontSizes.small,
+        color:      colors.textSecondary,
         fontWeight: '500',
     },
 
     // ── Legal ─────────────────────────────────────────────────────────────────
     legalLinks: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
-    legalLink: { fontSize: 11, color: 'cyan', textDecorationLine: 'underline', lineHeight: 16 },
+    legalLink: { fontSize: fontSizes.micro, color: colors.accent, textDecorationLine: 'underline', lineHeight: 16 },
     legalNote: {
-        fontSize:   11,
-        color:      'rgba(255,255,255,0.6)',
+        fontSize:   fontSizes.micro,
+        color:      colors.textSecondary,
         textAlign:  'center',
         lineHeight: 16,
     },

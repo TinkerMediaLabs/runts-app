@@ -5,6 +5,7 @@ import {
     Image,
     TouchableOpacity,
 } from 'react-native';
+import { radius } from '@/theme/tokens';
 
 const SocialLink = ({ label, url, source, size, round }: { label: string; url: string; source: any; size: number; round?: boolean }) => (
     <TouchableOpacity
@@ -17,7 +18,7 @@ const SocialLink = ({ label, url, source, size, round }: { label: string; url: s
     >
         <Image
             accessible={false}
-            style={{ height: size, width: size, ...(round ? { borderRadius: 16, overflow: 'hidden' as const } : null) }}
+            style={{ height: size, width: size, ...(round ? { borderRadius: radius.lg, overflow: 'hidden' as const } : null) }}
             source={source}
         />
     </TouchableOpacity>

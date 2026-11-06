@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { SkeletonAuthorPage } from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
 import { View, TouchableOpacity, FlatList, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -16,7 +18,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import AntDesign    from '@react-native-vector-icons/ant-design';
 
 import StoryTile   from '../../components/story/StoryTile';
 import SocialBlock from '../../components/story/SocialBlock';
@@ -36,6 +37,10 @@ import {
 import { useApp } from '@/context/AppContext';
 
 import { CachedImage } from '../../components/common/CachedImage';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
+import { iconSize } from '@/theme/tokens';
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
 const HEADER_H      = 260;
@@ -47,7 +52,7 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 const StatPill = ({ icon, label }: { icon: any; label: string }) => (
     <View style={styles.statPill}>
-        <FontAwesome5 name={icon} size={12} color="rgba(255,255,255,0.6)" iconStyle="solid" />
+        <FontAwesome5 name={icon} size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
         <Text style={styles.statText}>{label}</Text>
     </View>
 );
@@ -188,8 +193,8 @@ const CreatorProfile = () => {
     // ── Loading ───────────────────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator color="cyan" size="large" />
+            <View style={styles.root}>
+                <SkeletonAuthorPage />
             </View>
         );
     }
@@ -209,7 +214,7 @@ const CreatorProfile = () => {
                 topBarStyle,
             ]}>
                 <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
-                    <AntDesign name="close" size={22} color="#fff" />
+                    <FontAwesome5 name="times" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
                 </TouchableOpacity>
 
                 <Animated.Text numberOfLines={1} style={[styles.topBarTitle, titleStyle]}>
@@ -244,11 +249,11 @@ const CreatorProfile = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
                 ListEmptyComponent={
-                    <View style={{ alignItems: 'center', paddingTop: 40 }}>
-                        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>
-                            No stories yet
-                        </Text>
-                    </View>
+                    <EmptyState
+                        icon={<FontAwesome5 name="book-open" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                        title="No stories yet"
+                        body="Check back soon for new stories from this author."
+                    />
                 }
 
                 ListHeaderComponent={
@@ -320,7 +325,7 @@ const styles = StyleSheet.create({
 
     root: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: colors.surface0,
     },
 
     topBar: {
@@ -333,7 +338,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingBottom: 12,
         paddingHorizontal: 20,
-        borderBottomColor: '#2a2a2a',
+        borderBottomColor: colors.border,
     },
     closeBtn: {
         padding: 4,
@@ -341,28 +346,28 @@ const styles = StyleSheet.create({
     },
     topBarTitle: {
         flex: 1,
-        fontSize: 17,
+        fontSize: fontSizes.subtitle,
         fontWeight: '700',
-        color: '#fff',
+        color: colors.textPrimary,
     },
     followBtn: {
         borderWidth: 1,
-        borderColor: 'cyan',
-        borderRadius: 20,
+        borderColor: colors.accent,
+        borderRadius: radius.xl,
         paddingHorizontal: 16,
         paddingVertical: 6,
     },
     followBtnActive: {
-        backgroundColor: 'cyan',
-        borderColor: 'cyan',
+        backgroundColor: colors.accent,
+        borderColor: colors.accent,
     },
     followBtnText: {
-        color: 'cyan',
+        color: colors.accent,
         fontWeight: '700',
-        fontSize: 13,
+        fontSize: fontSizes.small,
     },
     followBtnTextActive: {
-        color: '#000',
+        color: colors.textOnAccent,
     },
 
     header: {
@@ -381,7 +386,7 @@ const styles = StyleSheet.create({
         width: AVATAR_SIZE,
         height: AVATAR_SIZE,
         borderRadius: AVATAR_SIZE / 2,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
     },
     avatarRing: {
         position: 'absolute',
@@ -395,9 +400,9 @@ const styles = StyleSheet.create({
     },
 
     name: {
-        fontSize: 26,
+        fontSize: fontSizes.headline,
         fontWeight: '800',
-        color: '#fff',
+        color: colors.textPrimary,
         marginBottom: 12,
         letterSpacing: 0.2,
     },
@@ -411,22 +416,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: '#1e1e1e',
-        borderRadius: 20,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.xl,
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderWidth: 1,
-        borderColor: '#2a2a2a',
+        borderColor: colors.border,
     },
     statText: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.6)',
+        fontSize: fontSizes.caption,
+        color: colors.textSecondary,
     },
 
     followBtnLarge: {
         borderWidth: 1,
-        borderColor: 'cyan',
-        borderRadius: 24,
+        borderColor: colors.accent,
+        borderRadius: radius.xl,
         paddingHorizontal: 36,
         paddingVertical: 10,
         marginBottom: 24,
@@ -435,17 +440,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,255,255,0.12)',
     },
     followBtnLargeText: {
-        color: 'cyan',
+        color: colors.accent,
         fontWeight: '700',
-        fontSize: 15,
+        fontSize: fontSizes.body,
     },
     followBtnLargeTextActive: {
-        color: 'cyan',
+        color: colors.accent,
     },
 
     bio: {
-        color: 'rgba(255,255,255,0.65)',
-        fontSize: 14,
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
         lineHeight: 22,
         textAlign: 'center',
         marginBottom: 24,
@@ -459,16 +464,16 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     storiesLabelText: {
-        fontSize: 13,
+        fontSize: fontSizes.small,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.55)',
+        color: colors.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 0.8,
     },
     storiesLabelLine: {
         flex: 1,
         height: StyleSheet.hairlineWidth,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: colors.surface3,
     },
 });
 

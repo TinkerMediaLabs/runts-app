@@ -1,11 +1,13 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import { colors } from '@/theme/colors';
+import { fontSizes } from '@/theme/tokens';
 
 type Props = {
   icon: React.ReactNode;
   title: string;
-  body: string;
+  body?: string;
   // Optional step the listener can take right now.
   actionLabel?: string;
   onAction?: () => void;
@@ -17,7 +19,7 @@ export default function EmptyState({ icon, title, body, actionLabel, onAction }:
     <View style={styles.wrap}>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">{icon}</View>
       <Text style={styles.title} accessibilityRole="header">{title}</Text>
-      <Text style={styles.body}>{body}</Text>
+      {body ? <Text style={styles.body}>{body}</Text> : null}
       {actionLabel && onAction ? (
         <TouchableOpacity
           style={styles.button}
@@ -35,12 +37,12 @@ export default function EmptyState({ icon, title, body, actionLabel, onAction }:
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, marginTop: 70, gap: 12 },
-  title: { fontSize: 18, fontWeight: '700', color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
-  body: { fontSize: 14, color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: 21 },
+  title: { fontSize: fontSizes.subtitle, fontWeight: '700', color: colors.textStrong, textAlign: 'center' },
+  body: { fontSize: fontSizes.small, color: colors.textStrong, textAlign: 'center', lineHeight: 21 },
   button: {
     marginTop: 8, minHeight: 48, paddingHorizontal: 24, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'cyan', backgroundColor: 'rgba(0,255,255,0.08)',
+    borderWidth: 1, borderColor: colors.accent, backgroundColor: 'rgba(0,255,255,0.08)',
   },
-  buttonText: { color: 'cyan', fontSize: 15, fontWeight: '600' },
+  buttonText: { color: colors.accent, fontSize: fontSizes.body, fontWeight: '600' },
 });
