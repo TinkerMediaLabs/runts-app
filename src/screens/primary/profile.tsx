@@ -172,9 +172,7 @@ const ProfileScreen = ({ navigation }: any) => {
             await updateProfilePic(s3Url);
 
        } catch (err: any) {
-        console.log('Photo upload error full:', JSON.stringify(err));
-        console.log('Photo upload error message:', err?.message);
-        console.log('Photo upload error name:', err?.name);
+        console.log('Photo upload failed:', err?.name);
         Alert.alert('Error', err?.message || 'Failed to update profile photo. Please try again.');
     } finally {
             setUploadingPhoto(false);

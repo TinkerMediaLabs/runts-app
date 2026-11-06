@@ -5,6 +5,9 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 
+// Flip to true to show the Popularity and Date chips again once they filter the list.
+const SHOW_UNBUILT_FILTERS = false;
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -225,13 +228,18 @@ const LetterBrowser = ({
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
-                        <Text style={styles.chipText}>Any Popularity</Text>
-                    </TouchableOpacity>
+                    {/* Not built yet: they look like filters but do nothing, so they stay hidden until they work. */}
+                    {SHOW_UNBUILT_FILTERS && (
+                        <>
+                            <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
+                                <Text style={styles.chipText}>Any Popularity</Text>
+                            </TouchableOpacity>
 
-                    <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
-                        <Text style={styles.chipText}>Any Date</Text>
-                    </TouchableOpacity>
+                            <TouchableOpacity activeOpacity={0.75} style={styles.chip} accessibilityRole="button" accessibilityState={{ disabled: true }}>
+                                <Text style={styles.chipText}>Any Date</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </ScrollView>
             </View>
 

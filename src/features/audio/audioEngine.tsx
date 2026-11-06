@@ -195,7 +195,6 @@ async play(track: Track) {
     if (this.localMode === 'remote') this.localMode = 'uri';
     const resolvedUrl = await resolveAudioUrl(track.url, this.localMode);
     this.playingLocal = resolvedUrl.startsWith('file://') || resolvedUrl.startsWith('/');
-    console.log('audioEngine.play: resolvedUrl =', resolvedUrl);
 
     await TrackPlayer.stop();
     await new Promise(resolve => setTimeout(resolve, 100));

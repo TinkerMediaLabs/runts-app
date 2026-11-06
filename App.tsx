@@ -33,9 +33,8 @@ Sentry.init({
     // Set to true (or remove this line) once you want dev errors reported too.
     enabled: Constants.expoConfig?.extra?.APP_ENV !== 'development',
 
-    // Capture 100% of transactions for performance monitoring.
-    // Lower this (e.g. 0.2) in production once you have volume.
-    tracesSampleRate: 1.0,
+    // Performance monitoring samples 10% of transactions (crash and error reports are always sent).
+    tracesSampleRate: 0.1,
 });
 
 
