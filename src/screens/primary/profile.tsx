@@ -22,6 +22,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionLabel from '@/components/common/SectionLabel';
+import EditNameSheet from '@/components/settings/EditNameSheet';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -83,6 +84,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [editingName, setEditingName] = useState(false);
 
     const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -306,9 +308,19 @@ const ProfileScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={styles.heroName}>
-                            {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
-                        </Text>
+                        <TouchableOpacity
+                            style={styles.heroNameRow}
+                            activeOpacity={0.7}
+                            onPress={() => setEditingName(true)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Display name ${profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}. Edit`}
+                            hitSlop={{ top: 10, bottom: 10, left: 14, right: 14 }}
+                        >
+                            <Text style={styles.heroName}>
+                                {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
+                            </Text>
+                            <FontAwesome5 name="pen" size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
+                        </TouchableOpacity>
 
                         {/* Stats row */}
                         <View style={styles.statsRow}>
@@ -352,6 +364,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
                 </Animated.ScrollView>
             </LinearGradient>
+            <EditNameSheet visible={editingName} onClose={() => setEditingName(false)} />
         </Screen>
     );
 };
@@ -390,11 +403,17 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#12121a',
     },
+    heroNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginBottom: 20,
+    },
     heroName: {
         fontSize: fontSizes.title,
         fontWeight: '700',
         color: colors.textPrimary,
-        marginBottom: 20,
     },
 
     // Stats

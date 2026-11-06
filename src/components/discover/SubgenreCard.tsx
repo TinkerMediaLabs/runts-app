@@ -30,8 +30,8 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
       onPress={() => { Analytics.genreTapped(id, name); navigation.push('TagHomeScreen', { id, name }); }}
       style={[styles.card, { width, minHeight: height }]}
       accessibilityRole="button"
-      accessibilityLabel={count ? `${name}, subgenre, ${count}` : `${name}, subgenre`}
-      accessibilityHint="Opens this subgenre"
+      accessibilityLabel={count ? `${name}, tag, ${count}` : `${name}, tag`}
+      accessibilityHint="Opens this tag"
     >
       {uri ? (
         <>

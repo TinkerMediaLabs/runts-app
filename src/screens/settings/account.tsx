@@ -10,7 +10,7 @@ import Constants from 'expo-constants';
 import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
 import { colors } from '../../theme/colors';
-import { fields } from '../../theme/fields';
+import { fields, passwordDots } from '../../theme/fields';
 import Button from '../../components/common/Button';
 
 import { useApp } from '@/context/AppContext';
@@ -33,6 +33,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Sheet from '@/components/common/BottomSheet';
+import EditNameSheet from '@/components/settings/EditNameSheet';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -160,6 +161,7 @@ const PasswordField = ({
                         flex: 1,
                         paddingHorizontal: 16,
                         ...fields.text,
+                        ...(hidden && value.length > 0 ? passwordDots : null),
                     }}
                     value={value}
                     onChangeText={onChange}
@@ -233,7 +235,7 @@ const InfoBanner = ({ message }: { message: string }) => (
 
 const AccountScreen = ({ navigation }: any) => {
 
-    const { userId, logout, profile, setProfile, isPremium } = useApp();
+    const { logout, profile, isPremium } = useApp();
 
     // ── Auth provider detection ───────────────────────────────────────────────
     const [authProvider, setAuthProvider] = useState<AuthProvider>('unknown');
@@ -281,7 +283,6 @@ const AccountScreen = ({ navigation }: any) => {
     const open  = (modal: ModalType) => setActiveModal(modal);
     const close = () => {
         setActiveModal(null);
-        setName('');
         setEmail('');
         setEmailCode('');
         setEmailStep('input');
@@ -296,7 +297,6 @@ const AccountScreen = ({ navigation }: any) => {
     };
 
     // ── Form state ────────────────────────────────────────────────────────────
-    const [name, setName]                       = useState('');
     const [email, setEmail]                     = useState('');
     const [emailCode, setEmailCode]             = useState('');
     const [emailStep, setEmailStep]             = useState<'input' | 'verify'>('input');
@@ -311,41 +311,6 @@ const AccountScreen = ({ navigation }: any) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError]         = useState('');
     const [success, setSuccess]     = useState('');
-
-    // ── Update Display Name ───────────────────────────────────────────────────
-    const handleUpdateName = async () => {
-        if (!name.trim()) return;
-        setIsLoading(true);
-        setError('');
-        setSuccess('');
-        try {
-            // Update Cognito attribute
-            await updateUserAttribute({
-                userAttribute: {
-                    attributeKey: 'name',
-                    value: name.trim(),
-                },
-            });
-
-            // Also update DynamoDB
-            if (userId) {
-                unwrap(await client.models.User.update({
-                    id: userId,
-                    name: name.trim(),
-                }), 'Update name');
-            }
-
-            // Update local AppContext state
-            setProfile(profile ? { ...profile, name: name.trim() } : null);
-
-            setSuccess('Your display name has been updated.');
-            setName('');
-        } catch (err: any) {
-            console.log(err);
-            setError(err?.message || 'Error updating name. Please try again.');
-        }
-        setIsLoading(false);
-    };
 
     // ── Update Email — step 1: send code ─────────────────────────────────────
     const handleUpdateEmail = async () => {
@@ -588,27 +553,7 @@ const AccountScreen = ({ navigation }: any) => {
             </LinearGradient>
 
             {/* ── Update Name sheet ── */}
-            <Sheet visible={activeModal === 'name'} onClose={close} title="Update Display Name">
-                {error ? <ErrorBanner message={error} /> : null}
-                {success ? <SuccessBanner message={success} /> : null}
-                <Text style={styles.fieldLabel}>New name</Text>
-                <TextInput
-                    style={[styles.input, { marginBottom: 24, color: colors.textPrimary }]}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Your display name"
-                    accessibilityLabel="New display name"
-                    placeholderTextColor={colors.textSecondary}
-                    maxLength={30}
-                    autoCapitalize="words"
-                />
-                <ActionButton
-                    label="Save Name"
-                    onPress={handleUpdateName}
-                    loading={isLoading}
-                    disabled={name.trim().length === 0}
-                />
-            </Sheet>
+            <EditNameSheet visible={activeModal === 'name'} onClose={close} />
 
             {/* ── Update Email sheet — email users only ── */}
             <Sheet

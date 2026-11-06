@@ -8,7 +8,7 @@ import { View, TouchableOpacity, StyleSheet, Dimensions, TextInputProps } from '
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
-import { fields } from '../../theme/fields';
+import { fields, passwordDots } from '../../theme/fields';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
@@ -45,12 +45,6 @@ const fieldStyles = StyleSheet.create({
         fontSize: fontSizes.body,
         paddingVertical: 14,
         includeFontPadding: false,
-    },
-    // Hidden password: bigger dots with space between them, so each typed character can be counted.
-    inputDots: {
-        fontSize: fontSizes.title,
-        letterSpacing: 4,
-        paddingVertical: 12,
     },
     eyeBtn: {
         paddingLeft: 10,
@@ -101,7 +95,7 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
             <Text style={fieldStyles.label}>{label}</Text>
             <View style={[fieldStyles.inputRow, focused && fieldStyles.inputRowFocused]}>
                 <TextInput
-                    style={[fieldStyles.input, !visible && value.length > 0 && fieldStyles.inputDots]}
+                    style={[fieldStyles.input, !visible && value.length > 0 && passwordDots]}
                     value={value}
                     onChangeText={onChangeText}
                     accessibilityLabel={label}

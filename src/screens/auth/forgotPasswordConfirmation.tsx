@@ -23,6 +23,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { passwordDots } from '@/theme/fields';
 
 const { width, height } = Dimensions.get('window');
 
@@ -157,7 +158,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         accessibilityLabel="New password"
                                         placeholder="At least 8 characters"
                                         placeholderTextColor={colors.textSecondary}
-                                        style={[styles.textInputTitle, { flex: 1, fontSize: fontSizes.body, color: colors.textPrimary }]}
+                                        style={[styles.textInputTitle, { flex: 1, fontSize: fontSizes.body, color: colors.textPrimary }, !showNew && newPassword.length > 0 && passwordDots]}
                                         maxLength={40}
                                         autoCapitalize="none"
                                         autoCorrect={false}
@@ -186,7 +187,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         accessibilityLabel="Confirm new password"
                                         placeholder="Re-enter your new password"
                                         placeholderTextColor={colors.textSecondary}
-                                        style={[styles.textInputTitle, { flex: 1, fontSize: fontSizes.body, color: colors.textPrimary }]}
+                                        style={[styles.textInputTitle, { flex: 1, fontSize: fontSizes.body, color: colors.textPrimary }, !showConfirm && confirmPassword.length > 0 && passwordDots]}
                                         maxLength={40}
                                         autoCapitalize="none"
                                         autoCorrect={false}

@@ -93,7 +93,7 @@ const BrowseScreen = ({ navigation }: any) => {
                 return list.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Featured'} tags={list} /></Reveal> : null;
             }
             case 'discoverShuffle':
-                return (exploreQ.data ?? []).length ? <Reveal key={s.id} duration={350}><ExploreSubgenres pool={exploreQ.data!} title={s.title || 'Explore subgenres'} /></Reveal> : null;
+                return (exploreQ.data ?? []).length ? <Reveal key={s.id} duration={350}><ExploreSubgenres pool={exploreQ.data!} title={s.title || 'Explore tags'} /></Reveal> : null;
             case 'discoverBecause':
                 return becauseQ.tags.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Based on your listening'} tags={becauseQ.tags} /></Reveal> : null;
             case 'discoverTryNew': {

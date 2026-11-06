@@ -18,6 +18,10 @@ import { fontSizes } from '@/theme/tokens';
 
 // Every subgenre that has live stories, in alphabetical sections with a letter strip down the side. Loads more as
 // you scroll; tapping a letter jumps to it when that part of the list is loaded.
+// Rows and section headers have fixed heights, so the list can work out where any letter is without having drawn it.
+const ROW_H = 52;
+const HEADER_H = 32;
+
 const AllSubgenresScreen = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
@@ -28,8 +32,26 @@ const AllSubgenresScreen = () => {
   const sections = useMemo(() => groupByLetter(items).map(s => ({ title: s.letter, data: s.data })), [items]);
   const letters = useMemo(() => sections.map(s => s.title), [sections]);
 
+  // Where each row and header sits. The list counts a header, its rows, then a zero-height footer per section.
+  const getItemLayout = useCallback((_data: unknown, index: number) => {
+    let offset = 0;
+    let i = 0;
+    for (const s of sections) {
+      if (index === i) return { length: HEADER_H, offset, index };
+      offset += HEADER_H; i++;
+      for (let j = 0; j < s.data.length; j++) {
+        if (index === i) return { length: ROW_H, offset, index };
+        offset += ROW_H; i++;
+      }
+      if (index === i) return { length: 0, offset, index };
+      i++;
+    }
+    return { length: 0, offset, index };
+  }, [sections]);
+
+  // viewOffset keeps the first row of the section just below the sticky letter header.
   const jump = useCallback((i: number) => {
-    try { listRef.current?.scrollToLocation({ sectionIndex: i, itemIndex: 0, animated: false, viewOffset: 0 }); } catch { /* not loaded yet */ }
+    try { listRef.current?.scrollToLocation({ sectionIndex: i, itemIndex: 0, animated: true, viewOffset: HEADER_H }); } catch { /* not loaded yet */ }
   }, []);
 
   const renderItem = useCallback(({ item }: { item: ListedTag }) => (
@@ -46,14 +68,14 @@ const AllSubgenresScreen = () => {
   return (
     <Screen>
       <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
-        <ScreenHeader title="All subgenres" />
+        <ScreenHeader title="All tags" />
 
         {q.isLoading ? (
           <SkeletonRows count={9} />
         ) : items.length === 0 ? (
           <EmptyState
             icon={<FontAwesome5 name="tags" size={40} color={colors.textSecondary} iconStyle="solid" />}
-            title="No subgenres yet"
+            title="No tags yet"
             body="Check back soon."
           />
         ) : (
@@ -69,6 +91,7 @@ const AllSubgenresScreen = () => {
               stickySectionHeadersEnabled
               onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage(); }}
               onEndReachedThreshold={0.6}
+              getItemLayout={getItemLayout}
               onScrollToIndexFailed={() => {}}
               ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={colors.accent} style={{ margin: 20 }} /> : <View style={{ height: 40 }} />}
               contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingRight: 28 }}
@@ -92,10 +115,10 @@ const AllSubgenresScreen = () => {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   empty: { color: colors.textSecondary, fontSize: fontSizes.body },
-  sectionHeader: { backgroundColor: colors.surface0, paddingHorizontal: spacing.margin, paddingVertical: 6 },
+  sectionHeader: { backgroundColor: colors.surface0, paddingHorizontal: spacing.margin, height: HEADER_H, justifyContent: 'center' },
   sectionLetter: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '700' },
   row: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 13, minHeight: 48, paddingHorizontal: spacing.margin,
+    flexDirection: 'row', alignItems: 'center', height: ROW_H, paddingHorizontal: spacing.margin,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderSubtle,
   },
   name: { flex: 1, color: colors.textPrimary, fontSize: fontSizes.body },

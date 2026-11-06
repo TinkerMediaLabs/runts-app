@@ -75,7 +75,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
     if (spinning) return;
     if (reduceMotion) {
       setVisible(draw());
-      AccessibilityInfo.announceForAccessibility('Showing different subgenres');
+      AccessibilityInfo.announceForAccessibility('Showing different tags');
       return;
     }
     setSpinning(true);
@@ -83,7 +83,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
     Animated.timing(spin, { toValue: 1, duration: 400, useNativeDriver: true }).start(() => setSpinning(false));
     Animated.timing(fade, { toValue: 0, duration: 140, useNativeDriver: true }).start(() => {
       setVisible(draw());
-      AccessibilityInfo.announceForAccessibility('Showing different subgenres');
+      AccessibilityInfo.announceForAccessibility('Showing different tags');
       Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
   };
@@ -95,7 +95,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
         text={title}
         right={
           <TouchableOpacity activeOpacity={0.7} onPress={shuffle} disabled={spinning} style={styles.shuffleBtn}
-            accessibilityRole="button" accessibilityLabel="Shuffle subgenres" accessibilityHint="Shows a different set of subgenres">
+            accessibilityRole="button" accessibilityLabel="Shuffle tags" accessibilityHint="Shows a different set of tags">
             <Animated.View style={{ transform: [{ rotate }] }}>
               <FontAwesome5 name={'sync-alt' as any} size={iconSize.xs} color={colors.accent} iconStyle="solid" />
             </Animated.View>
@@ -107,14 +107,14 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
         {visible.map(tag => (
           <TouchableOpacity key={tag.id} activeOpacity={0.7} style={styles.chip}
             onPress={() => { Analytics.genreTapped(tag.id, tag.name); navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name }); }}
-            accessibilityRole="button" accessibilityLabel={`${tag.name}, subgenre, ${tag.liveCount} ${tag.liveCount === 1 ? 'story' : 'stories'}`}>
+            accessibilityRole="button" accessibilityLabel={`${tag.name}, tag, ${tag.liveCount} ${tag.liveCount === 1 ? 'story' : 'stories'}`}>
             <Text style={styles.chipText}>#{tag.name}</Text>
           </TouchableOpacity>
         ))}
       </Animated.View>
       <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('AllSubgenres')} style={styles.seeAll}
-        accessibilityRole="button" accessibilityLabel="See all subgenres">
-        <Text style={styles.seeAllText}>See all subgenres</Text>
+        accessibilityRole="button" accessibilityLabel="See all tags">
+        <Text style={styles.seeAllText}>See all tags</Text>
         <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.accent} iconStyle="solid" />
       </TouchableOpacity>
     </View>
@@ -126,7 +126,7 @@ export const CatalogLinks = ({ title }: { title?: string | null }) => {
   const navigation = useNavigation<any>();
   const rows = [
     { key: 'stories', icon: 'book-open', label: 'All stories', hint: 'A to Z', to: 'BrowseByTitle' },
-    { key: 'subgenres', icon: 'tags', label: 'All subgenres', hint: 'A to Z', to: 'AllSubgenres' },
+    { key: 'subgenres', icon: 'tags', label: 'All tags', hint: 'A to Z', to: 'AllSubgenres' },
   ];
   return (
     <View style={{ marginTop: 40, marginHorizontal: spacing.margin }}>

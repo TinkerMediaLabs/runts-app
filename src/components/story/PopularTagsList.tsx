@@ -92,9 +92,9 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
             {/* Header */}
             <View style={styles.header}>
                 <View>
-                    <Text style={styles.title}>Explore Subgenres</Text>
+                    <Text style={styles.title}>Explore Tags</Text>
                     {/* <Text style={styles.subtitle}>
-                        {minorTags.length} subgenres · showing {Math.min(VISIBLE_COUNT, minorTags.length)}
+                        {minorTags.length} tags · showing {Math.min(VISIBLE_COUNT, minorTags.length)}
                     </Text> */}
                 </View>
 
