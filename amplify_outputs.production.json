@@ -2463,6 +2463,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "previewStartSeconds": {
+              "name": "previewStartSeconds",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
             "universeId": {
               "name": "universeId",
               "isArray": false,
