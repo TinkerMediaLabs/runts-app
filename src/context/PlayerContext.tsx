@@ -18,6 +18,7 @@ import { unwrap, warnOnErrors } from '@/lib/amplifyResult';
 import { withTimeout } from '@/lib/withTimeout';
 import { storyIdFromMediaId } from '@/features/audio/carBrowseTree';
 import { endedNaturally } from '@/lib/carPlayback';
+import { stopPreview } from '@/features/audio/preview';
 
 const client = generateClient<Schema>();
 
@@ -36,6 +37,7 @@ type PlayerState = {
     isPlaying: boolean;
     playbackRate: number;
     playError: string | null;
+    isResuming: boolean;   // finding the saved place: the progress bar shows a loading line and cannot be dragged
     pendingRatingStoryId: string | null;
     pendingRatingTitle: string | null;
     pendingRatingArtwork: string | null;
@@ -50,6 +52,7 @@ export const PlayerProvider = ({ children }: any) => {
         isPlaying:            false,
         playbackRate:         1,
         playError:            null,
+        isResuming:           false,
         pendingRatingStoryId: null,
         pendingRatingTitle:   null,
         pendingRatingArtwork: null,
@@ -252,6 +255,7 @@ export const PlayerProvider = ({ children }: any) => {
 
     // ── Play ──────────────────────────────────────────────────────────────────
     const playTrack = async (track: Track) => {
+        stopPreview();   // a story preview and the main player never play together
         setKeepGoingStoryId(null);
         setState(prev => ({ ...prev, playError: null }));
 
@@ -278,7 +282,20 @@ export const PlayerProvider = ({ children }: any) => {
             lastPlayedStoryIdRef.current = track.id;
             // ─────────────────────────────────────────────────────────────────────
 
-            await audioEngine.play(track);
+            // Resuming a story that is not already loaded: go to the saved place before any audio plays, and
+            // show the loading line on the progress bar until the player confirms the position.
+            const needsSeek = savedSeconds > 0 && audioEngine.currentId !== track.id;
+            if (needsSeek) setState(prev => ({ ...prev, isResuming: true }));
+
+            await audioEngine.play(track, needsSeek ? savedSeconds : 0);
+            if (needsSeek) {
+                let there = await audioEngine.waitForPosition(savedSeconds, 4000);
+                if (!there) {
+                    await audioEngine.seek(savedSeconds);                       // the first seek was too early
+                    there = await audioEngine.waitForPosition(savedSeconds, 2500);
+                }
+                setState(prev => ({ ...prev, isResuming: false }));
+            }
             // Every real start counts (first listens and resumes); `resumed` tells them apart.
             Analytics.storyPlayStarted({ storyId: track.id, title: track.title, author: track.artist, resumed: savedSeconds > 0 });
 
@@ -297,7 +314,7 @@ export const PlayerProvider = ({ children }: any) => {
             } : null);
 
             if (savedSeconds > 0) {
-                setTimeout(() => audioEngine.seek(savedSeconds), 500);
+                // Already at the saved place (moved there before playing).
             } else {
                 const defaultSpeed = await getDefaultPlaybackSpeed();
                 if (defaultSpeed !== 1) {
@@ -319,6 +336,7 @@ export const PlayerProvider = ({ children }: any) => {
             currentTrackRef.current = null;
             setState(prev => ({
                 ...prev,
+                isResuming:   false,
                 isPlaying:    false,
                 currentTrack: null,
                 playError:    err instanceof Error ? err.message : 'Failed to load audio. Please try again.',
@@ -421,6 +439,7 @@ export const PlayerProvider = ({ children }: any) => {
     };
 
     const resume = async () => {
+        stopPreview();
         isPlayingRef.current = true;
         await audioEngine.resume();
         setState(prev => ({ ...prev, isPlaying: true }));
@@ -497,6 +516,7 @@ export const PlayerProvider = ({ children }: any) => {
             isPlaying:            false,
             playbackRate:         1,
             playError:            null,
+            isResuming:           false,
             pendingRatingStoryId: null,
             pendingRatingTitle: null,
             pendingRatingArtwork: null,

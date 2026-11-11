@@ -524,7 +524,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       }
                     }}
                   >
-                    <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'}/>
+                    <ProgressBar progress={progress} isErotic={currentStory?.isErotic === 'true'} loading={!!state.isResuming}/>
                  
                   </View>
 
@@ -883,6 +883,7 @@ mini: {
   actioncontainer: {
     alignItems: 'center',
     marginTop: 14,
+    marginBottom: 16,   // space between the primary tag and the actions bar
   },
   // Genre pill — replaces the old plain cyan text tag
   genrePill: {

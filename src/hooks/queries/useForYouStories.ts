@@ -6,6 +6,7 @@ import type { Schema } from '../../../amplify/data/resource';
 
 const PER_TAG = 12;   // a few spare, since stories already listened to are skipped
 const NEWEST = 8;
+const NEWEST_MAX = 60;   // upper bound for the widened newest list: still one small query
 
 // The Home carousel, a round-robin mix (so no source crowds the others) of: the most-listened live stories
 // of the genres the listener picked, of up to 2 more genres their listening history points to, what is
@@ -25,8 +26,11 @@ export function useForYouStories(preferredTagIds: string[], limit: number = 8, t
       const safe = async (p: Promise<any>): Promise<any[]> => { try { return (await p)?.data ?? []; } catch { return []; } };
 
       const tagIds = [...preferredTagIds.slice(0, 3), ...learned.filter(id => !preferredTagIds.includes(id)).slice(0, 2)];
+      // Every story already listened to (and every erotic one) takes a slot in this list and is then skipped, so
+      // widen the window by that many; otherwise a listener who has heard the newest stories sees an empty carousel.
+      const newestWindow = Math.min(NEWEST_MAX, (tagIds.length ? NEWEST : Math.max(limit, 20)) + listened.length + 10);
       const newestP = safe((client.models.Story as any).listStoryByLiveAndPublishedAt(
-        { live: 'true' }, { sortDirection: 'DESC', limit: tagIds.length ? NEWEST : Math.max(limit, 20) }));
+        { live: 'true' }, { sortDirection: 'DESC', limit: newestWindow }));
       const tagPs = tagIds.map(id =>
         safe((client.models.Story as any).listStoryByLiveTagIdAndNumListens(
           { liveTagId: id }, { sortDirection: 'DESC', limit: PER_TAG })));

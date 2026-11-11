@@ -15,4 +15,4 @@ async function fetchLinks(paths: string[]): Promise<FetchedLinks> {
 
 export const audioLinks = createAudioLinkCache({ fetchLinks });
 
-export const isCdnPath = (p: string) => p.startsWith('stories/');
+export const isCdnPath = (p: string) => p.startsWith('stories/') || p.startsWith('authors/');

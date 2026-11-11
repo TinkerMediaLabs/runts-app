@@ -148,7 +148,15 @@ export async function getLocalCoverPath(s3Path: string): Promise<string | null> 
     });
     coverIndex = map;
   }
-  return coverIndex.get(s3Path) ?? null;
+  const local = coverIndex.get(s3Path);
+  if (!local) return null;
+  // The record can outlive the file (storage cleared, file removed): only use the saved cover if it is really
+  // there, otherwise the caller falls back to the network link instead of showing a blank cover.
+  try {
+    const info = await FileSystem.getInfoAsync(local);
+    if (info.exists) return local;
+  } catch { /* treat as missing */ }
+  return null;
 }
 
 /** Canonical local path for a story's saved cover. */

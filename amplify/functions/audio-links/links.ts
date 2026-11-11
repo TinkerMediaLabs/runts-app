@@ -2,7 +2,8 @@
 
 export const MAX_PATHS = 50;
 export const LINK_DAYS = 7;
-const PATH_PATTERN = /^stories\/[A-Za-z0-9._\/-]+$/;
+// Story files and author photos only. profile-pictures/ stays private (owner-only in the bucket rules).
+const PATH_PATTERN = /^(stories|authors)\/[A-Za-z0-9._\/-]+$/;
 
 export type AudioLink = { path: string; url: string };
 
