@@ -18,6 +18,7 @@ import * as Crypto from 'expo-crypto';
 import { rememberSignInMethod } from '../lib/signInMethod';
 import { decodeAppleClaims, makeNonce, makeThrowawayPassword, fullNameOf } from '../lib/appleSignIn';
 import { uploadData, getUrl } from 'aws-amplify/storage';
+import { getCdnImageUrl } from '../lib/imageLinks';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 
@@ -162,47 +163,39 @@ export async function confirmNewPassword(
   });
 }
 
-// Cache for story image URLs to avoid regenerating on every render
+// Cache for author image URLs (bucket links) to avoid regenerating on every render
 const imageUrlCache: Record<string, { url: string; expiresAt: number }> = {};
 
 export async function getStoryImageUrl(path: string): Promise<string> {
   if (!path) return '';
-  
-  // Return cached URL if still valid (expires in 6 days, refresh at 1 day remaining)
-  const cached = imageUrlCache[path];
-  if (cached && cached.expiresAt > Date.now() + 1000 * 60 * 60 * 24) {
-    return cached.url;
-  }
-
-  const { url } = await getUrl({
-    path,
-    options: { expiresIn: 3600 * 24 * 7 }, // 7 days
-  });
-
-  const urlString = url.toString();
-  imageUrlCache[path] = {
-    url: urlString,
-    expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7,
-  };
-
-  return urlString;
+  // Story covers come through the signed CDN (7-day links). Failing here is deliberate: the caller retries and
+  // shows a placeholder, whereas a bucket link would look fine and then stop working within the hour.
+  return getCdnImageUrl(path);
 }
 
 export async function getAuthorImageUrl(path: string): Promise<string> {
   if (!path) return '';
 
+  // Author photos come through the signed CDN (7-day links) like story covers. An older backend that does not
+  // serve authors/ yet is not an error: fall back to a bucket link, which only lives as long as the login
+  // credentials (about an hour), so that fallback is kept for 45 minutes.
+  try {
+    return await getCdnImageUrl(path);
+  } catch (e) {
+    console.warn('getAuthorImageUrl: CDN link unavailable, using bucket link', e);
+  }
   const cached = imageUrlCache[path];
-  if (cached && cached.expiresAt > Date.now() + 1000 * 60 * 60 * 24) {
+  if (cached && cached.expiresAt > Date.now()) {
     return cached.url;
   }
   const { url } = await getUrl({
     path,
-    options: { expiresIn: 3600 * 24 * 7 }, // 7 days
+    options: { expiresIn: 3600 * 24 * 7 },
   });
   const urlString = url.toString();
   imageUrlCache[path] = {
     url: urlString,
-    expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7,
+    expiresAt: Date.now() + 1000 * 60 * 45,
   };
   return urlString;
 }

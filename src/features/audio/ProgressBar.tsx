@@ -11,13 +11,14 @@ import {
 } from 'react-native-reanimated';
 
 import { audioEngine } from './audioEngine';
+import WavyLoader from './WavyLoader';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 
 const SLIDER_UPDATE_MS = 500; // update slider at most every 500ms
 
-export default function ProgressBar({ progress, isErotic = false }: any) {
+export default function ProgressBar({ progress, isErotic = false, loading = false }: any) {
 
   // Throttled value fed to the Slider — only updates every SLIDER_UPDATE_MS.
   // This breaks the rapid-fire re-render loop that causes the duplicate key bug
@@ -97,6 +98,18 @@ export default function ProgressBar({ progress, isErotic = false }: any) {
   return (
     <View style={styles.container}>
       {/* One adjustable control for screen readers: speaks "1:23 of 12:00"; swipe up/down to seek 15 s */}
+      {loading ? (
+        // Finding the saved place: a rippling line instead of the bar, and nothing to drag.
+        <View
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityLabel="Finding your place in the story"
+          accessibilityState={{ busy: true }}
+          accessibilityLiveRegion="polite"
+        >
+          <WavyLoader isErotic={isErotic} />
+        </View>
+      ) : (
       <View
         accessible
         accessibilityRole="adjustable"
@@ -154,6 +167,7 @@ export default function ProgressBar({ progress, isErotic = false }: any) {
       }}
       />
       </View>
+      )}
 
       <View
         style={styles.row}

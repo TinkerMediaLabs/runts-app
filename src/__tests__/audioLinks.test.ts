@@ -1,6 +1,10 @@
 import { validatePaths, buildLinks, MAX_PATHS, LINK_DAYS } from '../../amplify/functions/audio-links/links';
 
 describe('audio links', () => {
+  it('accepts author photo paths', () => {
+    expect(validatePaths(['authors/a1/photo.jpg'])).toEqual(['authors/a1/photo.jpg']);
+  });
+
   it('accepts story paths and removes duplicates', () => {
     expect(validatePaths(['stories/a/audio.mp3', 'stories/a/audio.mp3', 'stories/b/c d.m4a'.replace(' ', '_')]))
       .toEqual(['stories/a/audio.mp3', 'stories/b/c_d.m4a']);
@@ -12,8 +16,8 @@ describe('audio links', () => {
     expect(() => validatePaths(Array.from({ length: MAX_PATHS + 1 }, (_, i) => `stories/${i}.mp3`))).toThrow();
   });
 
-  it('rejects anything outside stories/, traversal, and odd characters', () => {
-    for (const bad of ['profile-pictures/x/y.jpg', 'authors/a.jpg', '/stories/a.mp3', 'stories/../authors/a.jpg',
+  it('rejects anything outside stories/ and authors/, traversal, and odd characters', () => {
+    for (const bad of ['profile-pictures/x/y.jpg', 'narrators/a.jpg', '/stories/a.mp3', 'authors/../profile-pictures/a.jpg',
       'stories//a.mp3', 'stories/a b.mp3', 'stories/a.mp3?x=1', 5, null]) {
       expect(() => validatePaths([bad as any])).toThrow();
     }

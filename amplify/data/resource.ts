@@ -344,6 +344,7 @@ Comment: a
       storyFormat: a.enum(['SHORT_STORY', 'NOVELLA', 'FLASH_FICTION']),
       sequenceNumber: a.integer(),
       sceneCount: a.integer(),   // picture-book scenes; set by the CMS. App only queries StoryScene when > 0.
+      previewStartSeconds: a.integer(),   // where the app's 30-second Preview begins; blank = the app default (60 s). Set in the CMS.
       universeId: a.string(),
       pov: a.enum(['THIRD_PERSON', 'SECOND_PERSON', 'FIRST_PERSON', 'MULTIPLE_POV']),
       narrationType: a.enum(['AI', 'HUMAN', 'MIXED']),

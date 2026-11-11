@@ -185,7 +185,7 @@ class AudioEngine {
     if (this.localMode === 'remote') this.localMode = 'uri';
   }
 
-async play(track: Track) {
+async play(track: Track, startAt: number = 0) {
   try {
     if (this.currentTrack?.id === track.id) {
       await TrackPlayer.play();
@@ -206,8 +206,11 @@ async play(track: Track) {
       artist:  track.artist,
     } as any]);
     this.currentTrack = track;
+    // Resuming: move to the saved place BEFORE playing, so the story never starts from the beginning first.
+    if (startAt > 0) {
+      try { await TrackPlayer.seekTo(startAt); } catch (e) { console.warn('audioEngine: seek before play failed', e); }
+    }
     await TrackPlayer.play();
-    console.log('audioEngine.play: play() called successfully');  // ← add
   } catch (error) {
     console.error('Play error:', error);
     throw error;
@@ -268,6 +271,23 @@ async play(track: Track) {
   async stop() {
     try { await TrackPlayer.stop(); this.currentTrack = null; }
     catch (error) { console.error('Stop error:', error); }
+  }
+
+  /** The story the player currently holds (null when nothing is loaded). */
+  get currentId(): string | null { return this.currentTrack?.id ?? null; }
+
+  /**
+   * Wait until the player reports a position within 2 seconds of `target`. Returns true when it got there,
+   * false on timeout (the caller can seek again). Polls the player's own position, so it only returns once the
+   * saved place has really taken effect.
+   */
+  async waitForPosition(target: number, timeoutMs: number): Promise<boolean> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      if (Math.abs(this.getCurrentPosition() - target) <= 2) return true;
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return false;
   }
 
   async seek(seconds: number) {

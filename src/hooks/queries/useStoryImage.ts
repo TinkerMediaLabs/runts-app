@@ -6,10 +6,10 @@ import { getLocalCoverPath } from '../../lib/offlineStorage';
 // (no request is made) so the remote link would just be a broken image.
 export function useStoryImage(path: string | null | undefined) {
   return useQuery({
-    queryKey: ['storyImage', path],
+    queryKey: ['storyImage', 'v3', path], // new key: ignores older saved entries (dead bucket links, and saved-cover paths whose file was gone)
     queryFn: async () => (await getLocalCoverPath(path!)) ?? getStoryImageUrl(path!),
     enabled: !!path && path.startsWith('stories/'),
-    staleTime: 1000 * 60 * 60 * 24 * 6, // 6 days — matches URL expiry
+    staleTime: 1000 * 60 * 60 * 24 * 5, // CDN links last 7 days; refresh well before
     gcTime: 1000 * 60 * 60 * 24 * 7,    // keep in cache for 7 days
   });
 }

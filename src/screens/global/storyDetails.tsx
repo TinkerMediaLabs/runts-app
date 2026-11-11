@@ -40,6 +40,7 @@ import PinButton    from '../../components/common/PinButton';
 import RatingModal  from '../../features/audio/RatingModal';
 import MoreLikeThis from '../../components/story/MoreLikeThis';
 import Reveal from '../../components/common/Reveal';
+import PreviewButton from '../../components/story/PreviewButton';
 
 import { spacing } from '../../theme/spacing';
 import { useApp }  from '@/context/AppContext';
@@ -764,6 +765,11 @@ const handleDelete = (id: string) => {
                     <View style={styles.separator} />
 
                  
+
+                    {/* Preview: a short clip played right here (no track player) */}
+                    {story?.audioUri ? (
+                        <PreviewButton story={story} isErotic={story?.isErotic === 'true'} />
+                    ) : null}
 
                     {/* Summary */}
                     {story?.summary ? (
