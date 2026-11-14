@@ -57,6 +57,23 @@ describe('computeInsights', () => {
   });
 });
 
+describe('typed tags (setting, mood, tone, universe)', () => {
+  it('are not related to genres and genres are not related to them, but still get a live count', () => {
+    const spec = {
+      s1: { tags: ['mystery', 'crime', 'eerie'], pub: '2026-01-01' },
+      s2: { tags: ['mystery', 'crime', 'eerie'], pub: '2026-01-02' },
+    };
+    const r = computeInsights(links(spec), new Set(), undefined, new Set(['eerie']));
+    expect(r.get('mystery')!.related.map(x => x.tagId)).toEqual(['crime']);
+    expect(r.get('eerie')!.related).toEqual([]);
+    expect(r.get('eerie')!.liveCount).toBe(2);
+  });
+  it('relate normally when no tag is typed', () => {
+    const r = computeInsights(links({ s1: { tags: ['a', 'b'], pub: '2026-01-01' } }), new Set());
+    expect(r.get('a')!.related.map(x => x.tagId)).toEqual(['b']);
+  });
+});
+
 describe('discoverFields', () => {
   it('lists a subgenre that has live stories', () => {
     expect(discoverFields({ id: 'a', name: ' Haunted House ' }, 3)).toEqual({ name: 'Haunted House', nameLower: 'haunted house', listed: true });
@@ -65,6 +82,12 @@ describe('discoverFields', () => {
     expect(discoverFields({ id: 'a', name: 'X' }, 0).listed).toBe(false);
     expect(discoverFields({ id: 'a', name: 'X', isPrimary: true }, 9).listed).toBe(false);
     expect(discoverFields({ id: 'a', name: 'X', isErotic: true }, 9).listed).toBe(false);
+  });
+  it('does not list a typed tag (setting, mood, tone, universe)', () => {
+    for (const tagType of ['setting', 'mood', 'tone', 'universe']) {
+      expect(discoverFields({ id: 'a', name: 'X', tagType }, 9).listed).toBe(false);
+    }
+    expect(discoverFields({ id: 'a', name: 'X', tagType: null }, 9).listed).toBe(true);
   });
   it('does not list a genre without a name', () => {
     expect(discoverFields({ id: 'a' }, 5).listed).toBe(false);

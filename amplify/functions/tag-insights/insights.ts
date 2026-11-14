@@ -21,7 +21,11 @@ const key = (a: string, b: string) => `${a}|${b}`;
 // Two genres are related when many live stories carry both. Ranking uses cosine similarity
 // (shared / sqrt(sizeA * sizeB)), not the raw count, so a huge genre does not show up as "related"
 // to everything. Erotic genres only relate to erotic genres.
-export function computeInsights(links: TagLink[], eroticTagIds: Set<string>, opts: InsightOptions = DEFAULTS): Map<string, TagInsightResult> {
+// Tags with a type (setting, mood, tone, universe) are not genres: they still get a row (their own live count) but are never
+// related to anything and never appear as a related genre, so "Mystery" is not "related to" Eerie or to a world.
+export function computeInsights(
+  links: TagLink[], eroticTagIds: Set<string>, opts: InsightOptions = DEFAULTS, typedTagIds: Set<string> = new Set(),
+): Map<string, TagInsightResult> {
   const byStory = new Map<string, { tags: Set<string>; pub: string }>();
   for (const l of links) {
     if (!l.storyId || !l.tagId) continue;
@@ -37,7 +41,7 @@ export function computeInsights(links: TagLink[], eroticTagIds: Set<string>, opt
     const list = Array.from(tags);
     for (const a of list) size.set(a, (size.get(a) ?? 0) + 1);
     for (const a of list) for (const b of list) {
-      if (a === b || eroticTagIds.has(a) !== eroticTagIds.has(b)) continue;
+      if (a === b || typedTagIds.has(a) || typedTagIds.has(b) || eroticTagIds.has(a) !== eroticTagIds.has(b)) continue;
       pair.set(key(a, b), (pair.get(key(a, b)) ?? 0) + 1);
     }
   }
@@ -80,14 +84,15 @@ export function computeInsights(links: TagLink[], eroticTagIds: Set<string>, opt
 
 
 // What a genre contributes to the Discover lists. A subgenre is listed only while it has live stories, so the
-// sparse indexes never hold an empty one. Primary and erotic genres are never listed (they have their own areas).
-export type TagMeta = { id: string; name?: string; isPrimary?: boolean; isErotic?: boolean };
+// sparse indexes never hold an empty one. Primary and erotic genres are never listed (they have their own areas),
+// and neither is any typed tag (setting, mood, tone, universe): those are not genres.
+export type TagMeta = { id: string; name?: string; isPrimary?: boolean; isErotic?: boolean; tagType?: string | null };
 export function discoverFields(tag: TagMeta, liveCount: number): { name: string; nameLower: string; listed: boolean } {
   const name = (tag.name ?? '').trim();
   return {
     name,
     nameLower: name.toLowerCase(),
-    listed: !!name && liveCount > 0 && !tag.isPrimary && !tag.isErotic,
+    listed: !!name && liveCount > 0 && !tag.isPrimary && !tag.isErotic && !tag.tagType,
   };
 }
 

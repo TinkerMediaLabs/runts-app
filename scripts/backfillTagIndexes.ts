@@ -1,8 +1,9 @@
-// Sets Story.liveTagId, StoryTag.liveTagId and StoryTag.publishedAt from the current data
+// Sets Story.liveTagId, StoryTag.liveTagId, StoryTag.publishedAt, StoryTag.durationBand and StoryTag.liveTagBand from the current data
 // (ground truth). The tag-index-sync Lambda keeps them current afterwards; run this once per
 // environment after the first deploy and after any table wipe/restore:
 //   npx tsx scripts/backfillTagIndexes.ts <table-suffix>      (suffix WITHOUT "-NONE")
 import { DynamoDBClient, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { bandOf, liveTagBandOf } from '../amplify/functions/tag-index-sync/bands';
 
 const suffix = process.argv[2];
 if (!suffix) { console.error('Usage: npx tsx scripts/backfillTagIndexes.ts <table-suffix>'); process.exit(1); }
@@ -17,13 +18,13 @@ async function scanAll(table: string) {
   return out;
 }
 
-async function setOrRemove(table: string, id: string, attrs: Record<string, string | undefined>) {
+async function setOrRemove(table: string, id: string, attrs: Record<string, string | number | undefined>) {
   const sets: string[] = []; const removes: string[] = [];
   const names: Record<string, string> = {}; const values: Record<string, any> = {};
   let n = 0;
   for (const [attr, val] of Object.entries(attrs)) {
     names[`#a${n}`] = attr;
-    if (val === undefined) removes.push(`#a${n}`); else { values[`:v${n}`] = { S: val }; sets.push(`#a${n} = :v${n}`); }
+    if (val === undefined) removes.push(`#a${n}`); else { values[`:v${n}`] = typeof val === 'number' ? { N: String(val) } : { S: val }; sets.push(`#a${n} = :v${n}`); }
     n++;
   }
   const expr = [sets.length ? `SET ${sets.join(', ')}` : '', removes.length ? `REMOVE ${removes.join(', ')}` : ''].filter(Boolean).join(' ');
@@ -52,8 +53,11 @@ async function main() {
     if (!s) { orphan++; continue; }
     const wantLive = s.live?.S === 'true' ? l.tagId?.S : undefined;
     const wantPub = s.publishedAt?.S;
-    if (l.liveTagId?.S !== wantLive || l.publishedAt?.S !== wantPub) {
-      await setOrRemove(`StoryTag-${suffix}-NONE`, id, { liveTagId: wantLive, publishedAt: wantPub });
+    const wantBand = bandOf(s.duration?.N);
+    const wantLiveBand = liveTagBandOf(l.tagId?.S, s.live?.S === 'true', wantBand);
+    const haveBand = l.durationBand?.N === undefined ? undefined : Number(l.durationBand.N);
+    if (l.liveTagId?.S !== wantLive || l.publishedAt?.S !== wantPub || haveBand !== wantBand || l.liveTagBand?.S !== wantLiveBand) {
+      await setOrRemove(`StoryTag-${suffix}-NONE`, id, { liveTagId: wantLive, publishedAt: wantPub, durationBand: wantBand, liveTagBand: wantLiveBand });
       linksSet++;
     }
   }

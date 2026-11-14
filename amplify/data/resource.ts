@@ -474,16 +474,21 @@ Comment: a
       description: a.string(),
       useHeroLayout: a.boolean().default(false),
       isErotic: a.boolean().default(false),
-      // What kind of tag this is, beyond genre. Absent = ordinary genre tag. First value: 'setting'
-      // (where a story takes place). No index yet: adding a GSI makes Amplify delete and recreate the table
-      // (all rows lost), so an index here needs a backup-and-restore plan first (see handoff section 36).
+      // What kind of tag this is, beyond genre. Absent = ordinary genre tag. Values: 'setting' (where a story
+      // takes place), 'mood' (what the listener is in the mood for; drives the daily picker), 'tone' (how the
+      // story reads), 'universe' (a shared world). Indexed (byTypeAndName, byTypeAndOrder) so the CMS and the app can
+      // list the tags of one type. Both indexes are sparse: genre tags have no type and are not in them.
       tagType: a.string(),
+      sortOrder: a.integer(),        // order within its type (moods in the picker, lowest first)
+      pickerEnabled: a.boolean(),    // mood tags: false hides it from the picker (null counts as on)
       stories: a.hasMany('StoryTag', 'tagId'),
       
     })
     .secondaryIndexes(index => [
       index('searchPk').sortKeys(['nameLower']).name('byName'),
       index('primaryFlag').sortKeys(['nameLower']).name('byPrimaryAndName'),
+      index('tagType').sortKeys(['nameLower']).name('byTypeAndName'),
+      index('tagType').sortKeys(['sortOrder']).name('byTypeAndOrder'),
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
@@ -681,6 +686,8 @@ Comment: a
       tagId: a.string().required(),
       liveTagId: a.string(),      // = tagId while the story is live, otherwise absent (sparse). Maintained by tag-index-sync.
       publishedAt: a.datetime(),  // copy of Story.publishedAt (sort key for the live-tag index)
+      durationBand: a.integer(),  // floor(Story.duration / 900): the story's length in 15-minute steps. Maintained by tag-index-sync.
+      liveTagBand: a.string(),    // `${tagId}#${durationBand}` while the story is live, otherwise absent (sparse). Maintained by tag-index-sync.
       story: a.belongsTo('Story', 'storyId'),
       tag: a.belongsTo('Tag', 'tagId'),
     })
@@ -688,6 +695,7 @@ Comment: a
       index('storyId').name('byStoryId'),
       index('tagId').name('byTagId'),
       index('liveTagId').sortKeys(['publishedAt']).name('byLiveTagAndPublishedAt'),
+      index('liveTagBand').sortKeys(['publishedAt']).name('byLiveTagBandAndPublishedAt'),
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
