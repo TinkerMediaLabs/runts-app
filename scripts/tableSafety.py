@@ -45,7 +45,13 @@ def backup(model, env):
     while aws('describe-backup', '--backup-arn', arn)['BackupDescription']['BackupDetails']['BackupStatus'] != 'AVAILABLE': time.sleep(5)
     print('backup ready:', arn)
 
+def drop_nulls(item):
+    # An attribute stored as an explicit NULL means the same as a missing one, but a NULL cannot be an index key
+    # (older CMS saves wrote tagType: null), so restore without them.
+    return {k: v for k, v in item.items() if v != {'NULL': True}}
+
 def batch_write(target, items):
+    items = [drop_nulls(it) for it in items]
     for i in range(0, len(items), 25):
         req = {target: [{'PutRequest': {'Item': it}} for it in items[i:i + 25]]}
         while req:
