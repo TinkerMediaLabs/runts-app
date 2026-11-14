@@ -16,7 +16,7 @@ export const TIPS: Tip[] = [
   {
     id: 'search',
     target: 'search-bar',
-    routes: ['HomeScreen'],
+    routes: ['DiscoverScreen'],
     title: 'Find your next story',
     body: 'Search by title, author or genre. Tap here any time.',
     order: 10,

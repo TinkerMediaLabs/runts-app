@@ -98,6 +98,9 @@ function subscribe(listener: () => void) {
   return () => { listeners.delete(listener); };
 }
 
+// The current state, read at the moment it is needed (not a value captured by an earlier render).
+export function getTipsState(): State { return state; }
+
 export function useTipsState(): State {
   return useSyncExternalStore(subscribe, () => state, () => state);
 }

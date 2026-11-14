@@ -6,8 +6,9 @@ import Animated, {
 import { Text } from '@/components/common/AppText';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import {
-  loadTips, useTipsState, getTargetRef, markTipSeen, setTipsEnabled, setTipsRoute,
+  loadTips, useTipsState, getTipsState, getTargetRef, markTipSeen, setTipsEnabled, setTipsRoute,
 } from './tipsStore';
+import { tipIsEligible } from './tipRules';
 import { navigationRef } from '@/navigation/RootNavigator';
 import { TIPS, type Tip } from './tips';
 import { colors } from '@/theme/colors';
@@ -18,6 +19,10 @@ const DIM = 'rgba(0,0,0,0.78)';
 const ACCENT = '#00ffff';
 
 type Active = { tip: Tip; x: number; y: number; w: number; h: number };
+
+// The screen showing right now, straight from the navigator (null before it is ready).
+const liveRoute = (): string | null =>
+  navigationRef.current?.isReady() ? navigationRef.current.getCurrentRoute()?.name ?? null : null;
 
 // One tip at a time, pointing at a real control. Dims the screen, leaves a spotlight around the control,
 // pulses a ring (static with Reduce Motion), and shows a card with "Got it" / "Turn off tips".
@@ -47,11 +52,14 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
     return () => clearInterval(id);
   }, []);
 
-  const eligible = (tip: Tip) =>
-    !seen.includes(tip.id) &&
-    !!route && tip.routes.includes(route) &&
-    (!tip.needs || flags[tip.needs]) &&
-    !!getTargetRef(tip.target);
+  // Judged against the LIVE route and store every time, never values captured when a wait began, so a screen
+  // change during the settle delay or the measuring callbacks cancels the tip.
+  const eligible = (tip: Tip) => {
+    const s = getTipsState();
+    return s.enabled && tipIsEligible(tip, {
+      seen: s.seen, route: liveRoute() ?? s.route, flags: s.flags, hasTarget: !!getTargetRef(tip.target),
+    });
+  };
 
   // Decide what to show whenever anything relevant changes.
   useEffect(() => {
