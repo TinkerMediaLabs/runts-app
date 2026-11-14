@@ -29,9 +29,10 @@ export const handler = async () => {
     ProjectionExpression: 'storyId, tagId, publishedAt',
   })) as TagLink[];
 
-  const tags = await scanAll({ TableName: TAG_TABLE, ProjectionExpression: 'id, #n, isPrimary, isErotic', ExpressionAttributeNames: { '#n': 'name' } });
+  const tags = await scanAll({ TableName: TAG_TABLE, ProjectionExpression: 'id, #n, isPrimary, isErotic, tagType', ExpressionAttributeNames: { '#n': 'name' } });
   const erotic = new Set<string>(tags.filter(t => t.isErotic).map(t => t.id));
-  const insights = computeInsights(links, erotic);
+  const typed = new Set<string>(tags.filter(t => t.tagType).map(t => t.id));   // settings, moods, tones, universes: not genres
+  const insights = computeInsights(links, erotic, undefined, typed);
 
   const now = new Date().toISOString();
   const ids = tags.map(t => t.id as string);

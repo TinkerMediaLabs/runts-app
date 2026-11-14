@@ -269,6 +269,10 @@ const StoryScreen = ({ navigation }: any) => {
 
      const primaryTag = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? storyTags[0] ?? null;
      const isLocked   = useIsLocked(story, primaryTag);
+    // Mood, tone and world are tags of their own type: shown apart from the genre-style tags.
+    const moodTone   = storyTags.filter((t: any) => t.tagType === 'mood' || t.tagType === 'tone');
+    const worldTag   = storyTags.find((t: any) => t.tagType === 'universe') ?? null;
+    const otherTags  = storyTags.filter((t: any) => !t.tagType || t.tagType === 'setting');
     const primaryTagPill   = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? null;
     const secondaryTagPill = storyTags.find((t: any) => t.id === story?.secondaryTagId) ?? null;
     const [showPaywall, setShowPaywall] = useState(false);
@@ -748,12 +752,12 @@ const handleDelete = (id: string) => {
                     ) : null}
 
                     {/* Story Format / Story Tone / POV — pills, same style as numListens */}
-                    {(story?.storyFormat || story?.tone || story?.pov) ? (
+                    {(story?.storyFormat || (story?.tone && !moodTone.some((t: any) => t.tagType === 'tone')) || story?.pov) ? (
                         <View style={styles.statsRow}>
                             {story?.storyFormat ? (
                                 <StatPill icon="book" value={STORY_FORMATS[story.storyFormat] ?? story.storyFormat} />
                             ) : null}
-                            {story?.tone ? (
+                            {story?.tone && !moodTone.some((t: any) => t.tagType === 'tone') ? (
                                 <StatPill icon="theater-masks" value={TONES[story.tone] ?? story.tone} />
                             ) : null}
                             {story?.pov ? (
@@ -778,11 +782,38 @@ const handleDelete = (id: string) => {
 
                      {/* Tags */}
                                         {/* Tags */}
-                    {storyTags.length > 0 && (
+                    {moodTone.length > 0 && (
+                        <View style={styles.tagsSection}>
+                            <Text style={styles.sectionLabel}>Mood and tone</Text>
+                            <View style={styles.tagsWrap}>
+                                {moodTone.map((tag: any) => (
+                                    <TagChip
+                                        key={tag.id}
+                                        name={tag.name}
+                                        isErotic={tag.isErotic === true}
+                                        onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
+                                    />
+                                ))}
+                            </View>
+                        </View>
+                    )}
+                    {worldTag && (
+                        <View style={styles.tagsSection}>
+                            <Text style={styles.sectionLabel}>World</Text>
+                            <View style={styles.tagsWrap}>
+                                <TagChip
+                                    name={worldTag.name}
+                                    isErotic={worldTag.isErotic === true}
+                                    onPress={() => navigation.navigate('TagHomeScreen', { id: worldTag.id, name: worldTag.name })}
+                                />
+                            </View>
+                        </View>
+                    )}
+                    {otherTags.length > 0 && (
                         <View style={styles.tagsSection}>
                             <Text style={styles.sectionLabel}>Tags</Text>
                             <View style={styles.tagsWrap}>
-                                {storyTags.map((tag: any) => (
+                                {otherTags.map((tag: any) => (
                                     <TagChip
                                         key={tag.id}
                                         name={tag.name}

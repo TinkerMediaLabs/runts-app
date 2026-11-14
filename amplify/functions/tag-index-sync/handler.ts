@@ -1,6 +1,7 @@
 import { DynamoDBClient, UpdateItemCommand, GetItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { bandOf, liveTagBandOf } from './bands';
 
 // Keeps the "live stories of a tag" indexes in step, whoever writes the data (CMS, publish Lambda,
 // restore scripts):
@@ -8,6 +9,8 @@ import { unmarshall } from '@aws-sdk/util-dynamodb';
 //                        simply not in it, so tag pages never need to filter drafts out).
 //   StoryTag.liveTagId = tagId while the story is live, otherwise removed.
 //   StoryTag.publishedAt = the story's publishedAt (sort key).
+//   StoryTag.durationBand = the story's duration in 15-minute steps; StoryTag.liveTagBand = "<tagId>#<band>" while the
+//                        story is live (sparse). Together they index "live stories of a tag in a length band, newest first".
 // Also: when a Story is DELETED, its StoryTag and StoryNarrator link rows are deleted too (the CMS delete only
 // removes the Story row). Deleting StoryTag rows lets tag-count-aggregator decrement the tag counts.
 // Sources: Story stream (INSERT/MODIFY) and StoryTag stream (INSERT only). Every write is skipped when the
@@ -19,14 +22,14 @@ const STORYNARRATOR_TABLE = process.env.STORYNARRATOR_TABLE_NAME!;
 
 const isCondFail = (e: any) => e?.name === 'ConditionalCheckFailedException';
 
-async function setOrRemove(table: string, key: Record<string, any>, attrs: Record<string, any | undefined>) {
+async function setOrRemove(table: string, key: Record<string, any>, attrs: Record<string, string | number | undefined>) {
   const sets: string[] = []; const removes: string[] = [];
   const names: Record<string, string> = {}; const values: Record<string, any> = {};
   let n = 0;
   for (const [attr, val] of Object.entries(attrs)) {
     const nk = `#a${n}`; names[nk] = attr;
     if (val === undefined) removes.push(nk);
-    else { const vk = `:v${n}`; values[vk] = { S: val }; sets.push(`${nk} = ${vk}`); }
+    else { const vk = `:v${n}`; values[vk] = typeof val === 'number' ? { N: String(val) } : { S: val }; sets.push(`${nk} = ${vk}`); }
     n++;
   }
   const expr = [sets.length ? `SET ${sets.join(', ')}` : '', removes.length ? `REMOVE ${removes.join(', ')}` : ''].filter(Boolean).join(' ');
@@ -46,10 +49,16 @@ async function setOrRemove(table: string, key: Record<string, any>, attrs: Recor
 const liveOf = (story: any) => story?.live === 'true';
 
 async function syncStoryTagRow(link: any, story: any) {
-  const wantLive = liveOf(story) ? link.tagId : undefined;
+  const live = liveOf(story);
+  const wantLive = live ? link.tagId : undefined;
   const wantPub = story?.publishedAt ?? undefined;
-  if (link.liveTagId === wantLive && link.publishedAt === wantPub) return;
-  await setOrRemove(STORYTAG_TABLE, { id: { S: link.id } }, { liveTagId: wantLive, publishedAt: wantPub });
+  const wantBand = bandOf(story?.duration);
+  const wantLiveBand = liveTagBandOf(link.tagId, live, wantBand);
+  if (link.liveTagId === wantLive && link.publishedAt === wantPub &&
+      link.durationBand === wantBand && link.liveTagBand === wantLiveBand) return;
+  await setOrRemove(STORYTAG_TABLE, { id: { S: link.id } }, {
+    liveTagId: wantLive, publishedAt: wantPub, durationBand: wantBand, liveTagBand: wantLiveBand,
+  });
 }
 
 async function deleteLinks(table: string, storyId: string) {
@@ -85,8 +94,8 @@ async function handleStory(record: DynamoDBRecord) {
     await setOrRemove(STORY_TABLE, { id: { S: story.id } }, { liveTagId: wantLiveTag });
   }
 
-  // Propagate to this story's StoryTag rows only when live / publishedAt actually changed.
-  const changed = !old || old.live !== story.live || old.publishedAt !== story.publishedAt;
+  // Propagate to this story's StoryTag rows only when live / publishedAt / duration actually changed.
+  const changed = !old || old.live !== story.live || old.publishedAt !== story.publishedAt || old.duration !== story.duration;
   if (!changed) return;
   let lastKey: any;
   do {
