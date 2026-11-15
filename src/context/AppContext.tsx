@@ -50,6 +50,9 @@ type UserProfile = {
     birthdate?: string | null;
     onboardingComplete?: boolean | null;
     preferredTagIds?: string[] | null;
+    preferredMoodTagIds?: string[] | null;
+    preferredLengths?: string[] | null;
+    tasteVersion?: number | null;
     totalListenSeconds?: number | null;
     totalStoriesFinished?: number | null;
 };
@@ -192,6 +195,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 birthdate:            dbUser?.birthdate,
                 onboardingComplete:   dbUser?.onboardingComplete,
                 preferredTagIds:      (dbUser?.preferredTagIds ?? []).filter(Boolean),
+                preferredMoodTagIds:  (dbUser?.preferredMoodTagIds ?? []).filter(Boolean),
+                preferredLengths:     (dbUser?.preferredLengths ?? []).filter(Boolean),
+                tasteVersion:         dbUser?.tasteVersion ?? null,
                 totalListenSeconds:   dbUser?.totalListenSeconds,
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
