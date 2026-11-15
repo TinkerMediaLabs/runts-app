@@ -887,7 +887,7 @@ const handleDelete = (id: string) => {
     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20, marginBottom: 12 }}>
       Create a free account to read and join the conversation about this story.
     </Text>
-    <Button label="Create a free account" size="small" onPress={() => askForAccount('join the discussion')} accessibilityLabel="Create a free account to join the discussion" />
+    <Button label="Create a free account" size="small" onPress={() => askForAccount('join the discussion', story?.id ? { kind: 'story', id: story.id } : undefined)} accessibilityLabel="Create a free account to join the discussion" />
   </View>
 ) : (
 <>

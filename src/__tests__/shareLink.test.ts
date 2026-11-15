@@ -6,6 +6,13 @@ describe('parseStoryLink', () => {
     expect(parseStoryLink('https://www.tinkermedia.net/runts/story/abc_123/')).toBe('abc_123');
     expect(parseStoryLink('https://tinkermedia.net/runts/story/abc?utm=x#y')).toBe('abc');
   });
+  it('reads the short runts.app link', () => {
+    expect(parseStoryLink('https://runts.app/story/abc-123')).toBe('abc-123');
+    expect(parseStoryLink('https://www.runts.app/story/abc_123/')).toBe('abc_123');
+    expect(parseStoryLink('https://runts.app/story/abc?utm=x#y')).toBe('abc');
+    expect(parseStoryLink('https://runts.app/story/a/b')).toBeNull();
+    expect(parseStoryLink('https://runts.app/privacy')).toBeNull();
+  });
   it('reads the app address from the preview page button', () => {
     expect(parseStoryLink('runts://story/abc-123')).toBe('abc-123');
     expect(parseStoryLink('runts-dev://story/abc')).toBe('abc');

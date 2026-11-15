@@ -111,7 +111,7 @@ const CreatorProfile = () => {
 
     const guest = useIsGuest();
     const handleToggleFollow = () => {
-    if (guest) { askForAccount('follow authors'); return; }
+    if (guest) { askForAccount('follow authors', { kind: 'follow', id }); return; }
     if (isFollowing && followRecordId) {
         unfollowAuthor({ recordId: followRecordId, authorId: id });
     } else {

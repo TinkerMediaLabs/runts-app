@@ -182,7 +182,7 @@ export function useTogglePin() {
   return {
     toggle: (storyId: string, isPinned: boolean) => {
       // Guests have no playlist: ask them to make an account instead of failing after the icon changes.
-      if (guest) { askForAccount('pin stories to your playlist'); return; }
+      if (guest) { askForAccount('pin stories to your playlist', { kind: 'pin', id: storyId }); return; }
       if (isPinned) {
         unpinStory.mutate(storyId);
       } else {

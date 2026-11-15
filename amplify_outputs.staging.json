@@ -5434,6 +5434,7 @@
   },
   "version": "1.4",
   "custom": {
+    "sharePreviewUrl": "https://54agahfp7jry7o5voebzvf3rt40reugr.lambda-url.us-east-2.on.aws/",
     "carProgressUrl": "https://ca4fdyqqhnuy4lf7sobaz2uxsi0djowf.lambda-url.us-east-2.on.aws/"
   }
 }

@@ -258,7 +258,7 @@ export const PlayerProvider = ({ children }: any) => {
     // ── Play ──────────────────────────────────────────────────────────────────
     const playTrack = async (track: Track) => {
         // Guests cannot play full stories (every normal entry point asks first; this is the backstop).
-        if (getDataAccess() === 'guest') { askForAccount('listen to the full story'); return; }
+        if (getDataAccess() === 'guest') { askForAccount('listen to the full story', track?.id ? { kind: 'story', id: track.id } : undefined); return; }
         stopPreview();   // a story preview and the main player never play together
         setKeepGoingStoryId(null);
         setState(prev => ({ ...prev, playError: null }));

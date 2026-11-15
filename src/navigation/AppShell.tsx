@@ -14,12 +14,14 @@ import TipOverlay from '@/tips/TipOverlay';
 import { setTipsFlag } from '@/tips/tipsStore';
 
 import { useDeepLink } from '@/hooks/useDeepLink';
+import { useReplayAction } from '@/hooks/useReplayAction';
 import { useCarBrowseTree } from '@/hooks/useCarBrowseTree';
 import { useCarPass } from '@/hooks/useCarPass';
 
 export default function AppShell({ children }: any) {
 
   useDeepLink();
+  useReplayAction();
   useCarBrowseTree();
   useCarPass();
 

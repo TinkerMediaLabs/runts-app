@@ -65,7 +65,7 @@ export const handler = async (event: any) => {
   return html(buildPage({
     story: show ? story : null,
     authorName,
-    pageUrl: `${SITE}/runts/story/${route.id}`,
+    pageUrl: `https://runts.app/story/${route.id}`,
     imageUrl: coverPath(story) ? `${selfOrigin}/image/${route.id}` : null,
     appLink: `${scheme}://story/${route.id}`,
   }), show ? 300 : 60);
