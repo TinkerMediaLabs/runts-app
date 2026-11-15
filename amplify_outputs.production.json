@@ -492,6 +492,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -1927,6 +1934,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -2065,6 +2079,13 @@
                 "rules": [
                   {
                     "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "public",
+                    "provider": "identityPool",
                     "operations": [
                       "read"
                     ]
@@ -2238,6 +2259,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -2371,6 +2399,13 @@
                 "rules": [
                   {
                     "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "public",
+                    "provider": "identityPool",
                     "operations": [
                       "read"
                     ]
@@ -3052,6 +3087,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -3644,6 +3686,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -3763,6 +3812,13 @@
                 "rules": [
                   {
                     "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "public",
+                    "provider": "identityPool",
                     "operations": [
                       "read"
                     ]
@@ -4118,6 +4174,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -4235,6 +4298,13 @@
                 "rules": [
                   {
                     "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "public",
+                    "provider": "identityPool",
                     "operations": [
                       "read"
                     ]
@@ -4415,6 +4485,13 @@
                 "rules": [
                   {
                     "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "public",
+                    "provider": "identityPool",
                     "operations": [
                       "read"
                     ]
@@ -4624,6 +4701,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -4825,6 +4909,13 @@
                     ]
                   },
                   {
+                    "allow": "public",
+                    "provider": "identityPool",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
                     "groupClaim": "cognito:groups",
                     "provider": "userPools",
                     "allow": "groups",
@@ -4999,6 +5090,13 @@
                 "rules": [
                   {
                     "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "public",
+                    "provider": "identityPool",
                     "operations": [
                       "read"
                     ]
@@ -5270,6 +5368,13 @@
               "type": "String",
               "isRequired": false,
               "isArrayNullable": false
+            },
+            "storyIds": {
+              "name": "storyIds",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "isArrayNullable": true
             }
           }
         },
