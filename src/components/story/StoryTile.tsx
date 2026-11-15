@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableWithoutFeedback, Image, StyleSheet, Share } from 'react-native';
+import { View, TouchableWithoutFeedback, Image, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
@@ -28,6 +28,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { shareStory } from '@/lib/shareStory';
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 
@@ -81,11 +82,7 @@ const StoryTile = ({
     };
 
     const handleShare = async () => {
-        await Share.share({
-            message: `Check out "${title}" on Runts: https://tinkermedia.net/runts/story/${id}`,
-            url: `https://tinkermedia.net/runts/story/${id}`,
-            title: title ?? 'Runts',
-        });
+        await shareStory(id, title);
     };
 
     // ── Animated styles ─────────────────────────────────────────────────────

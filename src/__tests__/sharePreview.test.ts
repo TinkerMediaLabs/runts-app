@@ -1,4 +1,4 @@
-import { parseRoute, isShowable, coverPath, buildPage, esc, clip, minutesLabel, DEFAULT_ICON } from '../../amplify/functions/share-preview/preview';
+import { pickScheme, parseRoute, isShowable, coverPath, buildPage, esc, clip, minutesLabel, DEFAULT_ICON } from '../../amplify/functions/share-preview/preview';
 
 const story = { id: 's1', title: 'The "Lantern" & Co', summary: 'A short <b>tale</b> of light.', authorId: 'a1', imageUri: 'stories/covers/s1.jpg', live: 'true', isErotic: 'false', duration: 1260 };
 
@@ -73,5 +73,19 @@ describe('buildPage', () => {
       expect(html).toContain(`content="${DEFAULT_ICON}"`);
       expect(html).toContain('og:title" content="Runts: short audio stories"');
     }
+  });
+});
+
+describe('pickScheme', () => {
+  it('accepts only the app schemes', () => {
+    expect(pickScheme('runts-dev')).toBe('runts-dev');
+    expect(pickScheme('runts-staging')).toBe('runts-staging');
+    expect(pickScheme('runts')).toBe('runts');
+  });
+  it('falls back for anything else', () => {
+    expect(pickScheme('javascript')).toBe('runts');
+    expect(pickScheme('https')).toBe('runts');
+    expect(pickScheme(undefined)).toBe('runts');
+    expect(pickScheme('x', 'runts-dev')).toBe('runts-dev');
   });
 });

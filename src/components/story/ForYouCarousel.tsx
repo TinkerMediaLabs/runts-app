@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Share } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -32,6 +32,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { shareStory } from '@/lib/shareStory';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -112,11 +113,7 @@ const CarouselItem = ({
     };
 
     const handleShare = async () => {
-    await Share.share({
-        message: `Check out "${title}" on Runts: https://tinkermedia.net/runts/story/${id}`,
-        url: `https://tinkermedia.net/runts/story/${id}`,
-        title: title ?? 'Runts',
-    });
+    await shareStory(id, title);
 };
 
     const expandStyle = useAnimatedStyle(() => ({

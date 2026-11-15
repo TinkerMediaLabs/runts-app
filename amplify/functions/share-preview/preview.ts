@@ -106,3 +106,10 @@ ${show && i.authorName ? `<div class="by">by ${esc(i.authorName)}</div>\n` : ''}
 </body>
 </html>`;
 }
+
+// The app address the "Open in Runts" button uses. Production links use runts; development and staging builds add
+// ?scheme=runts-dev (or runts-staging) to their share links so the button opens that build. Anything else falls back.
+const SCHEMES = ['runts', 'runts-dev', 'runts-staging'];
+export function pickScheme(requested: unknown, fallback: string = 'runts'): string {
+  return typeof requested === 'string' && SCHEMES.includes(requested) ? requested : fallback;
+}

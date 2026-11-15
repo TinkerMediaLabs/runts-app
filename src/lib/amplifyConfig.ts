@@ -10,6 +10,10 @@ console.log('[Amplify] env:', env); // ← add
 export let BACKEND_ID = 'unknown';
 // Where the player library posts progress while a story plays from the car with the app closed (Android).
 export let CAR_PROGRESS_URL = '';
+// This environment's share preview page (custom.sharePreviewUrl). Development and staging builds share it instead of the
+// tinkermedia.net link, because their stories do not exist in production. Production builds leave it empty.
+export let SHARE_PREVIEW_URL = '';
+export let APP_SCHEME = 'runts';
 
 try {
   let config;
@@ -24,9 +28,11 @@ try {
   console.log('[Amplify] user_pool_id:', config?.auth?.user_pool_id); // ← add
   BACKEND_ID = config?.data?.url ?? 'unknown';
   CAR_PROGRESS_URL = config?.custom?.carProgressUrl ?? '';
+  SHARE_PREVIEW_URL = env === 'production' ? '' : (config?.custom?.sharePreviewUrl ?? '');
   // Return from the browser sign-in to this build's own app scheme (runts, runts-dev or runts-staging).
   const scheme = Constants.expoConfig?.scheme;
   const appScheme = Array.isArray(scheme) ? scheme[0] : scheme;
+  if (appScheme) APP_SCHEME = appScheme;
   if (appScheme && config?.auth?.oauth) {
     config = {
       ...config,
