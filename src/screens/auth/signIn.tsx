@@ -21,6 +21,7 @@ import { signInWithGoogle as googleSignIn, signInWithApple as appleSignIn } from
 import { friendlyAppleError } from '../../lib/appleSignIn';
 import { signInWithRedirect } from 'aws-amplify/auth';
 import { colors } from '@/theme/colors';
+import { useApp } from '../../context/AppContext';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 
@@ -29,6 +30,7 @@ const { width, height } = Dimensions.get('window');
 const SignIn = ({ navigation }: any) => {
 
     const styles = useStyles();
+    const { continueAsGuest } = useApp();
 
     const [isErr, setIsErr] = useState(false);
     const [err, setErr] = useState('Error signing in.');
@@ -349,6 +351,27 @@ const SignIn = ({ navigation }: any) => {
                                     .
                                 </Text>
                             </View>
+
+                            <TouchableOpacity
+
+                                accessibilityRole="button"
+
+                                accessibilityLabel="Continue without signing in"
+
+                                onPress={() => { continueAsGuest(); }}
+
+                                style={{ alignSelf: 'center', marginTop: 26, paddingVertical: 8, paddingHorizontal: 12 }}
+
+                            >
+
+                                <Text style={[styles.paragraph, { color: colors.textSecondary, textDecorationLine: 'underline' }]}>
+
+                                    Continue without signing in
+
+                                </Text>
+
+                            </TouchableOpacity>
+
 
                             <View
                                 style={{

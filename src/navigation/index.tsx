@@ -59,7 +59,7 @@ const forFade = ({ current }: any) => ({
 const Stack = createStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
-  const { isAuthenticated, isLoading, isNewUser } = useApp();
+  const { isAuthenticated, isLoading, isNewUser, isGuest } = useApp();
 
   if (isLoading) {
     return (
@@ -102,6 +102,28 @@ function RootNavigator() {
         <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="EroticHome"      component={EroticHomeScreen} />
         <Stack.Screen name="ContentBlocked"  component={ContentBlocked}   />
+      </Stack.Navigator>
+    );
+  }
+
+  // Guest (browsing without an account): the browsing screens, plus the sign-in and sign-up screens a locked action leads to.
+  if (isGuest && !isAuthenticated) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Root" component={BottomTabNavigator} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="StoryScreen" component={StoryScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="TagHomeScreen" component={TagHomeScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AuthorDetails" component={AuthorDetailsScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="BrowseByTitle" component={BrowseByTitleScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AllSubgenres" component={AllSubgenresScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AboutScreen" component={AboutScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="SignIn" component={SignInScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="EmailSignIn" component={EmailSignIn} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ForgotPasswordCon" component={ForgotPasswordConScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ConfirmEmail" component={ConfirmEmailScreen} options={{ cardStyleInterpolator: forFade }} />
       </Stack.Navigator>
     );
   }

@@ -3,6 +3,7 @@ import {
     useContext,
     useState,
     useEffect,
+    useRef,
     ReactNode,
 } from 'react';
 import { getCurrentUser, signOut, signInWithRedirect } from 'aws-amplify/auth';
@@ -14,6 +15,8 @@ import { queryClient, queryPersister } from '../lib/queryClient';
 import { getProfilePicUrl } from '../services/auth';
 import { syncDownloads } from '../hooks/queries/useDownloads';
 import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setDataAccess } from '../lib/dataAccess';
 import {
     loadAllEroticSettings,
     saveEroticEnabled,
@@ -57,6 +60,9 @@ type AppContextType = {
     isAuthenticated: boolean;
     isLoading: boolean;
     isNewUser: boolean;
+    isGuest: boolean;               // browsing without an account
+    continueAsGuest: () => Promise<void>;
+    exitGuest: () => Promise<void>;
     isPremium: boolean;
     profile: UserProfile | null;
     setProfile: (profile: UserProfile | null) => void;
@@ -78,6 +84,8 @@ type AppContextType = {
     lockEroticSession: () => void;
     setEroticInPlaylist: (value: boolean) => Promise<void>;
 };
+
+const GUEST_KEY = 'runts_guest_v1';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -108,6 +116,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading,       setIsLoading]       = useState(true);
     const [isNewUser,       setIsNewUser]       = useState(false);
+    const [isGuest,         setIsGuest]         = useState(false);
+    const isGuestRef = useRef(false);   // read inside refreshAuth, which runs from long-lived listeners
     const [profile,         setProfile]         = useState<UserProfile | null>(null);
     const [isPremium, setIsPremium] = useState(false);
 
@@ -157,6 +167,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 if (r.error !== 'server_error') setEroticPinEnabledState(r.pinSet);
             });
 
+            // A guest who signs in leaves guest mode. Anything fetched as a guest is dropped, so nothing stale lingers.
+            if (isGuestRef.current) {
+                isGuestRef.current = false;
+                setIsGuest(false);
+                AsyncStorage.removeItem(GUEST_KEY).catch(() => {});
+                setDataAccess('user');
+                queryClient.clear();
+                queryPersister.removeClient();
+            }
             setUserId(user.userId);
             setIsAuthenticated(true);
             setIsNewUser(isNew);
@@ -182,9 +201,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setIsAuthenticated(false);
             setIsNewUser(false);
             setProfile(null);
+            // Not signed in: pick up where a guest left off.
+            try {
+                if ((await AsyncStorage.getItem(GUEST_KEY)) === 'true') {
+                    isGuestRef.current = true;
+                    setDataAccess('guest');
+                    setIsGuest(true);
+                }
+            } catch { /* no saved guest flag: show sign-in */ }
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const continueAsGuest = async () => {
+        isGuestRef.current = true;
+        setDataAccess('guest');
+        queryClient.clear();
+        setIsGuest(true);
+        AsyncStorage.setItem(GUEST_KEY, 'true').catch(() => {});
+    };
+
+    const exitGuest = async () => {
+        isGuestRef.current = false;
+        setIsGuest(false);
+        setDataAccess('user');
+        queryClient.clear();
+        AsyncStorage.removeItem(GUEST_KEY).catch(() => {});
     };
 
     const updateProfilePic = async (uri: string) => {
@@ -380,6 +423,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 isAuthenticated,
                 isLoading,
                 isNewUser,
+                isGuest,
+                continueAsGuest,
+                exitGuest,
                 isPremium,
                 profile,
                 setProfile,

@@ -127,6 +127,8 @@ const audioCdn = new cloudfront.Distribution(cdnStack, 'AudioCdn', {
 const audioLinksFn = backend.audioLinks.resources.lambda as lambda.Function;
 audioLinksFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
 audioLinksFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
+audioLinksFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+storyTable.grantReadData(audioLinksFn);   // guests: look up the stories they ask about
 
 // ── comment-write ─────────────────────────────────────────────────────────
 // The only writer of comments (postComment / editComment). Reads stories and users, and reads and writes comments.
