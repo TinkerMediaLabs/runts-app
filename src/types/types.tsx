@@ -24,6 +24,7 @@ export type RootStackParamList = {
     SearchScreen: undefined;
     Waiting: undefined;
     WelcomePref: undefined;
+    WelcomeTaste: { birthdate: string | null; genres: string[] };
     EroticHome: undefined;
     ContentBlocked: undefined;
   };

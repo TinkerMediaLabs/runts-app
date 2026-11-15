@@ -33,6 +33,7 @@ import ForgotPasswordScreen from '../screens/auth/forgotPassword';
 import ForgotPasswordConScreen from '../screens/auth/forgotPasswordConfirmation';
 import ConfirmEmailScreen from '../screens/auth/confirmEmail';
 import WelcomePreferencesScreen from '../screens/auth/welcomePreferences';
+import WelcomeTasteScreen from '../screens/auth/welcomeTaste';
 import Welcome from '../screens/auth/welcome';
 import WaitingScreen from '../screens/auth/waiting';
 import EroticHomeScreen from '../screens/erotic/EroticHomeScreen';
@@ -87,6 +88,7 @@ function RootNavigator() {
       <Stack.Navigator key="newUser" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Welcome" component={Welcome} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="WelcomePref" component={WelcomePreferencesScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="WelcomeTaste" component={WelcomeTasteScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="Root" component={BottomTabNavigator} options={{ cardStyleInterpolator: forFade }} />
       </Stack.Navigator>
     );
