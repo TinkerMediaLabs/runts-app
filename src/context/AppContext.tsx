@@ -3,6 +3,7 @@ import {
     useContext,
     useState,
     useEffect,
+    useRef,
     ReactNode,
 } from 'react';
 import { getCurrentUser, signOut, signInWithRedirect } from 'aws-amplify/auth';
@@ -14,6 +15,8 @@ import { queryClient, queryPersister } from '../lib/queryClient';
 import { getProfilePicUrl } from '../services/auth';
 import { syncDownloads } from '../hooks/queries/useDownloads';
 import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setDataAccess } from '../lib/dataAccess';
 import {
     loadAllEroticSettings,
     saveEroticEnabled,
@@ -57,6 +60,9 @@ type AppContextType = {
     isAuthenticated: boolean;
     isLoading: boolean;
     isNewUser: boolean;
+    isGuest: boolean;               // browsing without an account
+    continueAsGuest: () => Promise<void>;
+    exitGuest: () => Promise<void>;
     isPremium: boolean;
     profile: UserProfile | null;
     setProfile: (profile: UserProfile | null) => void;
@@ -78,6 +84,8 @@ type AppContextType = {
     lockEroticSession: () => void;
     setEroticInPlaylist: (value: boolean) => Promise<void>;
 };
+
+const GUEST_KEY = 'runts_guest_v1';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -108,6 +116,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading,       setIsLoading]       = useState(true);
     const [isNewUser,       setIsNewUser]       = useState(false);
+    const [isGuest,         setIsGuest]         = useState(false);
+    const isGuestRef = useRef(false);   // read inside refreshAuth, which runs from long-lived listeners
     const [profile,         setProfile]         = useState<UserProfile | null>(null);
     const [isPremium, setIsPremium] = useState(false);
 
@@ -133,6 +143,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         try {
             await new Promise(resolve => setTimeout(resolve, 100));
             const user   = await getCurrentUser();
+            // Signed in. Switch data calls back to the signed-in user NOW, before the account lookups below, which
+            // must run as the user. (The guest screens stay up until sign-in has fully succeeded, so nothing flashes.)
+            setDataAccess('user');
             const dbUser = await getOrCreateUser() as any;
             const isNew  = !dbUser?.onboardingComplete && !dbUser?.birthdate;
 
@@ -157,6 +170,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 if (r.error !== 'server_error') setEroticPinEnabledState(r.pinSet);
             });
 
+            // A guest who signed in leaves guest mode. Anything fetched as a guest is dropped, so nothing stale lingers.
+            if (isGuestRef.current) {
+                isGuestRef.current = false;
+                setIsGuest(false);
+                AsyncStorage.removeItem(GUEST_KEY).catch(() => {});
+                queryClient.clear();
+                queryPersister.removeClient();
+            }
             setUserId(user.userId);
             setIsAuthenticated(true);
             setIsNewUser(isNew);
@@ -182,9 +203,40 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setIsAuthenticated(false);
             setIsNewUser(false);
             setProfile(null);
+            // Not signed in: pick up where a guest left off.
+            try {
+                if ((await AsyncStorage.getItem(GUEST_KEY)) === 'true') {
+                    isGuestRef.current = true;
+                    setDataAccess('guest');
+                    setIsGuest(true);
+                }
+            } catch { /* no saved guest flag: show sign-in */ }
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const continueAsGuest = async () => {
+        console.log('[Guest] continue without signing in');
+        try {
+            isGuestRef.current = true;
+            setDataAccess('guest');
+            queryClient.clear();
+            setIsGuest(true);
+            AsyncStorage.setItem(GUEST_KEY, 'true').catch(() => {});
+        } catch (e) {
+            console.warn('[Guest] could not start guest mode:', e);
+            isGuestRef.current = false;
+            showChip("Couldn't start browsing as a guest. Please try again.", 'error');
+        }
+    };
+
+    const exitGuest = async () => {
+        isGuestRef.current = false;
+        setIsGuest(false);
+        setDataAccess('user');
+        queryClient.clear();
+        AsyncStorage.removeItem(GUEST_KEY).catch(() => {});
     };
 
     const updateProfilePic = async (uri: string) => {
@@ -380,6 +432,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 isAuthenticated,
                 isLoading,
                 isNewUser,
+                isGuest,
+                continueAsGuest,
+                exitGuest,
                 isPremium,
                 profile,
                 setProfile,
@@ -389,10 +444,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 refreshProfile,
                 // Erotic
                 isUnderAge,
-                eroticEnabled,
+                // Guests never see erotic content, whatever this phone had saved from an earlier account.
+                eroticEnabled: eroticEnabled && !isGuest,
                 eroticPinEnabled,
                 eroticUnlockedThisSession,
-                eroticInPlaylist,
+                eroticInPlaylist: eroticInPlaylist && !isGuest,
                 setEroticEnabled:       handleSetEroticEnabled,
                 setEroticPin:           handleSetEroticPin,
                 removeEroticPin:        handleRemoveEroticPin,

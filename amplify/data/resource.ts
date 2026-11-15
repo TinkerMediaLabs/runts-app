@@ -62,6 +62,7 @@ const schema = a.schema({
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -271,6 +272,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -288,6 +290,7 @@ Comment: a
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -310,6 +313,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -329,6 +333,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -411,6 +416,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -519,6 +525,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -536,6 +543,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -584,6 +592,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -603,6 +612,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -633,6 +643,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
@@ -667,6 +678,7 @@ Comment: a
     })
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['read']),
     ]),
 
@@ -703,6 +715,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['read']),
     ]),
 
@@ -726,6 +739,7 @@ Comment: a
     ])
     .authorization(allow => [
       allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
   incrementListenCount: a
@@ -778,9 +792,9 @@ Comment: a
   // Signed 7-day CDN links for story audio (see functions/audio-links). Returns JSON: { expiresAt, links: [{ path, url }] }.
   getAudioLinks: a
     .mutation()
-    .arguments({ paths: a.string().array().required() })
+    .arguments({ paths: a.string().array().required(), storyIds: a.string().array() })
     .returns(a.string())
-    .authorization(allow => [allow.authenticated()])
+    .authorization(allow => [allow.authenticated(), allow.guest()])
     .handler(a.handler.function(audioLinks)),
   // A 30-day "car pass" for the player library's own progress posts while the app is closed in a car (see functions/car-pass).
   getCarPass: a
@@ -803,6 +817,7 @@ Comment: a
 
 export type Schema = ClientSchema<typeof schema>;
 
+// Guests (not signed in) can read the public catalog only. Everything personal stays signed-in only.
 export const data = defineData({
   schema,
   authorizationModes: {

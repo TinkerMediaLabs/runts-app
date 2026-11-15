@@ -1,5 +1,6 @@
 import { Amplify } from 'aws-amplify';
 import Constants from 'expo-constants';
+import { registerBaseConfig } from './dataAccess';
 
 const env = Constants.expoConfig?.extra?.APP_ENV ?? 'development';
 console.log('[Amplify] env:', env); // ← add
@@ -40,6 +41,7 @@ try {
     };
   }
   Amplify.configure(config);
+  registerBaseConfig(config);
 } catch (e) {
   console.warn(`[Amplify] Could not load config for env: ${env}`, e);
 }

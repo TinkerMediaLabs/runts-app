@@ -10,6 +10,8 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTileList from '../../components/story/StoryTileList';
 import { useApp } from '@/context/AppContext';
+import BaseEmptyState from '@/components/common/EmptyState';
+import { askForAccount } from '@/lib/requireAccount';
 
 import FavoritesList from '../../components/story/FavoritesList';
 import BookmarkList from '../../components/story/BookmarkList';
@@ -44,7 +46,7 @@ const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subti
     </View>
 );
 
-const PlaylistScreen = () => {
+const SignedInPlaylist = () => {
     const reorderTipRef = useTipTarget('reorder-button');
 
     const { userId } = useApp();
@@ -290,5 +292,26 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 });
+
+// Guests have no playlist yet: invite them to make an account instead of showing an error.
+const GuestPlaylist = () => {
+    const insets = useSafeAreaInsets();
+    return (
+        <View style={{ flex: 1, paddingTop: insets.top + 20 }}>
+            <BaseEmptyState
+                icon={<FontAwesome5 name="bookmark" size={36} color={colors.textSecondary} iconStyle="solid" />}
+                title="Your playlist lives here"
+                body="Pin stories to listen later, keep your favorites, and pick up where you left off. A free account unlocks it."
+                actionLabel="Create a free account"
+                onAction={() => askForAccount('save stories to your playlist')}
+            />
+        </View>
+    );
+};
+
+const PlaylistScreen = () => {
+    const { isGuest } = useApp();
+    return isGuest ? <GuestPlaylist /> : <SignedInPlaylist />;
+};
 
 export default PlaylistScreen;

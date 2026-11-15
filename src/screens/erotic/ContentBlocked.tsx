@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import { useApp } from '@/context/AppContext';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
@@ -20,10 +21,13 @@ const { width } = Dimensions.get('window');
 const ContentBlocked = () => {
     const navigation = useNavigation<any>();
     const insets     = useSafeAreaInsets();
+    const { isGuest } = useApp();
 
     // The tab bar is the "Root" screen and the settings screen is "AppSettingsScreen" (the old names, "Main" and
     // "AppSettings", do not exist and left this screen stuck).
     const handleGoToSettings = () => {
+        // Guests have no settings: the way forward is an account.
+        if (isGuest) { navigation.navigate('SignUp'); return; }
         navigation.reset({
             index: 1,
             routes: [{ name: 'Root' }, { name: 'AppSettingsScreen' }],
@@ -64,8 +68,9 @@ const ContentBlocked = () => {
                 {/* Text */}
                 <Text style={styles.title}>Content Blocked</Text>
                 <Text style={styles.body}>
-                    This story contains erotic content. You can enable erotic
-                    stories in Settings to access this link.
+                    {isGuest
+                        ? 'This story contains erotic content, which is only available to signed-in adults.'
+                        : 'This story contains erotic content. You can enable erotic stories in Settings to access this link.'}
                 </Text>
 
                 {/* Actions */}
@@ -73,7 +78,7 @@ const ContentBlocked = () => {
                     activeOpacity={0.85}
                     onPress={handleGoToSettings}
                     accessibilityRole="button"
-                    accessibilityLabel="Open Settings"
+                    accessibilityLabel={isGuest ? 'Create an account' : 'Open Settings'}
                     style={styles.primaryButton}
                 >
                     <LinearGradient
@@ -83,13 +88,13 @@ const ContentBlocked = () => {
                         style={styles.primaryButtonGradient}
                     >
                         <FontAwesome5
-                            name={'cog' as any}
+                            name={(isGuest ? 'user-plus' : 'cog') as any}
                             size={iconSize.sm}
                             color={colors.textPrimary}
                             iconStyle="solid"
                             style={{ marginRight: 8 }}
                         />
-                        <Text style={styles.primaryButtonText}>Open Settings</Text>
+                        <Text style={styles.primaryButtonText}>{isGuest ? 'Create an account' : 'Open Settings'}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
 

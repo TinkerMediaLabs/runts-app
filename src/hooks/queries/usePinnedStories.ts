@@ -2,6 +2,8 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
+import { askForAccount } from '../../lib/requireAccount';
 import { getOfflineEnabled } from '../../lib/offlineStorage';
 import { downloadStory, deleteDownload } from './useDownloads';
 import { useApp } from '@/context/AppContext';
@@ -15,8 +17,10 @@ const PINS_PAGE_SIZE = 30;
 // page to apply the erotic filters. The list screen loads more on scroll.
 export function usePinnedStories() {
     const { eroticEnabled, eroticInPlaylist } = useApp();
+    const guest = useIsGuest();
 
     return useInfiniteQuery({
+        enabled: !guest,
         queryKey: ['pinnedStories', eroticEnabled, eroticInPlaylist],
         queryFn: async ({ pageParam }: { pageParam: string | null }) => {
             const client = generateClient<Schema>();
@@ -46,13 +50,14 @@ export function usePinnedStories() {
 
 // ─── Is THIS story pinned? One index lookup, cached per story ─────────────
 export function useIsPinned(storyId: string) {
+  const guest = useIsGuest();
   return useQuery({
     queryKey: ['isPinned', storyId],
     queryFn: async () => {
       const { userId } = await getCurrentUser();
       return (await findPinned(userId, storyId)).length > 0;
     },
-    enabled: !!storyId,
+    enabled: !!storyId && !guest,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -172,9 +177,12 @@ export function useUnpinStory() {
 export function useTogglePin() {
   const pinStory   = usePinStory();
   const unpinStory = useUnpinStory();
+  const guest = useIsGuest();
 
   return {
     toggle: (storyId: string, isPinned: boolean) => {
+      // Guests have no playlist: ask them to make an account instead of failing after the icon changes.
+      if (guest) { askForAccount('pin stories to your playlist'); return; }
       if (isPinned) {
         unpinStory.mutate(storyId);
       } else {

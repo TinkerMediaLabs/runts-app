@@ -2,6 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 
@@ -29,6 +30,7 @@ const FAVORITES_PAGE_SIZE = 20;
 // that page. Scales to any number of rated stories; the list loads more as you scroll.
 export function useFavoritedStories(threshold: number) {
     const { eroticEnabled } = useApp();
+    const guest = useIsGuest();
 
     return useInfiniteQuery({
         queryKey: ['favoritedStories', threshold, eroticEnabled],
@@ -56,7 +58,7 @@ export function useFavoritedStories(threshold: number) {
         },
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.nextToken,
-        enabled: threshold > 0,
+        enabled: threshold > 0 && !guest,
         staleTime: 1000 * 60 * 2,
     });
 }

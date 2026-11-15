@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ColorSchemeName } from 'react-native';
@@ -59,11 +60,22 @@ const forFade = ({ current }: any) => ({
 const Stack = createStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
-  const { isAuthenticated, isLoading, isNewUser } = useApp();
+  const { isAuthenticated, isLoading, isNewUser, isGuest } = useApp();
+
+  // Starting guest mode begins at Home. The guest stack includes the Sign In screen (a locked action leads there),
+  // so without this the navigator would keep the Sign In route the person tapped "Continue without signing in" on.
+  const inGuestMode = isGuest && !isAuthenticated;
+  const wasInGuestMode = useRef(false);
+  useEffect(() => {
+    if (inGuestMode && !wasInGuestMode.current) {
+      navigationRef.current?.resetRoot({ index: 0, routes: [{ name: 'Root' }] });
+    }
+    wasInGuestMode.current = inGuestMode;
+  }, [inGuestMode]);
 
   if (isLoading) {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator key="loading" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Waiting" component={WaitingScreen} />
       </Stack.Navigator>
     );
@@ -72,7 +84,7 @@ function RootNavigator() {
   // Authenticated new user → onboarding flow
   if (isAuthenticated && isNewUser) {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator key="newUser" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Welcome" component={Welcome} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="WelcomePref" component={WelcomePreferencesScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="Root" component={BottomTabNavigator} options={{ cardStyleInterpolator: forFade }} />
@@ -83,7 +95,7 @@ function RootNavigator() {
   // Authenticated returning user → home
   if (isAuthenticated && !isNewUser) {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator key="authed" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Root" component={BottomTabNavigator} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="StoryScreen" component={StoryScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="UserScreen" component={UserScreen} options={{ cardStyleInterpolator: forFade }} />
@@ -106,9 +118,32 @@ function RootNavigator() {
     );
   }
 
+  // Guest (browsing without an account): the browsing screens, plus the sign-in and sign-up screens a locked action leads to.
+  if (isGuest && !isAuthenticated) {
+    return (
+      <Stack.Navigator key="guest" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Root" component={BottomTabNavigator} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="StoryScreen" component={StoryScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="TagHomeScreen" component={TagHomeScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AuthorDetails" component={AuthorDetailsScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="BrowseByTitle" component={BrowseByTitleScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AllSubgenres" component={AllSubgenresScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="AboutScreen" component={AboutScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ContentBlocked" component={ContentBlocked} />
+        <Stack.Screen name="SignIn" component={SignInScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="EmailSignIn" component={EmailSignIn} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ForgotPasswordCon" component={ForgotPasswordConScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="ConfirmEmail" component={ConfirmEmailScreen} options={{ cardStyleInterpolator: forFade }} />
+      </Stack.Navigator>
+    );
+  }
+
   // Not authenticated → auth flow
   return (
-    <Stack.Navigator
+    <Stack.Navigator key="auth"
       screenOptions={{ headerShown: false }}
       initialRouteName="SignIn"
     >

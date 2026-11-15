@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 
 import HorizontalList from './HorizontalList';
@@ -17,7 +18,9 @@ const MIN_ITEMS = 3;
 
 // The listener's most recently finished story: ONE row from the finished-by-date index, newest first.
 function useLatestFinishedStoryId() {
+    const guest = useIsGuest();
     return useQuery({
+        enabled: !guest,
         queryKey: ['finishedStories', 'latest'],
         queryFn: async () => {
             const client = generateClient<Schema>();

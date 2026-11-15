@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 import { fetchAllPages } from '../../lib/paginate';
 import { Analytics } from '@/lib/analytics';
@@ -12,6 +13,7 @@ const PAGE_SIZE = 20;
 
 // ── Check if following a specific author ──────────────────────────────────
 export function useIsFollowing(authorId: string) {
+  const guest = useIsGuest();
   return useQuery({
     queryKey: ['isFollowing', authorId],
     queryFn: async () => {
@@ -24,7 +26,7 @@ export function useIsFollowing(authorId: string) {
       );
       return { isFollowing: !!data?.length, recordId: data?.[0]?.id ?? null };
     },
-    enabled: !!authorId,
+    enabled: !!authorId && !guest,
     staleTime: 1000 * 30,
   });
 }
@@ -33,7 +35,9 @@ export function useIsFollowing(authorId: string) {
 // Reads the aggregate User.followedAuthorCount (kept by follow-count-aggregator) - one get,
 // no matter how many authors the user follows.
 export function useFollowingCount() {
+  const guest = useIsGuest();
   return useQuery({
+    enabled: !guest,
     queryKey: ['followingCount'],
     queryFn: async () => {
       const client = generateClient<Schema>();

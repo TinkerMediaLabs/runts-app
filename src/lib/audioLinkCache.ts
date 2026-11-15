@@ -5,9 +5,11 @@ export const SAFETY_MARGIN_MS = 24 * 60 * 60 * 1000; // treat a link as expired 
 const BATCH = 50;                                      // the backend allows at most 50 per request
 
 export type FetchedLinks = { expiresAt: string; links: { path: string; url: string }[] };
+// Extra context for a request. Guests (not signed in) must name the stories they want audio for.
+export type LinkContext = { storyIds?: string[] };
 
 export function createAudioLinkCache(deps: {
-  fetchLinks: (paths: string[]) => Promise<FetchedLinks>;
+  fetchLinks: (paths: string[], context?: LinkContext) => Promise<FetchedLinks>;
   now?: () => number;
 }) {
   const now = deps.now ?? (() => Date.now());
@@ -19,14 +21,14 @@ export function createAudioLinkCache(deps: {
     return hit && hit.expiresAt - SAFETY_MARGIN_MS > now() ? hit.url : null;
   };
 
-  async function load(paths: string[]) {
-    const out = await deps.fetchLinks(paths);
+  async function load(paths: string[], context?: LinkContext) {
+    const out = await deps.fetchLinks(paths, context);
     const expiresAt = new Date(out.expiresAt).getTime();
     for (const l of out.links) cache.set(l.path, { url: l.url, expiresAt });
   }
 
   /** Links for many stories at once. Paths that could not be signed are simply missing from the result. */
-  async function getMany(paths: string[]): Promise<Record<string, string>> {
+  async function getMany(paths: string[], context?: LinkContext): Promise<Record<string, string>> {
     const need = [...new Set(paths)].filter(p => !fresh(p));
     const batches: string[][] = [];
     for (let i = 0; i < need.length; i += BATCH) batches.push(need.slice(i, i + BATCH));
@@ -34,7 +36,7 @@ export function createAudioLinkCache(deps: {
       const key = b.join('|');
       let p = inFlight.get(key);
       if (!p) {
-        p = load(b).finally(() => inFlight.delete(key));
+        p = load(b, context).finally(() => inFlight.delete(key));
         inFlight.set(key, p);
       }
       return p;
@@ -47,8 +49,8 @@ export function createAudioLinkCache(deps: {
     return result;
   }
 
-  async function getOne(path: string): Promise<string | null> {
-    return (await getMany([path]))[path] ?? null;
+  async function getOne(path: string, context?: LinkContext): Promise<string | null> {
+    return (await getMany([path], context))[path] ?? null;
   }
 
   return { getMany, getOne, forget: (path: string) => { cache.delete(path); }, clear: () => cache.clear() };

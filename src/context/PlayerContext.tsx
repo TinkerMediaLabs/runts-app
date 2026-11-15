@@ -19,6 +19,8 @@ import { withTimeout } from '@/lib/withTimeout';
 import { storyIdFromMediaId } from '@/features/audio/carBrowseTree';
 import { endedNaturally } from '@/lib/carPlayback';
 import { stopPreview } from '@/features/audio/preview';
+import { getDataAccess } from '../lib/dataAccess';
+import { askForAccount } from '../lib/requireAccount';
 
 const client = generateClient<Schema>();
 
@@ -255,6 +257,8 @@ export const PlayerProvider = ({ children }: any) => {
 
     // ── Play ──────────────────────────────────────────────────────────────────
     const playTrack = async (track: Track) => {
+        // Guests cannot play full stories (every normal entry point asks first; this is the backstop).
+        if (getDataAccess() === 'guest') { askForAccount('listen to the full story'); return; }
         stopPreview();   // a story preview and the main player never play together
         setKeepGoingStoryId(null);
         setState(prev => ({ ...prev, playError: null }));

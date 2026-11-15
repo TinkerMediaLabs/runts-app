@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 import { useApp } from '@/context/AppContext';
 import { Analytics } from '@/lib/analytics';
@@ -18,8 +19,10 @@ const PAGE_SIZE = 20;
 
 export function useBookmarks() {
     const { eroticEnabled } = useApp();
+    const guest = useIsGuest();
 
     return useInfiniteQuery({
+        enabled: !guest,
         queryKey: ['bookmarks', eroticEnabled],
         queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       const client = generateClient<Schema>();

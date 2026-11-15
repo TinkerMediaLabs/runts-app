@@ -36,6 +36,7 @@ import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sns from 'aws-cdk-lib/aws-sns';
+import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
 import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
@@ -127,6 +128,19 @@ const audioCdn = new cloudfront.Distribution(cdnStack, 'AudioCdn', {
 const audioLinksFn = backend.audioLinks.resources.lambda as lambda.Function;
 audioLinksFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
 audioLinksFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
+audioLinksFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+audioLinksFn.addEnvironment('TAG_TABLE_NAME', backend.data.resources.tables['Tag'].tableName);
+backend.data.resources.tables['Tag'].grantReadData(audioLinksFn);
+// Reading an index needs its own permission, which the table grant above does not include for these tables.
+// Guests: the erotic-story index and the erotic half of the tag name index (see audio-links/handler.ts).
+audioLinksFn.addToRolePolicy(new iam.PolicyStatement({
+  actions: ['dynamodb:Query'],
+  resources: [
+    `${storyTable.tableArn}/index/byEroticAndPublishedAt`,
+    `${backend.data.resources.tables['Tag'].tableArn}/index/byName`,
+  ],
+}));
+storyTable.grantReadData(audioLinksFn);   // guests: look up the stories they ask about
 
 // ── comment-write ─────────────────────────────────────────────────────────
 // The only writer of comments (postComment / editComment). Reads stories and users, and reads and writes comments.
@@ -557,3 +571,47 @@ backend.applePreSignUp.resources.lambda.addToRolePolicy(new iam.PolicyStatement(
 // Account deletion reads the stored Apple token and revokes it.
 backend.deleteAccount.addEnvironment('APPLE_TABLE_NAME', appleTable.tableName);
 appleTable.grantReadWriteData(backend.deleteAccount.resources.lambda);
+
+// ── API rate limit (AWS WAF in front of the data API) ─────────────────────────
+// Guests browse without an account, so the API accepts anonymous (IAM-signed) requests. A rate limit per IP address
+// keeps one visitor from hammering it. Two rules, each counted over 5 minutes per IP address:
+//   GuestRateLimit   - requests signed the way guests sign them (AWS4-HMAC-SHA256); signed-in users send a login
+//                      token instead, so this rule never touches them.
+//   GeneralRateLimit - everything, a looser backstop.
+// A normal screen makes a few dozen calls, so these limits are far above real use; many people behind one shared
+// address (an office, a mobile carrier) still fit. Blocked callers get a 403 until their rate drops.
+// Counting metrics appear in CloudWatch as runts-api-guest-rate and runts-api-general-rate.
+const firewallStack = backend.createStack('ApiFirewall');
+const rateRule = (name: string, priority: number, limit: number, guestsOnly: boolean): wafv2.CfnWebACL.RuleProperty => ({
+  name,
+  priority,
+  action: { block: {} },
+  statement: {
+    rateBasedStatement: {
+      limit,
+      aggregateKeyType: 'IP',
+      evaluationWindowSec: 300,
+      ...(guestsOnly ? {
+        scopeDownStatement: {
+          byteMatchStatement: {
+            searchString: 'AWS4-HMAC-SHA256',
+            fieldToMatch: { singleHeader: { name: 'authorization' } },
+            textTransformations: [{ priority: 0, type: 'NONE' }],
+            positionalConstraint: 'STARTS_WITH',
+          },
+        },
+      } : {}),
+    },
+  },
+  visibilityConfig: { cloudWatchMetricsEnabled: true, sampledRequestsEnabled: true, metricName: guestsOnly ? 'runts-api-guest-rate' : 'runts-api-general-rate' },
+});
+const apiWebAcl = new wafv2.CfnWebACL(firewallStack, 'ApiWebAcl', {
+  scope: 'REGIONAL',
+  defaultAction: { allow: {} },
+  visibilityConfig: { cloudWatchMetricsEnabled: true, sampledRequestsEnabled: true, metricName: 'runts-api-acl' },
+  rules: [rateRule('GuestRateLimit', 0, 1500, true), rateRule('GeneralRateLimit', 1, 6000, false)],
+});
+new wafv2.CfnWebACLAssociation(firewallStack, 'ApiWebAclAssociation', {
+  resourceArn: backend.data.resources.cfnResources.cfnGraphqlApi.attrArn,
+  webAclArn: apiWebAcl.attrArn,
+});

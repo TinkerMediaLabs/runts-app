@@ -2,11 +2,14 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import { findFinished } from '../../lib/userStoryLookups';
 
 // Index byUserAndFinishedAt, newest first, 20 per page (History screen loads more on scroll).
 export function useFinishedStories() {
+  const guest = useIsGuest();
   return useInfiniteQuery({
+    enabled: !guest,
     queryKey: ['finishedStories', 'paged'],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const client = generateClient<Schema>();
