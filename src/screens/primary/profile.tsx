@@ -204,8 +204,8 @@ const ProfileScreen = ({ navigation }: any) => {
         {
             id: '3b',
             icon: 'tags',
-            title: 'Your Genres',
-            description: 'Choose what shows up in For You',
+            title: 'Your Taste',
+            description: 'Genres, moods and lengths for For You',
             onPress: () => navigation.navigate('EditGenresScreen'),
         },
         {

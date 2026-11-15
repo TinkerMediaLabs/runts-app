@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import TrackPlayerWidget from '@/features/audio/TrackPlayer';
@@ -6,6 +6,7 @@ import ActionChip from '@/components/common/ActionChip';
 import KeepGoingSheet from '@/components/story/KeepGoingSheet';
 import OfflineBanner from '@/components/common/OfflineBanner';
 import GuestSheet from '@/components/common/GuestSheet';
+import DailyMoodSheet from '@/components/taste/DailyMoodSheet';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
 import { usePlayer } from '@/context/PlayerContext';
@@ -30,7 +31,8 @@ export default function AppShell({ children }: any) {
     setTipsFlag('playerExpanded', !!expanded && !!state.currentTrack);
   }, [expanded, state.currentTrack]);
   // Never show a tip over a rating popup or the Keep going sheet.
-  const tipsBlocked = !!state.pendingRatingStoryId || !!keepGoingStoryId;
+  const [moodSheetOpen, setMoodSheetOpen] = useState(false);
+  const tipsBlocked = !!state.pendingRatingStoryId || !!keepGoingStoryId || moodSheetOpen;
 
   return (
     <View style={{ flex: 1 }}>
@@ -41,6 +43,7 @@ export default function AppShell({ children }: any) {
       <OfflineBanner />
       <ActionChip />
       <GuestSheet />
+      <DailyMoodSheet onOpenChange={setMoodSheetOpen} />
     </View>
   );
 }

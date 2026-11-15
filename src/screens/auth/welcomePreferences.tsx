@@ -13,12 +13,6 @@ import Button from '@/components/common/Button';
 import GenreChip from '../../components/common/GenreChip';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 
-import { getCurrentUser } from 'aws-amplify/auth';
-import { generateClient } from 'aws-amplify/data';
-import type { Schema } from '../../../amplify/data/resource';
-import { useApp } from '../../context/AppContext';
-import { unwrap } from '@/lib/amplifyResult';
-import { Analytics } from '@/lib/analytics';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
@@ -30,13 +24,11 @@ import { iconSize } from '@/theme/tokens';
 const WelcomePreferences = ({ navigation, route }: any) => {
 
     const insets     = useSafeAreaInsets();
-    const { refreshAuth } = useApp();
 
     const { data: allTags = [], isLoading } = usePrimaryTags();
     const genres = allTags.filter((t: any) => !t.isErotic);
 
     const [selected, setSelected] = useState<string[]>([]);
-    const [saving,   setSaving]   = useState(false);
 
     const toggleGenre = (id: string) => {
         if (selected.includes(id)) {
@@ -46,27 +38,10 @@ const WelcomePreferences = ({ navigation, route }: any) => {
         }
     };
 
-    const handleContinue = async () => {
+    // The account is saved at the end of the taste steps; this screen just passes the genres along.
+    const handleContinue = () => {
         if (selected.length !== 3) return;
-        setSaving(true);
-        try {
-            const client = generateClient<Schema>();
-            const { userId } = await getCurrentUser();
-            const birthdate = route?.params?.birthdate ?? null;
-
-            unwrap(await client.models.User.update({
-                id: userId,
-                birthdate,
-                onboardingComplete: true,
-                preferredTagIds: selected,
-            }), 'Save your preferences');
-
-            Analytics.onboardingCompleted();
-            await refreshAuth();
-        } catch (e: any) {
-            console.error('WelcomePreferences error:', e?.message ?? e);
-            setSaving(false);
-        }
+        navigation.navigate('WelcomeTaste', { birthdate: route?.params?.birthdate ?? null, genres: selected });
     };
 
     const canContinue = selected.length === 3;
@@ -136,7 +111,6 @@ const WelcomePreferences = ({ navigation, route }: any) => {
 
                     <Button
                         label="Continue"
-                        loading={saving}
                         disabled={!canContinue}
                         onPress={handleContinue}
                         icon={<FontAwesome5 name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} iconStyle="solid" />}

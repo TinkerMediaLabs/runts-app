@@ -50,6 +50,9 @@ type UserProfile = {
     birthdate?: string | null;
     onboardingComplete?: boolean | null;
     preferredTagIds?: string[] | null;
+    preferredMoodTagIds?: string[] | null;
+    preferredLengths?: string[] | null;
+    tasteVersion?: number | null;
     totalListenSeconds?: number | null;
     totalStoriesFinished?: number | null;
 };
@@ -139,10 +142,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // ── Auth functions ────────────────────────────────────────────────────────
 
-    const refreshAuth = async () => {
+    const refreshAuth = async (retried = false): Promise<void> => {
+        let signedInOk = false;
         try {
             await new Promise(resolve => setTimeout(resolve, 100));
             const user   = await getCurrentUser();
+            signedInOk = true;
             // Signed in. Switch data calls back to the signed-in user NOW, before the account lookups below, which
             // must run as the user. (The guest screens stay up until sign-in has fully succeeded, so nothing flashes.)
             setDataAccess('user');
@@ -190,6 +195,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 birthdate:            dbUser?.birthdate,
                 onboardingComplete:   dbUser?.onboardingComplete,
                 preferredTagIds:      (dbUser?.preferredTagIds ?? []).filter(Boolean),
+                preferredMoodTagIds:  (dbUser?.preferredMoodTagIds ?? []).filter(Boolean),
+                preferredLengths:     (dbUser?.preferredLengths ?? []).filter(Boolean),
+                tasteVersion:         dbUser?.tasteVersion ?? null,
                 totalListenSeconds:   dbUser?.totalListenSeconds,
                 totalStoriesFinished: dbUser?.totalStoriesFinished,
             });
@@ -198,7 +206,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             Notifications.registerToken(user.userId);
             const premiumStatus = await PurchasesService.isPremium();
             setIsPremium(premiumStatus);
-        } catch (err) {
+        } catch (err: any) {
+            // Normal when nobody is signed in; anything else here is why a fresh sign-in would look signed out.
+            console.warn('[Auth] refreshAuth ended signed out:', err?.name ?? '', err?.message ?? err);
+            // Signed in but a later step failed (a fresh account's first lookups can race the new session): try once
+            // more instead of dropping a real sign-in back to guest browsing.
+            if (signedInOk && !retried) {
+                await new Promise(resolve => setTimeout(resolve, 800));
+                return refreshAuth(true);
+            }
             setUserId(null);
             setIsAuthenticated(false);
             setIsNewUser(false);

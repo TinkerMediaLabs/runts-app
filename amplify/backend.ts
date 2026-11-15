@@ -22,6 +22,7 @@ import { audioLinks } from './functions/audio-links/resource';
 import { commentWrite } from './functions/comment-write/resource';
 import { carProgress } from './functions/car-progress/resource';
 import { carPass } from './functions/car-pass/resource';
+import { sharePreview } from './functions/share-preview/resource';
 import { appleVerifyChallenge } from './functions/apple-auth/verify-challenge/resource';
 import { applePreSignUp } from './functions/apple-auth/pre-signup/resource';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -62,6 +63,7 @@ const backend = defineBackend({
   dataHealth,
   deleteAccount,
   audioLinks,
+  sharePreview,
   commentWrite,
   carProgress,
   carPass,
@@ -141,6 +143,20 @@ audioLinksFn.addToRolePolicy(new iam.PolicyStatement({
   ],
 }));
 storyTable.grantReadData(audioLinksFn);   // guests: look up the stories they ask about
+
+// ── share-preview ─────────────────────────────────────────────────────────
+// The public page behind a shared story link: title, author and cover as link-preview tags, plus "Open in Runts".
+// The website forwards tinkermedia.net/runts/story/* to this address (published as custom.sharePreviewUrl). It reads
+// only live, non-erotic stories (see share-preview/preview.ts) and signs a short-lived cover link with the audio CDN key.
+const sharePreviewFn = backend.sharePreview.resources.lambda as lambda.Function;
+sharePreviewFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
+sharePreviewFn.addEnvironment('AUTHOR_TABLE_NAME', backend.data.resources.tables['Author'].tableName);
+sharePreviewFn.addEnvironment('AUDIO_CDN_DOMAIN', audioCdn.distributionDomainName);
+sharePreviewFn.addEnvironment('AUDIO_KEY_PAIR_ID', audioPublicKey.publicKeyId);
+storyTable.grantReadData(sharePreviewFn);
+backend.data.resources.tables['Author'].grantReadData(sharePreviewFn);
+const sharePreviewUrl = sharePreviewFn.addFunctionUrl({ authType: lambda.FunctionUrlAuthType.NONE });
+backend.addOutput({ custom: { sharePreviewUrl: sharePreviewUrl.url } });
 
 // ── comment-write ─────────────────────────────────────────────────────────
 // The only writer of comments (postComment / editComment). Reads stories and users, and reads and writes comments.

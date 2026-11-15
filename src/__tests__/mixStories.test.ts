@@ -30,3 +30,45 @@ describe('mixRoundRobin', () => {
     expect(out.map(s => s.id)).toEqual(['b1', 'b2']);
   });
 });
+
+import { mixWithReasons, reasonText } from '../lib/mixStories';
+
+describe('mixWithReasons', () => {
+  const s = (id: string) => ({ id, title: id });
+  it('labels each story with the list it came from', () => {
+    const out = mixWithReasons([
+      { reason: { kind: 'picked', tagId: 't1' }, stories: [s('a')] },
+      { reason: { kind: 'new' }, stories: [s('b')] },
+    ], 10);
+    expect(out.map(x => [x.id, x.reason.kind])).toEqual([['a', 'picked'], ['b', 'new']]);
+  });
+  it('shows the strongest reason when a story is in several lists', () => {
+    const out = mixWithReasons([
+      { reason: { kind: 'new' }, stories: [s('a')] },
+      { reason: { kind: 'trending' }, stories: [s('a')] },
+      { reason: { kind: 'learned', tagId: 'x' }, stories: [s('a')] },
+      { reason: { kind: 'picked', tagId: 'y' }, stories: [s('a')] },
+    ], 10);
+    expect(out).toHaveLength(1);
+    expect(out[0].reason).toEqual({ kind: 'picked', tagId: 'y' });
+  });
+  it('keeps the exclusions and limit of the plain mix', () => {
+    const out = mixWithReasons([{ reason: { kind: 'new' }, stories: [s('a'), s('b'), s('c')] }], 2, new Set(['a']));
+    expect(out.map(x => x.id)).toEqual(['b', 'c']);
+  });
+});
+
+describe('reasonText', () => {
+  it('words each reason', () => {
+    expect(reasonText({ kind: 'picked', tagId: 't' }, 'Mystery')).toBe('Because you like Mystery');
+    expect(reasonText({ kind: 'learned', tagId: 't' }, 'Horror')).toBe('Because you listen to Horror');
+    expect(reasonText({ kind: 'mood', tagId: 't' }, 'Dark and scary')).toBe('Matches Dark and scary');
+    expect(reasonText({ kind: 'trending' })).toBe('Trending this week');
+    expect(reasonText({ kind: 'new' }, undefined, true)).toBe('New this week');
+    expect(reasonText({ kind: 'new' }, undefined, false)).toBe('Recently added');
+  });
+  it('says nothing when the genre name is missing or there is no reason', () => {
+    expect(reasonText({ kind: 'picked', tagId: 't' })).toBe('');
+    expect(reasonText(undefined)).toBe('');
+  });
+});

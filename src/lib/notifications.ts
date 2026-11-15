@@ -15,6 +15,7 @@ import { Platform } from 'react-native';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 import { navigate } from '../navigation/RootNavigator';
+import { markOpenedFromOutside } from './launchContext';
 
 // ---------------------------------------------------------------------------
 // Notification handler — show alerts when app is in foreground
@@ -44,6 +45,7 @@ function addNotificationTapListener(): void {
         const storyId = data?.storyId as string | undefined;
 
         if (storyId) {
+            markOpenedFromOutside();
             navigate('StoryScreen', { storyID: storyId, source: 'notification' });
         }
     });
@@ -54,6 +56,7 @@ async function checkColdStartNotification(): Promise<void> {
     const storyId = response?.notification.request.content.data?.storyId as string | undefined;
 
     if (storyId) {
+        markOpenedFromOutside();
         navigate('StoryScreen', { storyID: storyId, source: 'notification' });
     }
 }

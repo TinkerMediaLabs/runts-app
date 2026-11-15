@@ -18,11 +18,18 @@ import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
 import { useStories } from '../../hooks/queries/useStories';
 import { useStoriesByIds } from '../../hooks/queries/useStoriesByIds';
 import { useTasteProfile } from '../../hooks/queries/useTasteProfile';
+import { usePickedForToday } from '../../hooks/queries/usePickedForToday';
+import { usePickerMoods, usePickerLengths } from '../../hooks/queries/usePickerOptions';
+import { useTodayChoice, openMoodSheet } from '../../lib/todayChoice';
+import { pickedTitle, describeChoice, isEmptyChoice } from '../../lib/moodPicks';
 import { useTrendingSection } from '../../hooks/queries/useTrending';
 import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
+import { useTagNames } from '../../hooks/queries/useTagNames';
+import { reasonText } from '../../lib/mixStories';
+import { isRecentlyPublished } from '../../lib/storyDisplay';
 import { Analytics } from '../../lib/analytics';
 import { StorySourceContext } from '../../hooks/useStorySource';
 import type { HomeSectionRow } from '../../lib/homeLayout';
@@ -69,7 +76,13 @@ const ForYouSection = ({ section, index }: Props) => {
     listenedIds: tasteData?.listenedIds ?? [],
     ready: !tasteLoading,
   });
-  const { stories, tagMap } = useEnrichedStories(data);
+  const { stories: enriched, tagMap } = useEnrichedStories(data);
+  // The one-line reason on each card ("Because you like Mystery"). Names come from the same cached tag lookups.
+  const { data: reasonNames = {} } = useTagNames(enriched.map((s: any) => s.reason?.tagId));
+  const stories = useMemo(() => enriched.map((s: any) => ({
+    ...s,
+    reasonLabel: reasonText(s.reason, s.reason?.tagId ? (reasonNames as any)[s.reason.tagId] : undefined, isRecentlyPublished(s.publishedAt)),
+  })), [enriched, reasonNames]);
   useSettleWhen(!isPending);
   if (stories.length === 0) return null;
   return (
@@ -155,6 +168,50 @@ export const FeaturedAuthorSection = ({ section, index }: Props) => {
   );
 };
 
+// Today's mood choice as a row of stories. Shows nothing until a choice has been made today.
+const PickedTodaySection = ({ section, index }: Props) => {
+  const { profile } = useApp();
+  const { choice: stored, loaded } = useTodayChoice();
+  // While the daily sheet is not built yet, a development build tests this row with the taste saved on "Your taste".
+  const choice = useMemo(() => {
+    if (stored) return stored;
+    if (!__DEV__) return null;
+    const moodIds = profile?.preferredMoodTagIds ?? [];
+    const lengthKeys = profile?.preferredLengths ?? [];
+    return moodIds.length || lengthKeys.length ? { moodIds, genreIds: [], lengthKeys } : null;
+  }, [stored, profile?.preferredMoodTagIds, profile?.preferredLengths]);
+  const { data: moods } = usePickerMoods();
+  const { data: lengths, isLoading: lengthsLoading } = usePickerLengths();
+  const { data: tasteData, isLoading: tasteLoading } = useTasteProfile(profile?.preferredTagIds ?? []);
+  const { data, isPending } = usePickedForToday(choice, lengths ?? [], tasteData?.listenedIds ?? [], section.limit ?? 10, !tasteLoading && !lengthsLoading);
+  const { data: genres } = usePrimaryTags();
+  useSettleWhen(loaded && (!choice || isEmptyChoice(choice) || !isPending));
+  if (!choice) return null;
+  const skipped = isEmptyChoice(choice);
+  const names = (moods ?? []).filter((m: any) => choice.moodIds.includes(m.id)).map((m: any) => m.name);
+  const summary = skipped ? '' : describeChoice(choice, moods ?? [], genres ?? [], lengths ?? []);
+  const hasStories = !!data && data.stories.length > 0;
+  return (
+    <>
+      <Reveal index={index}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={openMoodSheet}
+          style={styles.todayChip}
+          accessibilityRole="button"
+          accessibilityLabel={skipped ? "Pick today's mood" : `Today: ${summary}. Change`}
+        >
+          <Text style={styles.todayText} numberOfLines={1}>
+            {skipped ? "What are you in the mood for today?" : `Today: ${summary}`}
+          </Text>
+          <Text style={styles.todayChange}>{skipped ? 'Choose' : 'Change'}</Text>
+        </TouchableOpacity>
+      </Reveal>
+      {hasStories && <StoryRow title={section.title || pickedTitle(data!.level, names)} stories={data!.stories} index={index} />}
+    </>
+  );
+};
+
 const SectionContent = ({ section, index }: Props) => {
   const reveal = Math.min(index + 1, 6);
   switch (section.type) {
@@ -170,6 +227,7 @@ const SectionContent = ({ section, index }: Props) => {
     case 'featuredAuthor':    return <FeaturedAuthorSection section={section} index={reveal} />;
     case 'handPicked':        return <HandPickedSection section={section} index={reveal} />;
     case 'trending':          return <TrendingSection section={section} index={reveal} />;
+    case 'pickedToday':       return <PickedTodaySection section={section} index={reveal} />;
     default:                  return null;
   }
 };
@@ -220,6 +278,9 @@ const HomeSectionView = ({ section, index, visible, onSettled }: Props & { visib
 export default HomeSectionView;
 
 const styles = StyleSheet.create({
+  todayChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)' },
+  todayText: { flex: 1, color: colors.textPrimary, fontSize: fontSizes.small, marginRight: 12 },
+  todayChange: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '700' },
   hidden: { position: 'absolute', left: 0, right: 0, opacity: 0 },
   authorHeader: {
     flexDirection: 'row', alignItems: 'center',

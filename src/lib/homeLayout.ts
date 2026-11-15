@@ -3,10 +3,10 @@
 
 export type HomeSectionType =
   | 'forYou' | 'continueListening' | 'becauseYou' | 'genres'
-  | 'newStories' | 'featuredAuthor' | 'handPicked' | 'trending';
+  | 'newStories' | 'featuredAuthor' | 'handPicked' | 'trending' | 'pickedToday';
 
 export const HOME_SECTION_TYPES: HomeSectionType[] = [
-  'forYou', 'continueListening', 'becauseYou', 'genres', 'newStories', 'featuredAuthor', 'handPicked', 'trending',
+  'forYou', 'continueListening', 'becauseYou', 'genres', 'newStories', 'featuredAuthor', 'handPicked', 'trending', 'pickedToday',
 ];
 
 export const MAX_HOME_SECTIONS = 20;
