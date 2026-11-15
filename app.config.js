@@ -52,7 +52,7 @@ export default ({ config }) => ({
     },
     googleServicesFile: './GoogleService-Info.plist', 
     // Universal Links — iOS intercepts tinkermedia.net/runts/* before opening browser
-    associatedDomains: ['applinks:tinkermedia.net', 'applinks:www.tinkermedia.net'], 
+    associatedDomains: ['applinks:runts.app', 'applinks:www.runts.app', 'applinks:tinkermedia.net', 'applinks:www.tinkermedia.net'], 
   },
 
   android: {
@@ -73,6 +73,15 @@ export default ({ config }) => ({
             host: 'www.tinkermedia.net',
             pathPrefix: '/runts',
           },
+        ],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
+      {
+        action:     'VIEW',
+        autoVerify: true,
+        data: [
+          { scheme: 'https', host: 'runts.app', pathPrefix: '/story' },
+          { scheme: 'https', host: 'www.runts.app', pathPrefix: '/story' },
         ],
         category: ['BROWSABLE', 'DEFAULT'],
       },

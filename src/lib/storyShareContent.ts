@@ -2,7 +2,7 @@
 // lone link into a card with the cover, title and author (from the preview page behind the link), so the person who
 // receives it sees the card instead of a long address. Android's share sheet takes the link as the message text.
 // Pure (no react-native import) so it can be unit tested.
-export const PROD_SHARE_BASE = 'https://tinkermedia.net/runts/story/';
+export const PROD_SHARE_BASE = 'https://runts.app/story/';
 // `preview` is the environment's own preview page address and `scheme` its app scheme; set only for development and
 // staging builds, whose stories do not exist in production, so their links show real cards and open the right build.
 export type SharePreview = { url: string; scheme: string } | null;
