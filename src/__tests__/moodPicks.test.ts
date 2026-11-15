@@ -73,3 +73,42 @@ describe('pickedTitle', () => {
     expect(pickedTitle(1, ['Dark and scary'])).toBe('Closest matches for Dark and scary');
   });
 });
+
+import { bandRuns, isEmptyChoice, describeChoice, shouldPromptMood } from '../lib/moodPicks';
+
+describe('bandRuns', () => {
+  it('joins consecutive bands into one seconds range', () => {
+    expect(bandRuns([0])).toEqual([[0, 899]]);
+    expect(bandRuns([2, 3])).toEqual([[1800, 3599]]);
+    expect(bandRuns([5, 2, 3])).toEqual([[1800, 3599], [4500, 5399]]);
+    expect(bandRuns([])).toEqual([]);
+  });
+});
+
+describe('isEmptyChoice and describeChoice', () => {
+  it('treats no picks (or null) as empty', () => {
+    expect(isEmptyChoice(null)).toBe(true);
+    expect(isEmptyChoice({ moodIds: [], genreIds: [], lengthKeys: [] })).toBe(true);
+    expect(isEmptyChoice({ moodIds: ['m'], genreIds: [], lengthKeys: [] })).toBe(false);
+  });
+  it('lists moods, genres, then lengths (using the length subtitle)', () => {
+    const text = describeChoice(
+      { moodIds: ['m1'], genreIds: ['g1'], lengthKeys: ['short'] },
+      [{ id: 'm1', name: 'Dark and scary' }], [{ id: 'g1', name: 'Mystery' }],
+      [{ key: 'short', label: 'Short and sweet', subtitle: 'Under 15 minutes' }],
+    );
+    expect(text).toBe('Dark and scary, Mystery, Under 15 minutes');
+  });
+});
+
+describe('shouldPromptMood', () => {
+  const ok = { signedInOrGuest: true, promptedToday: false, openedFromOutside: false, storyLoaded: false, popupOpen: false };
+  it('asks on a clean first open of the day', () => { expect(shouldPromptMood(ok)).toBe(true); });
+  it('stays away for each blocker', () => {
+    expect(shouldPromptMood({ ...ok, signedInOrGuest: false })).toBe(false);
+    expect(shouldPromptMood({ ...ok, promptedToday: true })).toBe(false);
+    expect(shouldPromptMood({ ...ok, openedFromOutside: true })).toBe(false);
+    expect(shouldPromptMood({ ...ok, storyLoaded: true })).toBe(false);
+    expect(shouldPromptMood({ ...ok, popupOpen: true })).toBe(false);
+  });
+});

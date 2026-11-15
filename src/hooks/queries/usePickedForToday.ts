@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import {
-  buildLadder, bandsForLengths, mergeLinks, rankCandidates, unique, PAGE, MIN_MATCHES,
-  type Choice, type PickerLength, type LinkRow,
+  buildLadder, bandsForLengths, bandRuns, mergeLinks, rankCandidates, unique, PAGE, MIN_MATCHES,
+  isEmptyChoice, type Choice, type PickerLength, type LinkRow,
 } from '../../lib/moodPicks';
 import { fetchTagInsight } from './useTagHome';
 
@@ -23,7 +23,7 @@ export function usePickedForToday(
   const key = choice ? [choice.moodIds.join(','), choice.genreIds.join(','), choice.lengthKeys.join(',')].join('|') : 'none';
   return useQuery<PickedResult>({
     queryKey: ['stories', 'pickedToday', key, limit, listenedIds.length, lengths.length],
-    enabled: !!choice && ready,
+    enabled: !!choice && !isEmptyChoice(choice) && ready,
     staleTime: 1000 * 60 * 10,
     queryFn: async () => {
       const client = generateClient<Schema>();
@@ -43,6 +43,14 @@ export function usePickedForToday(
         }));
         return got.filter((s: any) => s && s.live === 'true' && s.isErotic !== 'true') as any[];
       };
+
+      // Lengths only (no mood or genre chosen): the Story length index, one query per run of bands, shortest first.
+      if (!choice!.moodIds.length && !choice!.genreIds.length) {
+        const found = await Promise.all(bandRuns(bands).map(([lo, hi]) => safe((client.models.Story as any).listStoryByLiveAndDuration(
+          { live: 'true', duration: { between: [lo, hi] } }, { limit: PAGE }))));
+        const stories = found.flat().filter((s: any) => s && s.isErotic !== 'true' && !listened.has(s.id));
+        return { stories: unique(stories as any[]).slice(0, limit), level: 0 };
+      }
 
       let best: PickedResult = { stories: [], level: 0 };
       for (const step of buildLadder(choice!)) {

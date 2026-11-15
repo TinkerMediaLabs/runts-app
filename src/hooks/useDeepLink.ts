@@ -4,6 +4,7 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 import { navigate } from '@/navigation/RootNavigator';
 import { useApp } from '@/context/AppContext';
+import { markOpenedFromOutside } from '@/lib/launchContext';
 
 
 
@@ -26,6 +27,7 @@ export function useDeepLink() {
 
         const match = url.match(STORY_PATH_RE);
         if (!match?.[1]) return;
+        markOpenedFromOutside();
 
         // Not ready to show a story yet: keep the link. Someone who opens a shared link without an account is taken
         // straight in as a guest, so they see the story at once and can sign up from there.

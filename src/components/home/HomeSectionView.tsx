@@ -20,8 +20,8 @@ import { useStoriesByIds } from '../../hooks/queries/useStoriesByIds';
 import { useTasteProfile } from '../../hooks/queries/useTasteProfile';
 import { usePickedForToday } from '../../hooks/queries/usePickedForToday';
 import { usePickerMoods, usePickerLengths } from '../../hooks/queries/usePickerOptions';
-import { useTodayChoice } from '../../lib/todayChoice';
-import { pickedTitle } from '../../lib/moodPicks';
+import { useTodayChoice, openMoodSheet } from '../../lib/todayChoice';
+import { pickedTitle, describeChoice, isEmptyChoice } from '../../lib/moodPicks';
 import { useTrendingSection } from '../../hooks/queries/useTrending';
 import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
@@ -175,10 +175,32 @@ const PickedTodaySection = ({ section, index }: Props) => {
   const { data: lengths, isLoading: lengthsLoading } = usePickerLengths();
   const { data: tasteData, isLoading: tasteLoading } = useTasteProfile(profile?.preferredTagIds ?? []);
   const { data, isPending } = usePickedForToday(choice, lengths ?? [], tasteData?.listenedIds ?? [], section.limit ?? 10, !tasteLoading && !lengthsLoading);
-  useSettleWhen(loaded && (!choice || !isPending));
-  if (!choice || !data || data.stories.length === 0) return null;
+  const { data: genres } = usePrimaryTags();
+  useSettleWhen(loaded && (!choice || isEmptyChoice(choice) || !isPending));
+  if (!choice) return null;
+  const skipped = isEmptyChoice(choice);
   const names = (moods ?? []).filter((m: any) => choice.moodIds.includes(m.id)).map((m: any) => m.name);
-  return <StoryRow title={section.title || pickedTitle(data.level, names)} stories={data.stories} index={index} />;
+  const summary = skipped ? '' : describeChoice(choice, moods ?? [], genres ?? [], lengths ?? []);
+  const hasStories = !!data && data.stories.length > 0;
+  return (
+    <>
+      <Reveal index={index}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={openMoodSheet}
+          style={styles.todayChip}
+          accessibilityRole="button"
+          accessibilityLabel={skipped ? "Pick today's mood" : `Today: ${summary}. Change`}
+        >
+          <Text style={styles.todayText} numberOfLines={1}>
+            {skipped ? "What are you in the mood for today?" : `Today: ${summary}`}
+          </Text>
+          <Text style={styles.todayChange}>{skipped ? 'Choose' : 'Change'}</Text>
+        </TouchableOpacity>
+      </Reveal>
+      {hasStories && <StoryRow title={section.title || pickedTitle(data!.level, names)} stories={data!.stories} index={index} />}
+    </>
+  );
 };
 
 const SectionContent = ({ section, index }: Props) => {
@@ -247,6 +269,9 @@ const HomeSectionView = ({ section, index, visible, onSettled }: Props & { visib
 export default HomeSectionView;
 
 const styles = StyleSheet.create({
+  todayChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)' },
+  todayText: { flex: 1, color: colors.textPrimary, fontSize: fontSizes.small, marginRight: 12 },
+  todayChange: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '700' },
   hidden: { position: 'absolute', left: 0, right: 0, opacity: 0 },
   authorHeader: {
     flexDirection: 'row', alignItems: 'center',

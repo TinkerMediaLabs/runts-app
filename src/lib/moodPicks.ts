@@ -79,3 +79,44 @@ export function pickedTitle(level: number, names: string[], base = 'Picked for t
 }
 
 export function unique<T>(list: T[]): T[] { return [...new Set(list)]; }
+
+// Consecutive bands as seconds ranges [from, to]: bands 2,3 and 5 become [1800, 3599] and [4500, 5399]. Used for a
+// length-only choice, which reads the Story length index once per range.
+export function bandRuns(bands: number[]): Array<[number, number]> {
+  const runs: Array<[number, number]> = [];
+  for (const b of [...bands].sort((x, y) => x - y)) {
+    const last = runs[runs.length - 1];
+    if (last && b * 900 === last[1] + 1) last[1] = (b + 1) * 900 - 1;
+    else runs.push([b * 900, (b + 1) * 900 - 1]);
+  }
+  return runs;
+}
+
+export const isEmptyChoice = (c: Choice | null | undefined) =>
+  !c || (!c.moodIds.length && !c.genreIds.length && !c.lengthKeys.length);
+
+// "Dark and scary, Mystery, Under 15 minutes" for the Today chip.
+export function describeChoice(
+  choice: Choice,
+  moods: Array<{ id: string; name: string }>,
+  genres: Array<{ id: string; name: string }>,
+  lengths: Array<{ key: string; label: string; subtitle?: string | null }>,
+): string {
+  return [
+    ...choice.moodIds.map(id => moods.find(m => m.id === id)?.name),
+    ...choice.genreIds.map(id => genres.find(g => g.id === id)?.name),
+    ...choice.lengthKeys.map(k => { const o = lengths.find(l => l.key === k); return o ? (o.subtitle || o.label) : undefined; }),
+  ].filter(Boolean).join(', ');
+}
+
+// Whether the daily sheet should open right now. Pure so the rules can be tested.
+export type PromptContext = {
+  signedInOrGuest: boolean;     // false while starting up, signed out, or still in onboarding
+  promptedToday: boolean;       // already asked (or answered, or signed up) on this local day
+  openedFromOutside: boolean;   // launched from a shared link or a notification
+  storyLoaded: boolean;         // a story is playing or being resumed
+  popupOpen: boolean;           // the rating popup or the Keep going sheet is up
+};
+export function shouldPromptMood(c: PromptContext): boolean {
+  return c.signedInOrGuest && !c.promptedToday && !c.openedFromOutside && !c.storyLoaded && !c.popupOpen;
+}

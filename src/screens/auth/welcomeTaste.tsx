@@ -16,6 +16,7 @@ import { usePickerMoods, usePickerLengths } from '../../hooks/queries/usePickerO
 import { useApp } from '../../context/AppContext';
 import { unwrap } from '@/lib/amplifyResult';
 import { Analytics } from '@/lib/analytics';
+import { markPromptedToday } from '@/lib/todayChoice';
 import { colors } from '@/theme/colors';
 import { fontSizes, iconSize } from '@/theme/tokens';
 
@@ -53,6 +54,7 @@ const WelcomeTaste = ({ route }: any) => {
         preferredLengths: finalLengths,
         tasteVersion: TASTE_VERSION,
       }), 'Save your preferences');
+      await markPromptedToday();   // they just answered these questions; the daily sheet starts tomorrow
       Analytics.onboardingCompleted();
       await refreshAuth();
     } catch (e: any) {
