@@ -35,10 +35,12 @@ export function buildLinks(opts: {
 }
 
 // ── Guests (not signed in) ─────────────────────────────────────────────────
-// A guest names the stories they are looking at; the function reads those stories and signs only what a guest may
-// have: covers of live, non-erotic stories, and audio of live, non-erotic, non-premium stories (their 30-second
-// preview). Author photos are open. Anything else is refused.
+// Author photos are open to guests. Covers and genre tiles (everything under stories/covers/) are open unless they
+// belong to an erotic story or an erotic tag (a deny-list, so no story id is needed for a cover). Audio is
+// stricter: the guest names the story, the function reads it, and only the audio of a live, non-erotic,
+// non-premium story is signed (the 30-second preview). Anything else is refused.
 export const MAX_GUEST_STORIES = 25;
+const COVER_PREFIX = 'stories/covers/';
 
 export type GuestStory = { live?: unknown; isErotic?: unknown; isPremium?: unknown; imageUri?: unknown; tileImageUri?: unknown; audioUri?: unknown };
 
@@ -55,6 +57,7 @@ export function validateStoryIds(input: unknown): string[] {
   return [...ids];
 }
 
+/** Audio (and covers) of the named stories that a guest may have. */
 export function guestAllowedPaths(stories: GuestStory[]): Set<string> {
   const allowed = new Set<string>();
   for (const s of stories) {
@@ -65,9 +68,22 @@ export function guestAllowedPaths(stories: GuestStory[]): Set<string> {
   return allowed;
 }
 
-export function assertGuestPaths(paths: string[], allowed: Set<string>) {
+/** Every file path (image or audio) used by erotic stories and erotic tags, from rows read with a projection. */
+export function eroticPathSet(rows: Record<string, unknown>[]): Set<string> {
+  const out = new Set<string>();
+  for (const r of rows) for (const v of Object.values(r)) if (typeof v === 'string' && v.startsWith('stories/')) out.add(v);
+  return out;
+}
+
+export function needsEroticList(paths: string[]): boolean {
+  return paths.some(p => p.startsWith(COVER_PREFIX));
+}
+
+export function assertGuestPaths(paths: string[], allowed: Set<string>, erotic: Set<string> = new Set()) {
   for (const p of paths) {
-    if (p.startsWith('authors/') || allowed.has(p)) continue;
+    if (p.startsWith('authors/')) continue;
+    if (p.startsWith(COVER_PREFIX) && !erotic.has(p)) continue;
+    if (allowed.has(p) && !erotic.has(p)) continue;
     throw new Error('Sign in to see this');
   }
 }

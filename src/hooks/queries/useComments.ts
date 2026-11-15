@@ -1,6 +1,7 @@
 import { generateClient } from 'aws-amplify/data';
 import { isCommentAllowed, COMMENT_REJECTED_MESSAGE } from '../../lib/commentFilter';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { unwrap } from '@/lib/amplifyResult';
@@ -11,6 +12,7 @@ import { unwrap } from '@/lib/amplifyResult';
 const COMMENTS_PAGE_SIZE = 20;
 
 export function useComments(storyId: string) {
+  const guest = useIsGuest();   // comments are for signed-in listeners
   return useInfiniteQuery({
     queryKey: ['comments', storyId],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
@@ -24,7 +26,7 @@ export function useComments(storyId: string) {
     },
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextToken,
-    enabled: !!storyId,
+    enabled: !!storyId && !guest,
     staleTime: 1000 * 60,
   });
 }

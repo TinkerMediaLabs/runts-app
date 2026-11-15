@@ -30,7 +30,7 @@ const { width, height } = Dimensions.get('window');
 const SignIn = ({ navigation }: any) => {
 
     const styles = useStyles();
-    const { continueAsGuest } = useApp();
+    const { continueAsGuest, isGuest } = useApp();
 
     const [isErr, setIsErr] = useState(false);
     const [err, setErr] = useState('Error signing in.');
@@ -358,7 +358,7 @@ const SignIn = ({ navigation }: any) => {
 
                                 accessibilityLabel="Continue without signing in"
 
-                                onPress={() => { continueAsGuest(); }}
+                                onPress={() => { if (isGuest) navigation.goBack(); else continueAsGuest(); }}
 
                                 style={{ alignSelf: 'center', marginTop: 26, paddingVertical: 8, paddingHorizontal: 12 }}
 
@@ -366,7 +366,7 @@ const SignIn = ({ navigation }: any) => {
 
                                 <Text style={[styles.paragraph, { color: colors.textSecondary, textDecorationLine: 'underline' }]}>
 
-                                    Continue without signing in
+                                    {isGuest ? 'Back to browsing' : 'Continue without signing in'}
 
                                 </Text>
 

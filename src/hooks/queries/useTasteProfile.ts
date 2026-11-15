@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 import { isListened, topTags, listenedTagIds, type TasteEntry } from '../../lib/taste';
 
@@ -53,10 +54,11 @@ export async function fetchTasteProfile(pickedTagIds: string[]): Promise<TastePr
 // The listener's taste, refreshed every few hours. It only shapes For You, so a failure (offline) just
 // means For You uses the picked genres alone.
 export function useTasteProfile(pickedTagIds: string[], enabled: boolean = true) {
+  const guest = useIsGuest();
   return useQuery({
     queryKey: ['taste', pickedTagIds.join(',')],
     queryFn: () => fetchTasteProfile(pickedTagIds),
-    enabled,
+    enabled: enabled && !guest,
     staleTime: 1000 * 60 * 60 * 3,
     retry: 1,
   });

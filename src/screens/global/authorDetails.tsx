@@ -41,6 +41,8 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { useIsGuest } from '../../lib/dataAccess';
+import { askForAccount } from '../../lib/requireAccount';
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
 const HEADER_H      = 260;
@@ -107,7 +109,9 @@ const CreatorProfile = () => {
     const { mutate: followAuthor,   isPending: following   } = useFollowAuthor();
     const { mutate: unfollowAuthor, isPending: unfollowing } = useUnfollowAuthor();
 
+    const guest = useIsGuest();
     const handleToggleFollow = () => {
+    if (guest) { askForAccount('follow authors'); return; }
     if (isFollowing && followRecordId) {
         unfollowAuthor({ recordId: followRecordId, authorId: id });
     } else {

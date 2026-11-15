@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import { findInProgress } from '../../lib/userStoryLookups';
 import { unwrap } from '@/lib/amplifyResult';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -53,15 +54,19 @@ async function fetchInProgressTop(erotic: boolean, limit: number) {
 
 // Continue Listening strip - never shows erotic stories.
 export function useInProgressStories(limit: number = 4) {
-  return useQuery({ queryKey: ['inProgressStories', 'top', limit], queryFn: () => fetchInProgressTop(false, limit), staleTime: 1000 * 60 * 2 });
+  const guest = useIsGuest();
+  return useQuery({ enabled: !guest, queryKey: ['inProgressStories', 'top', limit], queryFn: () => fetchInProgressTop(false, limit), staleTime: 1000 * 60 * 2 });
 }
 // Erotic Home strip only.
 export function useEroticInProgressStories(limit: number = 10) {
-  return useQuery({ queryKey: ['eroticInProgressStories', limit], queryFn: () => fetchInProgressTop(true, limit), staleTime: 1000 * 60 * 2 });
+  const guest = useIsGuest();
+  return useQuery({ enabled: !guest, queryKey: ['eroticInProgressStories', limit], queryFn: () => fetchInProgressTop(true, limit), staleTime: 1000 * 60 * 2 });
 }
 // Full "in progress" list screen: load more on scroll.
 export function useInProgressStoriesPaginated() {
+  const guest = useIsGuest();
   return useInfiniteQuery({
+    enabled: !guest,
     queryKey: ['inProgressStories', 'paged'],
     queryFn: ({ pageParam }: { pageParam: string | null }) => fetchInProgressPage(false, pageParam),
     initialPageParam: null as string | null,

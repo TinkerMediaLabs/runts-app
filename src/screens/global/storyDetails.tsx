@@ -58,6 +58,8 @@ import { useStoryNarratorNames } from '../../hooks/queries/useStoryNarratorNames
 import { fetchAllPages } from '../../lib/paginate';
 import { findFinished } from '../../lib/userStoryLookups';
 import { useUniverse } from '../../hooks/queries/useUniverse';
+import { useIsGuest } from '../../lib/dataAccess';
+import { askForAccount } from '../../lib/requireAccount';
 import { getDurationDisplay, formatNarratorDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
 import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
 
@@ -396,6 +398,7 @@ const {
   isFetchingNextPage: loadingMoreComments,
 } = useComments(storyID);
 const comments = React.useMemo(() => commentPages?.pages.flatMap(p => p.items) ?? [], [commentPages]);
+const guest = useIsGuest();
 const { mutate: postComment,   isPending: posting   } = usePostComment();
 const { mutate: updateComment, isPending: updating  } = useUpdateComment();
 const { mutate: deleteComment                        } = useDeleteComment();
@@ -881,6 +884,16 @@ const handleDelete = (id: string) => {
                     )}
 
                     <View style={styles.separator} />
+{guest ? (
+  <View style={{ marginTop: 4 }}>
+    <Text style={styles.sectionLabel}>Discussion</Text>
+    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20, marginBottom: 12 }}>
+      Create a free account to read and join the conversation about this story.
+    </Text>
+    <Button label="Create a free account" size="small" onPress={() => askForAccount('join the discussion')} accessibilityLabel="Create a free account to join the discussion" />
+  </View>
+) : (
+<>
 {/* ── Discussion ── */}
 <Text style={styles.sectionLabel}>
   Discussion{story?.numComments ? ` · ${story.numComments}` : ''}
@@ -1003,6 +1016,8 @@ const handleDelete = (id: string) => {
     <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
     <Text style={styles.spoilerSub}>Tap to view comments</Text>
   </TouchableOpacity>
+)}
+</>
 )}
 
                 </Animated.View>

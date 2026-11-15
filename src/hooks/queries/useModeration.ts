@@ -1,5 +1,6 @@
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import type { Schema } from '../../../amplify/data/resource';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchAllPages } from '../../lib/paginate';
@@ -11,7 +12,9 @@ export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
 // One listener blocks a handful of people, so the whole list is read (all pages) from the
 // byUserAndBlocked index. Comments from these people are hidden on the story page.
 export function useBlockedUsers() {
+  const guest = useIsGuest();
   return useQuery({
+    enabled: !guest,
     queryKey: ['blockedUsers'],
     queryFn: async () => {
       const client = generateClient<Schema>();

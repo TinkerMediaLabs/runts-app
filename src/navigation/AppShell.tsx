@@ -5,6 +5,7 @@ import TrackPlayerWidget from '@/features/audio/TrackPlayer';
 import ActionChip from '@/components/common/ActionChip';
 import KeepGoingSheet from '@/components/story/KeepGoingSheet';
 import OfflineBanner from '@/components/common/OfflineBanner';
+import GuestSheet from '@/components/common/GuestSheet';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
 import { usePlayer } from '@/context/PlayerContext';
@@ -39,6 +40,7 @@ export default function AppShell({ children }: any) {
       <TipOverlay blocked={tipsBlocked} />
       <OfflineBanner />
       <ActionChip />
+      <GuestSheet />
     </View>
   );
 }

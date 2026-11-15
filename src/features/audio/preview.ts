@@ -80,7 +80,7 @@ export async function togglePreview(story: PreviewStory) {
   set({ storyId: story.id, status: 'loading' });
 
   try {
-    const url = isCdnPath(story.audioUri) ? await audioLinks.getOne(story.audioUri) : story.audioUri;
+    const url = isCdnPath(story.audioUri) ? await audioLinks.getOne(story.audioUri, { storyIds: [story.id] }) : story.audioUri;
     if (!url) throw new Error('No audio link');
     if (mine !== token) return;   // stopped while the link was loading
 

@@ -47,6 +47,20 @@ async function main() {
     ok('guest is refused a premium story audio', !a.ok, a.err);
   } else console.log('SKIP  no premium story found');
   if (free) {
+    const a = await ask([free.imageUri]);
+    ok('guest gets a free story cover without naming the story', a.ok, a.err);
+  }
+  if (erotic) {
+    const a = await ask([erotic.imageUri]);
+    ok('guest is refused an erotic cover even without naming the story', !a.ok, a.err);
+  }
+  const tags: any[] = []; let tnext: string | null = null;
+  do { const r: any = await client.models.Tag.list({ limit: 100, nextToken: tnext }); tags.push(...(r.data ?? [])); tnext = r.nextToken ?? null; } while (tnext);
+  const tile = tags.find(t => !t.isErotic && t.tileImageUri);
+  const eroticTile = tags.find(t => t.isErotic && t.tileImageUri);
+  if (tile) { const a = await ask([tile.tileImageUri]); ok('guest gets a genre tile image', a.ok, a.err); } else console.log('SKIP  no genre tile image found');
+  if (eroticTile) { const a = await ask([eroticTile.tileImageUri]); ok('guest is refused an erotic genre tile', !a.ok, a.err); } else console.log('SKIP  no erotic genre tile found');
+  if (free) {
     const a = await ask([free.audioUri]);
     ok('guest is refused audio without naming the story', !a.ok, a.err);
   }

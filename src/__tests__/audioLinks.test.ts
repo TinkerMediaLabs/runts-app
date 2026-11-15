@@ -1,4 +1,4 @@
-import { validatePaths, buildLinks, MAX_PATHS, LINK_DAYS, validateStoryIds, guestAllowedPaths, assertGuestPaths, MAX_GUEST_STORIES } from '../../amplify/functions/audio-links/links';
+import { validatePaths, buildLinks, MAX_PATHS, LINK_DAYS, validateStoryIds, guestAllowedPaths, assertGuestPaths, MAX_GUEST_STORIES, eroticPathSet, needsEroticList } from '../../amplify/functions/audio-links/links';
 
 describe('audio links', () => {
   it('accepts author photo paths', () => {
@@ -48,12 +48,26 @@ describe('guest links', () => {
     expect(() => assertGuestPaths(['stories/audio/free.mp3'], allowed)).toThrow();
   });
 
-  it('refuses everything for erotic or not-live stories', () => {
+  it('refuses the audio of erotic or not-live stories, and covers of erotic ones', () => {
     for (const s of [{ ...free, isErotic: 'true' }, { ...free, isErotic: true }, { ...free, live: 'false' }, { ...free, live: undefined }]) {
-      const allowed = guestAllowedPaths([s]);
-      expect(() => assertGuestPaths(['stories/covers/free.jpg'], allowed)).toThrow();
-      expect(() => assertGuestPaths(['stories/audio/free.mp3'], allowed)).toThrow();
+      expect(() => assertGuestPaths(['stories/audio/free.mp3'], guestAllowedPaths([s]), eroticPathSet([s]))).toThrow();
     }
+    const spicy = { ...free, isErotic: 'true' };
+    expect(() => assertGuestPaths(['stories/covers/free.jpg'], guestAllowedPaths([spicy]), eroticPathSet([spicy]))).toThrow();
+  });
+
+  it('lets a guest have any cover or genre tile that is not erotic, without naming a story', () => {
+    const erotic = eroticPathSet([{ imageUri: 'stories/covers/spicy.jpg', tileImageUri: 'stories/covers/tag-spicy.jpg', audioUri: 'stories/audio/spicy.mp3' }, { heroImageUri: 'stories/covers/tag-hero-spicy.jpg' }]);
+    expect(() => assertGuestPaths(['stories/covers/anything.jpg', 'stories/covers/tag-fantasy.jpg'], new Set(), erotic)).not.toThrow();
+    for (const p of ['stories/covers/spicy.jpg', 'stories/covers/tag-spicy.jpg', 'stories/covers/tag-hero-spicy.jpg']) {
+      expect(() => assertGuestPaths([p], new Set(), erotic)).toThrow();
+    }
+  });
+
+  it('never lets a guest have audio without naming a story, and only reads the erotic list for covers', () => {
+    expect(() => assertGuestPaths(['stories/audio/free.mp3'], new Set(), new Set())).toThrow();
+    expect(needsEroticList(['stories/audio/free.mp3', 'authors/a/p.jpg'])).toBe(false);
+    expect(needsEroticList(['stories/covers/x.jpg'])).toBe(true);
   });
 
   it('refuses a path that no named story owns, but always allows author photos', () => {

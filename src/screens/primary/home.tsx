@@ -12,6 +12,7 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
 import Screen from '@/components/common/Screen';
+import { useRequireAccount } from '../../hooks/useRequireAccount';
 import Reveal from '../../components/common/Reveal';
 import { SkeletonCarousel, SkeletonCardRow } from '../../components/common/Skeleton';
 
@@ -22,6 +23,7 @@ import NewGenreNudge, { useNewGenreNudge } from '../../components/home/NewGenreN
 const HomeScreen = ({ navigation }: any) => {
 
         const styles = useStyles();
+        const requireAccount = useRequireAccount();
     const typo = useTypography();
 
 
@@ -85,7 +87,7 @@ const HomeScreen = ({ navigation }: any) => {
                         <Text style={[{ color: colors.text }, typo.h1]}>
                             {text}
                         </Text>
-                        <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.navigate('UserScreen')} accessibilityRole="button" accessibilityLabel="Your account">
+                        <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => requireAccount('see your profile', () => navigation.navigate('UserScreen'))} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
                                 <Ionicons name="person" size={20} color={colors.textPrimary} />
                             </View>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useIsGuest } from '../../lib/dataAccess';
 import { findFinished, findInProgress } from '../../lib/userStoryLookups';
 
 export type StoryProgressStatus = 'none' | 'in_progress' | 'completed';
@@ -22,10 +23,11 @@ async function fetchProgress(storyId: string): Promise<StoryProgressInfo> {
 }
 
 export function useStoryProgress(storyId: string | null | undefined) {
+  const guest = useIsGuest();
   const { data } = useQuery({
     queryKey: ['storyProgress', storyId],
     queryFn: () => fetchProgress(storyId as string),
-    enabled: !!storyId,
+    enabled: !!storyId && !guest,
     staleTime: 1000 * 60 * 2,
   });
   return data;
@@ -37,8 +39,10 @@ export function useStoryProgressMap(storyIds: (string | null | undefined)[]) {
     () => Array.from(new Set(storyIds.filter((id): id is string => !!id))),
     [storyIds.join(',')] // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const guest = useIsGuest();
   const results = useQueries({
     queries: ids.map(id => ({
+      enabled: !guest,
       queryKey: ['storyProgress', id],
       queryFn: () => fetchProgress(id),
       staleTime: 1000 * 60 * 2,
