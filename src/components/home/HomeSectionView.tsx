@@ -27,6 +27,9 @@ import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
+import { useTagNames } from '../../hooks/queries/useTagNames';
+import { reasonText } from '../../lib/mixStories';
+import { isRecentlyPublished } from '../../lib/storyDisplay';
 import { Analytics } from '../../lib/analytics';
 import { StorySourceContext } from '../../hooks/useStorySource';
 import type { HomeSectionRow } from '../../lib/homeLayout';
@@ -73,7 +76,13 @@ const ForYouSection = ({ section, index }: Props) => {
     listenedIds: tasteData?.listenedIds ?? [],
     ready: !tasteLoading,
   });
-  const { stories, tagMap } = useEnrichedStories(data);
+  const { stories: enriched, tagMap } = useEnrichedStories(data);
+  // The one-line reason on each card ("Because you like Mystery"). Names come from the same cached tag lookups.
+  const { data: reasonNames = {} } = useTagNames(enriched.map((s: any) => s.reason?.tagId));
+  const stories = useMemo(() => enriched.map((s: any) => ({
+    ...s,
+    reasonLabel: reasonText(s.reason, s.reason?.tagId ? (reasonNames as any)[s.reason.tagId] : undefined, isRecentlyPublished(s.publishedAt)),
+  })), [enriched, reasonNames]);
   useSettleWhen(!isPending);
   if (stories.length === 0) return null;
   return (

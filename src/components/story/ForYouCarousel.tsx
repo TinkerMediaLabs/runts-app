@@ -78,13 +78,14 @@ type ItemProps = {
     progressStatus?: ProgressStatus;
     progressSeconds?: number;
     isFirst?: boolean;
+    reason?: string;
 };
 
 const CarouselItem = ({
     id, title, primaryTagName, secondaryTagName, summary,
     imageUri, audioUri, author, narratorDisplay, duration,
     numListens, avgRating, numRatings, spiceRating,
-    isPremium, isNew, progressStatus = 'none', progressSeconds = 0, isFirst = false,
+    isPremium, isNew, progressStatus = 'none', progressSeconds = 0, isFirst = false, reason = '',
 }: ItemProps) => {
 
     const cardTipRef = useTipTarget(isFirst ? 'foryou-card' : null);
@@ -186,7 +187,7 @@ const CarouselItem = ({
                         style={styles.imageTap}
                         activeOpacity={1}
                         accessibilityRole="button"
-                        accessibilityLabel={`Open ${title}${author ? `, by ${author}` : ''}`}
+                        accessibilityLabel={`Open ${title}${author ? `, by ${author}` : ''}${reason ? `. ${reason}` : ''}`}
                         accessibilityActions={[{ name: 'toggle', label: 'Show or hide details' }]}
                         onAccessibilityAction={(e) => {
                             if (e.nativeEvent.actionName === 'toggle') toggleExpand();
@@ -199,6 +200,8 @@ const CarouselItem = ({
                         style={styles.infoPanel}
                         accessible={false}
                     >
+                        {reason ? <Text style={styles.reason} numberOfLines={1}>{reason}</Text> : null}
+
                         {/* Title row */}
                         <View style={styles.titleRow}>
                             <Text style={styles.title} numberOfLines={2}>{title}</Text>
@@ -355,6 +358,7 @@ const ForYouCarousel = ({ stories, tagMap }: {
             isNew={item?.isNew === true}
             progressStatus={item?.progressStatus ?? 'none'}
             progressSeconds={item?.progressSeconds ?? 0}
+            reason={item?.reasonLabel ?? ''}
         />
     );
 
@@ -471,6 +475,14 @@ card: {
         paddingHorizontal: 14,
         paddingTop:        10,
         paddingBottom:     10,
+    },
+
+    reason: {
+        fontSize:      fontSizes.micro,
+        color:         colors.accent,
+        fontWeight:    '700',
+        letterSpacing: 0.3,
+        marginBottom:  3,
     },
 
     titleRow: {

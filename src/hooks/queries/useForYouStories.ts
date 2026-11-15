@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
-import { mixRoundRobin } from '../../lib/mixStories';
+import { mixWithReasons, type ReasonedList } from '../../lib/mixStories';
 import { fetchTrendingSnapshot } from '../../lib/trending';
 import type { Schema } from '../../../amplify/data/resource';
 
@@ -39,7 +39,16 @@ export function useForYouStories(preferredTagIds: string[], limit: number = 8, t
 
       // Popular right now sits between the genre lists and the newest, so it shapes the carousel without
       // pushing out what the listener asked for. Empty (new catalog) -> the mix is as before.
-      return mixRoundRobin([...byTag, trending, newest], limit, new Set(listened));
+      // Each list knows why its stories are here, so every card can say so (see reasonText).
+      const sources: ReasonedList[] = [
+        ...byTag.map((stories, i) => ({
+          reason: { kind: (i < Math.min(3, preferredTagIds.length) ? 'picked' : 'learned') as 'picked' | 'learned', tagId: tagIds[i] },
+          stories,
+        })),
+        { reason: { kind: 'trending' as const }, stories: trending },
+        { reason: { kind: 'new' as const }, stories: newest },
+      ];
+      return mixWithReasons(sources, limit, new Set(listened));
     },
     staleTime: 1000 * 60 * 5,
   });
