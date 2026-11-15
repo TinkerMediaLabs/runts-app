@@ -552,6 +552,18 @@ const handleDelete = (id: string) => {
         );
     }
 
+    // ── Not found: a deleted story or a link with a wrong id ──────────────────
+    if (!story) {
+        return (
+            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
+                <StatusBar style="light" />
+                <CloseButton navigation={navigation} />
+                <Text style={{ color: '#fff', fontSize: 18, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
+                <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
+            </View>
+        );
+    }
+
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <View style={styles.root}>
