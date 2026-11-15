@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SkeletonStoryPage } from '../../components/common/Skeleton';
-import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator, Share, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Button from '@/components/common/Button';
 import { TextInput } from '@/components/common/AppTextInput';
@@ -84,6 +84,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { shareStory } from '@/lib/shareStory';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -358,11 +359,7 @@ const StoryScreen = ({ navigation }: any) => {
     };
 
     const handleShare = async () => {
-        await Share.share({
-            message: `Check out "${story?.title}" on Runts: https://tinkermedia.net/runts/story/${story?.id}`,
-            url: `https://tinkermedia.net/runts/story/${story?.id}`, // iOS only
-            title: story?.title ?? 'Runts',
-        });
+        await shareStory(story?.id ?? '', story?.title);
         Analytics.storyShared({ storyId: story?.id ?? '', title: story?.title ?? '' });
     };
 

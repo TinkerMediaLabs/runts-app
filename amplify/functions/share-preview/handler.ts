@@ -1,11 +1,11 @@
 import { getSignedUrl } from '@aws-sdk/cloudfront-signer';
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
-import { parseRoute, isShowable, coverPath, buildPage, DEFAULT_ICON, type PreviewStory } from './preview';
+import { parseRoute, isShowable, coverPath, buildPage, pickScheme, DEFAULT_ICON, type PreviewStory } from './preview';
 
 const dynamo = new DynamoDBClient({});
 const SITE = process.env.SITE_ORIGIN || 'https://tinkermedia.net';
-const SCHEME = process.env.APP_SCHEME || 'runts';
+const DEFAULT_SCHEME = process.env.APP_SCHEME || 'runts';
 
 async function getStory(id: string): Promise<PreviewStory | null> {
   const table = process.env.STORY_TABLE_NAME;
@@ -39,8 +39,9 @@ export const handler = async (event: any) => {
   const route = parseRoute(event.rawPath);
   const host = event.requestContext?.domainName;
   const selfOrigin = host ? `https://${host}` : SITE;
+  const scheme = pickScheme(event.queryStringParameters?.scheme, DEFAULT_SCHEME);
 
-  if (!route) return html(buildPage({ story: null, pageUrl: SITE, imageUrl: null, appLink: `${SCHEME}://` }), 300);
+  if (!route) return html(buildPage({ story: null, pageUrl: SITE, imageUrl: null, appLink: `${scheme}://` }), 300);
 
   let story: PreviewStory | null = null;
   try { story = await getStory(route.id); } catch { story = null; }
@@ -66,6 +67,6 @@ export const handler = async (event: any) => {
     authorName,
     pageUrl: `${SITE}/runts/story/${route.id}`,
     imageUrl: coverPath(story) ? `${selfOrigin}/image/${route.id}` : null,
-    appLink: `${SCHEME}://story/${route.id}`,
+    appLink: `${scheme}://story/${route.id}`,
   }), show ? 300 : 60);
 };

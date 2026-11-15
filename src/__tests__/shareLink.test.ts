@@ -11,6 +11,10 @@ describe('parseStoryLink', () => {
     expect(parseStoryLink('runts-dev://story/abc')).toBe('abc');
     expect(parseStoryLink('runts-staging://story/abc/')).toBe('abc');
   });
+  it('reads a development or staging preview link', () => {
+    expect(parseStoryLink('https://z43dcgflzgnthz4mjfqyvxzene0ipikn.lambda-url.us-east-2.on.aws/story/abc-1?scheme=runts-dev')).toBe('abc-1');
+    expect(parseStoryLink('https://evil.example/story/abc')).toBeNull();
+  });
   it('ignores everything else', () => {
     expect(parseStoryLink(null)).toBeNull();
     expect(parseStoryLink('')).toBeNull();

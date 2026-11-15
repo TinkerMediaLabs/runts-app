@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback, Share } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useStoryNarratorNames } from '@/hooks/queries/useStoryNarratorNames';
 import { formatNarratorDisplay, fmtDuration } from '@/lib/storyDisplay';
@@ -61,6 +61,7 @@ import { CachedImage } from '../../components/common/CachedImage';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { shareStory } from '@/lib/shareStory';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 70;
 const HERO_HEIGHT_RATIO = 0.46; // hero image takes ~46% of screen height
@@ -123,11 +124,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const handleShare = async () => {
     if (!track) return;
-    await Share.share({
-        message: `Check out "${track.title}" on Runts: https://tinkermedia.net/runts/story/${track.id}`,
-        url: `https://tinkermedia.net/runts/story/${track.id}`,
-        title: track.title ?? 'Runts',
-    });
+    await shareStory(track.id, track.title);
   };
 
   const insets = useSafeAreaInsets();
