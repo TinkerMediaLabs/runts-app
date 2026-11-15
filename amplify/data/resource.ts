@@ -21,6 +21,9 @@ const schema = a.schema({
       plan: a.string(),
       onboardingComplete: a.boolean(),
       preferredTagIds: a.string().array(),   // up to 3 genres picked at onboarding; seeds Home
+      preferredMoodTagIds: a.string().array(), // up to 3 mood tag ids picked in the taste picker (the daily prompt can change them)
+      preferredLengths: a.string().array(),    // PickerOption keys for the lengths they like (e.g. 'short', 'medium')
+      tasteVersion: a.integer(),               // bumped each time the picker is saved; lets the app tell 'never asked' from 'asked'
       // Story connections
       pinnedStories: a.hasMany('UserPinnedStory', 'userId'),
       finishedStories: a.hasMany('UserFinishedStory', 'userId'),
@@ -37,6 +40,30 @@ const schema = a.schema({
       bookmarks: a.hasMany('UserBookmark', 'userId'),
     })
     .authorization(allow => [allow.owner()]),
+
+  // ── PickerOption ──────────────────────────────────────────────────────────
+  // Choices the taste picker offers that are not tags. Today: story lengths ('length'). A length option covers a
+  // range of 15-minute bands (Story duration / 900, see StoryTag.durationBand), so editing a cutoff is a CMS edit,
+  // not a release. `key` is stable once created (users store it); the label can change freely.
+  PickerOption: a
+    .model({
+      id: a.id().required(),
+      kind: a.string().required(),   // 'length'
+      key: a.string().required(),    // stable id stored on the user, e.g. 'short'
+      label: a.string().required(),  // e.g. 'Short and sweet'
+      subtitle: a.string(),          // e.g. 'Under 15 minutes'
+      minBand: a.integer(),          // lowest 15-minute band included (0 = under 15 min)
+      maxBand: a.integer(),          // highest band included
+      sortOrder: a.integer().required(),
+      enabled: a.boolean(),          // false hides it from the picker (null counts as on)
+    })
+    .secondaryIndexes(index => [
+      index('kind').sortKeys(['sortOrder']).name('byKindAndOrder'),
+    ])
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
 
   // ── UserPinnedStory (join table) ──────────────────────────────────────────
   UserPinnedStory: a
