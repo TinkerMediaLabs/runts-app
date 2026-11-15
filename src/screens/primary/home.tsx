@@ -87,7 +87,7 @@ const HomeScreen = ({ navigation }: any) => {
                         <Text style={[{ color: colors.text }, typo.h1]}>
                             {text}
                         </Text>
-                        <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => requireAccount('see your profile', () => navigation.navigate('UserScreen'))} accessibilityRole="button" accessibilityLabel="Your account">
+                        <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => requireAccount('see your profile', () => navigation.navigate('UserScreen'), { kind: 'profile' })} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
                                 <Ionicons name="person" size={20} color={colors.textPrimary} />
                             </View>

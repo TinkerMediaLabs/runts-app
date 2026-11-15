@@ -45,7 +45,7 @@ export default function PreviewButton({ story, isErotic = false }: { story: any;
 
   const onPress = async () => {
     // Premium previews need an account (the server will not hand a guest premium audio).
-    if (guest && story?.isPremium) { askForAccount('hear a preview of premium stories'); return; }
+    if (guest && story?.isPremium) { askForAccount('hear a preview of premium stories', { kind: 'story', id: story.id }); return; }
     if (status === 'idle' && state?.isPlaying) await pause();   // the story in the main player pauses; it is not resumed after
     try {
       await togglePreview(story);

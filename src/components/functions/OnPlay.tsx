@@ -34,7 +34,7 @@ const useOnPlay = (sourceOverride?: string) => {
     artist,
   }: any) => {
     // Guests can hear the 30-second preview; the full story needs an account.
-    if (guest) { askForAccount('listen to the full story'); return; }
+    if (guest) { askForAccount('listen to the full story', { kind: 'story', id }); return; }
     // On the story's own page the source was set when it was opened; anywhere else, this is where the play started.
     if (sourceOverride || routeName !== 'StoryScreen') Analytics.noteSource(id, sourceOverride ?? source);
     await playTrack({ id, title, url, artwork, artist });
