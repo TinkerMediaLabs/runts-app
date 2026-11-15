@@ -18,6 +18,10 @@ import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
 import { useStories } from '../../hooks/queries/useStories';
 import { useStoriesByIds } from '../../hooks/queries/useStoriesByIds';
 import { useTasteProfile } from '../../hooks/queries/useTasteProfile';
+import { usePickedForToday } from '../../hooks/queries/usePickedForToday';
+import { usePickerMoods, usePickerLengths } from '../../hooks/queries/usePickerOptions';
+import { useTodayChoice } from '../../lib/todayChoice';
+import { pickedTitle } from '../../lib/moodPicks';
 import { useTrendingSection } from '../../hooks/queries/useTrending';
 import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
@@ -155,6 +159,28 @@ export const FeaturedAuthorSection = ({ section, index }: Props) => {
   );
 };
 
+// Today's mood choice as a row of stories. Shows nothing until a choice has been made today.
+const PickedTodaySection = ({ section, index }: Props) => {
+  const { profile } = useApp();
+  const { choice: stored, loaded } = useTodayChoice();
+  // While the daily sheet is not built yet, a development build tests this row with the taste saved on "Your taste".
+  const choice = useMemo(() => {
+    if (stored) return stored;
+    if (!__DEV__) return null;
+    const moodIds = profile?.preferredMoodTagIds ?? [];
+    const lengthKeys = profile?.preferredLengths ?? [];
+    return moodIds.length || lengthKeys.length ? { moodIds, genreIds: [], lengthKeys } : null;
+  }, [stored, profile?.preferredMoodTagIds, profile?.preferredLengths]);
+  const { data: moods } = usePickerMoods();
+  const { data: lengths, isLoading: lengthsLoading } = usePickerLengths();
+  const { data: tasteData, isLoading: tasteLoading } = useTasteProfile(profile?.preferredTagIds ?? []);
+  const { data, isPending } = usePickedForToday(choice, lengths ?? [], tasteData?.listenedIds ?? [], section.limit ?? 10, !tasteLoading && !lengthsLoading);
+  useSettleWhen(loaded && (!choice || !isPending));
+  if (!choice || !data || data.stories.length === 0) return null;
+  const names = (moods ?? []).filter((m: any) => choice.moodIds.includes(m.id)).map((m: any) => m.name);
+  return <StoryRow title={section.title || pickedTitle(data.level, names)} stories={data.stories} index={index} />;
+};
+
 const SectionContent = ({ section, index }: Props) => {
   const reveal = Math.min(index + 1, 6);
   switch (section.type) {
@@ -170,6 +196,7 @@ const SectionContent = ({ section, index }: Props) => {
     case 'featuredAuthor':    return <FeaturedAuthorSection section={section} index={reveal} />;
     case 'handPicked':        return <HandPickedSection section={section} index={reveal} />;
     case 'trending':          return <TrendingSection section={section} index={reveal} />;
+    case 'pickedToday':       return <PickedTodaySection section={section} index={reveal} />;
     default:                  return null;
   }
 };
