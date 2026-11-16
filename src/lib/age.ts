@@ -9,10 +9,14 @@ export const ADULT_AGE = 18;
 // Returns null when the birthdate cannot be read.
 export function ageOn(birthdate: string | Date | null | undefined, today: Date = new Date()): number | null {
   if (!birthdate) return null;
-  const parts = typeof birthdate === 'string' ? birthdate.slice(0, 10).split('-').map(Number) : null;
-  const y = parts ? parts[0] : birthdate.getFullYear();
-  const m = parts ? parts[1] : birthdate.getMonth() + 1;
-  const d = parts ? parts[2] : birthdate.getDate();
+  let y: number, m: number, d: number;
+  if (typeof birthdate === 'string') {
+    [y, m, d] = birthdate.slice(0, 10).split('-').map(Number);
+  } else {
+    y = birthdate.getFullYear();
+    m = birthdate.getMonth() + 1;
+    d = birthdate.getDate();
+  }
   if (!y || !m || !d || m > 12 || d > 31) return null;
   let age = today.getFullYear() - y;
   const hadBirthday = today.getMonth() + 1 > m || (today.getMonth() + 1 === m && today.getDate() >= d);
