@@ -18,6 +18,7 @@ const PINS_PAGE_SIZE = 30;
 export function usePinnedStories() {
     const { eroticEnabled, eroticInPlaylist } = useApp();
     const guest = useIsGuest();
+    const queryClient = useQueryClient();
 
     return useInfiniteQuery({
         enabled: !guest,
@@ -33,6 +34,12 @@ export function usePinnedStories() {
             const storyResults = await Promise.all(
                 rows.map((r: any) => client.models.Story.get({ id: r.storyId }))
             );
+            // Each tile reads its story from the ['story', id] cache. Filling it here means a tile has its story the
+            // moment it is drawn (no blank row that grows later, no second request for the same story).
+            storyResults.forEach((r: any, i: number) => {
+                if (r?.data) queryClient.setQueryData(['story', rows[i].storyId], r.data);
+            });
+            rows.forEach((r: any) => queryClient.setQueryData(['isPinned', r.storyId], true));
             const items = rows.filter((_: any, i: number) => {
                 const story = storyResults[i]?.data;
                 if (story?.isErotic !== 'true') return true;

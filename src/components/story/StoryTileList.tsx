@@ -59,7 +59,8 @@ const PinnedStoryTile = ({
 
     const { data: authorData } = useAuthor(story?.authorId ?? '');
 
-    if (!story) return null;
+    // A placeholder of about the same height (not nothing), so a row never starts at zero height and pushes the list around.
+    if (!story) return <SkeletonRows count={1} />;
 
     return (
         <StoryTile
@@ -180,7 +181,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
                 data={listData}
                 onDragEnd={onDragEnd}
                 onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
-                onEndReachedThreshold={0.5}
+                onEndReachedThreshold={1.5}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 refreshControl={
@@ -193,7 +194,14 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
                 ListEmptyComponent={<ListEmpty />}
-                ListFooterComponent={<View style={{ height: 100 }} />}
+                ListFooterComponent={
+                    <View style={{ height: 100, paddingTop: 16 }}>
+                        {isFetchingNextPage ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading more pinned stories" /> : null}
+                    </View>
+                }
+                initialNumToRender={10}
+                windowSize={7}
+                maxToRenderPerBatch={10}
             />
         </View>
     );

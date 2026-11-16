@@ -73,10 +73,14 @@ const StoryTile = ({
     const expanded = useSharedValue(false);
 
     const [expandedHeight, setExpandedHeight] = React.useState(300);
+    // The hidden details (cover, pin and play buttons) are built the first time the tile is opened, not for every tile in
+    // a long list up front; that work, times dozens of tiles, was what made opening and closing feel slow.
+    const [expandedOnce, setExpandedOnce] = React.useState(false);
 
     const toggle = () => {
         if (reorderEnabled) return;
         const next = !expanded.value;
+        if (next) setExpandedOnce(true);
         expanded.value = next;
         progressAnim.value = withTiming(next ? 1 : 0, TIMING);
     };
@@ -218,8 +222,9 @@ const StoryTile = ({
                     <Animated.View style={[styles.expandedClip, expandedStyle]}>
                         <View 
                             style={styles.expandedInner}
-                            onLayout={e => setExpandedHeight(e.nativeEvent.layout.height)}
+                            onLayout={e => { const h = e.nativeEvent.layout.height; if (h > 0) setExpandedHeight(h); }}
                         >
+                            {expandedOnce ? (<>
 
                             {/* Full artwork → story screen */}
                             <TouchableWithoutFeedback
@@ -278,6 +283,7 @@ const StoryTile = ({
                                         isPremium={isPremium}
                                     />
                             </View>
+                            </>) : null}
 
                         </View>
                     </Animated.View>
