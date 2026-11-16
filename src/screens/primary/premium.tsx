@@ -28,6 +28,11 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionLabel from '@/components/common/SectionLabel';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource';
+import { unwrap } from '@/lib/amplifyResult';
+import { useFreePremiumOffer } from '@/hooks/queries/useFreePremiumOffer';
+import { askForAccount } from '@/lib/requireAccount';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -151,7 +156,10 @@ const PremiumScreen = () => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-    const { userId } = useApp();
+    const { userId, refreshAuth, isGuest } = useApp();
+    const { open: offerOpen } = useFreePremiumOffer();
+    const [claimed,   setClaimed]   = useState(false);   // this person already used the offer
+    const [claiming,  setClaiming]  = useState(false);
     const insets       = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
 
@@ -192,6 +200,34 @@ const PremiumScreen = () => {
             Alert.alert('Purchase failed', err?.message ?? 'Something went wrong. Please try again.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // The free offer: the server records the claim once and grants 3 months of Premium (no payment method).
+    const handleClaimFree = async () => {
+        if (isGuest) { askForAccount('claim your 3 free months of Premium'); return; }
+        setClaiming(true);
+        try {
+            const client = generateClient<Schema>();
+            const result = unwrap(await client.mutations.claimFreePremium(), 'Claim free Premium');
+            if (result === 'granted') {
+                await PurchasesService.refreshPremium();
+                await refreshAuth();
+                Alert.alert('Enjoy Premium!', 'You have 3 months of Premium, free. It ends on its own and never charges you.', [
+                    { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Root' }] }) },
+                ]);
+            } else if (result === 'already_claimed') {
+                setClaimed(true);
+                Alert.alert('Already used', 'You have already used your free 3 months. You can subscribe below to keep Premium.');
+            } else {
+                setClaimed(true);
+                Alert.alert('Offer ended', 'The free Premium offer is no longer available.');
+            }
+        } catch (err: any) {
+            console.warn('Claim free Premium failed:', err);
+            Alert.alert('Something went wrong', 'We could not start your free months. Please check your connection and try again.');
+        } finally {
+            setClaiming(false);
         }
     };
 
@@ -242,6 +278,23 @@ const PremiumScreen = () => {
                             Unlock the full experience — more stories, exclusive content, and more.
                         </Text>
                     </View>
+
+                    {/* ── Free offer (open while the CMS end date has not passed) ── */}
+                    {offerOpen && !claimed && (
+                        <View style={styles.freeOffer}>
+                            <Text style={styles.freeOfferTitle}>3 months of Premium, free</Text>
+                            <Text style={styles.freeOfferText}>
+                                No payment needed. It ends on its own after 3 months and never charges you.
+                            </Text>
+                            <Button
+                                label="Start 3 months free"
+                                loading={claiming}
+                                disabled={claiming || isLoading}
+                                onPress={handleClaimFree}
+                                style={{ marginTop: 12 }}
+                            />
+                        </View>
+                    )}
 
                     {/* ── Plan picker ── */}
                     {offeringsLoading ? (
@@ -321,6 +374,28 @@ const PremiumScreen = () => {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
+
+    freeOffer: {
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.accent,
+        padding: 16,
+        marginBottom: 20,
+    },
+    freeOfferTitle: {
+        color: colors.textPrimary,
+        fontSize: fontSizes.body,
+        fontWeight: '700',
+        textAlign: 'center',
+    },
+    freeOfferText: {
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
+        textAlign: 'center',
+        marginTop: 6,
+        lineHeight: 18,
+    },
 
     scrollContent: {
         paddingHorizontal: spacing.margin * 2,

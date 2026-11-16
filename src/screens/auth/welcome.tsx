@@ -19,6 +19,11 @@ import Animated, {
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
+import { useApp } from '@/context/AppContext';
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource';
+import { unwrap } from '@/lib/amplifyResult';
+import { isOldEnough, MIN_AGE } from '@/lib/age';
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
@@ -27,6 +32,25 @@ const Welcome = ({ navigation }: any) => {
 
     const [date, setDate] = useState(new Date());
     const [isPickerVisible, setPickerVisible] = useState(false);
+    const { logout } = useApp();
+    const [tooYoung, setTooYoung] = useState(false);
+    const [removing, setRemoving] = useState(false);
+    const [removeError, setRemoveError] = useState('');
+
+    // Under the minimum age: nothing is saved. The sign-in account that was just created is removed so no data is kept.
+    const removeAccount = async () => {
+        setRemoving(true);
+        setRemoveError('');
+        try {
+            const client = generateClient<Schema>();
+            if (unwrap(await client.mutations.deleteMyAccount(), 'Delete account') !== true) throw new Error('Delete account failed');
+            await logout();
+        } catch (err) {
+            console.warn('Under-age account removal failed:', err);
+            setRemoveError('We could not remove the account. Please check your connection and try again.');
+        }
+        setRemoving(false);
+    };
 
     // -----------------------
     // ANIMATIONS
@@ -131,6 +155,28 @@ const Welcome = ({ navigation }: any) => {
                             {format(date, "MMMM do, yyyy")}
                         </Text>
                     </TouchableOpacity>
+
+                    {tooYoung ? (
+                        <View accessibilityLiveRegion="polite" style={{ marginTop: 20, paddingHorizontal: 30, alignItems: 'center' }}>
+                            <Text style={{ color: colors.textPrimary, fontSize: fontSizes.body, textAlign: 'center', lineHeight: 22 }}>
+                                Runts is for listeners {MIN_AGE} and older, so we can't create your account.
+                            </Text>
+                            {removeError ? (
+                                <Text style={{ color: '#ff6b6b', fontSize: fontSizes.small, textAlign: 'center', marginTop: 8 }}>{removeError}</Text>
+                            ) : null}
+                            <TouchableOpacity
+                                onPress={removeAccount}
+                                disabled={removing}
+                                accessibilityRole="button"
+                                accessibilityLabel="Remove my account"
+                                style={{ marginTop: 14, paddingVertical: 12, paddingHorizontal: 22, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, opacity: removing ? 0.5 : 1 }}
+                            >
+                                <Text style={{ color: colors.textPrimary, fontSize: fontSizes.body }}>
+                                    {removing ? 'Removing…' : 'Remove my account'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : null}
                 </View>
 
                 {/* FOOTER CTA */}
@@ -139,9 +185,11 @@ const Welcome = ({ navigation }: any) => {
                     <TouchableOpacity
                         accessibilityRole="button"
                         accessibilityLabel="Next"
-                        onPress={() => navigation.navigate('WelcomePref', {
-                            birthdate: format(date, 'yyyy-MM-dd'),
-                        })}
+                        onPress={() => {
+                            const birthdate = format(date, 'yyyy-MM-dd');
+                            if (!isOldEnough(birthdate)) { setTooYoung(true); return; }
+                            navigation.navigate('WelcomePref', { birthdate });
+                        }}
                         style={{
                             backgroundColor: "#00C2C2",
                             paddingVertical: 14,

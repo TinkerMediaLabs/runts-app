@@ -46,6 +46,7 @@ import { spacing } from '../../theme/spacing';
 import { useApp }  from '@/context/AppContext';
 
 import { useStory }      from '../../hooks/queries/useStories';
+import { useTagsByIds }  from '../../hooks/queries/useTagHome';
 import { useAuthor }     from '../../hooks/queries/useAuthors';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { generateClient } from 'aws-amplify/data';
@@ -255,7 +256,9 @@ const StoryScreen = ({ navigation }: any) => {
     // Per-story, index-backed (byStoryId) — never loads the Narrator table.
     const { data: storyNarratorNames = [] } = useStoryNarratorNames(storyID);
 
-    const narratorDisplay = formatNarratorDisplay(storyNarratorNames);
+    // The story carries its narrator names (saved by the CMS), so the line shows with the story; the lookup is the fallback.
+    const savedNarrators = (story?.narratorNames ?? []).filter((n): n is string => !!n);
+    const narratorDisplay = formatNarratorDisplay(savedNarrators.length ? savedNarrators : storyNarratorNames);
     const durationDisplay = getDurationDisplay(
         story?.duration ?? 0,
         progress?.status ?? 'none',
@@ -276,8 +279,11 @@ const StoryScreen = ({ navigation }: any) => {
     const moodTone   = storyTags.filter((t: any) => t.tagType === 'mood' || t.tagType === 'tone');
     const worldTag   = storyTags.find((t: any) => t.tagType === 'universe') ?? null;
     const otherTags  = storyTags.filter((t: any) => !t.tagType || t.tagType === 'setting');
-    const primaryTagPill   = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? null;
-    const secondaryTagPill = storyTags.find((t: any) => t.id === story?.secondaryTagId) ?? null;
+    // Pills come from two cached tag lookups (usually already cached from the tile that opened this screen), so they
+    // show with the story instead of after the whole link chain below.
+    const pillTags = useTagsByIds([story?.primaryTagId, story?.secondaryTagId].filter(Boolean) as string[]);
+    const primaryTagPill   = pillTags.find((t: any) => t.id === story?.primaryTagId) ?? storyTags.find((t: any) => t.id === story?.primaryTagId) ?? null;
+    const secondaryTagPill = pillTags.find((t: any) => t.id === story?.secondaryTagId) ?? storyTags.find((t: any) => t.id === story?.secondaryTagId) ?? null;
     const [showPaywall, setShowPaywall] = useState(false);
 
 
@@ -552,6 +558,18 @@ const handleDelete = (id: string) => {
         );
     }
 
+    // ── Not found: a deleted story or a link with a wrong id ──────────────────
+    if (!story) {
+        return (
+            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
+                <StatusBar style="light" />
+                <CloseButton navigation={navigation} />
+                <Text style={{ color: '#fff', fontSize: 18, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
+                <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
+            </View>
+        );
+    }
+
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <View style={styles.root}>
@@ -636,8 +654,13 @@ const handleDelete = (id: string) => {
                 </View>
 
                     {/* Primary + secondary tag, same pill as the story tiles */}
-                    {(primaryTagPill || secondaryTagPill) ? (
+                    {(story?.primaryTagId || story?.secondaryTagId || primaryTagPill || secondaryTagPill) ? (
                         <View style={styles.tilePillRow}>
+                            {!(primaryTagPill || secondaryTagPill) && (
+                                <View style={[styles.tilePill, { opacity: 0 }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                                    <Text style={styles.tilePillText}>Genre</Text>
+                                </View>
+                            )}
                             {[primaryTagPill, secondaryTagPill].filter(Boolean).map((tag: any) => (
                                 <TouchableOpacity
                                     key={tag.id}

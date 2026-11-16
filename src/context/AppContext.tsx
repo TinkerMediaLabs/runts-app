@@ -1,3 +1,4 @@
+import { ageOn, ADULT_AGE } from '../lib/age';
 import {
     createContext,
     useContext,
@@ -96,14 +97,8 @@ const GUEST_KEY = 'runts_guest_v1';
 
 function calculateIsUnderAge(birthdate: string | null | undefined): boolean {
     if (!birthdate) return false;
-    try {
-        const birth   = new Date(birthdate);
-        const ageMsec = Date.now() - birth.getTime();
-        const age     = new Date(ageMsec).getUTCFullYear() - 1970;
-        return age < 18;
-    } catch {
-        return false;
-    }
+    const age = ageOn(birthdate);
+    return age !== null && age < ADULT_AGE;
 }
 
 // ---------------------------------------------------------------------------
