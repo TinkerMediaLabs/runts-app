@@ -2,6 +2,7 @@ import { incrementListens } from '../functions/increment-listens/resource';
 import { eroticPin } from '../functions/erotic-pin/resource';
 import { uploadUrl } from '../functions/upload-url/resource';
 import { deleteAccount } from '../functions/delete-account/resource';
+import { claimFreePremium } from '../functions/claim-free-premium/resource';
 import { audioLinks } from '../functions/audio-links/resource';
 import { commentWrite } from '../functions/comment-write/resource';
 import { carPass } from '../functions/car-pass/resource';
@@ -647,6 +648,34 @@ Comment: a
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
     ]),
 
+  // ── AppSetting: a few app-wide settings, edited in the CMS ─────────────────
+  // One row per setting; the id is the setting's name. Currently 'premiumFreeUntil': an ISO date; the free
+  // Premium offer (claimFreePremium) can be claimed until then, and is closed when the row is missing.
+  // A handful of rows (tens at most), read by key.
+  AppSetting: a
+    .model({
+      id: a.id().required(),
+      value: a.string(),
+      note: a.string(),
+    })
+    .authorization(allow => [
+      allow.authenticated().to(['read']),
+      allow.guest().to(['read']),
+      allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
+  // ── PremiumClaim: who has used the free Premium offer (one row per person, id = their user id) ──
+  // Written only by the claim-free-premium function (conditionally, so it can happen once). Nobody reads or
+  // writes it from the app; the claim result comes back from the mutation.
+  PremiumClaim: a
+    .model({
+      id: a.id().required(),
+      claimedAt: a.string(),
+    })
+    .authorization(allow => [
+      allow.group('admin').to(['read', 'delete']),
+    ]),
+
   // ── StoryListenDay ────────────────────────────────────────────────────────
   // Plays per story per UTC day (id = `${day}#${storyId}`, day = YYYY-MM-DD). listens-aggregator adds to it
   // in the same batches that update Story.numListens, so a play costs no extra write at play time.
@@ -808,6 +837,13 @@ Comment: a
     .returns(a.boolean())
     .authorization(allow => [allow.authenticated()])
     .handler(a.handler.function(deleteAccount)),
+  // The signed-in user claims 3 free months of Premium, once, while the offer is open (see functions/claim-free-premium).
+  // Returns 'granted', 'already_claimed' or 'offer_closed'.
+  claimFreePremium: a
+    .mutation()
+    .returns(a.string())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(claimFreePremium)),
 });
 
 

@@ -76,6 +76,14 @@ async function isPremium(): Promise<boolean> {
     }
 }
 
+// Premium can also be granted from the server (the free 3-month offer). The SDK keeps customer info for a
+// while, so drop that copy and read it again.
+async function refreshPremium(): Promise<boolean> {
+    if (!initialised) return false;
+    try { await Purchases.invalidateCustomerInfoCache(); } catch { /* read it anyway */ }
+    return isPremium();
+}
+
 // ---------------------------------------------------------------------------
 // Offerings
 // ---------------------------------------------------------------------------
@@ -130,6 +138,7 @@ export const PurchasesService = {
     identify,
     reset,
     isPremium,
+    refreshPremium,
     getOfferings,
     purchase,
     restorePurchases,

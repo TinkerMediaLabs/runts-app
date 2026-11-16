@@ -18,6 +18,7 @@ import { trendingSnapshot } from './functions/trending-snapshot/resource';
 import { tagInsights } from './functions/tag-insights/resource';
 import { dataHealth } from './functions/data-health/resource';
 import { deleteAccount } from './functions/delete-account/resource';
+import { claimFreePremium } from './functions/claim-free-premium/resource';
 import { audioLinks } from './functions/audio-links/resource';
 import { commentWrite } from './functions/comment-write/resource';
 import { carProgress } from './functions/car-progress/resource';
@@ -62,6 +63,7 @@ const backend = defineBackend({
   tagInsights,
   dataHealth,
   deleteAccount,
+  claimFreePremium,
   audioLinks,
   sharePreview,
   commentWrite,
@@ -389,6 +391,17 @@ deleteAccountFn.addToRolePolicy(new iam.PolicyStatement({
   resources: [backend.auth.resources.userPool.userPoolArn],
 }));
 
+// ── claim-free-premium ────────────────────────────────────────────────────
+// Records the claim (conditional write, once per person), reads the offer's end date, then grants Premium
+// through RevenueCat's API (secret REVENUECAT_SECRET_KEY).
+const claimPremiumFn = backend.claimFreePremium.resources.lambda as lambda.Function;
+const premiumClaimTable = backend.data.resources.tables['PremiumClaim'];
+const appSettingTable = backend.data.resources.tables['AppSetting'];
+claimPremiumFn.addEnvironment('CLAIM_TABLE_NAME', premiumClaimTable.tableName);
+claimPremiumFn.addEnvironment('SETTING_TABLE_NAME', appSettingTable.tableName);
+premiumClaimTable.grantReadWriteData(claimPremiumFn);
+appSettingTable.grantReadData(claimPremiumFn);
+
 // ── user-cleanup ──────────────────────────────────────────────────────────
 // Account deletion only removes the User row from the app; this Lambda (fired by that row's REMOVE
 // stream record) deletes everything the user owned, reading each table through its userId index.
@@ -490,6 +503,7 @@ const allFunctions: Record<string, lambda.Function> = {
   tagInsights: backend.tagInsights.resources.lambda as lambda.Function,
   dataHealth: dataHealthFn,
   deleteAccount: backend.deleteAccount.resources.lambda as lambda.Function,
+  claimFreePremium: claimPremiumFn,
 };
 for (const [name, fn] of Object.entries(allFunctions)) {
   watch(new cloudwatch.Alarm(alarmsStack, `${name}Errors`, {
