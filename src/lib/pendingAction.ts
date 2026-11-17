@@ -5,6 +5,7 @@
 export type PendingAction =
   | { kind: 'pin'; id: string }       // pin the story, then open it
   | { kind: 'follow'; id: string }    // follow the author, then open the author
+  | { kind: 'followTag'; id: string; name: string }   // follow the genre, then open it
   | { kind: 'story'; id: string }     // open the story (they wanted to listen, rate or discuss it)
   | { kind: 'profile' };              // open their profile
 

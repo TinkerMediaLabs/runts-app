@@ -21,7 +21,7 @@ const { width } = Dimensions.get('window');
 // Local tile images — keyed by tileImageUri value stored in DynamoDB
 // ---------------------------------------------------------------------------
 
-const localAssets: Record<string, any> = {
+export const localAssets: Record<string, any> = {
     fanfiction:     require('../../../assets/images/genres/fanfictionTileImage.jpg'),
     sciencefiction: require('../../../assets/images/genres/scienceFictionTileImage.jpg'),
     dystopian:      require('../../../assets/images/genres/dystopianTileImage.png'),

@@ -257,6 +257,27 @@ Comment: a
     ])
     .authorization(allow => [allow.owner()]),
 
+  // ── UserFollowedTag ───────────────────────────────────────────────────────
+  // A listener following a genre (any tag). One row per person and tag. This is a NEW table, so adding it (indexes
+  // included) never recreates anything. The three indexes are everything the feature will need, decided up front so
+  // an index is never added to this table later (that would delete and recreate it):
+  //   byUserAndTag        is this tag followed by this person (and account deletion)
+  //   byUserAndFollowedAt the My Tags list, newest first; the Home row and For You read it too
+  //   byTagId             followers of a tag, for the new-story notification fan-out
+  UserFollowedTag: a
+    .model({
+      userId: a.string().required(),
+      tagId: a.string().required(),
+      followedAt: a.datetime(),
+      notify: a.boolean(),   // new-story push for this tag; switched per tag in app settings. Missing counts as ON.
+    })
+    .secondaryIndexes(index => [
+      index('userId').sortKeys(['tagId']).name('byUserAndTag'),
+      index('userId').sortKeys(['followedAt']).name('byUserAndFollowedAt'),
+      index('tagId').name('byTagId'),
+    ])
+    .authorization(allow => [allow.owner()]),
+
   // ── StoryReactionCount ────────────────────────────────────────────────────
   // One record per storyId + reactionType. Written exclusively by
   // reaction-aggregator Lambda via DynamoDB SDK (atomic ADD). Read by app
@@ -572,6 +593,9 @@ Comment: a
     pushToken: a.string().required(),
     platform:  a.string().required(),  // 'ios' | 'android'
     updatedAt: a.datetime(),
+    // Per-kind push preferences for this device. Plain fields (no index), so they never recreate the table.
+    muteAuthors: a.boolean(),          // true = no new-story pushes from followed authors (missing counts as ON)
+    lastGenrePushAt: a.datetime(),     // when this person last got a genre push; written by notify-new-story to cap them at one a day
   })
   .secondaryIndexes(index => [
     index('userId').name('byUserId'),

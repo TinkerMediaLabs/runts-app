@@ -17,6 +17,8 @@ type SearchInputProps = {
   inputStyle?: any;
   iconColor?: string;
   showClear?: boolean;
+  /** Focus the field as soon as it mounts, natively, without waiting for the screen's other work. */
+  autoFocus?: boolean;
 };
 
 const SearchBar = forwardRef<TextInput, SearchInputProps>(
@@ -31,6 +33,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
       inputStyle,
       iconColor = '#000000a5',
       showClear = true,
+      autoFocus = false,
     },
     ref
   ) => {
@@ -59,6 +62,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           returnKeyType="search"
           onSubmitEditing={onSubmit}
           maxLength={maxLength}
+          autoFocus={autoFocus}
         />
 
         {/* Clear Button */}

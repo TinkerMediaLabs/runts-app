@@ -20,6 +20,7 @@ import { CachedImage } from '../../components/common/CachedImage';
 import StoryTile from '../../components/story/StoryTile';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import TagRowView from '../../components/tag/TagRows';
+import FollowTagButton from '../../components/tag/FollowTagButton';
 
 import { useTag } from '../../hooks/queries/useTagNames';
 import { useTagHome } from '../../hooks/queries/useTagHome';
@@ -81,11 +82,12 @@ const GenreHome = ({ navigation }: any) => {
                             accessibilityRole="button" accessibilityLabel="Go back" style={styles.heroBubble} activeOpacity={0.7}>
                             <FontAwesome5 name="chevron-left" size={iconSize.sm} color={colors.textPrimary} iconStyle="solid" />
                         </TouchableOpacity>
+                        <FollowTagButton tagId={tagId} tagName={tagName ?? ''} variant="bubble" />
                     </View>
                     <Text style={styles.heroTitle}>{(tagName ?? '').toUpperCase()}</Text>
                 </View>
             ) : (
-                <ScreenHeader title={tagName ?? ''} capitalize />
+                <ScreenHeader title={tagName ?? ''} capitalize right={<FollowTagButton tagId={tagId} tagName={tagName ?? ''} />} />
             )}
 
             {!home.ready ? (

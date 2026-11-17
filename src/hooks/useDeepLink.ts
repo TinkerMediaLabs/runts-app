@@ -26,7 +26,7 @@ export function useDeepLink() {
         if (!url) return;
 
         const storyId = parseStoryLink(url);
-        console.log('[Link] opened with', url, '->', storyId ?? 'not a story link');
+        console.log('[Link] opened ->', storyId ? 'story link' : 'not a story link');
         if (!storyId) return;
         markOpenedFromOutside();
 

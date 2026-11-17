@@ -22,6 +22,7 @@ import { usePickedForToday } from '../../hooks/queries/usePickedForToday';
 import { usePickerMoods, usePickerLengths } from '../../hooks/queries/usePickerOptions';
 import { useTodayChoice, openMoodSheet } from '../../lib/todayChoice';
 import { pickedTitle, describeChoice, isEmptyChoice } from '../../lib/moodPicks';
+import { useFollowedTagIds, useNewInFollowedGenres } from '../../hooks/queries/useFollowedFeed';
 import { useTrendingSection } from '../../hooks/queries/useTrending';
 import { useAuthorNewest } from '../../hooks/queries/useAuthorNewest';
 import { useAuthor } from '../../hooks/queries/useAuthors';
@@ -71,10 +72,13 @@ const ForYouSection = ({ section, index }: Props) => {
   // Wait for the listening profile so the carousel does not rebuild itself a moment after it appears; if it
   // cannot be read (offline), carry on with the picked genres alone.
   const { data: tasteData, isLoading: tasteLoading } = useTasteProfile(preferred);
+  const { data: followedTags, isLoading: followedLoading } = useFollowedTagIds();
+  const followedTagIds = useMemo(() => (followedTags ?? []).map(t => t.id), [followedTags]);
   const { data, isPending } = useForYouStories(preferred, section.limit ?? 8, {
     learnedTagIds: tasteData?.learnedTagIds ?? [],
     listenedIds: tasteData?.listenedIds ?? [],
-    ready: !tasteLoading,
+    ready: !tasteLoading && !followedLoading,
+    followedTagIds,
   });
   const { stories: enriched, tagMap } = useEnrichedStories(data);
   // The one-line reason on each card ("Because you like Mystery"). Names come from the same cached tag lookups.
@@ -123,6 +127,14 @@ export const HandPickedSection = ({ section, index }: Props) => {
   const { stories } = useStoriesByIds(ids);
   useSettleAfter(1200);
   return <StoryRow title={section.title || 'Hand-picked'} stories={stories} index={index} />;
+};
+
+// The newest stories from the genres the listener follows. Nothing is shown (and no space is kept) for guests or
+// listeners who follow nothing yet.
+const FollowedGenresSection = ({ section, index }: Props) => {
+  const { stories, isLoading } = useNewInFollowedGenres(section.limit ?? 12);
+  useSettleWhen(!isLoading);
+  return <StoryRow title={section.title || 'New in genres you follow'} stories={stories} index={index} />;
 };
 
 const TrendingSection = ({ section, index }: Props) => {
@@ -228,6 +240,7 @@ const SectionContent = ({ section, index }: Props) => {
     case 'handPicked':        return <HandPickedSection section={section} index={reveal} />;
     case 'trending':          return <TrendingSection section={section} index={reveal} />;
     case 'pickedToday':       return <PickedTodaySection section={section} index={reveal} />;
+    case 'followedGenres':    return <FollowedGenresSection section={section} index={reveal} />;
     default:                  return null;
   }
 };

@@ -23,10 +23,10 @@ export function mixRoundRobin(lists: any[][], limit: number, exclude?: Set<strin
 // ---- Why a story is recommended -------------------------------------------------------------------------------
 // The For You carousel already knows where every story came from (a picked genre, a learned genre, trending, newest),
 // so showing the reason costs no extra queries. A story that qualifies for several shows the strongest, in this
-// order: today's mood match, picked genre, learned genre, trending, new.
-export type ReasonKind = 'mood' | 'picked' | 'learned' | 'trending' | 'new';
+// order: today's mood match, picked genre, followed genre, learned genre, trending, new.
+export type ReasonKind = 'mood' | 'picked' | 'followed' | 'learned' | 'trending' | 'new';
 export type Reason = { kind: ReasonKind; tagId?: string };
-const REASON_RANK: Record<ReasonKind, number> = { mood: 0, picked: 1, learned: 2, trending: 3, new: 4 };
+const REASON_RANK: Record<ReasonKind, number> = { mood: 0, picked: 1, followed: 2, learned: 3, trending: 4, new: 5 };
 
 export type ReasonedList = { reason: Reason; stories: any[] };
 
@@ -50,6 +50,7 @@ export function reasonText(reason: Reason | undefined, tagName?: string, recentl
   switch (reason.kind) {
     case 'mood':     return tagName ? `Matches ${tagName}` : '';
     case 'picked':   return tagName ? `Because you like ${tagName}` : '';
+    case 'followed': return tagName ? `Because you follow ${tagName}` : '';
     case 'learned':  return tagName ? `Because you listen to ${tagName}` : '';
     case 'trending': return 'Trending this week';
     case 'new':      return recentlyPublished ? 'New this week' : 'Recently added';

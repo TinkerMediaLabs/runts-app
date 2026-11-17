@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { usePinStory } from './queries/usePinnedStories';
 import { useFollowAuthor } from './queries/useAuthorFollowing';
+import { useFollowTag } from './queries/useTagFollowing';
 import { hasPendingAction, takePendingAction } from '../lib/pendingAction';
 import { navigate } from '@/navigation/RootNavigator';
 
@@ -14,6 +15,7 @@ export function useReplayAction() {
   const { isAuthenticated, isNewUser, isGuest, isLoading } = useApp();
   const pin = usePinStory();
   const follow = useFollowAuthor();
+  const followTag = useFollowTag();
 
   useEffect(() => {
     if (isLoading || !isAuthenticated || isNewUser || isGuest || !hasPendingAction()) return;
@@ -28,6 +30,10 @@ export function useReplayAction() {
         case 'follow':
           follow.mutate(action.id);
           navigate('AuthorDetails', { id: action.id });
+          break;
+        case 'followTag':
+          followTag.mutate({ tagId: action.id, name: action.name });
+          navigate('TagHomeScreen', { id: action.id, name: action.name });
           break;
         case 'story':
           navigate('StoryScreen', { storyID: action.id, source: 'after_signup' });

@@ -43,7 +43,7 @@ import { useApp } from '../../context/AppContext';
 import PINEntryModal from '../../components/settings/PINEntryModal';
 import PINSetupModal from '../../components/settings/PINSetupModal';
 
-import { Notifications } from '../../lib/notifications';
+import { Notifications, AUTHOR_PUSH_KEY } from '../../lib/notifications';
 import { resetTips } from '../../tips/tipsStore';
 import { showChip } from '../../lib/chip';
 import { colors } from '@/theme/colors';
@@ -53,7 +53,7 @@ import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
-const NOTIF_AUTHOR_KEY = '@runts/notificationsAuthorsEnabled';
+const NOTIF_AUTHOR_KEY = AUTHOR_PUSH_KEY;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -456,10 +456,11 @@ const AppSettings = ({ navigation }: any) => {
         setAuthorNotifications(value);
         await AsyncStorage.setItem(NOTIF_AUTHOR_KEY, String(value));
         if (userId) {
+            // Only author pushes are muted; the device keeps its push token so genre notifications keep working.
             if (!value) {
-                await Notifications.unregisterToken(userId);
+                await Notifications.setAuthorPushMuted(userId, true);
             } else {
-                await Notifications.registerToken(userId);
+                await Notifications.registerToken(userId);   // also asks for permission if it was never given
             }
         }
     };
@@ -631,6 +632,13 @@ const AppSettings = ({ navigation }: any) => {
                             description="Get notified when an author you follow publishes a new story"
                             value={authorNotifications}
                             onChange={handleAuthorNotificationsChange}
+                        />
+                        <RowDivider />
+                        <ActionRow
+                            icon="tags"
+                            label="Genre notifications"
+                            description="Choose which followed genres send you a note about new stories"
+                            onPress={() => navigation.navigate('GenreNotificationsScreen')}
                         />
                     </Section>
 

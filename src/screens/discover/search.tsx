@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { SkeletonRows } from '../../components/common/Skeleton';
 import SharedEmptyState from '../../components/common/EmptyState';
-import { View, FlatList, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, Modal, TouchableWithoutFeedback, ScrollView, InteractionManager } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, Modal, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Animated, {
@@ -511,10 +511,12 @@ const SearchScreen = ({ navigation }: any) => {
   }, [debouncedQuery]);
 
   const inputRef = useRef<any>(null);
+  // The field takes focus natively on mount (autoFocus below), so the keyboard opens straight away. This is only a
+  // backup if the first focus is lost to the screen transition. It must NOT wait for InteractionManager: that waits
+  // for the story, author and genre searches to finish, which is why typing used to be blocked for a few seconds.
   useEffect(() => {
-    InteractionManager.runAfterInteractions(() => {
-      inputRef.current?.focus();
-    });
+    const t = setTimeout(() => inputRef.current?.focus(), 150);
+    return () => clearTimeout(t);
   }, []);
 
   // ── Scroll-based scrunch ──────────────────────────────────────────────────
@@ -693,6 +695,7 @@ const filteredTagResults = useMemo(() => {
           <View style={{ flex: 1 }}>
             <SearchInput
               ref={inputRef}
+              autoFocus
               value={inputValue}
               onChangeText={setInputValue}
               placeholder="Stories, authors, genres…"

@@ -127,6 +127,14 @@ function authorUnfollowed(authorId: string, authorName?: string): void {
     track('author_unfollowed', { authorId, authorName });
 }
 
+function tagFollowed(tagId: string, tagName?: string): void {
+    track('tag_followed', { tagId, tagName });
+}
+
+function tagUnfollowed(tagId: string, tagName?: string): void {
+    track('tag_unfollowed', { tagId, tagName });
+}
+
 // ---------------------------------------------------------------------------
 // Discovery events
 // ---------------------------------------------------------------------------
@@ -195,6 +203,8 @@ export const Analytics = {
     storyShared,
     authorFollowed,
     authorUnfollowed,
+    tagFollowed,
+    tagUnfollowed,
     searchPerformed,
     genreTapped,
     homeSectionShown,

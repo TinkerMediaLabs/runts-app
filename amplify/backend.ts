@@ -419,6 +419,7 @@ const cleanupTargets: { model: string; index: string }[] = [
   { model: 'UserReaction',        index: 'byUserAndStory' },
   { model: 'UserFavoritedStory',  index: 'byUserAndStory' },
   { model: 'UserFollowedAuthor',  index: 'byUserAndAuthor' },
+  { model: 'UserFollowedTag',     index: 'byUserAndTag' },
   { model: 'UserBookmark',        index: 'byUserAndCreatedAt' },
   { model: 'UserDevice',          index: 'byUserId' },
   { model: 'Comment',             index: 'byUserAndCreatedAt' },

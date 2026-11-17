@@ -137,8 +137,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // ── Auth functions ────────────────────────────────────────────────────────
 
-    const refreshAuth = async (retried = false): Promise<void> => {
+    // showLoader: used only for the moment a person has just signed in. The account lookups take a second or two, and
+    // without the loader the sign-in screen stays up (and looks like the sign-in did not work) until they finish.
+    // Calls from signed-in screens (edit genres, taste picker, premium) must not show it.
+    const refreshAuth = async (retried = false, showLoader = false): Promise<void> => {
         let signedInOk = false;
+        if (showLoader) setIsLoading(true);
         try {
             await new Promise(resolve => setTimeout(resolve, 100));
             const user   = await getCurrentUser();
@@ -208,7 +212,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             // more instead of dropping a real sign-in back to guest browsing.
             if (signedInOk && !retried) {
                 await new Promise(resolve => setTimeout(resolve, 800));
-                return refreshAuth(true);
+                return await refreshAuth(true);
             }
             setUserId(null);
             setIsAuthenticated(false);
@@ -386,7 +390,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = Hub.listen('auth', ({ payload }) => {
             switch (payload.event) {
                 case 'signedIn':
-                    refreshAuth();
+                    refreshAuth(false, true);
                     break;
                 case 'signInWithRedirect_failure': {
                     // The first Google sign-in for an email that already has an account links the two, and Cognito
