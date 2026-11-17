@@ -16,6 +16,10 @@ T="arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table"
 
 [ -f $LAMBDA_DIR/handler.ts ] || { echo "Run this from the project root (~/runts)"; exit 1; }
 
+echo "Checking the UserFollowedTag byTagId index exists..."
+aws dynamodb describe-table --table-name "UserFollowedTag-${PROD_API_ID}-NONE" --region $REGION \
+  --query 'Table.GlobalSecondaryIndexes[].[IndexName,IndexStatus]' --output text | grep -q "byTagId.*ACTIVE" \
+  || { echo "UserFollowedTag byTagId index is missing or not ACTIVE yet - deploy production first."; exit 1; }
 echo "Checking the byAuthorId index exists..."
 aws dynamodb describe-table --table-name "UserFollowedAuthor-${PROD_API_ID}-NONE" --region $REGION \
   --query 'Table.GlobalSecondaryIndexes[].[IndexName,IndexStatus]' --output text | grep -q "byAuthorId.*ACTIVE" \
@@ -30,7 +34,13 @@ aws iam put-role-policy --role-name $ROLE_NAME --policy-name RuntsNotifyPolicy -
        \"$T/Story-${PROD_API_ID}-NONE\", \"$T/Story-${PROD_API_ID}-NONE/index/*\",
        \"$T/UserFollowedAuthor-${PROD_API_ID}-NONE\", \"$T/UserFollowedAuthor-${PROD_API_ID}-NONE/index/*\",
        \"$T/UserDevice-${PROD_API_ID}-NONE\", \"$T/UserDevice-${PROD_API_ID}-NONE/index/*\",
+       \"$T/UserFollowedTag-${PROD_API_ID}-NONE\", \"$T/UserFollowedTag-${PROD_API_ID}-NONE/index/*\",
+       \"$T/StoryTag-${PROD_API_ID}-NONE\", \"$T/StoryTag-${PROD_API_ID}-NONE/index/*\",
+       \"$T/Tag-${PROD_API_ID}-NONE\",
        \"$T/Author-${PROD_API_ID}-NONE\"]},
+    {\"Effect\": \"Allow\",
+     \"Action\": [\"dynamodb:UpdateItem\"],
+     \"Resource\": [\"$T/UserDevice-${PROD_API_ID}-NONE\"]},
     {\"Effect\": \"Allow\",
      \"Action\": [\"dynamodb:DeleteItem\"],
      \"Resource\": [\"$T/UserDevice-${PROD_API_ID}-NONE\"]},
