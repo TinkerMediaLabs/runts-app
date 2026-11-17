@@ -13,7 +13,7 @@ import { useApp } from '@/context/AppContext';
 import BaseEmptyState from '@/components/common/EmptyState';
 import { askForAccount } from '@/lib/requireAccount';
 
-import FavoritesList from '../../components/story/FavoritesList';
+import MyTagsList from '../../components/tag/MyTagsList';
 import BookmarkList from '../../components/story/BookmarkList';
 
 import useStyles from '../../theme/styles';
@@ -27,12 +27,12 @@ import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
-type TabId = 'pinned' | 'favorites' | 'bookmarked';
+type TabId = 'pinned' | 'mytags' | 'bookmarked';
 type Tab   = { id: TabId; label: string };
 
 const TABS: Tab[] = [
     { id: 'pinned',      label: 'Pinned'      },
-    { id: 'favorites',   label: 'Favorites'   },
+    { id: 'mytags',      label: 'My Tags'     },
     { id: 'bookmarked',  label: 'Bookmarks'  },
 ];
 
@@ -155,8 +155,8 @@ const SignedInPlaylist = () => {
                         <StoryTileList reorderEnabled={reorderEnabled} tabBarHeight={tabBarHeight} />
                     )}
 
-                    {activeTab === 'favorites' && (
-                        <FavoritesList tabBarHeight={tabBarHeight} />
+                    {activeTab === 'mytags' && (
+                        <MyTagsList tabBarHeight={tabBarHeight} />
                     )}
 
                     {activeTab === 'bookmarked' && (
@@ -301,7 +301,7 @@ const GuestPlaylist = () => {
             <BaseEmptyState
                 icon={<FontAwesome5 name="bookmark" size={36} color={colors.textSecondary} iconStyle="solid" />}
                 title="Your playlist lives here"
-                body="Pin stories to listen later, keep your favorites, and pick up where you left off. A free account unlocks it."
+                body="Pin stories to listen later, follow the genres you love, and pick up where you left off. A free account unlocks it."
                 actionLabel="Create a free account"
                 onAction={() => askForAccount('save stories to your playlist')}
             />

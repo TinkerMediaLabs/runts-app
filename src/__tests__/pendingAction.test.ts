@@ -25,5 +25,9 @@ describe('pending action', () => {
     setPendingAction(undefined, T + 5);
     expect(takePendingAction(T + 10)).toBeNull();
   });
+  it('keeps the genre to follow and its name', () => {
+    setPendingAction({ kind: 'followTag', id: 't1', name: 'Mystery' }, T);
+    expect(takePendingAction(T + 1000)).toEqual({ kind: 'followTag', id: 't1', name: 'Mystery' });
+  });
   it('is empty by default', () => { expect(takePendingAction(T)).toBeNull(); });
 });

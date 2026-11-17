@@ -1,14 +1,15 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { SkeletonRows } from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet, Animated, TouchableOpacity, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Screen from '@/components/common/Screen';
 import { useApp } from '@/context/AppContext';
 import MenuHeader from '../../components/common/MenuHeader';
 import StoryTile from '../../components/story/StoryTile';
+import FavoritesList from '../../components/story/FavoritesList';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useFinishedStories } from '../../hooks/queries/useFinishedStories';
 import { useAuthor } from '../../hooks/queries/useAuthors';
@@ -20,6 +21,15 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 
 const client = generateClient<Schema>();
+const { width } = Dimensions.get('window');
+
+// Two lists on one screen: everything the listener has finished, and their favorites (stories rated at or above the
+// favorites threshold in app settings). The favorites list is the same list that used to be a tab on the playlist.
+type TabId = 'history' | 'favorites';
+const TABS: { id: TabId; label: string }[] = [
+    { id: 'history',   label: 'All history' },
+    { id: 'favorites', label: 'Favorites'   },
+];
 
 // ---------------------------------------------------------------------------
 // Per-tile wrapper
@@ -88,6 +98,14 @@ const History = ({ navigation }: any) => {
     const finishedStories = useMemo(() => finishedPages?.pages.flatMap(p => p.items) ?? [], [finishedPages]);
     const [isFetching, setIsFetching] = useState(false);
 
+    const [activeTab, setActiveTab] = useState<TabId>('history');
+    const indicatorX = useRef(new Animated.Value(0)).current;
+    const TAB_WIDTH  = width / TABS.length;
+    const handleTabPress = (tab: TabId, index: number) => {
+        setActiveTab(tab);
+        Animated.spring(indicatorX, { toValue: index * TAB_WIDTH, damping: 20, stiffness: 200, useNativeDriver: true }).start();
+    };
+
 
     const onRefresh = async () => {
         setIsFetching(true);
@@ -106,7 +124,29 @@ const History = ({ navigation }: any) => {
             <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
                 <MenuHeader title="History" navigation={navigation} />
 
-                {isLoading ? (
+                <View style={styles.tabBar}>
+                    {TABS.map((tab, index) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <TouchableOpacity
+                                key={tab.id}
+                                activeOpacity={0.7}
+                                onPress={() => handleTabPress(tab.id, index)}
+                                style={[styles.tab, { width: TAB_WIDTH }]}
+                                accessibilityRole="tab"
+                                accessibilityLabel={tab.label}
+                                accessibilityState={{ selected: isActive }}
+                            >
+                                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                    <Animated.View style={[styles.indicator, { width: TAB_WIDTH, transform: [{ translateX: indicatorX }] }]} />
+                </View>
+
+                {activeTab === 'favorites' ? (
+                    <FavoritesList tabBarHeight={60} />
+                ) : isLoading ? (
                     <SkeletonRows count={7} />
                 ) : (
                     <FlatList
@@ -144,6 +184,33 @@ const History = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
+    tabBar: {
+        flexDirection: 'row',
+        position: 'relative',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+        marginBottom: 8,
+    },
+    tab: {
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    tabLabel: {
+        fontSize: fontSizes.small,
+        fontWeight: '500',
+        color: colors.textSecondary,
+    },
+    tabLabelActive: {
+        color: colors.textPrimary,
+        fontWeight: '700',
+    },
+    indicator: {
+        position: 'absolute',
+        bottom: -StyleSheet.hairlineWidth,
+        height: 2,
+        backgroundColor: colors.accent,
+        borderRadius: 1,
+    },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',

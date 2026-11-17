@@ -3,7 +3,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
-async function fetchTag(id: string) {
+export async function fetchTag(id: string) {
   const client = generateClient<Schema>();
   const { data } = await client.models.Tag.get({ id });
   return { ...data, id, name: data?.name ?? '' };
