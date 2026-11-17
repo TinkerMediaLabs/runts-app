@@ -30,12 +30,22 @@ async function processRecord(record: DynamoDBRecord) {
 
   if (eventName === 'INSERT') {
     console.log(`tagId=${tagId} delta=+1`);
-    await dynamo.send(new UpdateItemCommand({
-      TableName: TAG_TABLE,
-      Key: { id: { S: tagId } },
-      UpdateExpression: 'ADD storyCount :delta',
-      ExpressionAttributeValues: { ':delta': { N: '1' } },
-    }));
+    try {
+      await dynamo.send(new UpdateItemCommand({
+        TableName: TAG_TABLE,
+        Key: { id: { S: tagId } },
+        UpdateExpression: 'ADD storyCount :delta',
+        // Without this, linking a story to a tag that no longer exists would create an empty stub Tag row.
+        ConditionExpression: 'attribute_exists(id)',
+        ExpressionAttributeValues: { ':delta': { N: '1' } },
+      }));
+    } catch (err) {
+      if (err instanceof ConditionalCheckFailedException) {
+        console.log(`tagId=${tagId} no longer exists, skipping count`);
+        return;
+      }
+      throw err;
+    }
     return;
   }
 

@@ -1,4 +1,4 @@
-import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
@@ -28,10 +28,20 @@ async function processRecord(record: DynamoDBRecord) {
   const delta = eventName === 'INSERT' ? 1 : -1;
   console.log(`storyId=${image.storyId} delta=${delta}`);
 
-  await dynamo.send(new UpdateItemCommand({
-    TableName: STORY_TABLE,
-    Key: { id: { S: image.storyId } },
-    UpdateExpression: 'ADD numComments :delta',
-    ExpressionAttributeValues: { ':delta': { N: delta.toString() } },
-  }));
+  try {
+    await dynamo.send(new UpdateItemCommand({
+      TableName: STORY_TABLE,
+      Key: { id: { S: image.storyId } },
+      UpdateExpression: 'ADD numComments :delta',
+      // Without this, a comment on a story that no longer exists would create an empty stub Story row.
+      ConditionExpression: 'attribute_exists(id)',
+      ExpressionAttributeValues: { ':delta': { N: delta.toString() } },
+    }));
+  } catch (err) {
+    if (err instanceof ConditionalCheckFailedException) {
+      console.log(`storyId=${image.storyId} no longer exists, skipping comment count`);
+      return;
+    }
+    throw err;
+  }
 }
