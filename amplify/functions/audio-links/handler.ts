@@ -2,6 +2,7 @@ import { getSignedUrl } from '@aws-sdk/cloudfront-signer';
 import { DynamoDBClient, BatchGetItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { validatePaths, buildLinks, validateStoryIds, guestAllowedPaths, assertGuestPaths, eroticPathSet, needsEroticList, type GuestStory } from './links';
+import { createPremiumChecker, premiumAudioSet, splitPremiumPaths, needsPremiumList } from './premium';
 
 const dynamo = new DynamoDBClient({});
 
@@ -37,8 +38,30 @@ async function eroticPaths(storyTable: string, tagTable: string): Promise<Set<st
   return paths;
 }
 
-// Signed-in users can ask for links to any story file or author photo (the same access they have to the bucket today).
-// Checking that a free user may not get a premium story's link is a later hardening step (needs RevenueCat).
+// Which of the requested audio files belong to premium stories: a direct read by path from the PremiumAudio table
+// (at most 50 paths per request, so one batch). A failed read throws, so a free listener is refused rather than let through.
+async function premiumAmong(table: string, audioPaths: string[]): Promise<Set<string>> {
+  if (audioPaths.length === 0) return new Set();
+  const res = await dynamo.send(new BatchGetItemCommand({
+    RequestItems: { [table]: { Keys: audioPaths.map(id => ({ id: { S: id } })), ProjectionExpression: 'id' } },
+  }));
+  if (res.UnprocessedKeys && Object.keys(res.UnprocessedKeys).length) throw new Error('Premium check incomplete');
+  return premiumAudioSet((res.Responses?.[table] ?? []).map(i => unmarshall(i)));
+}
+
+// Whether a signed-in person has Premium, asked of RevenueCat (at most once per person every 5 minutes per warm function).
+const isPremiumUser = createPremiumChecker({
+  fetchSubscriber: async (userId) => {
+    const res = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}`, {
+      headers: { Authorization: `Bearer ${process.env.REVENUECAT_SECRET_KEY ?? ''}` },
+    });
+    if (!res.ok) throw new Error(`RevenueCat lookup failed (${res.status})`);
+    return ((await res.json()) as any).subscriber ?? {};
+  },
+});
+
+// Signed-in users can ask for links to story files and author photos. The audio of a premium story is signed only
+// for someone with Premium; for everyone else it is simply left out of the answer (the app shows it as locked).
 // Guests (not signed in) get a stricter path: they name the stories they are viewing, and only covers of live,
 // non-erotic stories and the audio of live, non-erotic, non-premium ones are signed (see links.ts).
 export const handler = async (event: any): Promise<string> => {
@@ -51,7 +74,7 @@ export const handler = async (event: any): Promise<string> => {
   const keyB64 = process.env.CLOUDFRONT_PRIVATE_KEY_B64;
   if (!domain || !keyPairId || !keyB64) throw new Error('Audio links are not configured');
 
-  const paths = validatePaths(event.arguments?.paths);
+  let paths = validatePaths(event.arguments?.paths);
 
   if (guest) {
     const table = process.env.STORY_TABLE_NAME;
@@ -70,6 +93,15 @@ export const handler = async (event: any): Promise<string> => {
     }
     const erotic = needsEroticList(paths) ? await eroticPaths(table, tagTable) : new Set<string>();
     assertGuestPaths(paths, guestAllowedPaths(stories), erotic);
+  }
+
+  // The CMS (admin group) previews and plays everything, premium or not.
+  const isAdmin = Array.isArray(event.identity?.groups) && event.identity.groups.includes('admin');
+  if (signedIn && !isAdmin && needsPremiumList(paths)) {
+    const table = process.env.PREMIUM_AUDIO_TABLE_NAME;
+    if (!table) throw new Error('Audio links are not configured');
+    const { open, locked } = splitPremiumPaths(paths, await premiumAmong(table, paths.filter(p => p.startsWith('stories/audio/'))));
+    if (locked.length && !(await isPremiumUser(event.identity.sub))) paths = open;
   }
 
   const privateKey = Buffer.from(keyB64, 'base64').toString('utf8');

@@ -145,6 +145,9 @@ audioLinksFn.addToRolePolicy(new iam.PolicyStatement({
   ],
 }));
 storyTable.grantReadData(audioLinksFn);   // guests: look up the stories they ask about
+const premiumAudioTable = backend.data.resources.tables['PremiumAudio'];
+audioLinksFn.addEnvironment('PREMIUM_AUDIO_TABLE_NAME', premiumAudioTable.tableName);
+premiumAudioTable.grantReadData(audioLinksFn);   // signed-in listeners: which requested audio is premium
 
 // ── share-preview ─────────────────────────────────────────────────────────
 // The public page behind a shared story link: title, author and cover as link-preview tags, plus "Open in Runts".
@@ -347,6 +350,8 @@ followCountAggregatorFn.addEventSource(new DynamoEventSource(followTable, {
 const tagIndexSyncFn = backend.tagIndexSync.resources.lambda as lambda.Function;
 tagIndexSyncFn.addEnvironment('STORY_TABLE_NAME', storyTable.tableName);
 tagIndexSyncFn.addEnvironment('STORYTAG_TABLE_NAME', storyTagTable.tableName);
+tagIndexSyncFn.addEnvironment('PREMIUM_AUDIO_TABLE_NAME', premiumAudioTable.tableName);
+premiumAudioTable.grantWriteData(tagIndexSyncFn);
 tagIndexSyncFn.addEnvironment('STORYNARRATOR_TABLE_NAME', storyNarratorTable.tableName);
 storyNarratorTable.grantReadWriteData(tagIndexSyncFn);
 storyTable.grantReadWriteData(tagIndexSyncFn);

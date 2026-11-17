@@ -7,5 +7,8 @@ export const audioLinks = defineFunction({
   entry: './handler.ts',
   resourceGroupName: 'data',
   timeoutSeconds: 15,
-  environment: { CLOUDFRONT_PRIVATE_KEY_B64: secret('CLOUDFRONT_PRIVATE_KEY_B64') },
+  environment: {
+    CLOUDFRONT_PRIVATE_KEY_B64: secret('CLOUDFRONT_PRIVATE_KEY_B64'),
+    REVENUECAT_SECRET_KEY: secret('REVENUECAT_SECRET_KEY'),   // reads whether a signed-in person has Premium
+  },
 });

@@ -4,6 +4,7 @@ import { onlineManager } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getLocalFilePath } from '../../lib/offlineStorage';
 import { audioLinks, isCdnPath } from '../../lib/audioLinks';
+import { PREMIUM_REQUIRED_MESSAGE } from '../../lib/premiumGate';
 
 export type Track = {
   id: string;
@@ -56,13 +57,18 @@ async function resolveAudioUrl(url: string, localMode: LocalMode = 'uri'): Promi
 
   // Preferred: a 7-day CDN link (stable, supports seeking, shared with the car list). If the backend cannot
   // give one, fall through to the old direct bucket link so playback never depends on the CDN alone.
+  // Story audio has NO bucket fallback: the bucket no longer lets the app read stories/audio/ directly, so a premium
+  // file is only reachable through a link the server agreed to sign.
   if (isCdnPath(url)) {
+    const isAudio = url.startsWith('stories/audio/');
     try {
       const cdn = await audioLinks.getOne(url);
       if (cdn) return cdn;
     } catch (e) {
+      if (isAudio) throw e;
       console.warn('audioEngine: CDN link unavailable, using bucket link', e);
     }
+    if (isAudio) throw new Error(PREMIUM_REQUIRED_MESSAGE);
   }
 
   const cached = signedUrlCache.get(url);

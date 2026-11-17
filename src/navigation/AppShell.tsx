@@ -6,6 +6,7 @@ import ActionChip from '@/components/common/ActionChip';
 import KeepGoingSheet from '@/components/story/KeepGoingSheet';
 import OfflineBanner from '@/components/common/OfflineBanner';
 import GuestSheet from '@/components/common/GuestSheet';
+import PremiumGate from '@/components/common/PremiumGate';
 import DailyMoodSheet from '@/components/taste/DailyMoodSheet';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
@@ -45,6 +46,7 @@ export default function AppShell({ children }: any) {
       <OfflineBanner />
       <ActionChip />
       <GuestSheet />
+      <PremiumGate />
       <DailyMoodSheet onOpenChange={setMoodSheetOpen} />
     </View>
   );

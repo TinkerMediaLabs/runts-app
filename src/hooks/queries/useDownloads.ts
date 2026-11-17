@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
-import { getUrl } from 'aws-amplify/storage';
+import { audioLinks } from '../../lib/audioLinks';
+import { PREMIUM_REQUIRED_MESSAGE } from '../../lib/premiumGate';
+import { getCdnImageUrl } from '../../lib/imageLinks';
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
@@ -103,10 +105,10 @@ async function downloadStoryInner(story: {
 
   try {
     // Get a short-lived signed URL just for the download
-    const { url: signedUrl } = await getUrl({
-      path: story.audioUri,
-      options: { expiresIn: 3600 },
-    });
+    // Same signed link the player uses: the server only signs premium audio for Premium listeners.
+    const cdnUrl = await audioLinks.getOne(story.audioUri);
+    if (!cdnUrl) throw new Error(PREMIUM_REQUIRED_MESSAGE);
+    const signedUrl = cdnUrl;
 
     setDownloadProgress(story.id, 0);
     const resumable = FileSystem.createDownloadResumable(
@@ -197,8 +199,8 @@ async function downloadCover(storyId: string, imageUri?: string | null): Promise
   try {
     await FileSystem.makeDirectoryAsync(COVERS_DIR, { intermediates: true }).catch(() => {});
     const dest = coverPathForStory(storyId);
-    const { url } = await getUrl({ path: imageUri, options: { expiresIn: 3600 } });
-    const out = await FileSystem.downloadAsync(url.toString(), dest);
+    const url = await getCdnImageUrl(imageUri);
+    const out = await FileSystem.downloadAsync(url, dest);
     if (out.status !== 200) { await FileSystem.deleteAsync(dest, { idempotent: true }); return { path: null, bytes: 0 }; }
     const info = await FileSystem.getInfoAsync(dest);
     return { path: dest, bytes: (info as any).size ?? 0 };
@@ -242,9 +244,9 @@ async function downloadScenes(storyId: string, usedBytes: number): Promise<{ sce
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     try {
-      const { url } = await getUrl({ path: row.imageUri, options: { expiresIn: 3600 } });
+      const url = await getCdnImageUrl(row.imageUri);
       const dest = `${dir}${i}.jpg`;
-      const out = await FileSystem.downloadAsync(url.toString(), dest);
+      const out = await FileSystem.downloadAsync(url, dest);
       if (out.status !== 200) { await FileSystem.deleteAsync(dest, { idempotent: true }); continue; }
       const info = await FileSystem.getInfoAsync(dest);
       const size = (info as any).size ?? 0;

@@ -11,7 +11,10 @@ export function useFreePremiumOffer() {
     queryFn: async () => {
       const client = generateClient<Schema>();
       const res: any = await (client.models as any).AppSetting.get({ id: FREE_PREMIUM_KEY });
-      if (res.errors?.length) throw new Error(res.errors[0].message);
+      if (res.errors?.length) {
+        console.warn('freePremiumOffer: could not read the setting:', res.errors[0].message);
+        throw new Error(res.errors[0].message);
+      }
       return (res.data?.value ?? null) as string | null;
     },
     staleTime: 1000 * 60 * 5,
