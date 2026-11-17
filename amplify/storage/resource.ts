@@ -9,9 +9,8 @@ export const storage = defineStorage({
     ],
     // Read-only for signed-in app users. Writes happen only through the admin-only
     // getUploadUrl mutation (functions/upload-url), which the CMS uses.
-    'stories/*': [
-      allow.authenticated.to(['read']),
-    ],
+    // Nothing under stories/ is read directly: covers, scene images and audio all come through the signed CDN links
+    // (audio-links function), which refuses premium audio to people without Premium (admins are always allowed).
     'authors/*': [
       allow.authenticated.to(['read']),
     ],

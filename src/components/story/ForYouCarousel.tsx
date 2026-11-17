@@ -33,6 +33,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
+import PremiumBadge from '@/components/common/PremiumBadge';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -147,6 +148,9 @@ const CarouselItem = ({
                             <Text style={styles.newBadgeText}>NEW</Text>
                         </View>
                     )}
+
+                    {/* PREMIUM across the middle of the cover */}
+                    {isPremium === true && <PremiumBadge />}
 
                     {/* Duration / progress pill — top right */}
                     {duration > 0 && (

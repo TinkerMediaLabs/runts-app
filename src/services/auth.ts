@@ -170,7 +170,12 @@ export async function getStoryImageUrl(path: string): Promise<string> {
   if (!path) return '';
   // Story covers come through the signed CDN (7-day links). Failing here is deliberate: the caller retries and
   // shows a placeholder, whereas a bucket link would look fine and then stop working within the hour.
-  return getCdnImageUrl(path);
+  try {
+    return await getCdnImageUrl(path);
+  } catch (e) {
+    console.warn('getStoryImageUrl: no link for', path, e);
+    throw e;
+  }
 }
 
 export async function getAuthorImageUrl(path: string): Promise<string> {

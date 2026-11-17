@@ -1,4 +1,4 @@
-import { DynamoDBClient, UpdateItemCommand, GetItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, GetItemCommand, QueryCommand, DeleteItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { bandOf, liveTagBandOf } from './bands';
@@ -7,6 +7,8 @@ import { bandOf, liveTagBandOf } from './bands';
 // restore scripts):
 //   Story.liveTagId    = primaryTagId while live === 'true', otherwise REMOVED (sparse index: drafts are
 //                        simply not in it, so tag pages never need to filter drafts out).
+//   PremiumAudio rows  = one row (id = the audio file path) per premium story, so audio-links can keep premium audio
+//                        from free listeners with a direct lookup by path.
 //   StoryTag.liveTagId = tagId while the story is live, otherwise removed.
 //   StoryTag.publishedAt = the story's publishedAt (sort key).
 //   StoryTag.durationBand = the story's duration in 15-minute steps; StoryTag.liveTagBand = "<tagId>#<band>" while the
@@ -19,6 +21,7 @@ const dynamo = new DynamoDBClient({});
 const STORY_TABLE = process.env.STORY_TABLE_NAME!;
 const STORYTAG_TABLE = process.env.STORYTAG_TABLE_NAME!;
 const STORYNARRATOR_TABLE = process.env.STORYNARRATOR_TABLE_NAME!;
+const PREMIUM_AUDIO_TABLE = process.env.PREMIUM_AUDIO_TABLE_NAME!;
 
 const isCondFail = (e: any) => e?.name === 'ConditionalCheckFailedException';
 
@@ -76,9 +79,31 @@ async function deleteLinks(table: string, storyId: string) {
   } while (lastKey);
 }
 
+const AUDIO_PREFIX = 'stories/audio/';
+const audioPathOf = (s: any): string | undefined =>
+  typeof s?.audioUri === 'string' && s.audioUri.startsWith(AUDIO_PREFIX) ? s.audioUri : undefined;
+
+// Keeps the PremiumAudio row for a story right: present while the story is premium, gone when it is not, when its
+// audio file changes, or when the story is deleted. Both writes are safe to repeat.
+async function syncPremiumAudio(story: any | null, old: any | null) {
+  const wantPath = story?.isPremium === true ? audioPathOf(story) : undefined;
+  const oldPath = old?.isPremium === true ? audioPathOf(old) : undefined;
+  if (oldPath && oldPath !== wantPath) {
+    await dynamo.send(new DeleteItemCommand({ TableName: PREMIUM_AUDIO_TABLE, Key: { id: { S: oldPath } } }));
+  }
+  if (wantPath && wantPath !== oldPath) {
+    await dynamo.send(new PutItemCommand({
+      TableName: PREMIUM_AUDIO_TABLE,
+      Item: { id: { S: wantPath }, storyId: { S: story.id }, __typename: { S: 'PremiumAudio' },
+              createdAt: { S: new Date().toISOString() }, updatedAt: { S: new Date().toISOString() } },
+    }));
+  }
+}
+
 async function handleStory(record: DynamoDBRecord) {
   if (record.eventName === 'REMOVE') {
     const gone: any = record.dynamodb?.OldImage ? unmarshall(record.dynamodb.OldImage as any) : null;
+    if (gone) await syncPremiumAudio(null, gone);
     if (gone?.id) {
       await deleteLinks(STORYTAG_TABLE, gone.id);
       await deleteLinks(STORYNARRATOR_TABLE, gone.id);
@@ -93,6 +118,7 @@ async function handleStory(record: DynamoDBRecord) {
   if (story.liveTagId !== wantLiveTag) {
     await setOrRemove(STORY_TABLE, { id: { S: story.id } }, { liveTagId: wantLiveTag });
   }
+  await syncPremiumAudio(story, old);
 
   // Propagate to this story's StoryTag rows only when live / publishedAt / duration actually changed.
   const changed = !old || old.live !== story.live || old.publishedAt !== story.publishedAt || old.duration !== story.duration;

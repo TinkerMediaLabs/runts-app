@@ -48,6 +48,18 @@ describe('guest links', () => {
     expect(() => assertGuestPaths(['stories/audio/free.mp3'], allowed)).toThrow();
   });
 
+  it('lets a guest have the preview clip of a live, non-erotic story, even a premium one', () => {
+    const withClip = { ...free, previewUri: 'stories/previews/free.mp3' };
+    for (const s of [withClip, { ...withClip, isPremium: true }]) {
+      expect(() => assertGuestPaths(['stories/previews/free.mp3'], guestAllowedPaths([s]))).not.toThrow();
+    }
+    // the clip of a story the guest did not name, or of an erotic / not-live story, stays refused
+    expect(() => assertGuestPaths(['stories/previews/other.mp3'], guestAllowedPaths([withClip]))).toThrow();
+    for (const s of [{ ...withClip, isErotic: 'true' }, { ...withClip, live: 'false' }]) {
+      expect(() => assertGuestPaths(['stories/previews/free.mp3'], guestAllowedPaths([s]))).toThrow();
+    }
+  });
+
   it('refuses the audio of erotic or not-live stories, and covers of erotic ones', () => {
     for (const s of [{ ...free, isErotic: 'true' }, { ...free, isErotic: true }, { ...free, live: 'false' }, { ...free, live: undefined }]) {
       expect(() => assertGuestPaths(['stories/audio/free.mp3'], guestAllowedPaths([s]), eroticPathSet([s]))).toThrow();

@@ -279,28 +279,15 @@ const PremiumScreen = () => {
                         </Text>
                     </View>
 
-                    {/* ── Free offer (open while the CMS end date has not passed) ── */}
-                    {offerOpen && !claimed && (
-                        <View style={styles.freeOffer}>
-                            <Text style={styles.freeOfferTitle}>3 months of Premium, free</Text>
-                            <Text style={styles.freeOfferText}>
-                                No payment needed. It ends on its own after 3 months and never charges you.
-                            </Text>
-                            <Button
-                                label="Start 3 months free"
-                                loading={claiming}
-                                disabled={claiming || isLoading}
-                                onPress={handleClaimFree}
-                                style={{ marginTop: 12 }}
-                            />
-                        </View>
-                    )}
-
                     {/* ── Plan picker ── */}
                     {offeringsLoading ? (
                         <View style={styles.offeringsLoader}>
                             <ActivityIndicator color={colors.accent} />
                         </View>
+                    ) : !annualPkg && !monthlyPkg ? (
+                        <Text style={styles.noPlans}>
+                            Plans aren't available right now. Please try again later.
+                        </Text>
                     ) : (
                         <View style={styles.planRow}>
                             {annualPkg && (
@@ -334,6 +321,23 @@ const PremiumScreen = () => {
                     <Text style={styles.renewalNote}>
                         Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
                     </Text>
+
+                    {/* ── Free offer: below the paid plans (open while the CMS end date has not passed) ── */}
+                    {offerOpen && !claimed && (
+                        <View style={styles.freeOffer}>
+                            <Text style={styles.freeOfferTitle}>3 months of Premium, free</Text>
+                            <Text style={styles.freeOfferText}>
+                                No payment needed. It ends on its own after 3 months and never charges you.
+                            </Text>
+                            <Button
+                                label="Start 3 months free"
+                                loading={claiming}
+                                disabled={claiming || isLoading}
+                                onPress={handleClaimFree}
+                                style={{ marginTop: 12 }}
+                            />
+                        </View>
+                    )}
 
                     {/* ── Features ── */}
                     <View style={styles.featuresSection}>
@@ -375,8 +379,17 @@ const PremiumScreen = () => {
 
 const styles = StyleSheet.create({
 
+    noPlans: {
+        color: colors.textSecondary,
+        fontSize: fontSizes.small,
+        textAlign: 'center',
+        marginBottom: 20,
+        lineHeight: 18,
+    },
+
     freeOffer: {
         backgroundColor: colors.surface2,
+        marginTop: 8,
         borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: colors.accent,

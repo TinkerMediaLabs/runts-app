@@ -29,6 +29,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
+import PremiumBadge from '@/components/common/PremiumBadge';
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 
@@ -142,6 +143,7 @@ const StoryTile = ({
                         {/* Artwork — animates to 0 width on expand */}
                         <Animated.View style={[styles.artwork, artworkStyle, { overflow: 'hidden' }]}>
                             <CachedImage source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
+                            {isPremium === true && <PremiumBadge compact />}
                         </Animated.View>
 
                         {/* Text block — flex:1 so it fills the space left by artwork */}

@@ -3,7 +3,8 @@ import { DynamoDBStreamEvent } from 'aws-lambda';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 // When a User row is deleted (account deletion), remove everything that user owns: pins, finished /
-// in-progress stories, ratings, reactions, favorites, follows, bookmarks, comments and push devices.
+// in-progress stories, ratings, reactions, favorites, follows, bookmarks, comments, push devices, the erotic
+// PIN and the free Premium claim record.
 // Every target is read through a userId index (never a scan) and deleted in batches of 25. The
 // deletes flow through the normal aggregator streams (ratings, comments, follows, ...), so counts
 // stay right. Safe to retry: deleting a row twice is a no-op, so a failure just re-runs the batch.
@@ -59,10 +60,12 @@ export const handler = async (event: DynamoDBStreamEvent) => {
       total += await cleanTarget(userId, t);
     }
 
-    // The account-level erotic PIN is keyed by the user id itself (no userId index), so delete it directly.
-    const pinTable = process.env.EROTIC_PIN_TABLE_NAME;
-    if (pinTable) {
-      await dynamo.send(new DeleteItemCommand({ TableName: pinTable, Key: { id: { S: userId } } }));
+    // Rows keyed by the user id itself (no userId index) are deleted directly: the account-level erotic PIN and
+    // the record that this person claimed the free Premium offer.
+    for (const tableName of [process.env.EROTIC_PIN_TABLE_NAME, process.env.PREMIUM_CLAIM_TABLE_NAME]) {
+      if (tableName) {
+        await dynamo.send(new DeleteItemCommand({ TableName: tableName, Key: { id: { S: userId } } }));
+      }
     }
     console.log(`user-cleanup: removed ${total} row(s) for deleted user ${userId}`);
   }

@@ -72,6 +72,7 @@ const HorizontalList = ({ stories, tagId, tagName, showSeeMore }: HorizontalList
             credit={item.credit}
             nsfw={item.nsfw}
             isNew={item.isNew}
+            isPremium={item.isPremium === true}
             progressStatus={item.progressStatus}
             progressSeconds={item.progressSeconds}
         />

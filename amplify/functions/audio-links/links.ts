@@ -42,7 +42,7 @@ export function buildLinks(opts: {
 export const MAX_GUEST_STORIES = 25;
 const COVER_PREFIX = 'stories/covers/';
 
-export type GuestStory = { live?: unknown; isErotic?: unknown; isPremium?: unknown; imageUri?: unknown; tileImageUri?: unknown; audioUri?: unknown };
+export type GuestStory = { live?: unknown; isErotic?: unknown; isPremium?: unknown; imageUri?: unknown; tileImageUri?: unknown; audioUri?: unknown; previewUri?: unknown };
 
 const isTrue = (v: unknown) => v === true || v === 'true';
 
@@ -62,7 +62,8 @@ export function guestAllowedPaths(stories: GuestStory[]): Set<string> {
   const allowed = new Set<string>();
   for (const s of stories) {
     if (!isTrue(s.live) || isTrue(s.isErotic)) continue;
-    for (const img of [s.imageUri, s.tileImageUri]) if (typeof img === 'string' && img.startsWith('stories/')) allowed.add(img);
+    // The 30-second preview clip (stories/previews/) is safe for guests even when the story is premium: it is the teaser.
+    for (const img of [s.imageUri, s.tileImageUri, s.previewUri]) if (typeof img === 'string' && img.startsWith('stories/')) allowed.add(img);
     if (!isTrue(s.isPremium) && typeof s.audioUri === 'string' && s.audioUri.startsWith('stories/')) allowed.add(s.audioUri);
   }
   return allowed;

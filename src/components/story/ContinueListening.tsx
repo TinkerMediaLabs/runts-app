@@ -98,6 +98,7 @@ const ProgressCard = ({
         url: story.audioUri ?? '',
         artwork: displayImageUri,
         artist: authorName,
+        isPremium: story.isPremium,
     });
 
     return (

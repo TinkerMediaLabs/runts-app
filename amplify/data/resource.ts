@@ -347,6 +347,7 @@ Comment: a
       type: a.string(),
       licenseType: a.string(),    // 'public_domain' | 'runts_exclusive' | 'licensed' | 'other'
       isPremium:   a.boolean().default(false),
+      previewUri:  a.string(),   // a short (30 s) preview clip under stories/previews/, so free listeners never need the full audio of a premium story
       title: a.string().required(),
       titleLower: a.string(),   // lowercase title — sort key for title-prefix search
       liveTagId: a.string(),    // = primaryTagId while live==='true', otherwise absent (sparse). Maintained by tag-index-sync.
@@ -662,6 +663,19 @@ Comment: a
       allow.authenticated().to(['read']),
       allow.guest().to(['read']),
       allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    ]),
+
+  // ── PremiumAudio: the audio files of premium stories (one row per file, id = the file path, e.g. stories/audio/x.mp3) ──
+  // Kept in step with Story.isPremium and Story.audioUri by the tag-index-sync stream function. The audio-links function
+  // looks up just the files a request names (a direct read by key, no index), and only signs a premium file for someone
+  // with Premium. A separate small table on purpose: adding an index to Story would delete and recreate that table.
+  PremiumAudio: a
+    .model({
+      id: a.id().required(),
+      storyId: a.string(),
+    })
+    .authorization(allow => [
+      allow.group('admin').to(['read']),
     ]),
 
   // ── PremiumClaim: who has used the free Premium offer (one row per person, id = their user id) ──

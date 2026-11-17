@@ -13,6 +13,7 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 
 import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../lib/storyDisplay';
 import { CachedImageBackground } from '../common/CachedImage';
+import PremiumBadge from '../common/PremiumBadge';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
@@ -35,6 +36,7 @@ const HorzStoryTile = ({
     spiceRating,
     author,
     isNew,
+    isPremium = false,
     progressStatus = 'none',
     progressSeconds = 0,
 }: any) => {
@@ -76,6 +78,9 @@ const HorzStoryTile = ({
                             <Text style={styles.newBadgeText}>NEW</Text>
                         </View>
                     )}
+
+                    {/* PREMIUM across the middle of the cover */}
+                    {isPremium === true && <PremiumBadge />}
 
                     {/* Duration / progress pill — top right */}
                     {duration > 0 && (
