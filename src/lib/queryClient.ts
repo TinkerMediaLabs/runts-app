@@ -2,6 +2,7 @@ import { QueryClient, onlineManager } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { createChunkedStorage } from './chunkedStorage';
 
 // Offline: the app keeps a bounded on-device copy of the data the listener has already viewed (their
 // own stories, pins, progress, authors, tags) so those screens open without a connection. Search results,
@@ -31,7 +32,7 @@ export const queryClient = new QueryClient({
 });
 
 export const queryPersister = createAsyncStoragePersister({
-    storage: AsyncStorage,
+    storage: createChunkedStorage(AsyncStorage),   // pieces, so no row passes Android's ~2MB read limit
     key: '@runts/query_cache',
     throttleTime: 2000,
 });
