@@ -62,7 +62,7 @@ import { useUniverse } from '../../hooks/queries/useUniverse';
 import { useIsGuest } from '../../lib/dataAccess';
 import { askForAccount } from '../../lib/requireAccount';
 import { getDurationDisplay, formatNarratorDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
-import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
+import { STORY_FORMATS, POV_OPTIONS, CONTENT_WARNINGS } from '../../constants/storyMetadata';
 
 
 
@@ -774,14 +774,11 @@ const handleDelete = (id: string) => {
                         </View>
                     ) : null}
 
-                    {/* Story Format / Story Tone / POV — pills, same style as numListens */}
-                    {(story?.storyFormat || (story?.tone && !moodTone.some((t: any) => t.tagType === 'tone')) || story?.pov) ? (
+                    {/* Story Format / POV — pills, same style as numListens (tone is a tag now, shown under Mood and tone) */}
+                    {(story?.storyFormat || story?.pov) ? (
                         <View style={styles.statsRow}>
                             {story?.storyFormat ? (
                                 <StatPill icon="book" value={STORY_FORMATS[story.storyFormat] ?? story.storyFormat} />
-                            ) : null}
-                            {story?.tone && !moodTone.some((t: any) => t.tagType === 'tone') ? (
-                                <StatPill icon="theater-masks" value={TONES[story.tone] ?? story.tone} />
                             ) : null}
                             {story?.pov ? (
                                 <StatPill icon="eye" value={POV_OPTIONS[story.pov] ?? story.pov} />

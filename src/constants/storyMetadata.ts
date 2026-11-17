@@ -24,16 +24,3 @@ export const CONTENT_WARNINGS: Record<string, string> = {
   SEX:             'Sex',
   STRONG_LANGUAGE: 'Strong Language',
 };
-
-export const TONES: Record<string, string> = {
-  FUNNY:             'Funny',
-  DARK:              'Dark',
-  SUSPENSEFUL:       'Suspenseful',
-  WHIMSICAL:         'Whimsical',
-  ROMANTIC:          'Romantic',
-  EERIE:             'Eerie',
-  THOUGHT_PROVOKING: 'Thought-Provoking',
-  HOPEFUL:           'Hopeful',
-  MELANCHOLIC:       'Melancholic',
-  ADVENTUROUS:       'Adventurous',
-};
