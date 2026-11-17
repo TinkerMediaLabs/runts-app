@@ -425,6 +425,8 @@ userCleanupFn.addEnvironment('CLEANUP_TARGETS', Stack.of(userCleanupFn).toJsonSt
 ));
 userCleanupFn.addEnvironment('EROTIC_PIN_TABLE_NAME', eroticPinTable.tableName);
 eroticPinTable.grantWriteData(userCleanupFn);
+userCleanupFn.addEnvironment('PREMIUM_CLAIM_TABLE_NAME', premiumClaimTable.tableName);
+premiumClaimTable.grantWriteData(userCleanupFn);
 userCleanupFn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['dynamodb:Query', 'dynamodb:BatchWriteItem', 'dynamodb:DeleteItem'],
   resources: cleanupTargets.flatMap(t => {
