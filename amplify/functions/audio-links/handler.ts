@@ -30,7 +30,7 @@ async function queryAll(table: string, index: string, keyAttr: string, keyValue:
 async function eroticPaths(storyTable: string, tagTable: string): Promise<Set<string>> {
   if (eroticCache && Date.now() - eroticCache.at < EROTIC_TTL_MS) return eroticCache.paths;
   const [stories, tags] = await Promise.all([
-    queryAll(storyTable, 'byEroticAndPublishedAt', 'isErotic', 'true', 'imageUri, tileImageUri, audioUri'),
+    queryAll(storyTable, 'byEroticAndPublishedAt', 'isErotic', 'true', 'imageUri, tileImageUri, audioUri, previewUri'),
     queryAll(tagTable, 'byName', 'searchPk', 'EROTIC', 'imageUri, tileImageUri, heroImageUri'),
   ]);
   const paths = eroticPathSet([...stories, ...tags]);
@@ -86,7 +86,7 @@ export const handler = async (event: any): Promise<string> => {
       const res = await dynamo.send(new BatchGetItemCommand({
         RequestItems: { [table]: {
           Keys: ids.map(id => ({ id: { S: id } })),
-          ProjectionExpression: 'id, live, isErotic, isPremium, imageUri, tileImageUri, audioUri',
+          ProjectionExpression: 'id, live, isErotic, isPremium, imageUri, tileImageUri, audioUri, previewUri',
         } },
       }));
       for (const item of res.Responses?.[table] ?? []) stories.push(unmarshall(item) as GuestStory);

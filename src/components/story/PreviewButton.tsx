@@ -7,11 +7,9 @@ import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { Text } from '@/components/common/AppText';
 import { usePlayer } from '@/context/PlayerContext';
-import { usePreviewStatus, togglePreview, stopPreview, previewAvailable, PREVIEW_SECONDS } from '@/features/audio/preview';
+import { usePreviewStatus, togglePreview, stopPreview, previewAvailable, previewSourceFor, PREVIEW_SECONDS } from '@/features/audio/preview';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { showChip } from '@/lib/chip';
-import { useIsGuest } from '@/lib/dataAccess';
-import { askForAccount } from '@/lib/requireAccount';
 import { colors } from '@/theme/colors';
 import { fontSizes, iconSize, radius } from '@/theme/tokens';
 
@@ -33,7 +31,6 @@ function Bar({ index, active, color }: { index: number; active: boolean; color: 
 // stop. If a story is playing in the main player it is paused first. Renders nothing in a build without expo-audio.
 export default function PreviewButton({ story, isErotic = false }: { story: any; isErotic?: boolean }) {
   const { state, pause } = usePlayer();
-  const guest = useIsGuest();
   const status = usePreviewStatus(story?.id);
   const accent = isErotic ? '#ff7c2a' : colors.accent;                 // for the faint fill
   const soft   = isErotic ? '#ff7c2aa5' : colors.accentSoft;            // slightly see-through, for line, icon and text
@@ -41,11 +38,10 @@ export default function PreviewButton({ story, isErotic = false }: { story: any;
   // Leaving the screen ends the preview.
   useEffect(() => () => { if (story?.id) stopPreview(); }, [story?.id]);
 
-  if (!story?.audioUri || !previewAvailable()) return null;
+  if (!previewSourceFor(story ?? {}) || !previewAvailable()) return null;
 
   const onPress = async () => {
-    // Premium previews need an account (the server will not hand a guest premium audio).
-    if (guest && story?.isPremium) { askForAccount('hear a preview of premium stories', { kind: 'story', id: story.id }); return; }
+    // A premium story's Preview is its separate clip, which guests may play too; the full audio stays account-only.
     if (status === 'idle' && state?.isPlaying) await pause();   // the story in the main player pauses; it is not resumed after
     try {
       await togglePreview(story);

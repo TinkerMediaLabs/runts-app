@@ -32,8 +32,22 @@ def scan(t, proj):
         start = out.get('NextToken')
         if not start: break
 
-stories = {i['id']['S'] for i in scan(f'Story-{SUF}', '#i')}
-print('Stories in dev:', len(stories))
+# Story rows with no title are empty stubs (a counter function updated a story that no longer exists, e.g. while
+# orphan comments / ratings were deleted). They are not real stories: never count them, and delete them.
+def stubs():
+    out, start = [], None
+    while True:
+        args = ['dynamodb', 'scan', '--table-name', f'Story-{SUF}', '--filter-expression', 'attribute_not_exists(title)',
+                '--projection-expression', 'id', '--max-items', '500', '--output', 'json']
+        if start: args += ['--starting-token', start]
+        res = json.loads(aws(*args))
+        out += [i['id']['S'] for i in res.get('Items', [])]
+        start = res.get('NextToken')
+        if not start: return out
+
+stub_ids = set(stubs())
+stories = {i['id']['S'] for i in scan(f'Story-{SUF}', '#i')} - stub_ids
+print('Stories in dev:', len(stories), ' (empty stub rows without a title: %d)' % len(stub_ids))
 MODELS = ('StoryTag', 'StoryScene', 'StoryNarrator', 'UserPinnedStory', 'UserFinishedStory', 'UserInProgressStory',
           'UserRating', 'UserReaction', 'UserFavoritedStory', 'UserBookmark', 'StoryReactionCount', 'StoryListenDay',
           'Comment', 'CommentReport')
@@ -48,4 +62,9 @@ for m in MODELS:
             aws('dynamodb', 'batch-write-item', '--request-items', 'file://' + tf.name)
             os.unlink(tf.name); time.sleep(0.1)
         print('   deleted')
+if APPLY and stub_ids:
+    # Last, so the cleanup above (which can create new stubs) is covered too.
+    for x in sorted(set(stubs())):
+        aws('dynamodb', 'delete-item', '--table-name', f'Story-{SUF}', '--key', json.dumps({'id': {'S': x}}))
+    print('Story stubs deleted')
 if not APPLY: print('\nDRY RUN - nothing changed. Re-run with --apply to delete.')

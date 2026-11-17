@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { audioLinks, isCdnPath } from '@/lib/audioLinks';
+import { previewSourceFor } from '@/lib/previewSource';
+export { previewSourceFor };
 
 // A 30-second preview of a story, played from the story details screen with its OWN player so the main player
 // (and its mini player, queue and saved place) is never touched. One preview at a time; starting one stops the
@@ -14,7 +16,7 @@ export const PREVIEW_SECONDS = 30;
 export const DEFAULT_PREVIEW_START = 60;   // seconds in; used when the CMS has no start set for the story
 
 type Status = 'idle' | 'loading' | 'playing';
-type PreviewStory = { id: string; audioUri?: string | null; duration?: number | null; previewStartSeconds?: number | null };
+type PreviewStory = { id: string; audioUri?: string | null; previewUri?: string | null; isPremium?: boolean | null; duration?: number | null; previewStartSeconds?: number | null };
 
 let audioModule: any;   // undefined = not tried yet, null = not available in this build
 function loadAudio() {
@@ -73,14 +75,15 @@ export function stopPreview() {
 export async function togglePreview(story: PreviewStory) {
   if (current.storyId === story.id && current.status !== 'idle') { stopPreview(); return; }
   const audio = loadAudio();
-  if (!audio?.createAudioPlayer || !story.audioUri) throw new Error('Preview unavailable');
+  const source = previewSourceFor(story);
+  if (!audio?.createAudioPlayer || !source) throw new Error('Preview unavailable');
 
   teardown();
   const mine = token;
   set({ storyId: story.id, status: 'loading' });
 
   try {
-    const url = isCdnPath(story.audioUri) ? await audioLinks.getOne(story.audioUri, { storyIds: [story.id] }) : story.audioUri;
+    const url = isCdnPath(source.path) ? await audioLinks.getOne(source.path, { storyIds: [story.id] }) : source.path;
     if (!url) throw new Error('No audio link');
     if (mine !== token) return;   // stopped while the link was loading
 
@@ -88,7 +91,7 @@ export async function togglePreview(story: PreviewStory) {
     const p = audio.createAudioPlayer({ uri: url });
     player = p;
 
-    const start = previewStartFor(story);
+    const start = source.isClip ? 0 : previewStartFor(story);   // a clip already begins at the preview start
     const end = start + PREVIEW_SECONDS;
 
     // Wait until the file is ready, then jump to the start and play.
