@@ -12,10 +12,19 @@
 import * as ExpoNotifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource';
 import { navigate } from '../navigation/RootNavigator';
 import { markOpenedFromOutside } from './launchContext';
+
+// The settings switch for "new stories from followed authors" is saved on the phone under this key. It only mutes
+// author pushes (the device keeps its push token), so pushes for followed genres keep working on their own.
+export const AUTHOR_PUSH_KEY = '@runts/notificationsAuthorsEnabled';
+
+async function authorPushMuted(): Promise<boolean> {
+    try { return (await AsyncStorage.getItem(AUTHOR_PUSH_KEY)) === 'false'; } catch { return false; }
+}
 
 // ---------------------------------------------------------------------------
 // Notification handler — show alerts when app is in foreground
@@ -100,6 +109,7 @@ async function registerToken(userId: string): Promise<void> {
         const platform  = Platform.OS;
 
         const client = generateClient<Schema>();
+        const muteAuthors = await authorPushMuted();   // a fresh sign-in must keep the choice made in settings
 
         // Check if a record already exists for this user
         const { data: existing_records } = await (client.models as any).UserDevice.listUserDeviceByUserId(
@@ -111,6 +121,7 @@ async function registerToken(userId: string): Promise<void> {
                 id:        existing_records[0].id,
                 pushToken,
                 platform,
+                muteAuthors,
                 updatedAt: new Date().toISOString(),
             });
         } else {
@@ -119,6 +130,7 @@ async function registerToken(userId: string): Promise<void> {
                 userId,
                 pushToken,
                 platform,
+                muteAuthors,
                 updatedAt: new Date().toISOString(),
             });
         }
@@ -154,12 +166,32 @@ async function unregisterToken(userId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Mute or unmute author pushes on this device without touching the push token.
+// ---------------------------------------------------------------------------
+
+async function setAuthorPushMuted(userId: string, muted: boolean): Promise<void> {
+    if (!Device.isDevice) return;
+    try {
+        const client = generateClient<Schema>();
+        const { data: records } = await (client.models as any).UserDevice.listUserDeviceByUserId({ userId }, { limit: 50 });
+        if (records?.length) {
+            await (client.models as any).UserDevice.update({ id: records[0].id, muteAuthors: muted });
+        } else if (!muted) {
+            await registerToken(userId);   // no device row yet (e.g. never allowed): ask now that they turned it back on
+        }
+    } catch (err) {
+        console.warn('[Notifications] setAuthorPushMuted failed:', err);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Export
 // ---------------------------------------------------------------------------
 
 export const Notifications = {
     registerToken,
     unregisterToken,
+    setAuthorPushMuted,
     addNotificationTapListener,
     removeNotificationTapListener,
     checkColdStartNotification,

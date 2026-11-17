@@ -593,6 +593,9 @@ Comment: a
     pushToken: a.string().required(),
     platform:  a.string().required(),  // 'ios' | 'android'
     updatedAt: a.datetime(),
+    // Per-kind push preferences for this device. Plain fields (no index), so they never recreate the table.
+    muteAuthors: a.boolean(),          // true = no new-story pushes from followed authors (missing counts as ON)
+    lastGenrePushAt: a.datetime(),     // when this person last got a genre push; written by notify-new-story to cap them at one a day
   })
   .secondaryIndexes(index => [
     index('userId').name('byUserId'),
