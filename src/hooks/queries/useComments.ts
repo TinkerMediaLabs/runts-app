@@ -53,6 +53,8 @@ export function usePostComment() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });
       queryClient.invalidateQueries({ queryKey: ['story', variables.storyId] });
+      // The comment count on the story is updated a moment later by a background function, so read it again shortly.
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['story', variables.storyId] }), 4000);
     },
   });
 }
@@ -90,6 +92,8 @@ export function useDeleteComment() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.storyId] });
       queryClient.invalidateQueries({ queryKey: ['story', variables.storyId] });
+      // The comment count on the story is updated a moment later by a background function, so read it again shortly.
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['story', variables.storyId] }), 4000);
     },
   });
 }
