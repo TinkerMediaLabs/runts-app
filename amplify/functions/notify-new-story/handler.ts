@@ -277,14 +277,14 @@ export const handler: SQSHandler = async (event, context) => {
         const storyTitle = title ?? 'New Story';
         console.log(`[notify-new-story] Processing story: "${storyTitle}" (${storyId}) phase=${phase}`);
 
-        const queueContinuation = async (next: Msg) => {
+        const queueContinuation = async (next: Msg, reason: string) => {
             const [, , , region, account, queueName] = record.eventSourceARN.split(':');
             await sqs.send(new SendMessageCommand({
                 QueueUrl:     `https://sqs.${region}.amazonaws.com/${account}/${queueName}`,
                 DelaySeconds: 0,
                 MessageBody:  JSON.stringify({ storyId, authorId, title, isErotic, ...next }),
             }));
-            console.log('[notify-new-story] Time budget reached, continuation queued for', storyId, next.phase);
+            console.log(`[notify-new-story] ${reason}, continuation queued for`, storyId, next.phase);
         };
 
         let authorName = 'an author you follow';
@@ -323,7 +323,7 @@ export const handler: SQSHandler = async (event, context) => {
                     storyId,
                 );
                 if (lastKey && context.getRemainingTimeInMillis() < TIME_MARGIN_MS) {
-                    await queueContinuation({ phase: 'author', cursor: JSON.stringify(lastKey) });
+                    await queueContinuation({ phase: 'author', cursor: JSON.stringify(lastKey) }, 'Time budget reached');
                     paused = true;
                     break;
                 }
@@ -331,7 +331,7 @@ export const handler: SQSHandler = async (event, context) => {
             console.log(`[notify-new-story] ${followerCount} follower(s), ${deviceCount} device(s) notified`);
             if (paused) continue;
             // Author followers are done: carry on with the genres in a fresh message (fresh time budget).
-            await queueContinuation({ phase: 'genre', tagIdx: 0 });
+            await queueContinuation({ phase: 'genre', tagIdx: 0 }, 'Author followers done, genres next');
             continue;
         }
 
@@ -368,7 +368,7 @@ export const handler: SQSHandler = async (event, context) => {
                     );
                 }
                 if (lastKey && context.getRemainingTimeInMillis() < TIME_MARGIN_MS) {
-                    await queueContinuation({ phase: 'genre', tagIdx, cursor: JSON.stringify(lastKey) });
+                    await queueContinuation({ phase: 'genre', tagIdx, cursor: JSON.stringify(lastKey) }, 'Time budget reached');
                     paused = true;
                     break;
                 }
@@ -377,7 +377,7 @@ export const handler: SQSHandler = async (event, context) => {
             if (paused) break;
             tagIdx++; lastKey = undefined;
             if (tagIdx < tagIds.length && context.getRemainingTimeInMillis() < TIME_MARGIN_MS) {
-                await queueContinuation({ phase: 'genre', tagIdx });
+                await queueContinuation({ phase: 'genre', tagIdx }, 'Time budget reached');
                 break;
             }
         }
