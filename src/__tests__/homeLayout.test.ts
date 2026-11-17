@@ -4,6 +4,10 @@ const NOW = new Date('2026-10-26T12:00:00Z').getTime();
 const row = (over: Partial<HomeSectionRow> & { id: string }): HomeSectionRow => ({ type: 'newStories', sortOrder: 10, ...over });
 
 describe('resolveHomeLayout', () => {
+  it('knows the followed genres type', () => {
+    expect(resolveHomeLayout([row({ id: 'f', type: 'followedGenres' })], NOW).map(r => r.id)).toEqual(['f']);
+  });
+
   it('knows the trending type', () => {
     expect(resolveHomeLayout([row({ id: 't', type: 'trending', windowDays: 3 })], NOW).map(r => r.id)).toEqual(['t']);
   });

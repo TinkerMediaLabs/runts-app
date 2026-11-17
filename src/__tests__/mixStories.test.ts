@@ -71,4 +71,20 @@ describe('reasonText', () => {
     expect(reasonText({ kind: 'picked', tagId: 't' })).toBe('');
     expect(reasonText(undefined)).toBe('');
   });
+
+  it('says why a followed genre story is here, ranked between picked and learned', () => {
+    expect(reasonText({ kind: 'followed', tagId: 't' }, 'Mystery')).toBe('Because you follow Mystery');
+    expect(reasonText({ kind: 'followed', tagId: 't' })).toBe('');
+    const out = mixWithReasons([
+      { reason: { kind: 'learned', tagId: 'l' }, stories: [mk('a')] },
+      { reason: { kind: 'followed', tagId: 'f' }, stories: [mk('a')] },
+      { reason: { kind: 'new' }, stories: [mk('a')] },
+    ], 10);
+    expect(out[0].reason.kind).toBe('followed');
+    const picked = mixWithReasons([
+      { reason: { kind: 'followed', tagId: 'f' }, stories: [mk('b')] },
+      { reason: { kind: 'picked', tagId: 'p' }, stories: [mk('b')] },
+    ], 10);
+    expect(picked[0].reason.kind).toBe('picked');
+  });
 });

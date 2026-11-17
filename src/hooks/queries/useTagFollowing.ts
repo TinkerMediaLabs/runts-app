@@ -70,6 +70,7 @@ export function useFollowTag() {
     onSettled: (_data, _err, { tagId }) => {
       queryClient.invalidateQueries({ queryKey: ['isFollowingTag', tagId] });
       queryClient.invalidateQueries({ queryKey: ['followedTags'] });
+      queryClient.invalidateQueries({ queryKey: ['followedTagIds'] });
     },
   });
 }
@@ -99,6 +100,7 @@ export function useUnfollowTag() {
     onSettled: (_data, _err, { tagId }) => {
       queryClient.invalidateQueries({ queryKey: ['isFollowingTag', tagId] });
       queryClient.invalidateQueries({ queryKey: ['followedTags'] });
+      queryClient.invalidateQueries({ queryKey: ['followedTagIds'] });
     },
   });
 }
