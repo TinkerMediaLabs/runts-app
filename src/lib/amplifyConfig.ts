@@ -3,7 +3,6 @@ import Constants from 'expo-constants';
 import { registerBaseConfig } from './dataAccess';
 
 const env = Constants.expoConfig?.extra?.APP_ENV ?? 'development';
-console.log('[Amplify] env:', env); // ← add
 
 // Identifies which backend this build talks to (its API URL). The saved data copy is tagged with it so
 // data from another environment, or an older backend, is never shown.
@@ -25,7 +24,6 @@ try {
     default:
       config = require('../../amplify_outputs.json');
   }
-  console.log('[Amplify] user_pool_id:', config?.auth?.user_pool_id); // ← add
   BACKEND_ID = config?.data?.url ?? 'unknown';
   CAR_PROGRESS_URL = config?.custom?.carProgressUrl ?? '';
   SHARE_PREVIEW_URL = env === 'production' ? '' : (config?.custom?.sharePreviewUrl ?? '');

@@ -147,7 +147,7 @@ class AudioEngine {
             const position = this.getCurrentPosition();
             const url = await resolveAudioUrl(track.url, next);
             this.playingLocal = url.startsWith('file://') || url.startsWith('/');
-            console.log('audioEngine: retrying with', next, url.slice(0, 60));
+            console.log('audioEngine: retrying with', next);
             await TrackPlayer.setMediaItems([{ url, title: track.title, artwork: track.artwork, artist: track.artist } as any]);
             if (position > 0) await TrackPlayer.seekTo(position);
             await TrackPlayer.play();

@@ -41,6 +41,5 @@ let deepLink
   // Check if app was opened from a deep link
   deepLink = await Linking.getInitialURL()
   // Don't handle it now - wait until Navigation is ready
-  console.log('DeepLink URL:', deepLink)
 },
 };
