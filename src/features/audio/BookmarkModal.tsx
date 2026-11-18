@@ -6,11 +6,11 @@ import { fields } from '../../theme/fields';
 import Button from '@/components/common/Button';
 import { TextInput } from '@/components/common/AppTextInput';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -99,7 +99,7 @@ export default function BookmarkModal({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconWrap}>
-              <FontAwesome5 name={'bookmark' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+              <Icon name="bookmark" size={iconSize.sm} color={colors.accent} />
             </View>
             <Text style={styles.title}>Create Bookmark</Text>
             <TouchableOpacity
@@ -108,13 +108,13 @@ export default function BookmarkModal({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <FontAwesome5 name={'times' as any} size={iconSize.sm} color={colors.textTertiary} iconStyle="solid" />
+              <Icon name="close" size={iconSize.sm} color={colors.textTertiary} />
             </TouchableOpacity>
           </View>
 
           {/* Bookmark position */}
           <View style={styles.positionRow}>
-            <FontAwesome5 name={'clock' as any} size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
+            <Icon name="clock" size={iconSize.xs} color={colors.textTertiary} />
             <Text style={styles.positionText}>
               Bookmarked at <Text style={styles.positionHighlight}>{formatPosition(positionSeconds)}</Text>
             </Text>

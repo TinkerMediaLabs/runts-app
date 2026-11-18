@@ -15,7 +15,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { StatusBar } from 'expo-status-bar';
 import useStyles from '../../theme/authStyles';
 import { confirmNewPassword } from '../../services/auth';
@@ -24,6 +23,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { passwordDots } from '@/theme/fields';
+import Icon from '@/components/common/Icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -169,8 +169,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         onChangeText={setNewPassword}
                                     />
                                     <TouchableOpacity accessibilityRole="button" accessibilityLabel={showNew ? 'Hide new password' : 'Show new password'} onPress={() => setShowNew(v => !v)} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                                        <FontAwesome5
-                                            iconStyle="solid"
+                                        <Icon
                                             name={showNew ? 'eye' : 'eye-slash'}
                                             size={iconSize.sm}
                                             color={colors.textTertiary}
@@ -198,8 +197,7 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                         onChangeText={setConfirmPassword}
                                     />
                                     <TouchableOpacity accessibilityRole="button" accessibilityLabel={showConfirm ? 'Hide confirm password' : 'Show confirm password'} onPress={() => setShowConfirm(v => !v)} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                                        <FontAwesome5
-                                            iconStyle="solid"
+                                        <Icon
                                             name={showConfirm ? 'eye' : 'eye-slash'}
                                             size={iconSize.sm}
                                             color={colors.textTertiary}

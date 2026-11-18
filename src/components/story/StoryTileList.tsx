@@ -12,7 +12,6 @@ import type { Schema } from '../../../amplify/data/resource';
 import StoryTile from './StoryTile';
 import EmptyState from '../common/EmptyState';
 import { SkeletonRows } from '../common/Skeleton';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { navigate } from '@/navigation/RootNavigator';
 import { useApp } from '@/context/AppContext';
 import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
@@ -23,6 +22,7 @@ import { useTag } from '../../hooks/queries/useTagNames';
 import { unwrap } from '@/lib/amplifyResult';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
 
@@ -157,7 +157,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
         <View style={styles.emptyContainer}>
             {isError ? (
                 <EmptyState
-                    icon={<FontAwesome5 name="exclamation-circle" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                    icon={<Icon name="exclamation-circle" size={40} color={colors.textSecondary} />}
                     title="We couldn't load your playlist"
                     body="Check your connection and try again."
                     actionLabel="Try again"
@@ -165,7 +165,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
                 />
             ) : (
                 <EmptyState
-                    icon={<FontAwesome5 name="thumbtack" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                    icon={<Icon name="thumbtack" size={40} color={colors.textSecondary} />}
                     title="Build your playlist"
                     body="Tap the pin on any story to add it here. Pinned stories play one after another and are saved to your phone for offline listening."
                     actionLabel="Find a story"

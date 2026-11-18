@@ -30,7 +30,7 @@ const InProgress = ({navigation} : any) => {
     return (
         <Screen>
             <View style={styles.container}>
-                <MenuHeader title='Actively Listening' navigation={navigation}/>
+                <MenuHeader title='Continue Listening' navigation={navigation}/>
                 <ProgressTileList />
             </View>
             

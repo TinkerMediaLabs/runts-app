@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Icon from '@/components/common/Icon';
 import HorzStoryTile from './HorizontalTile';
 import { spacing } from '../../theme/spacing';
 import { colors } from '@/theme/colors';
@@ -44,11 +44,11 @@ const HorizontalList = ({ stories, tagId, tagName, showSeeMore }: HorizontalList
             accessibilityLabel={tagName ? `See more ${tagName} stories` : 'See more stories'}
         >
             <View style={styles.seeMoreBubble}>
-                <FontAwesome5
+                <Icon
                     name="chevron-right"
                     size={iconSize.md}
                     color="#888"
-                    iconStyle="solid"
+                   
                 />
             </View>
             <Text style={styles.seeMoreText}>See More</Text>

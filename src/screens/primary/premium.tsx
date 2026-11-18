@@ -8,7 +8,6 @@ import { Text } from '@/components/common/AppText';
 import Button from '@/components/common/Button';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
@@ -33,6 +32,7 @@ import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
 import { useFreePremiumOffer } from '@/hooks/queries/useFreePremiumOffer';
 import { askForAccount } from '@/lib/requireAccount';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,7 +129,7 @@ const PlanCard = ({
 
             {selected && (
                 <View style={styles.planCheck}>
-                    <FontAwesome5 name="check" size={10} color={colors.textOnAccent} iconStyle="solid" />
+                    <Icon name="check" size={10} color={colors.textOnAccent} />
                 </View>
             )}
         </TouchableOpacity>
@@ -139,7 +139,7 @@ const PlanCard = ({
 const FeatureRow = ({ icon, title, description }: Feature) => (
     <View style={styles.featureRow}>
         <View style={styles.featureIcon}>
-            <FontAwesome5 name={icon} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+            <Icon name={icon} size={iconSize.sm} color={colors.accent} />
         </View>
         <View style={{ flex: 1 }}>
             <Text style={styles.featureTitle}>{title}</Text>

@@ -6,11 +6,11 @@ import useTypography from '@/theme/typography';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import useOnPlay from '@/components/functions/OnPlay';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 
 const PlayButtonV4 = ({ style, id, title, audioUri, imageUri, author, isLocked = false, onLocked }: any) => {
@@ -37,11 +37,10 @@ const PlayButtonV4 = ({ style, id, title, audioUri, imageUri, author, isLocked =
                 margin: 10,
                 borderRadius: 30,
             }}>
-                <FontAwesome5
+                <Icon
                     name={isLocked ? 'lock' : 'play'}
                     size={iconSize.sm}
                     color={isLocked ? '#ffffff50' : '#000000'}
-                    iconStyle="solid"
                 />
                 <Text style={{
                     color: isLocked ? '#ffffff50' : '#000000',

@@ -1,10 +1,10 @@
 import { TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { colors } from '@/theme/colors';
 import { useApp } from '@/context/AppContext';
 import useOnPlay from '@/components/functions/OnPlay';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isPremium = false }: any) => {
     const onPlay = useOnPlay();
@@ -27,12 +27,11 @@ const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isPremium 
                     margin:          12,
                 }
             ]}>
-                <FontAwesome5
+                <Icon
                     name="play"
                     size={iconSize.sm}
                     color="#171717"
                     style={{ marginLeft: 2 }}
-                    iconStyle="solid"
                 />
             </Animated.View>
         </TouchableOpacity>

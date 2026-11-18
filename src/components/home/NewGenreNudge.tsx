@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Text } from '@/components/common/AppText';
 import Button from '@/components/common/Button';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Icon from '@/components/common/Icon';
 
 import { useApp } from '@/context/AppContext';
 import { usePrimaryTags } from '../../hooks/queries/useTags';
@@ -64,7 +64,7 @@ const NewGenreNudge = ({ names, ids, userId, onDismiss }: { names: string[]; ids
         accessibilityRole="button"
         accessibilityLabel="Dismiss"
       >
-        <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name="close" size={iconSize.sm} color={colors.textSecondary} />
       </TouchableOpacity>
     </View>
   );

@@ -10,7 +10,7 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Icon from '@/components/common/Icon';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
@@ -26,6 +26,8 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionTitle from '@/components/common/SectionTitle';
+import { fmtTimeLeft } from '../../lib/storyDisplay';
+import { useNavigation } from '@react-navigation/native';
 const client = generateClient<Schema>();
 
 // ---------------------------------------------------------------------------
@@ -118,11 +120,11 @@ const ProgressCard = ({
                     </Text>
 
                     <View style={styles.authorRow}>
-                        <FontAwesome5
-                            name="book-open"
+                        <Icon
+                            name="book-open" weight="fill"
                             size={iconSize.xs}
                             color={colors.textSecondary}
-                            iconStyle="solid"
+                           
                         />
                         <Text style={styles.author} numberOfLines={1}>
                             {authorName}
@@ -130,7 +132,7 @@ const ProgressCard = ({
                     </View>
 
                     <Text style={styles.timeLeft}>
-                        {minsLeft} min left · {percent}%
+                        {fmtTimeLeft(secsLeft)} · {percent}%
                     </Text>
                 </View>
 
@@ -150,6 +152,7 @@ const ContinueListening = () => {
 
     const { data: inProgressStories, isLoading } = useInProgressStories(MAX_CARDS);
     const [activeIndex, setActiveIndex] = useState(0);
+    const navigation = useNavigation<any>();
 
     const recentStories = useMemo(() => {
         return (inProgressStories ?? []).slice(0, MAX_CARDS);
@@ -166,7 +169,7 @@ const ContinueListening = () => {
 
     return (
         <View style={styles.container}>
-            <SectionTitle text="Continue Listening" />
+            <SectionTitle text="Continue Listening" actionLabel="See all" onAction={() => navigation.navigate('InProgressScreen')} />
 
             <FlatList
                 data={recentStories}
@@ -211,8 +214,7 @@ const ContinueListening = () => {
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 8,
-        marginBottom: 8,
+        marginBottom: 0,
     },
     listContent: {
         paddingHorizontal: spacing.margin,
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         gap: 5,
-        marginTop: 10,
+        marginTop: 6,
     },
     dot: {
         width: 5,

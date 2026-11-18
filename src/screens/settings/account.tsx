@@ -4,7 +4,6 @@ import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import Constants from 'expo-constants';
 
 import MenuHeader from '../../components/common/MenuHeader';
@@ -34,6 +33,7 @@ import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Sheet from '@/components/common/BottomSheet';
 import EditNameSheet from '@/components/settings/EditNameSheet';
+import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -98,11 +98,10 @@ const SettingRow = ({
                         style={{ width: 28, height: 28 }}
                     />
                 ) : (
-                    <FontAwesome5
+                    <Icon
                         name={icon}
                         size={iconSize.sm}
                         color={colors.textSecondary}
-                        iconStyle="solid"
                     />
                 )}
             </View>
@@ -120,11 +119,10 @@ const SettingRow = ({
                 <Text style={styles.rowValue} numberOfLines={1}>{value}</Text>
             ) : null}
             {chevron && onPress && (
-                <FontAwesome5
+                <Icon
                     name="chevron-right"
                     size={iconSize.xs}
                     color={colors.textSecondary}
-                    iconStyle="solid"
                 />
             )}
         </View>
@@ -173,11 +171,10 @@ const PasswordField = ({
                     autoCapitalize="none"
                 />
                 <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                    <FontAwesome5
+                    <Icon
                         name={hidden ? 'eye-slash' : 'eye'}
                         size={iconSize.sm}
                         color={colors.textSecondary}
-                        iconStyle="solid"
                     />
                 </TouchableOpacity>
             </View>
@@ -210,21 +207,21 @@ const ActionButton = ({
 
 const SuccessBanner = ({ message }: { message: string }) => (
     <View style={styles.successBanner} accessibilityLiveRegion="polite">
-        <FontAwesome5 name="check-circle" size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+        <Icon name="check-circle" size={iconSize.sm} color={colors.accent} />
         <Text style={styles.successBannerText}>{message}</Text>
     </View>
 );
 
 const ErrorBanner = ({ message }: { message: string }) => (
     <View style={styles.dangerBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-        <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
+        <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
         <Text style={styles.dangerBannerText}>{message}</Text>
     </View>
 );
 
 const InfoBanner = ({ message }: { message: string }) => (
     <View style={styles.infoBanner}>
-        <FontAwesome5 name="info-circle" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name="info-circle" size={iconSize.sm} color={colors.textSecondary} />
         <Text style={styles.infoBannerText}>{message}</Text>
     </View>
 );
@@ -713,7 +710,7 @@ const AccountScreen = ({ navigation }: any) => {
             {/* ── Delete Account sheet ── */}
             <Sheet visible={activeModal === 'delete'} onClose={close} title="Delete Account">
                 <View style={styles.dangerBanner}>
-                    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
+                    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
                     <Text style={styles.dangerBannerText}>
                         This action is permanent and cannot be undone. All account data will be removed.
                     </Text>

@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { SkeletonRows } from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { View, FlatList, RefreshControl, ActivityIndicator, StyleSheet, Animated, TouchableOpacity, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -19,6 +18,7 @@ import { spacing } from '../../theme/spacing';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -166,7 +166,7 @@ const History = ({ navigation }: any) => {
                         contentContainerStyle={{ paddingBottom: 100 }}
                         ListEmptyComponent={
                             <EmptyState
-                                icon={<FontAwesome5 name="history" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                                icon={<Icon name="history" size={40} color={colors.textSecondary} />}
                                 title="No listening history yet"
                                 body="Stories you finish will appear here."
                             />

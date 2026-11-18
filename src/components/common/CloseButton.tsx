@@ -3,9 +3,9 @@ import {
     TouchableWithoutFeedback,
 } from 'react-native';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { iconSize } from '@/theme/tokens';
 import { colors } from '@/theme/colors';
+import Icon from '@/components/common/Icon';
 
 const CloseButton = ({navigation} :any) => {
 
@@ -26,7 +26,7 @@ const CloseButton = ({navigation} :any) => {
                 height: 36,
                 marginHorizontal: 10,}]}
             >
-                <FontAwesome5 name="times" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+                <Icon name="close" size={iconSize.md} color={colors.textPrimary} />
             </View>
         </TouchableWithoutFeedback>
     );

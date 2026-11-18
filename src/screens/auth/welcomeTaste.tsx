@@ -4,7 +4,6 @@ import { Text } from '@/components/common/AppText';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
@@ -19,6 +18,7 @@ import { Analytics } from '@/lib/analytics';
 import { markPromptedToday } from '@/lib/todayChoice';
 import { colors } from '@/theme/colors';
 import { fontSizes, iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // Sign-up steps 2 and 3, after the genres: "What do you reach for?" (up to 3 moods) and "How long is your usual
 // listen?" (any lengths). Both are optional; the friendly skip buttons save an empty answer so we know they were asked.
@@ -118,7 +118,7 @@ const WelcomeTaste = ({ route }: any) => {
                 label="Continue"
                 disabled={!moods.length}
                 onPress={() => onMoodsDone(moods)}
-                icon={<FontAwesome5 name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} iconStyle="solid" />}
+                icon={<Icon name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} />}
               />
               <Button label="Surprise me" variant="text" onPress={() => onMoodsDone([])} />
             </>

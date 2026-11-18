@@ -4,7 +4,6 @@ import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -23,6 +22,7 @@ import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionLabel from '@/components/common/SectionLabel';
 import EditNameSheet from '@/components/settings/EditNameSheet';
+import Icon from '@/components/common/Icon';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -54,14 +54,14 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={description ? `${title}, ${description}` : title}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+                <Icon name={icon} size={iconSize.lg} color={colors.textSecondary} />
             </View>
             <View>
                 <Text style={styles.rowLabel}>{title}</Text>
                 <Text style={styles.rowDescription}>{description}</Text>
             </View>
         </View>
-        <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
     </TouchableOpacity>
 );
 
@@ -302,7 +302,7 @@ const ProfileScreen = ({ navigation }: any) => {
                                 accessibilityState={{ busy: uploadingPhoto }}
                                 hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                             >
-                                <FontAwesome5 name="camera" size={iconSize.xs} color={colors.textOnAccent} iconStyle="solid" />
+                                <Icon name="camera" size={iconSize.xs} color={colors.textOnAccent} />
                             </TouchableOpacity>
                         </View>
 
@@ -317,7 +317,7 @@ const ProfileScreen = ({ navigation }: any) => {
                             <Text style={styles.heroName}>
                                 {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
                             </Text>
-                            <FontAwesome5 name="pen" size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
+                            <Icon name="pen" size={iconSize.md} color={colors.textTertiary} />
                         </TouchableOpacity>
 
                         {/* Stats row */}
@@ -475,10 +475,8 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     rowIcon: {
-        width: 30,
-        height: 30,
-        borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
+        width: 32,
+        height: 32,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

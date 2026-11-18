@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { StyleSheet, Dimensions, TouchableOpacity, View, FlatList, ImageBackground } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import useStyles from '../../theme/styles';

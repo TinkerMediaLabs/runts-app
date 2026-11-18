@@ -25,7 +25,6 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Screen      from '@/components/common/Screen';
 import StoryTile   from '../../components/story/StoryTile';
@@ -59,13 +58,14 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 type TabId = 'stories' | 'authors' | 'tags';
 
-// icon typed as any to bypass FontAwesome5's strict union type
+// icon names come from the Icon component (see components/common/Icon.tsx)
 const TABS: { id: TabId; label: string; icon: any }[] = [
   { id: 'stories', label: 'Stories', icon: 'headphones' },
   { id: 'authors', label: 'Authors', icon: 'user-edit'  },
@@ -172,11 +172,10 @@ const SearchAuthorItem = React.memo(({
           <Text style={styles.authorBio} numberOfLines={2}>{item.bio}</Text>
         ) : null}
       </View>
-      <FontAwesome5
-        name={'chevron-right' as any}
+      <Icon
+        name="chevron-right"
         size={iconSize.xs}
         color={colors.textSecondary}
-        iconStyle="solid"
       />
     </TouchableOpacity>
   );
@@ -225,11 +224,10 @@ const FilterChip = ({
     accessibilityState={{ selected: active }}
   >
     {icon ? (
-      <FontAwesome5
+      <Icon
         name={icon}
         size={10}
         color={active ? '#000' : colors.textSecondary}
-        iconStyle="solid"
         style={{ marginRight: 5 }}
       />
     ) : null}
@@ -332,11 +330,10 @@ const SwipeableSheet = ({
             accessibilityState={{ checked: current === opt.value }}
           >
             <View style={styles.sheetOptionLeft}>
-              <FontAwesome5
+              <Icon
                 name={opt.icon}
                 size={iconSize.sm}
                 color={current === opt.value ? colors.accent : colors.textSecondary}
-                iconStyle="solid"
               />
               <Text style={[
                 styles.sheetOptionText,
@@ -346,7 +343,7 @@ const SwipeableSheet = ({
               </Text>
             </View>
             {current === opt.value && (
-              <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+              <Icon name="check" size={iconSize.sm} color={colors.accent} />
             )}
           </TouchableOpacity>
         ))}
@@ -390,7 +387,7 @@ const SwipeableSheet = ({
               {opt.label}
             </Text>
             {current === opt.value && (
-              <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+              <Icon name="check" size={iconSize.sm} color={colors.accent} />
             )}
           </TouchableOpacity>
         ))}
@@ -440,7 +437,7 @@ const GenreSheet = ({
             All Genres
           </Text>
           {current === null && (
-            <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+            <Icon name="check" size={iconSize.sm} color={colors.accent} />
           )}
         </TouchableOpacity>
         {tags.map(tag => (
@@ -460,7 +457,7 @@ const GenreSheet = ({
               {tag.name}
             </Text>
             {current === tag.id && (
-              <FontAwesome5 name={'check' as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+              <Icon name="check" size={iconSize.sm} color={colors.accent} />
             )}
           </TouchableOpacity>
         ))}
@@ -479,7 +476,7 @@ const EmptyState = ({ icon, title, subtitle }: {
   subtitle?: string;
 }) => (
   <SharedEmptyState
-    icon={<FontAwesome5 name={icon} size={40} color={colors.textSecondary} iconStyle="solid" />}
+    icon={<Icon name={icon} size={40} color={colors.textSecondary} />}
     title={title}
     body={subtitle}
   />

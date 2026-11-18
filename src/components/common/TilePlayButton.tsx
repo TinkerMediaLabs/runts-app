@@ -2,9 +2,6 @@ import React, {useState, useEffect, useContext} from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
-import AntDesign from '@react-native-vector-icons/ant-design';
 
 import TimeConversion from '../functions/TimeConversion';
 
@@ -18,6 +15,7 @@ import { usePlayer } from '@/context/PlayerContext';
 
 import useOnPlay from '@/components/functions/OnPlay';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any) => {
 
@@ -53,12 +51,11 @@ const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any)
                 
 
                 }}>
-                    <FontAwesome5 
-                        name='play'
+                    <Icon 
+                        name="play"
                         color={colors.textPrimary}
                         size={10}
                         style={{marginRight: 8}}
-                        iconStyle="solid"
                     />
                     <Text style={{
                         fontSize: fontSizes.small,

@@ -10,7 +10,6 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
@@ -23,6 +22,8 @@ import { useTag } from '../../hooks/queries/useTagNames';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import { fmtTimeLeft } from '../../lib/storyDisplay';
+import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
@@ -106,7 +107,7 @@ const ProgressTile = ({
 
                 <View style={styles.metaRow}>
                     <Text style={styles.metaText}>
-                        {percent}% · {minsLeft} min left
+                        {percent}% · {fmtTimeLeft(secsLeft)}
                     </Text>
                     <TouchableOpacity
                         onPress={() => deleteInProgress(story.id)}
@@ -116,11 +117,10 @@ const ProgressTile = ({
                         style={styles.deleteBtn}
                         hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                     >
-                        <FontAwesome5
-                            name="times"
+                        <Icon
+                            name="close"
                             size={iconSize.xs}
                             color={colors.textTertiary}
-                            iconStyle="solid"
                         />
                     </TouchableOpacity>
                 </View>

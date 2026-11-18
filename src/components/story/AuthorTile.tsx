@@ -2,7 +2,6 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
@@ -12,6 +11,7 @@ import { CachedImage } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 interface AuthorTileProps {
   author: any;
   followRecordId: string;
@@ -100,10 +100,10 @@ export default function AuthorTile({
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <FontAwesome5 name="book-open" size={10} color={colors.textTertiary} iconStyle="solid" />
+          <Icon name="book-open" size={10} color={colors.textTertiary} />
           <Text style={styles.statText}>{storyCount} {storyCount === 1 ? 'story' : 'stories'}</Text>
           <Text style={styles.statDot}>·</Text>
-          <FontAwesome5 name="headphones" size={10} color={colors.textTertiary} iconStyle="solid" />
+          <Icon name="headphones" size={10} color={colors.textTertiary} />
           <Text style={styles.statText}>{totalListens.toLocaleString()} listens</Text>
         </View>
       </View>

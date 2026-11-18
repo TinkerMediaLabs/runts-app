@@ -5,7 +5,6 @@ import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Screen from '@/components/common/Screen';
@@ -17,6 +16,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -43,11 +43,11 @@ const LinkRow = ({
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="link" accessibilityLabel={label}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                <Icon name={icon} size={iconSize.xs} color={colors.textSecondary} />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
-        <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
     </TouchableOpacity>
 );
 
@@ -55,7 +55,7 @@ const InfoRow = ({ icon, label, value }: { icon: any; label: string; value: stri
     <View style={styles.row}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                <Icon name={icon} size={iconSize.xs} color={colors.textSecondary} />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>

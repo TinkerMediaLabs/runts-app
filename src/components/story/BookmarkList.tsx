@@ -3,7 +3,6 @@ import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'r
 import { Text } from '@/components/common/AppText';
 
 import { SkeletonRows } from '../common/Skeleton';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import BookmarkTile        from './BookmarkTile';
 import EmptyState from '../common/EmptyState';
@@ -14,6 +13,7 @@ import { usePlayer }       from '../../context/PlayerContext';
 import { useStoryImage }   from '../../hooks/queries/useStoryImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -97,7 +97,7 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
       }
       ListEmptyComponent={
         <EmptyState
-          icon={<FontAwesome5 name={'bookmark' as any} size={40} color={colors.textSecondary} iconStyle="solid" />}
+          icon={<Icon name="bookmark" size={40} color={colors.textSecondary} />}
           title="Save your place"
           body="While a story plays, tap the bookmark icon to mark a moment. Come back here to jump straight to it."
         />

@@ -10,7 +10,6 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { useOpenStory } from '@/hooks/useStorySource';
 
@@ -30,6 +29,7 @@ import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
 import PremiumBadge from '@/components/common/PremiumBadge';
+import Icon from '@/components/common/Icon';
 // Animation config — quick and smooth
 const TIMING = { duration: 220, easing: Easing.out(Easing.quad) };
 
@@ -124,7 +124,7 @@ const StoryTile = ({
                     accessibilityLabel={`Reorder ${title}`}
                     accessibilityHint="Press and hold, then drag to move this story in your playlist"
                 >
-                    <FontAwesome5 name="grip-lines" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+                    <Icon name="grip-lines" size={iconSize.sm} color={colors.textSecondary} />
                 </TouchableOpacity>
             )}
 
@@ -170,7 +170,7 @@ const StoryTile = ({
                             ) : null}
 
                             <View style={styles.metaRow}>
-                                <FontAwesome5 name="book-open" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                                <Icon name="book-open" size={iconSize.xs} color={colors.textSecondary} />
                                 <Text style={styles.author} numberOfLines={1}>{author}</Text>
                             </View>
 
@@ -178,11 +178,10 @@ const StoryTile = ({
                         {/* Duration — replaces numListens/headphones */}
                             {duration > 0 && (
                                 <View style={styles.metaRow}>
-                                    <FontAwesome5
+                                    <Icon
                                         name={durationDisplay.icon}
                                         size={iconSize.xs}
                                         color={durationDisplay.color}
-                                        iconStyle="solid"
                                     />
                                     <Text style={[styles.durationText, { color: durationDisplay.color }]}>
                                         {durationDisplay.text}
@@ -211,11 +210,10 @@ const StoryTile = ({
 
                         {/* Chevron */}
                         <Animated.View style={[styles.chevron, chevronStyle]}>
-                            <FontAwesome5
+                            <Icon
                                 name="chevron-down"
                                 size={iconSize.xs}
                                 color={colors.textSecondary}
-                                iconStyle="solid"
                             />
                         </Animated.View>
                     </TouchableOpacity>
@@ -273,7 +271,7 @@ const StoryTile = ({
                                         accessibilityRole="button"
                                         accessibilityLabel="Share story"
                                     >
-                                        <FontAwesome5 name="share" size={iconSize.md} color="#ffffff70" iconStyle="solid" />
+                                        <Icon name="share" size={iconSize.md} color="#ffffff70" />
                                     </TouchableOpacity>
                                 </View>
                                     <PlayButtonV2

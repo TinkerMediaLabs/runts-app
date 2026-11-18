@@ -2,12 +2,12 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useIsOnline } from '../../hooks/useIsOnline';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // Small notice at the top while the phone has no connection. Announced once to screen readers.
 export default function OfflineBanner() {
@@ -24,7 +24,7 @@ export default function OfflineBanner() {
       accessibilityLabel="You're offline. Downloaded stories still play."
     >
       <View style={styles.pill}>
-        <FontAwesome5 name="wifi" size={iconSize.xs} color={colors.textStrong} iconStyle="solid" />
+        <Icon name="wifi" size={iconSize.xs} color={colors.textStrong} />
         <Text style={styles.text}>Offline · downloaded stories still play</Text>
       </View>
     </View>

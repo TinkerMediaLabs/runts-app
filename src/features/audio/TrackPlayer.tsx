@@ -31,8 +31,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 
-import Feather from '@react-native-vector-icons/feather';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { colors } from '@/theme/colors';
 
@@ -62,6 +60,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
+import Icon from '@/components/common/Icon';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 70;
 const HERO_HEIGHT_RATIO = 0.46; // hero image takes ~46% of screen height
@@ -425,11 +424,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
                   >
                       <Animated.View style={[heroControlsStyle]}>
-                          <FontAwesome5
+                          <Icon
                               name={optimisticPlaying ? 'pause' : 'play'}
                               size={72}
                               color={colors.textPrimary}
-                              style={{ opacity: 0.5 }} iconStyle="solid" />
+                              style={{ opacity: 0.5 }} />
                       </Animated.View>
                   </TouchableOpacity>
               </View>
@@ -553,7 +552,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       <Text numberOfLines={1} style={styles.upNextMeta}>
                         {nextTrackInfo.artist ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}                      </Text>
                     </View>
-                    <Feather name="skip-forward" size={20} color={colors.textPrimary} />
+                    <Icon name="skip-forward" size={20} color={colors.textPrimary} />
                   </View>
                 </TouchableOpacity>
               ) : null}
@@ -582,7 +581,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
               accessibilityRole="button"
               accessibilityLabel="Minimize player"
             >
-              <Feather name="chevron-down" size={28} color={colors.textPrimary} />
+              <Icon name="chevron-down" size={28} color={colors.textPrimary} />
             </TouchableOpacity>
 
             {/* Options modal — rendered outside scroll so it overlays
@@ -659,12 +658,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
             accessibilityRole="button"
             accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
           >
-            <FontAwesome5
+            <Icon
                 name={optimisticPlaying ? 'pause' : 'play'}
                 size={iconSize.sm}
                 color="#171717"
                 style={!optimisticPlaying ? { marginLeft: 2 } : undefined}
-                iconStyle="solid"
             />
         </TouchableOpacity>
         </Animated.View>
@@ -706,7 +704,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 accessibilityRole="button"
                 accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
               >
-                <Feather
+                <Icon
                   name={optimisticPlaying ? 'pause' : 'play'}
                   size={22}
                   color={colors.textPrimary}

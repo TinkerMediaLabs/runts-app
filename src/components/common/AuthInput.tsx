@@ -9,10 +9,10 @@ import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import { fields, passwordDots } from '../../theme/fields';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -116,8 +116,7 @@ export const PasswordField = ({ label, value, onChangeText, mb, ...rest }: TextF
                     accessibilityRole="button"
                     accessibilityLabel={visible ? `Hide ${label}` : `Show ${label}`}
                 >
-                    <FontAwesome5
-                        iconStyle="solid"
+                    <Icon
                         name={visible ? 'eye' : 'eye-slash'}
                         size={iconSize.sm}
                         color={colors.textSecondary}

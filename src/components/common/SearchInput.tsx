@@ -1,11 +1,11 @@
 import React, { forwardRef } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TextInput } from '@/components/common/AppTextInput';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { colors } from '@/theme/colors';
+import Icon from '@/components/common/Icon';
 
 type SearchInputProps = {
   value: string;
@@ -47,7 +47,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           accessibilityLabel="Search"
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          <FontAwesome5 name="search" size={iconSize.sm} color={iconColor} iconStyle="solid" />
+          <Icon name="search" size={iconSize.sm} color={iconColor} />
         </TouchableOpacity>
 
         {/* Input */}
@@ -74,7 +74,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
             accessibilityLabel="Clear search"
             hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           >
-            <FontAwesome5 name="times-circle" size={iconSize.sm} color={iconColor} iconStyle="solid" />
+            <Icon name="x-circle" size={iconSize.sm} color={iconColor} />
           </TouchableOpacity>
         )}
       </View>

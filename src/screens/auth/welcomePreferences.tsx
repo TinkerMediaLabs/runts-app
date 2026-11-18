@@ -6,7 +6,6 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Screen from '@/components/common/Screen';
 import Button from '@/components/common/Button';
@@ -16,6 +15,7 @@ import { usePrimaryTags } from '../../hooks/queries/useTags';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -113,7 +113,7 @@ const WelcomePreferences = ({ navigation, route }: any) => {
                         label="Continue"
                         disabled={!canContinue}
                         onPress={handleContinue}
-                        icon={<FontAwesome5 name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} iconStyle="solid" />}
+                        icon={<Icon name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} />}
                     />
                 </Animated.View>
 

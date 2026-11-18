@@ -2,7 +2,6 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { useStoryImage }   from '../../hooks/queries/useStoryImage';
 import { useDeleteBookmark } from '../../hooks/queries/useBookmarks';
@@ -13,6 +12,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -99,7 +99,7 @@ export default function BookmarkTile({
         {/* Bookmark name + position */}
         <View style={styles.topRow}>
           <View style={styles.bookmarkBadge}>
-            <FontAwesome5 name={'bookmark' as any} size={9} color={colors.accent} iconStyle="solid" />
+            <Icon name="bookmark" size={9} color={colors.accent} />
             <Text style={styles.bookmarkName} numberOfLines={1}>
               {bookmark.name || 'My Bookmark'}
             </Text>
@@ -134,11 +134,10 @@ export default function BookmarkTile({
         style={styles.deleteBtn}
         hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
       >
-        <FontAwesome5
-          name={'times' as any}
+        <Icon
+          name="close"
           size={iconSize.xs}
           color={colors.textTertiary}
-          iconStyle="solid"
         />
       </TouchableOpacity>
 

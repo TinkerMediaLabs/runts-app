@@ -26,6 +26,11 @@ export function fmtDuration(s: number): string {
   return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
 }
 
+// "24m left" — the one wording for time remaining, everywhere (cards, lists, tiles).
+export function fmtTimeLeft(secondsLeft: number): string {
+  return secondsLeft < 60 ? 'Almost done' : `${fmtDuration(secondsLeft)} left`;
+}
+
 export type ProgressStatus = 'none' | 'in_progress' | 'completed';
 
 // Shared progress-aware duration display used by ForYouCarousel,
@@ -37,8 +42,7 @@ export function getDurationDisplay(duration: number, progressStatus: ProgressSta
   }
   if (progressStatus === 'in_progress') {
     const remaining = Math.max(0, duration - (progressSeconds ?? 0));
-    const text = remaining < 60 ? 'Almost done' : `${fmtDuration(remaining)} left`;
-    return { text, color: 'cyan', icon: 'clock' as const };
+    return { text: fmtTimeLeft(remaining), color: 'cyan', icon: 'clock' as const };
   }
   return { text: fmtDuration(duration), color: 'rgba(255,255,255,0.85)', icon: 'clock' as const };
 }

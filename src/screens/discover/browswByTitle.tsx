@@ -8,7 +8,6 @@ import Animated, {
     runOnJS,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { spacing } from '@/theme/spacing';
 
@@ -23,6 +22,7 @@ import { useTagNames }       from '../../hooks/queries/useTagNames';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Enable LayoutAnimation on Android
@@ -246,11 +246,10 @@ const BrowseByTitle = ({ navigation }: any) => {
                                 <ActivityIndicator size="small" color={colors.accent} />
                             ) : (
                                 <>
-                                    <FontAwesome5
-                                        name={'book-open' as any}
+                                    <Icon
+                                        name="book-open"
                                         size={40}
                                         color={colors.textSecondary}
-                                        iconStyle="solid"
                                     />
                                     <Text style={styles.emptyText}>
                                         No stories found for "{selectedLetter.toUpperCase()}"

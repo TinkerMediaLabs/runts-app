@@ -6,11 +6,11 @@ import { Text } from '@/components/common/AppText';
 import Screen from '@/components/common/Screen';
 import MenuHeader from '../../components/common/MenuHeader';
 import EmptyState from '../../components/common/EmptyState';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { showChip } from '@/lib/chip';
 import { useBlockedUsers, useUnblockUser } from '../../hooks/queries/useModeration';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // People whose comments this listener has hidden, with a way to undo it.
 const BlockedUsersScreen = ({ navigation }: any) => {
@@ -43,7 +43,7 @@ const BlockedUsersScreen = ({ navigation }: any) => {
                         )}
                         ListEmptyComponent={
                             <EmptyState
-                                icon={<FontAwesome5 name="user-slash" size={40} color="#ffffff40" iconStyle="solid" />}
+                                icon={<Icon name="user-slash" size={40} color="#ffffff40" />}
                                 title="No one is blocked"
                                 body="If someone's comments bother you, tap the three dots on a comment and choose Block. Their comments will be hidden from you."
                             />

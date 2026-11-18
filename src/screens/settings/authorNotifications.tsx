@@ -5,10 +5,10 @@ import { Text } from '@/components/common/AppText';
 import Screen from '@/components/common/Screen';
 import MenuHeader from '../../components/common/MenuHeader';
 import EmptyState from '../../components/common/EmptyState';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useFollowedAuthors, useIsFollowing, useSetAuthorNotify } from '../../hooks/queries/useAuthorFollowing';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // Reads the follow state seeded by the list (no extra request) so the switch updates instantly when toggled.
 const AuthorRow = ({ author, followRecord }: { author: any; followRecord: any }) => {
@@ -56,7 +56,7 @@ const AuthorNotificationsScreen = ({ navigation }: any) => {
                         ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color={colors.accent} style={{ margin: 16 }} /> : null}
                         ListEmptyComponent={
                             <EmptyState
-                                icon={<FontAwesome5 name="user" size={40} color={colors.textTertiary} iconStyle="solid" />}
+                                icon={<Icon name="user" size={40} color={colors.textTertiary} />}
                                 title="No followed authors yet"
                                 body="Follow an author from their page and they will show up here, with a switch for their notifications."
                             />

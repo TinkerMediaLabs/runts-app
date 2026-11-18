@@ -8,7 +8,6 @@ import { useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import Animated, {
     useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, interpolate, Extrapolation,
 } from 'react-native-reanimated';
@@ -30,6 +29,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionTitle from '@/components/common/SectionTitle';
+import Icon from '@/components/common/Icon';
 
 const HERO_HEIGHT = 340;
 const HEADER_THRESHOLD_START = HERO_HEIGHT - 120;
@@ -80,7 +80,7 @@ const GenreHome = ({ navigation }: any) => {
                     <View style={[styles.heroTopRow, { paddingTop: insets.top + 10 }]}>
                         <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()}
                             accessibilityRole="button" accessibilityLabel="Go back" style={styles.heroBubble} activeOpacity={0.7}>
-                            <FontAwesome5 name="chevron-left" size={iconSize.sm} color={colors.textPrimary} iconStyle="solid" />
+                            <Icon name="chevron-left" size={iconSize.sm} color={colors.textPrimary} />
                         </TouchableOpacity>
                         <FollowTagButton tagId={tagId} tagName={tagName ?? ''} variant="bubble" />
                     </View>
@@ -97,7 +97,7 @@ const GenreHome = ({ navigation }: any) => {
                     {tag?.description ? <Text style={styles.description}>{tag.description}</Text> : null}
                     {!hasStories && (
                         <EmptyState
-                            icon={<FontAwesome5 name="book-open" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                            icon={<Icon name="book-open" size={40} color={colors.textSecondary} />}
                             title={`No stories in ${tagName} yet`}
                             body={home.relatedTags.length > 0 ? 'These genres might be a good place to start.' : 'Check back soon.'}
                         />
@@ -121,7 +121,7 @@ const GenreHome = ({ navigation }: any) => {
                     <Animated.View style={[styles.heroStickyHeader, stickyStyle, { paddingTop: insets.top + 10 }]} pointerEvents="box-none">
                         <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()}
                             accessibilityRole="button" accessibilityLabel="Go back" style={styles.heroStickyBackBtn} activeOpacity={0.7}>
-                            <FontAwesome5 name="chevron-left" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+                            <Icon name="chevron-left" size={iconSize.md} color={colors.textPrimary} />
                         </TouchableOpacity>
                         <Text style={styles.heroStickyTitle} numberOfLines={1}>{tagName}</Text>
                         <View style={{ width: 34 }} />

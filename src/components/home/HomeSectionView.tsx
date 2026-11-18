@@ -229,7 +229,7 @@ const SectionContent = ({ section, index }: Props) => {
   switch (section.type) {
     case 'forYou':            return <ForYouSection section={section} index={reveal} />;
     case 'continueListening': return (
-      <TimedReveal index={reveal} style={{ paddingVertical: 10 }}>
+      <TimedReveal index={reveal}>
         <ContinueListening />
       </TimedReveal>
     );

@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { TouchableOpacity, View, StyleSheet, Animated } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/types/types';
@@ -11,6 +10,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const VISIBLE_COUNT = 10;
 
@@ -107,11 +107,10 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
                     disabled={spinning}
                 >
                     <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                        <FontAwesome5
-                            name={'sync-alt' as any}
+                        <Icon
+                            name="sync-alt"
                             size={iconSize.xs}
                             color={colors.accent}
-                            iconStyle="solid"
                         />
                     </Animated.View>
                     <Text style={styles.refreshText}>Shuffle</Text>

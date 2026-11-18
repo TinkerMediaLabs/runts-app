@@ -5,12 +5,12 @@ import { Text } from '@/components/common/AppText';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useApp } from '@/context/AppContext';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -57,11 +57,10 @@ const ContentBlocked = () => {
 
                 {/* Icon */}
                 <View style={styles.iconWrapper}>
-                    <FontAwesome5
-                        name={'lock' as any}
+                    <Icon
+                        name="lock"
                         size={36}
                         color="#ff7c2a"
-                        iconStyle="solid"
                     />
                 </View>
 
@@ -87,11 +86,10 @@ const ContentBlocked = () => {
                         end={{ x: 1, y: 0 }}
                         style={styles.primaryButtonGradient}
                     >
-                        <FontAwesome5
+                        <Icon
                             name={(isGuest ? 'user-plus' : 'cog') as any}
                             size={iconSize.sm}
                             color={colors.textPrimary}
-                            iconStyle="solid"
                             style={{ marginRight: 8 }}
                         />
                         <Text style={styles.primaryButtonText}>{isGuest ? 'Create an account' : 'Open Settings'}</Text>

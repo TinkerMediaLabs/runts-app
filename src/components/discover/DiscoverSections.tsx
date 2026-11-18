@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, FlatList, TouchableOpacity, Animated, AccessibilityInfo, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useNavigation } from '@react-navigation/native';
 
 import SubgenreCard from './SubgenreCard';
@@ -12,6 +11,7 @@ import { weightedSample, type ListedTag } from '../../lib/discoverTags';
 import { Analytics } from '@/lib/analytics';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize, layout } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const SectionTitle = ({ text, right }: { text: string; right?: React.ReactNode }) => {
   const typo = useTypography();
@@ -97,7 +97,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
           <TouchableOpacity activeOpacity={0.7} onPress={shuffle} disabled={spinning} style={styles.shuffleBtn}
             accessibilityRole="button" accessibilityLabel="Shuffle tags" accessibilityHint="Shows a different set of tags">
             <Animated.View style={{ transform: [{ rotate }] }}>
-              <FontAwesome5 name={'sync-alt' as any} size={iconSize.xs} color={colors.accent} iconStyle="solid" />
+              <Icon name="sync-alt" size={iconSize.xs} color={colors.accent} />
             </Animated.View>
             <Text style={styles.shuffleText}>Shuffle</Text>
           </TouchableOpacity>
@@ -115,7 +115,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
       <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('AllSubgenres')} style={styles.seeAll}
         accessibilityRole="button" accessibilityLabel="See all tags">
         <Text style={styles.seeAllText}>See all tags</Text>
-        <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.accent} iconStyle="solid" />
+        <Icon name="chevron-right" size={iconSize.xs} color={colors.accent} />
       </TouchableOpacity>
     </View>
   );
@@ -134,10 +134,10 @@ export const CatalogLinks = ({ title }: { title?: string | null }) => {
       {rows.map(r => (
         <TouchableOpacity key={r.key} activeOpacity={0.8} onPress={() => navigation.navigate(r.to)} style={styles.linkRow}
           accessibilityRole="button" accessibilityLabel={`${r.label}, ${r.hint}`}>
-          <FontAwesome5 name={r.icon as any} size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+          <Icon name={r.icon as any} size={iconSize.sm} color={colors.accent} />
           <Text style={styles.linkLabel}>{r.label}</Text>
           <Text style={styles.linkHint}>{r.hint}</Text>
-          <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
+          <Icon name="chevron-right" size={iconSize.xs} color={colors.textTertiary} />
         </TouchableOpacity>
       ))}
     </View>

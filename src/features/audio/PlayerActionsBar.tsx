@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import PinButton from '../../components/common/PinButton';
 import { useTipTarget } from '../../tips/useTipTarget';
 import { speedLabel } from './PlayerSheets';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 type Props = {
   storyId: string;
@@ -35,7 +35,7 @@ export default function PlayerActionsBar({
     <View ref={tipRef} collapsable={false} style={styles.bar} accessibilityRole="toolbar">
       <TouchableOpacity style={styles.item} onPress={onInfo} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Story details" accessibilityHint="Opens the story page">
-        <FontAwesome5 name="info-circle" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+        <Icon name="info-circle" size={iconSize.md} color={colors.textPrimary} />
       </TouchableOpacity>
 
       <View style={styles.item}>
@@ -54,21 +54,21 @@ export default function PlayerActionsBar({
             <Text style={[styles.text, styles.textActive]}>
               {sleepMinutesLeft}<Text style={styles.unit}>m</Text>
             </Text>
-            <FontAwesome5 name="moon" size={iconSize.xs} color={colors.accent} iconStyle="solid" style={styles.badge} />
+            <Icon name="moon" size={iconSize.xs} color={colors.accent} style={styles.badge} />
           </View>
         ) : (
-          <FontAwesome5 name="moon" size={iconSize.md} color={sleepOn ? colors.accent : colors.textPrimary} iconStyle="solid" />
+          <Icon name="moon" size={iconSize.md} color={sleepOn ? colors.accent : colors.textPrimary} />
         )}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.item} onPress={onShare} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Share story">
-        <FontAwesome5 name="share" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+        <Icon name="share" size={iconSize.md} color={colors.textPrimary} />
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.item} onPress={onBookmark} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Add bookmark" accessibilityHint="Saves your current position">
-        <FontAwesome5 name="bookmark" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+        <Icon name="bookmark" size={iconSize.md} color={colors.textPrimary} />
       </TouchableOpacity>
     </View>
   );
