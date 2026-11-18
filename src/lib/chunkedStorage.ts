@@ -6,6 +6,9 @@ export interface KeyValueBackend {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
   removeItem(key: string): Promise<void>;
+  // AsyncStorage has these: all the pieces go in one batch (one native transaction) instead of one call each.
+  multiSet?(pairs: [string, string][]): Promise<void>;
+  multiRemove?(keys: string[]): Promise<void>;
 }
 
 export const CHUNK_SIZE = 400_000;
@@ -19,7 +22,11 @@ const markerCount = (value: string | null): number | null => {
 
 export function createChunkedStorage(backend: KeyValueBackend, chunkSize: number = CHUNK_SIZE): KeyValueBackend {
   const removeChunks = async (key: string, from: number, to: number) => {
-    for (let i = from; i < to; i++) await backend.removeItem(`${key}:${i}`);
+    const keys: string[] = [];
+    for (let i = from; i < to; i++) keys.push(`${key}:${i}`);
+    if (keys.length === 0) return;
+    if (backend.multiRemove) await backend.multiRemove(keys);
+    else for (const k of keys) await backend.removeItem(k);
   };
   return {
     async getItem(key) {
@@ -37,7 +44,10 @@ export function createChunkedStorage(backend: KeyValueBackend, chunkSize: number
     async setItem(key, value) {
       const previous = markerCount(await backend.getItem(key).catch(() => null)) ?? 0;
       const count = Math.max(1, Math.ceil(value.length / chunkSize));
-      for (let i = 0; i < count; i++) await backend.setItem(`${key}:${i}`, value.slice(i * chunkSize, (i + 1) * chunkSize));
+      const pieces: [string, string][] = [];
+      for (let i = 0; i < count; i++) pieces.push([`${key}:${i}`, value.slice(i * chunkSize, (i + 1) * chunkSize)]);
+      if (backend.multiSet) await backend.multiSet(pieces);
+      else for (const [k, v] of pieces) await backend.setItem(k, v);
       await backend.setItem(key, `${MARKER}${count}`);       // the marker goes last: a half-written save is never read
       await removeChunks(key, count, previous);              // drop pieces left over from a longer earlier save
     },

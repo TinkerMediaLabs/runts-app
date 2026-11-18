@@ -248,6 +248,7 @@ Comment: a
       userId: a.string().required(),
       authorId: a.string().required(),
       followedAt: a.datetime(),
+      notify: a.boolean(),       // new-story push for this author; missing counts as ON. Plain field (no index).
       user: a.belongsTo('User', 'userId'),
     })
     .secondaryIndexes(index => [
@@ -594,7 +595,8 @@ Comment: a
     platform:  a.string().required(),  // 'ios' | 'android'
     updatedAt: a.datetime(),
     // Per-kind push preferences for this device. Plain fields (no index), so they never recreate the table.
-    muteAuthors: a.boolean(),          // true = no new-story pushes from followed authors (missing counts as ON)
+    muteAuthors: a.boolean(),          // UNUSED since Nov 18 (author pushes are switched per author on UserFollowedAuthor.notify); kept only so older builds still validate
+    lastAuthorPushStoryId: a.string(), // the last story this device was sent an author push for; written by notify-new-story so a repeated delivery of the same story is skipped
     lastGenrePushAt: a.datetime(),     // when this person last got a genre push; written by notify-new-story to cap them at one a day
   })
   .secondaryIndexes(index => [

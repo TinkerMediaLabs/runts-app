@@ -10,7 +10,6 @@ import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
 import { spacing } from '../../theme/spacing';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
     getFavoriteThreshold,
@@ -43,7 +42,6 @@ import { useApp } from '../../context/AppContext';
 import PINEntryModal from '../../components/settings/PINEntryModal';
 import PINSetupModal from '../../components/settings/PINSetupModal';
 
-import { Notifications, AUTHOR_PUSH_KEY } from '../../lib/notifications';
 import { resetTips } from '../../tips/tipsStore';
 import { showChip } from '../../lib/chip';
 import { colors } from '@/theme/colors';
@@ -53,7 +51,6 @@ import { iconSize } from '@/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
-const NOTIF_AUTHOR_KEY = AUTHOR_PUSH_KEY;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -428,7 +425,7 @@ const AppSettings = ({ navigation }: any) => {
 
     // ── Appearance ────────────────────────────────────────────────────────────
 
-    const { userId, lockEroticSession } = useApp();
+    const { lockEroticSession } = useApp();
 
     // Leaving this screen re-locks the erotic settings, so a phone a parent just unlocked is not left open.
     useEffect(() => () => lockEroticSession(), []);   // eslint-disable-line react-hooks/exhaustive-deps
@@ -443,27 +440,6 @@ const AppSettings = ({ navigation }: any) => {
     const [wifiOnly, setWifiOnly] = useState(true);
     const [haptics, setHaptics] = useState(true);
     const { totalSize, refresh: refreshDownloads } = useDownloads();
-
-    const [authorNotifications, setAuthorNotifications] = useState(true);
-
-    useEffect(() => {
-        AsyncStorage.getItem(NOTIF_AUTHOR_KEY).then(val => {
-            if (val !== null) setAuthorNotifications(val === 'true');
-        });
-    }, []);
-
-    const handleAuthorNotificationsChange = async (value: boolean) => {
-        setAuthorNotifications(value);
-        await AsyncStorage.setItem(NOTIF_AUTHOR_KEY, String(value));
-        if (userId) {
-            // Only author pushes are muted; the device keeps its push token so genre notifications keep working.
-            if (!value) {
-                await Notifications.setAuthorPushMuted(userId, true);
-            } else {
-                await Notifications.registerToken(userId);   // also asks for permission if it was never given
-            }
-        }
-    };
 
     useEffect(() => {
         getFavoriteThreshold().then(setFavoriteThreshold);
@@ -626,12 +602,11 @@ const AppSettings = ({ navigation }: any) => {
 
                     {/* ── Notifications ── */}
                     <Section title="Notifications">
-                        <ToggleRow
-                            icon="bell"
-                            label="New stories from followed authors"
-                            description="Get notified when an author you follow publishes a new story"
-                            value={authorNotifications}
-                            onChange={handleAuthorNotificationsChange}
+                        <ActionRow
+                            icon="user"
+                            label="Author notifications"
+                            description="Choose which followed authors send you a note about new stories"
+                            onPress={() => navigation.navigate('AuthorNotificationsScreen')}
                         />
                         <RowDivider />
                         <ActionRow

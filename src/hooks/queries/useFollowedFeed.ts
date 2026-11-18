@@ -12,7 +12,7 @@ import type { Schema } from '../../../amplify/data/resource';
 // Both look only at the newest FOLLOWED_TAGS_FOR_FEEDS follows, so the cost is one small indexed read for the
 // follows plus one small indexed story query per genre, whether someone follows 3 genres or 3,000.
 
-const NEW_PER_TAG = 8;
+const NEW_PER_TAG = 4;   // the row shows about a dozen stories mixed from up to 6 genres, so a few per genre is enough
 
 export type FollowedTag = { id: string; name: string };
 

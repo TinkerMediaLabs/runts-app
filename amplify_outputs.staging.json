@@ -1760,6 +1760,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "notify": {
+              "name": "notify",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
             "user": {
               "name": "user",
               "isArray": false,
@@ -4144,6 +4151,13 @@
               "name": "muteAuthors",
               "isArray": false,
               "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
+            "lastAuthorPushStoryId": {
+              "name": "lastAuthorPushStoryId",
+              "isArray": false,
+              "type": "String",
               "isRequired": false,
               "attributes": []
             },

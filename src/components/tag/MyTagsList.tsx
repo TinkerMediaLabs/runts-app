@@ -41,7 +41,7 @@ export default function MyTagsList({ tabBarHeight }: { tabBarHeight: number }) {
           title="Follow the genres you love"
           body="Tap Follow on any genre page and it shows up here. You can choose which ones send you a note when a new story arrives."
           actionLabel="Find a genre"
-          onAction={() => navigate('SearchScreen')}
+          onAction={() => navigate('Browse')}
         />
       }
     />

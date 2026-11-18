@@ -62,7 +62,7 @@ import { useUniverse } from '../../hooks/queries/useUniverse';
 import { useIsGuest } from '../../lib/dataAccess';
 import { askForAccount } from '../../lib/requireAccount';
 import { getDurationDisplay, formatNarratorDisplay, getSpiceDisplay } from '../../lib/storyDisplay';
-import { STORY_FORMATS, POV_OPTIONS, TONES, CONTENT_WARNINGS } from '../../constants/storyMetadata';
+import { STORY_FORMATS, POV_OPTIONS, CONTENT_WARNINGS } from '../../constants/storyMetadata';
 
 
 
@@ -380,6 +380,7 @@ const focus = useRef<TextInput>(null);
 // the scroll view below); this then scrolls the box into the visible part, because the scroll position alone
 // would leave it just under the keyboard.
 const pageScrollRef = useRef<any>(null);
+
 const commentBoxRef = useRef<View>(null);
 const scrollCommentIntoView = () => {
   setTimeout(() => {
@@ -495,6 +496,13 @@ const handleDelete = (id: string) => {
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (e) => { scrollY.value = e.contentOffset.y; },
     });
+
+    // Tapping a suggested story opens this same screen with another story: start at the top, not where the last one
+    // was left, and reset the scroll value too so the sticky header does not stay showing until the next scroll.
+    useEffect(() => {
+        scrollY.value = 0;
+        pageScrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [storyID, scrollY]);
 
     const headerStyle = useAnimatedStyle(() => ({
         opacity: interpolate(
@@ -774,14 +782,11 @@ const handleDelete = (id: string) => {
                         </View>
                     ) : null}
 
-                    {/* Story Format / Story Tone / POV — pills, same style as numListens */}
-                    {(story?.storyFormat || (story?.tone && !moodTone.some((t: any) => t.tagType === 'tone')) || story?.pov) ? (
+                    {/* Story Format / POV — pills, same style as numListens (tone is a tag now, shown under Mood and tone) */}
+                    {(story?.storyFormat || story?.pov) ? (
                         <View style={styles.statsRow}>
                             {story?.storyFormat ? (
                                 <StatPill icon="book" value={STORY_FORMATS[story.storyFormat] ?? story.storyFormat} />
-                            ) : null}
-                            {story?.tone && !moodTone.some((t: any) => t.tagType === 'tone') ? (
-                                <StatPill icon="theater-masks" value={TONES[story.tone] ?? story.tone} />
                             ) : null}
                             {story?.pov ? (
                                 <StatPill icon="eye" value={POV_OPTIONS[story.pov] ?? story.pov} />

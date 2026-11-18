@@ -169,6 +169,6 @@ export function useFollowedTags() {
   });
 }
 
-// How many of the newest follows the Home row and For You use. A fixed small number keeps their cost the same
+// How many of the newest follows the Home row and For You use (the row shows about a dozen stories, so 6 genres are plenty). A fixed small number keeps their cost the same
 // whether someone follows 3 genres or 3,000 (one indexed story query per followed genre).
-export const FOLLOWED_TAGS_FOR_FEEDS = 10;
+export const FOLLOWED_TAGS_FOR_FEEDS = 6;
