@@ -59,4 +59,23 @@ describe('chunkedStorage', () => {
     await store.setItem('k', '');
     expect(await store.getItem('k')).toBe('');
   });
+
+  it('uses batch writes and removes when the backend has them', async () => {
+    const { map, backend } = memory();
+    let multiSetCalls = 0, multiRemoveCalls = 0;
+    const batched: KeyValueBackend = {
+      ...backend,
+      multiSet: async pairs => { multiSetCalls++; pairs.forEach(([k, v]) => map.set(k, v)); },
+      multiRemove: async keys => { multiRemoveCalls++; keys.forEach(k => map.delete(k)); },
+    };
+    const store = createChunkedStorage(batched, 10);
+    await store.setItem('k', 'x'.repeat(45));
+    expect(multiSetCalls).toBe(1);
+    expect(await store.getItem('k')).toBe('x'.repeat(45));
+    await store.setItem('k', 'y'.repeat(5));
+    expect(multiRemoveCalls).toBe(1);
+    expect(await store.getItem('k')).toBe('yyyyy');
+    expect([...map.keys()].sort()).toEqual(['k', 'k:0']);
+  });
 });
+

@@ -380,6 +380,7 @@ const focus = useRef<TextInput>(null);
 // the scroll view below); this then scrolls the box into the visible part, because the scroll position alone
 // would leave it just under the keyboard.
 const pageScrollRef = useRef<any>(null);
+
 const commentBoxRef = useRef<View>(null);
 const scrollCommentIntoView = () => {
   setTimeout(() => {
@@ -495,6 +496,13 @@ const handleDelete = (id: string) => {
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (e) => { scrollY.value = e.contentOffset.y; },
     });
+
+    // Tapping a suggested story opens this same screen with another story: start at the top, not where the last one
+    // was left, and reset the scroll value too so the sticky header does not stay showing until the next scroll.
+    useEffect(() => {
+        scrollY.value = 0;
+        pageScrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [storyID, scrollY]);
 
     const headerStyle = useAnimatedStyle(() => ({
         opacity: interpolate(

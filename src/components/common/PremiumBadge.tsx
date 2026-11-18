@@ -1,14 +1,18 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
+import { useApp } from '@/context/AppContext';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 
-// Marks a premium story on its tile: the word PREMIUM in large letters across the middle of the cover, at 40%
+// Tells a listener without Premium that a story is premium (so they know they cannot play it). Premium listeners
+// never see it. Marks a premium story on its tile: the word PREMIUM in large letters across the middle of the cover, at 40%
 // opacity. Fills the cover (absolute) and never takes touches. `compact` is for tiles with small artwork.
 type Props = { compact?: boolean };
 
 export default function PremiumBadge({ compact = false }: Props) {
+  const { isPremium } = useApp();
+  if (isPremium) return null;
   return (
     <View
       style={styles.overlay}

@@ -24,7 +24,7 @@ export function useIsFollowing(authorId: string) {
           { userId, authorId: { eq: authorId } },
           { limit: 10 }
       );
-      return { isFollowing: !!data?.length, recordId: data?.[0]?.id ?? null };
+      return { isFollowing: !!data?.length, recordId: data?.[0]?.id ?? null, notify: data?.[0]?.notify !== false };
     },
     enabled: !!authorId && !guest,
     staleTime: 1000 * 30,
@@ -131,6 +131,7 @@ export function useUnfollowAuthor() {
 
 // ── Paginated list of followed authors (most recent first) ────────────────
 export function useFollowedAuthors() {
+  const queryClient = useQueryClient();
   return useInfiniteQuery({
     queryKey: ['followedAuthors'],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
@@ -149,6 +150,8 @@ export function useFollowedAuthors() {
       );
 
       if (!data?.length) return { items: [], nextToken: null };
+      // Seed the per-author follow state so switches and buttons on this list need no extra request.
+      data.forEach((r: any) => queryClient.setQueryData(['isFollowing', r.authorId], { isFollowing: true, recordId: r.id, notify: r.notify !== false }));
 
       const authorResults = await Promise.all(
         data.map((r: any) => client.models.Author.get({ id: r.authorId }))
@@ -165,5 +168,27 @@ export function useFollowedAuthors() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextToken ?? undefined,
     staleTime: 1000 * 60,
+  });
+}
+
+// ── Turn new-story notifications on or off for one followed author ─────────
+// Cache-only update (the list and the switch read ['isFollowing', authorId]), like the genre switches.
+export function useSetAuthorNotify() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recordId, notify }: { recordId: string; authorId: string; notify: boolean }) => {
+      const client = generateClient<Schema>();
+      return unwrap(await (client.models.UserFollowedAuthor as any).update({ id: recordId, notify }), 'Author notifications');
+    },
+    onMutate: async ({ authorId, notify }) => {
+      await queryClient.cancelQueries({ queryKey: ['isFollowing', authorId] });
+      const previous = queryClient.getQueryData<any>(['isFollowing', authorId]);
+      if (previous) queryClient.setQueryData(['isFollowing', authorId], { ...previous, notify });
+      return { previous };
+    },
+    onError: (_err, { authorId }, context) => {
+      if (context?.previous) queryClient.setQueryData(['isFollowing', authorId], context.previous);
+      showChip("Couldn't change notifications. Please try again.", 'error');
+    },
   });
 }
