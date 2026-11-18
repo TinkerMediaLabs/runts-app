@@ -8,8 +8,8 @@
  * `live` field flips from 'false' to 'true'.
  *
  *   1. Skip erotic stories
- *   2. AUTHOR phase: find all users following the story's author, find their push tokens from the UserDevice
- *      table (skipping devices that muted author pushes), send via the Expo Push API
+ *   2. AUTHOR phase: find all users following the story's author (skipping those who switched this author off),
+ *      find their push tokens from the UserDevice table, send via the Expo Push API
  *   3. GENRE phase: for each (non-erotic) tag on the story, page through the people following that tag with
  *      notifications on (UserFollowedTag byTagId). Skip anyone the author push already reached, and cap each
  *      device at one genre push a day with a conditional write on UserDevice.lastGenrePushAt.
@@ -42,7 +42,9 @@ async function getFollowersPage(authorId, startKey) {
         TableName: table('UserFollowedAuthor'),
         IndexName: 'byAuthorId',
         KeyConditionExpression: 'authorId = :aid',
-        ExpressionAttributeValues: { ':aid': { S: authorId } },
+        // A follower who switched this author's notifications off is skipped. A missing `notify` counts as ON.
+        FilterExpression: 'attribute_not_exists(notify) OR notify <> :off',
+        ExpressionAttributeValues: { ':aid': { S: authorId }, ':off': { BOOL: false } },
         ExclusiveStartKey: startKey,
         Limit: 200,
     }));
@@ -53,7 +55,7 @@ async function getFollowersPage(authorId, startKey) {
 }
 async function getDevices(userIds) {
     const devices = [];
-    const CONCURRENCY = 10;
+    const CONCURRENCY = 20;
     for (let i = 0; i < userIds.length; i += CONCURRENCY) {
         const results = await Promise.all(userIds.slice(i, i + CONCURRENCY).map(async (userId) => {
             const found = [];
@@ -69,7 +71,7 @@ async function getDevices(userIds) {
                 for (const it of res.Items ?? []) {
                     const item = (0, util_dynamodb_1.unmarshall)(it);
                     if (item.pushToken && item.id)
-                        found.push({ id: item.id, token: item.pushToken, userId, muteAuthors: item.muteAuthors === true });
+                        found.push({ id: item.id, token: item.pushToken, userId });
                 }
                 lastKey = res.LastEvaluatedKey;
             } while (lastKey);
@@ -90,6 +92,32 @@ async function removeDeviceRows(ids) {
             console.log('[notify-new-story] Failed to delete dead device row:', id, err);
         }
     }
+}
+// One Expo push request. Expo answers 429 when sent too fast and the odd 5xx: wait and try again (1s, 2s, 4s) instead
+// of silently dropping the pushes. Gives up after 4 tries (logged) so one bad batch cannot stall the whole fan-out.
+async function postToExpo(messages) {
+    const MAX_ATTEMPTS = 4;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+            const res = await fetch(EXPO_PUSH_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(messages),
+                signal: AbortSignal.timeout(20000),
+            });
+            if (res.status === 429 || res.status >= 500)
+                throw new Error(`Expo answered ${res.status}`);
+            return await res.json().catch(() => null);
+        }
+        catch (err) {
+            if (attempt === MAX_ATTEMPTS) {
+                console.log('[notify-new-story] Expo push failed after retries:', err);
+                return null;
+            }
+            await new Promise(r => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+        }
+    }
+    return null;
 }
 async function sendPushNotifications(devices, title, body, storyId) {
     if (devices.length === 0)
@@ -112,13 +140,10 @@ async function sendPushNotifications(devices, title, body, storyId) {
             data: { storyId },
             sound: 'default',
         }));
-        const res = await fetch(EXPO_PUSH_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(messages),
-        });
-        const json = await res.json().catch(() => null);
-        console.log('[notify-new-story] Expo push response:', JSON.stringify(json));
+        const json = await postToExpo(messages);
+        // Log counts and the first few errors only: a big fan-out sends thousands of batches.
+        const failed = (json?.data ?? []).filter((t) => t?.status === 'error');
+        console.log(`[notify-new-story] Expo batch: ${batch.length} sent, ${failed.length} error(s)`, failed.length ? JSON.stringify(failed.slice(0, 3)) : '');
         // Tickets come back in the same order as the messages we sent.
         const dead = [];
         (json?.data ?? []).forEach((ticket, idx) => {
@@ -181,6 +206,7 @@ async function getTagFollowersPage(tagId, startKey) {
         lastKey: result.LastEvaluatedKey,
     };
 }
+// True when the person follows the author with notifications ON (so the author push covers them).
 async function followsAuthor(userId, authorId) {
     const res = await dynamo.send(new client_dynamodb_1.QueryCommand({
         TableName: table('UserFollowedAuthor'),
@@ -189,7 +215,9 @@ async function followsAuthor(userId, authorId) {
         ExpressionAttributeValues: { ':u': { S: userId }, ':a': { S: authorId } },
         Limit: 1,
     }));
-    return (res.Items ?? []).length > 0;
+    // Following with this author's notifications switched off means the author push did not reach them.
+    const item = (res.Items ?? [])[0];
+    return !!item && (0, util_dynamodb_1.unmarshall)(item).notify !== false;
 }
 // Take this device's genre-push slot for the day. Only one concurrent run can win it, so a person following
 // several genres of the same story (or two stories published together) still gets one note.
@@ -211,6 +239,25 @@ async function claimGenreSlot(deviceId) {
     catch (err) {
         if (err?.name !== 'ConditionalCheckFailedException')
             console.log('[notify-new-story] claimGenreSlot failed:', deviceId, err);
+        return false;
+    }
+}
+// Mark this device as told about this story's author push. Only the first run to mark it wins, so a message the queue
+// delivers twice (or a run that timed out and is retried) never pushes the same story to the same device twice.
+async function claimAuthorPush(deviceId, storyId) {
+    try {
+        await dynamo.send(new client_dynamodb_1.UpdateItemCommand({
+            TableName: table('UserDevice'),
+            Key: { id: { S: deviceId } },
+            UpdateExpression: 'SET lastAuthorPushStoryId = :s',
+            ConditionExpression: 'attribute_exists(id) AND (attribute_not_exists(lastAuthorPushStoryId) OR lastAuthorPushStoryId <> :s)',
+            ExpressionAttributeValues: { ':s': { S: storyId } },
+        }));
+        return true;
+    }
+    catch (err) {
+        if (err?.name !== 'ConditionalCheckFailedException')
+            console.log('[notify-new-story] claimAuthorPush failed:', deviceId, err);
         return false;
     }
 }
@@ -285,7 +332,9 @@ const handler = async (event, context) => {
                 followerCount += page.userIds.length;
                 if (page.userIds.length === 0)
                     continue;
-                const devices = (await getDevices(page.userIds)).filter(d => !d.muteAuthors);
+                const found = await getDevices(page.userIds);
+                const devices = (await inBatches(found, 20, async (d) => (await claimAuthorPush(d.id, storyId)) ? d : null))
+                    .filter((d) => d !== null);
                 deviceCount += await sendPushNotifications(devices, `New story from ${authorName}`, `"${storyTitle}" is now available to listen`, storyId);
                 if (lastKey && context.getRemainingTimeInMillis() < TIME_MARGIN_MS) {
                     await queueContinuation({ phase: 'author', cursor: JSON.stringify(lastKey) }, 'Time budget reached');
@@ -304,6 +353,9 @@ const handler = async (event, context) => {
         const tagIds = await getStoryTagIds(storyId);
         let tagIdx = message.tagIdx ?? 0;
         let lastKey = cursor ? JSON.parse(cursor) : undefined;
+        // People already handled under an earlier genre of this story in this run (a person following several of its
+        // genres is looked up once). Bounded so memory stays flat; the daily cap still guarantees one push either way.
+        const handled = new Set();
         while (tagIdx < tagIds.length) {
             const tagId = tagIds[tagIdx];
             const tag = await getTag(tagId);
@@ -317,15 +369,18 @@ const handler = async (event, context) => {
             do {
                 const page = await getTagFollowersPage(tagId, lastKey);
                 lastKey = page.lastKey;
-                if (page.userIds.length > 0) {
-                    const devices = await getDevices(page.userIds);
+                const fresh = page.userIds.filter(u => !handled.has(u));
+                if (handled.size < 200000)
+                    fresh.forEach(u => handled.add(u));
+                if (fresh.length > 0) {
+                    const devices = await getDevices(fresh);
                     // Anyone whose author push was just delivered already knows about this story.
                     const userIds = Array.from(new Set(devices.map(d => d.userId)));
                     const covered = new Set();
-                    await inBatches(userIds, 10, async (u) => { if (await followsAuthor(u, authorId))
+                    await inBatches(userIds, 20, async (u) => { if (await followsAuthor(u, authorId))
                         covered.add(u); });
-                    const candidates = devices.filter(d => !(covered.has(d.userId) && !d.muteAuthors));
-                    const claimed = (await inBatches(candidates, 10, async (d) => (await claimGenreSlot(d.id)) ? d : null))
+                    const candidates = devices.filter(d => !covered.has(d.userId));
+                    const claimed = (await inBatches(candidates, 20, async (d) => (await claimGenreSlot(d.id)) ? d : null))
                         .filter((d) => d !== null);
                     notified += await sendPushNotifications(claimed, `New in ${tag.name}`, `"${storyTitle}" by ${authorName}`, storyId);
                 }
