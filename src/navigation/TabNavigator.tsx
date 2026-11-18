@@ -62,8 +62,8 @@ export default function BottomTabNavigator() {
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: fontSizes.micro, fontWeight: '600', marginTop: 2 },
         tabBarStyle: {
-            paddingTop: 6,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+            paddingTop: 4,
+            paddingBottom: (insets.bottom > 0 ? insets.bottom : 6) + 2,
             height: layout.tabBarHeight + insets.bottom,
             backgroundColor: '#0a0a0a',
         }

@@ -49,7 +49,7 @@ export const SubgenreRow = ({ title, tags, top = 40 }: { title: string; tags: Li
 };
 
 // The shuffle: ten subgenres drawn (favouring bigger ones) from subgenres that have live stories, and a link to the
-// full A-Z list.
+// full list of tags.
 export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: string }) => {
   const navigation = useNavigation<any>();
   const draw = useCallback(() => weightedSample(pool, 10, t => Math.sqrt(Math.max(1, t.liveCount))), [pool]);
@@ -94,7 +94,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
       <SectionTitle
         text={title}
         right={
-          <TouchableOpacity activeOpacity={0.7} onPress={shuffle} disabled={spinning} style={styles.shuffleBtn}
+          <TouchableOpacity activeOpacity={0.7} onPress={shuffle} disabled={spinning} style={styles.shuffleBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button" accessibilityLabel="Shuffle tags" accessibilityHint="Shows a different set of tags">
             <Animated.View style={{ transform: [{ rotate }] }}>
               <Icon name="sync-alt" size={iconSize.xs} color={colors.accent} />
@@ -125,18 +125,20 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
 export const CatalogLinks = ({ title }: { title?: string | null }) => {
   const navigation = useNavigation<any>();
   const rows = [
-    { key: 'stories', icon: 'book-open', label: 'All stories', hint: 'A to Z', to: 'BrowseByTitle' },
-    { key: 'subgenres', icon: 'tags', label: 'All tags', hint: 'A to Z', to: 'AllSubgenres' },
+    { key: 'stories', icon: 'book-open', label: 'All stories', description: 'Explore the complete story library', to: 'BrowseByTitle' },
+    { key: 'subgenres', icon: 'tags', label: 'All tags', description: 'Find stories by topic and theme', to: 'AllSubgenres' },
   ];
   return (
     <View style={{ marginTop: 40, marginHorizontal: spacing.margin }}>
       <SectionTitle text={title || 'Browse the catalog'} />
       {rows.map(r => (
         <TouchableOpacity key={r.key} activeOpacity={0.8} onPress={() => navigation.navigate(r.to)} style={styles.linkRow}
-          accessibilityRole="button" accessibilityLabel={`${r.label}, ${r.hint}`}>
+          accessibilityRole="button" accessibilityLabel={`${r.label}, ${r.description}`}>
           <Icon name={r.icon as any} size={iconSize.sm} color={colors.accent} />
-          <Text style={styles.linkLabel}>{r.label}</Text>
-          <Text style={styles.linkHint}>{r.hint}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.linkLabel}>{r.label}</Text>
+            <Text style={styles.linkDescription}>{r.description}</Text>
+          </View>
           <Icon name="chevron-right" size={iconSize.xs} color={colors.textTertiary} />
         </TouchableOpacity>
       ))}
@@ -147,7 +149,7 @@ export const CatalogLinks = ({ title }: { title?: string | null }) => {
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: layout.gutter },
   shuffleBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 22, minHeight: 44,
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 22,
     backgroundColor: 'rgba(0,255,255,0.07)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,255,255,0.25)',
   },
   shuffleText: { fontSize: fontSizes.caption, fontWeight: '600', color: colors.accent },
@@ -163,6 +165,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 14, marginBottom: 8,
     borderRadius: radius.lg, backgroundColor: colors.fillFaint, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderSubtle,
   },
-  linkLabel: { flex: 1, fontSize: fontSizes.body, fontWeight: '600', color: colors.textPrimary },
-  linkHint: { fontSize: fontSizes.caption, color: colors.textSecondary },
+  linkLabel: { fontSize: fontSizes.body, fontWeight: '600', color: colors.textPrimary },
+  linkDescription: { fontSize: fontSizes.caption, color: colors.textSecondary, marginTop: 2 },
 });

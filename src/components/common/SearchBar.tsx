@@ -36,16 +36,18 @@ const SearchBar = () => {
                     paddingHorizontal: 10, 
                     borderRadius: radius.sm, 
                     flexDirection: 'row', 
-                    backgroundColor: '#e0e0e0', 
+                    backgroundColor: colors.inputBg,
+                    borderWidth: 1,
+                    borderColor: colors.inputBorder,
                     height: 40, 
                     width: Dimensions.get('window').width - 40}}
                 >
                 <Icon 
                     name="search"
-                    color='#000000a5'
+                    color={colors.inputPlaceholder}
                     size={18}
                 />
-                <Text style={{marginLeft: 20, color: '#000000a5'}}>
+                <Text style={{marginLeft: 20, color: colors.inputPlaceholder}}>
                     Search stories, authors, tags
                 </Text>
                 </View>

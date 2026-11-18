@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TextInput } from '@/components/common/AppTextInput';
 import { fontSizes } from '@/theme/tokens';
@@ -31,12 +31,14 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
       maxLength = 20,
       style,
       inputStyle,
-      iconColor = '#000000a5',
+      iconColor,
       showClear = true,
       autoFocus = false,
     },
     ref
   ) => {
+    const [focused, setFocused] = useState(false);
+    const glyph = iconColor ?? (focused ? colors.accent : colors.inputPlaceholder);
     return (
       <View style={[styles.container, style]}>
         {/* Left Icon */}
@@ -47,7 +49,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           accessibilityLabel="Search"
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          <Icon name="search" size={iconSize.sm} color={iconColor} />
+          <Icon name="search" size={iconSize.sm} color={glyph} />
         </TouchableOpacity>
 
         {/* Input */}
@@ -56,7 +58,10 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#595959"
+          placeholderTextColor={colors.inputPlaceholder}
+          selectionColor={colors.accent}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           accessibilityLabel={placeholder}
           style={[styles.input, inputStyle]}
           returnKeyType="search"
@@ -74,7 +79,7 @@ const SearchBar = forwardRef<TextInput, SearchInputProps>(
             accessibilityLabel="Clear search"
             hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           >
-            <Icon name="x-circle" size={iconSize.sm} color={iconColor} />
+            <Icon name="x-circle" size={iconSize.sm} color={colors.inputPlaceholder} />
           </TouchableOpacity>
         )}
       </View>
@@ -89,7 +94,9 @@ const styles = StyleSheet.create({
     height: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     borderRadius: radius.sm,
     paddingHorizontal: 10,
   },
@@ -102,7 +109,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: fontSizes.small,
-    color: colors.textOnAccent,
+    color: colors.inputText,
     paddingVertical: 0, // prevents weird vertical stretching
   },
 });

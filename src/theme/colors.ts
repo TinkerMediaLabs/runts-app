@@ -22,6 +22,12 @@ export const colors = {
   surface2: '#1c1c1c',  // cards, inputs, tiles
   surface3: '#2a2a2a',  // raised: chips, secondary buttons, dividers
 
+  // text inputs (search)
+  inputBg: '#202124',
+  inputBorder: '#3c4043',
+  inputText: '#e8eaed',
+  inputPlaceholder: '#9aa0a6',
+
   // lines
   border: '#2a2a2a',                       // card and input outlines
   borderSubtle: 'rgba(255,255,255,0.1)',   // hairlines, list separators

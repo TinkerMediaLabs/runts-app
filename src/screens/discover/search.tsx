@@ -697,7 +697,6 @@ const filteredTagResults = useMemo(() => {
               onChangeText={setInputValue}
               placeholder="Stories, authors, genres…"
               maxLength={50}
-              iconColor="rgba(0,0,0,0.5)"
               showClear
             />
           </View>
