@@ -7,6 +7,7 @@ export const colors = {
   // accent
   accent: '#00ffff',
   accentSoft: '#00ffffa5',
+  moodBorder: 'rgba(160,140,255,0.75)',
   accentFaint: '#00ffff40',
 
   // text on dark

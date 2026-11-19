@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import TagPill from '@/components/common/TagPill';
 
 import useStyles from '@/theme/styles';
 import { navigate }       from '@/navigation/RootNavigator';
@@ -31,28 +31,16 @@ const BasicTagsList = ({ tags }: any) => {
                 marginTop:     20,
             }}>
                 {tags?.map((item: any) => (
-                    <TouchableOpacity
+                    <TagPill
                         key={item.id}
-                        activeOpacity={0.7}
+                        name={item.name}
+                        erotic={!!item.isErotic}
+                        style={{ marginRight: 10, marginTop: 10 }}
                         onPress={() => {
                             collapsePlayer();
                             navigate('TagHomeScreen', { id: item.id, name: item.name });
                         }}
-                        style={{ marginRight: 10, marginTop: 10 }}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Tag ${item.name}`}
-                    >
-                        <Text style={[
-                            styles.tagtext,
-                            item.isErotic && { 
-                                color: '#ff7c2a',
-                                backgroundColor: '#ff7c2a1a',
-                                borderColor: '#ff7c2a',
-                            },
-                        ]}>
-                            #{item.name}
-                        </Text>
-                    </TouchableOpacity>
+                    />
                 ))}
             </View>
         </View>

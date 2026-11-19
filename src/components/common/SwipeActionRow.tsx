@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Text } from '@/components/common/AppText';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, radius } from '@/theme/tokens';
 import Icon, { type IconName } from '@/components/common/Icon';
 
 // A list row that swipes left to show action buttons (Delete, Edit...). A grabber with a chevron sits on the far
@@ -13,7 +13,8 @@ export type SwipeAction = {
   key: string;
   label: string;
   icon: IconName;
-  color: string;
+  color?: string;       // fill for a plain action
+  danger?: boolean;     // the soft red style of the spoiler warning: tinted fill, red border, light red text
   onPress: () => void;
 };
 
@@ -29,13 +30,13 @@ const SwipeActionRow = ({ children, actions, gap = 0 }: { children: React.ReactN
         <TouchableOpacity
           key={a.key}
           activeOpacity={0.8}
-          style={[styles.action, { backgroundColor: a.color }]}
+          style={[styles.action, a.danger ? styles.actionDanger : { backgroundColor: a.color }]}
           onPress={() => { ref.current?.close(); a.onPress(); }}
           accessibilityRole="button"
           accessibilityLabel={a.label}
         >
-          <Icon name={a.icon} size={22} color="#fff" />
-          <Text style={styles.actionLabel}>{a.label}</Text>
+          <Icon name={a.icon} size={22} color={a.danger ? '#ff8888' : '#fff'} />
+          <Text style={[styles.actionLabel, a.danger && { color: '#ff8888' }]}>{a.label}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -77,9 +78,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface3,
-    borderTopLeftRadius: 0,
+    borderTopLeftRadius: radius.md,
+    borderBottomLeftRadius: radius.md,
   },
   actions: { flexDirection: 'row' },
+  actionDanger: { backgroundColor: 'rgba(255,100,100,0.06)' },
   action: { width: ACTION_WIDTH, alignItems: 'center', justifyContent: 'center', gap: 4 },
   actionLabel: { color: '#fff', fontSize: fontSizes.caption, fontWeight: '600' },
 });

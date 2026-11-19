@@ -41,7 +41,7 @@ const ProgressTile = ({ inProgressRecord }: { inProgressRecord: any }) => {
 
     const remove = () => deleteInProgress(story.id);
     const actions: SwipeAction[] = [
-        { key: 'delete', label: 'Remove', icon: 'trash', color: colors.dangerSolid, onPress: remove },
+        { key: 'delete', label: 'Remove', icon: 'trash', danger: true, onPress: remove },
     ];
 
     return (

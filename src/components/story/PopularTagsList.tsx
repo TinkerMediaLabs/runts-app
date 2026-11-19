@@ -11,6 +11,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
+import TagPill from '@/components/common/TagPill';
 
 const VISIBLE_COUNT = 10;
 
@@ -120,16 +121,7 @@ const PopularTagsList = ({ tags }: { tags: any[] }) => {
             {/* Tag chips */}
             <Animated.View style={[styles.chipWrap, { opacity: fadeAnim }]}>
                 {visible.map(tag => (
-                    <TouchableOpacity
-                        key={tag.id}
-                        activeOpacity={0.7}
-                        onPress={() => handlePress(tag.id, tag.name)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Tag ${tag.name}`}
-                        style={styles.chip}
-                    >
-                        <Text style={styles.chipText}>#{tag.name}</Text>
-                    </TouchableOpacity>
+                    <TagPill key={tag.id} name={tag.name} onPress={() => handlePress(tag.id, tag.name)} />
                 ))}
             </Animated.View>
 

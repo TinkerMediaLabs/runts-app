@@ -213,8 +213,14 @@ async play(track: Track, startAt: number = 0) {
     } as any]);
     this.currentTrack = track;
     // Resuming: move to the saved place BEFORE playing, so the story never starts from the beginning first.
+    // The player may ignore a seek made before the file is ready, so keep asking until it reports the saved place
+    // (up to about 6 seconds), and only then press play. Sound never starts at 0:00 and jumps later.
     if (startAt > 0) {
-      try { await TrackPlayer.seekTo(startAt); } catch (e) { console.warn('audioEngine: seek before play failed', e); }
+      const giveUp = Date.now() + 6000;
+      while (Date.now() < giveUp) {
+        try { await TrackPlayer.seekTo(startAt); } catch (e) { console.warn('audioEngine: seek before play failed', e); }
+        if (await this.waitForPosition(startAt, 700)) break;
+      }
     }
     await TrackPlayer.play();
   } catch (error) {
