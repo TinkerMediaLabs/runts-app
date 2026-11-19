@@ -1,4 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { getStoryImageUrl } from '../../services/auth';
+import { getLocalCoverPath } from '../../lib/offlineStorage';
 import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -31,6 +34,7 @@ interface BookmarkListProps {
 export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
 
   const { playTrackAt } = usePlayer();
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -71,13 +75,26 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
     ]);
   };
 
-  const handlePlay = (story: any, positionSeconds: number) => {
+  const handlePlay = async (story: any, positionSeconds: number) => {
+    // The player shows the artwork as a plain link, so a stored cover path ('stories/...') is turned into one first
+    // (the tile already did this for its own thumbnail, so it normally comes straight from the cache).
+    const path: string = story.imageUri ?? '';
+    let artwork = path;
+    if (path.startsWith('stories/')) {
+      try {
+        artwork = await queryClient.fetchQuery({
+          queryKey: ['storyImage', 'v3', path],
+          queryFn: async () => (await getLocalCoverPath(path)) ?? getStoryImageUrl(path),
+          staleTime: 1000 * 60 * 60 * 24 * 5,
+        });
+      } catch { artwork = ''; }
+    }
     playTrackAt(
       {
         id:      story.id,
         title:   story.title ?? '',
         url:     story.audioUri ?? '',
-        artwork: story.imageUri ?? '',
+        artwork,
         artist:  authorMap[story.authorId ?? ''] ?? '',
       },
       positionSeconds

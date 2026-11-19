@@ -427,12 +427,14 @@ export const PlayerProvider = ({ children }: any) => {
         await audioEngine.pause();
         setState(prev => ({ ...prev, isPlaying: false }));
 
-        if (currentTrackRef.current) {
+        // The track can change or clear while the save is in flight, so its id is read once, up front.
+        const savingId = currentTrackRef.current?.id;
+        if (savingId) {
             try {
                 const position = audioEngine.getCurrentPosition();
                 if (position > 0) {
-                    await upsertInProgressStory(currentTrackRef.current.id, position);
-                    queryClient.invalidateQueries({ queryKey: ['storyProgress', currentTrackRef.current.id] });
+                    await upsertInProgressStory(savingId, position);
+                    queryClient.invalidateQueries({ queryKey: ['storyProgress', savingId] });
                     queryClient.invalidateQueries({ queryKey: ['inProgressStories'] });
                     queryClient.invalidateQueries({ queryKey: ['eroticInProgressStories'] });
                 }
