@@ -101,6 +101,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "aws-cdk-lib": "^2.234.1",
     "aws-lambda": "^1.0.7",
+    "babel-plugin-transform-remove-console": "^6.9.4",
     "constructs": "^10.6.0",
     "esbuild": "^0.28.0",
     "eslint": "^8.57.1",
