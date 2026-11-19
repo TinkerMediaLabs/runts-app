@@ -17,7 +17,9 @@ const schema = a.schema({
       type: a.string(),
       name: a.string(),
       profilePicUri: a.string(),
-      birthdate: a.date(),
+      birthdate: a.date(),                      // older accounts; new accounts give an age instead (below)
+      age: a.integer(),                        // the age the person gave at sign-up
+      ageEnteredOn: a.date(),                  // the day they gave it; the age moves on from there (see lib/age.ts)
       isPublisher: a.boolean(),
       plan: a.string(),
       onboardingComplete: a.boolean(),

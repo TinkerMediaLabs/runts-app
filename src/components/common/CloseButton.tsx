@@ -7,7 +7,8 @@ import { iconSize } from '@/theme/tokens';
 import { colors } from '@/theme/colors';
 import Icon from '@/components/common/Icon';
 
-const CloseButton = ({navigation} :any) => {
+// backdrop: a dark round backing so the icon stays visible over artwork (story pages).
+const CloseButton = ({navigation, backdrop = false} :any) => {
 
     return (
         <TouchableWithoutFeedback
@@ -20,7 +21,7 @@ const CloseButton = ({navigation} :any) => {
                 flexDirection: 'row',        
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'transparent',
+                backgroundColor: backdrop ? 'rgba(0,0,0,0.6)' : 'transparent',
                 borderRadius: 50,
                 width: 36,
                 height: 36,

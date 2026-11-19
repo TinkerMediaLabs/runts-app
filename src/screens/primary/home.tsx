@@ -15,7 +15,7 @@ import { layout } from '../../theme/tokens';
 import Screen from '@/components/common/Screen';
 import { useRequireAccount } from '../../hooks/useRequireAccount';
 import Reveal from '../../components/common/Reveal';
-import { SkeletonCarousel, SkeletonCardRow } from '../../components/common/Skeleton';
+import { SkeletonCarousel, SkeletonTileRow, SkeletonPickCard, SkeletonContinueCard } from '../../components/common/Skeleton';
 
 import HomeSectionView from '../../components/home/HomeSectionView';
 import { useHomeLayout } from '../../hooks/queries/useHomeLayout';
@@ -106,8 +106,11 @@ const HomeScreen = ({ navigation }: any) => {
 
                     {(topLoading || firstUnsettled !== -1) && (
                         <View>
-                            {waitingOn === 'forYou' ? <SkeletonCarousel /> : <SkeletonCardRow />}
-                            {firstUnsettled <= 0 ? <SkeletonCardRow titleWidth={120} /> : null}
+                            {waitingOn === 'forYou' ? <SkeletonCarousel />
+                                : waitingOn === 'pickOfDay' ? <SkeletonPickCard />
+                                : waitingOn === 'continueListening' ? <SkeletonContinueCard />
+                                : <SkeletonTileRow />}
+                            {firstUnsettled <= 0 ? <SkeletonTileRow titleWidth={120} /> : null}
                         </View>
                     )}
 

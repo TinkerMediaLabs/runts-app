@@ -4,8 +4,9 @@ import Animated, {
   Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated';
 import { colors } from '@/theme/colors';
-import { radius as radii } from '@/theme/tokens';
+import { radius as radii, layout } from '@/theme/tokens';
 import { spacing } from '@/theme/spacing';
+import { pickCardHeight } from '../../lib/pickOfDay';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -82,10 +83,51 @@ export const SkeletonCardRow = ({
   </Group>
 );
 
-/** The For You carousel card (same size as the real card). */
+// Sizes taken from the real components (ForYouCarousel, HorizontalTile, PickOfDayCard) through the layout tokens.
+const HERO_W = SCREEN_W * 0.9;
+const HERO_H = Math.max(layout.heroMinHeight, Math.round(SCREEN_H * layout.heroRatio));
+const SIDE_SCALE = 0.8;     // the cards either side of the centre one are 80% size
+
+/** The For You carousel: the centre card at full size with the next and previous cards peeking out behind it. */
 export const SkeletonCarousel = () => (
   <Group style={styles.carousel}>
-    <Skeleton width={SCREEN_W * 0.9} height={SCREEN_H * 0.4} radius={radii.lg} />
+    <View style={{ width: SCREEN_W, height: HERO_H, alignItems: 'center', justifyContent: 'center' }}>
+      <Skeleton width={HERO_W * SIDE_SCALE} height={HERO_H * SIDE_SCALE} radius={radii.lg} style={{ position: 'absolute', left: -HERO_W * SIDE_SCALE + 12 + (SCREEN_W - HERO_W) / 2 }} />
+      <Skeleton width={HERO_W * SIDE_SCALE} height={HERO_H * SIDE_SCALE} radius={radii.lg} style={{ position: 'absolute', right: -HERO_W * SIDE_SCALE + 12 + (SCREEN_W - HERO_W) / 2 }} />
+      <Skeleton width={HERO_W} height={HERO_H} radius={radii.lg} />
+    </View>
+  </Group>
+);
+
+/** A titled Home row of story tiles (200 by 240, with the title and author inside the cover, so nothing under it). */
+export const SkeletonTileRow = ({ titleWidth = 150, count = 3 }: { titleWidth?: number; count?: number }) => (
+  <Group style={styles.section}>
+    <SkeletonTitle width={titleWidth} />
+    <View style={styles.tileRow}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} width={layout.tileWidth} height={layout.tileHeight} radius={radii.lg} style={{ marginLeft: i === 0 ? 0 : spacing.margin }} />
+      ))}
+    </View>
+  </Group>
+);
+
+/** Pick of the Day: a title, then one card as wide as the screen with the shape of a tile. */
+export const SkeletonPickCard = () => (
+  <Group style={styles.section}>
+    <SkeletonTitle width={140} />
+    <View style={{ alignItems: 'center' }}>
+      <Skeleton width={SCREEN_W - spacing.margin * 2} height={pickCardHeight(SCREEN_W - spacing.margin * 2, layout.tileWidth, layout.tileHeight)} radius={radii.lg} />
+    </View>
+  </Group>
+);
+
+/** The Continue Listening card: a title, then one wide 90 high card. */
+export const SkeletonContinueCard = () => (
+  <Group style={styles.section}>
+    <SkeletonTitle width={170} />
+    <View style={{ marginHorizontal: spacing.margin }}>
+      <Skeleton width={SCREEN_W - spacing.margin * 2} height={90} radius={radii.lg} />
+    </View>
   </Group>
 );
 
@@ -133,6 +175,7 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, marginLeft: 14 },
   section: { marginTop: 24 },
   cardRow: { flexDirection: 'row', paddingHorizontal: spacing.margin, gap: 10 },
+  tileRow: { flexDirection: 'row', paddingLeft: spacing.margin },
   carousel: { alignItems: 'center', marginTop: 8 },
   genres: { paddingHorizontal: spacing.margin },
   genreTile: { marginVertical: 10 },

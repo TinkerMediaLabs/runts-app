@@ -41,7 +41,7 @@ const WelcomePreferences = ({ navigation, route }: any) => {
     // The account is saved at the end of the taste steps; this screen just passes the genres along.
     const handleContinue = () => {
         if (selected.length !== 3) return;
-        navigation.navigate('WelcomeTaste', { birthdate: route?.params?.birthdate ?? null, genres: selected });
+        navigation.navigate('WelcomeTaste', { name: route?.params?.name ?? '', age: route?.params?.age ?? null, genres: selected });
     };
 
     const canContinue = selected.length === 3;

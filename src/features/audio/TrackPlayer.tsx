@@ -57,6 +57,7 @@ import { useCreateBookmark } from '../../hooks/queries/useBookmarks';
 
 import { CachedImage } from '../../components/common/CachedImage';
 import { fontSizes } from '@/theme/tokens';
+import { useTipTarget } from '../../tips/useTipTarget';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
@@ -256,6 +257,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
   // The play/pause icon shows for 3s every time the player opens or is maximized from the mini player (and when
   // playback starts), then fades, so people notice the artwork is a button. While paused it stays visible.
   const heroControlsOpacity = useSharedValue(1);
+  const artTipRef = useTipTarget('player-art');
 
   useEffect(() => {
     if (!track) return;
@@ -423,13 +425,16 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       accessibilityRole="button"
                       accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
                   >
-                      <Animated.View style={[heroControlsStyle]}>
+                      {/* The tip for this control points at the play/pause icon's spot, which stays put even while the icon is faded. */}
+                      <View ref={artTipRef} collapsable={false} pointerEvents="none" style={styles.artTipSpot}>
+                        <Animated.View style={[heroControlsStyle]}>
                           <Icon
                               name={optimisticPlaying ? 'pause' : 'play'}
                               size={72}
                               color={colors.textPrimary}
                               style={{ opacity: 0.5 }} />
-                      </Animated.View>
+                        </Animated.View>
+                      </View>
                   </TouchableOpacity>
               </View>
 
@@ -858,6 +863,7 @@ mini: {
     position: 'absolute',
     bottom: 0,
   },
+  artTipSpot: { width: 96, height: 96, alignItems: 'center', justifyContent: 'center' },
   heroTouch: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',

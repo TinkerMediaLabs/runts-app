@@ -26,6 +26,7 @@ export default function PlayerActionsBar({
   storyId, onInfo, playbackRate, onSpeed, sleepMinutesLeft, sleepEndOfStory, onSleep, onShare, onBookmark,
 }: Props) {
   const tipRef = useTipTarget('player-actions');
+  const bookmarkTipRef = useTipTarget('player-bookmark');
   const sleepOn = sleepMinutesLeft !== null || sleepEndOfStory;
   const sleepLabel = sleepEndOfStory
     ? 'Sleep timer on, ends after this story'
@@ -66,10 +67,12 @@ export default function PlayerActionsBar({
         <Icon name="share" size={iconSize.md} color={colors.textPrimary} />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.item} onPress={onBookmark} activeOpacity={0.7}
-        accessibilityRole="button" accessibilityLabel="Add bookmark" accessibilityHint="Saves your current position">
-        <Icon name="bookmark" size={iconSize.md} color={colors.textPrimary} />
-      </TouchableOpacity>
+      <View ref={bookmarkTipRef} collapsable={false}>
+        <TouchableOpacity style={styles.item} onPress={onBookmark} activeOpacity={0.7}
+          accessibilityRole="button" accessibilityLabel="Add bookmark" accessibilityHint="Saves your current position">
+          <Icon name="bookmark" size={iconSize.md} color={colors.textPrimary} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

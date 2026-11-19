@@ -35,6 +35,9 @@ export const layout = {
   titlePadTop: 16,    // space above a row title
   titlePadBottom: 12, // space between a row title and its tiles
   heroRatio: 0.34,    // For You carousel card height, as a share of screen height
+  heroMinHeight: 260, // ...but never shorter than this
+  tileWidth: 200,     // story tile in a Home row
+  tileHeight: 240,
   tabBarHeight: 58,   // bottom tab bar (icon + label), before the safe-area inset
 } as const;
 

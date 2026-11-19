@@ -15,10 +15,10 @@ import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../
 import { CachedImageBackground } from '../common/CachedImage';
 import PremiumBadge from '../common/PremiumBadge';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, layout } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
-const CARD_WIDTH  = 200;
-const CARD_HEIGHT = 240;
+const CARD_WIDTH  = layout.tileWidth;
+const CARD_HEIGHT = layout.tileHeight;
 
 
 // ---------------------------------------------------------------------------

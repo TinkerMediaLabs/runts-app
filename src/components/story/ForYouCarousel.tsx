@@ -41,7 +41,7 @@ import PremiumBadge from '@/components/common/PremiumBadge';
 const { width, height } = Dimensions.get('window');
 
 const CARD_WIDTH  = width * 0.9;
-const CARD_HEIGHT = Math.max(260, Math.round(height * layout.heroRatio));
+const CARD_HEIGHT = Math.max(layout.heroMinHeight, Math.round(height * layout.heroRatio));
 const EXPAND_H    = 120;
 const TIMING_CFG  = { duration: 200, easing: Easing.out(Easing.quad) };
 const LISTENS_THRESHOLD = 1000;

@@ -88,7 +88,13 @@ const ProfileScreen = ({ navigation }: any) => {
 
     const scrollY = useRef(new Animated.Value(0)).current;
 
-    const AVATAR_SIZE   = 88;
+    // The avatar takes whatever width is left beside the stats, so the gap between the card's left edge and the
+    // picture matches the gap between the last stat label and the card's right edge.
+    const [heroW, setHeroW]   = useState(0);
+    const [statsW, setStatsW] = useState(0);
+    const AVATAR_SIZE = heroW && statsW
+        ? Math.max(64, Math.min(112, Math.floor(heroW - 34 - 25 - statsW)))
+        : 64;
     const FADE_START    = 80;
     const FADE_END      = 160;
 
@@ -260,9 +266,9 @@ const ProfileScreen = ({ navigation }: any) => {
                     </View>
 
                     {/* ── Hero ── */}
-                    <Animated.View style={[
+                    <Animated.View onLayout={e => setHeroW(e.nativeEvent.layout.width)} style={[
                         styles.hero,
-                        { paddingTop: 20, opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }
+                        { marginTop: 20, opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }
                     ]}>
 
                         {/* Avatar */}
@@ -306,6 +312,9 @@ const ProfileScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                         </View>
 
+                        <View style={styles.heroDivider} />
+
+                        <View style={styles.heroRight}>
                         <TouchableOpacity
                             style={styles.heroNameRow}
                             activeOpacity={0.7}
@@ -314,14 +323,14 @@ const ProfileScreen = ({ navigation }: any) => {
                             accessibilityLabel={`Display name ${profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}. Edit`}
                             hitSlop={{ top: 10, bottom: 10, left: 14, right: 14 }}
                         >
-                            <Text style={styles.heroName}>
+                            <Text style={styles.heroName} numberOfLines={1}>
                                 {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
                             </Text>
                             <Icon name="pen" size={iconSize.md} color={colors.textTertiary} />
                         </TouchableOpacity>
 
                         {/* Stats row */}
-                        <View style={styles.statsRow}>
+                        <View style={styles.heroStats} onLayout={e => setStatsW(e.nativeEvent.layout.width)}>
                             <View style={styles.statItem}>
                                 <Text style={styles.statValue}>
                                     {profile?.totalStoriesFinished ?? 0}
@@ -337,6 +346,7 @@ const ProfileScreen = ({ navigation }: any) => {
                                 </Text>
                                 <Text style={styles.statLabel}>Hours Listened</Text>
                             </View>
+                        </View>
                         </View>
 
                     </Animated.View>
@@ -375,13 +385,32 @@ const styles = StyleSheet.create({
 
     // ── Hero ──────────────────────────────────────────────────────────────────
     hero: {
+        flexDirection: 'row',
         alignItems: 'center',
-        paddingBottom: 28,
-        paddingHorizontal: spacing.margin,
+        marginHorizontal: spacing.margin,
+        padding: 16,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     avatarWrapper: {
         position: 'relative',
-        marginBottom: 14,
+    },
+    heroDivider: {
+        width: StyleSheet.hairlineWidth,
+        alignSelf: 'stretch',
+        backgroundColor: colors.surface3,
+        marginHorizontal: 12,
+    },
+    heroRight: {
+        flex: 1,
+    },
+    heroStats: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',   // numbers stay on one line however the labels wrap
+        alignSelf: 'flex-start',
+        maxWidth: '100%',
     },
     avatar: {
         backgroundColor: colors.surface3,
@@ -404,11 +433,12 @@ const styles = StyleSheet.create({
     heroNameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         gap: 8,
-        marginBottom: 20,
+        marginBottom: 12,
     },
     heroName: {
+        flexShrink: 1,
         fontSize: fontSizes.title,
         fontWeight: '700',
         color: colors.textPrimary,
@@ -425,17 +455,17 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
     },
     statItem: {
-        flex: 1,
-        alignItems: 'center',
+        flexShrink: 1,              // on a narrow screen the label wraps instead of overflowing
+        alignItems: 'flex-start',
     },
     statValue: {
         fontSize: fontSizes.title,
-        fontWeight: '700',
+        fontWeight: '600',
         color: colors.accent,
-        opacity: 0.85,
     },
     statLabel: {
-        fontSize: fontSizes.caption,
+        fontSize: fontSizes.micro,
+        textAlign: 'left',
         color: colors.textSecondary,
         marginTop: 2,
         fontWeight: '500',
@@ -443,7 +473,9 @@ const styles = StyleSheet.create({
     statSeparator: {
         width: StyleSheet.hairlineWidth,
         backgroundColor: colors.surface3,
+        alignSelf: 'stretch',
         marginVertical: 4,
+        marginHorizontal: 6,
     },
 
     // ── Sections ──────────────────────────────────────────────────────────────

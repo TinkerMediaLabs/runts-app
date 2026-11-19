@@ -570,7 +570,7 @@ const handleDelete = (id: string) => {
         return (
             <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
                 <StatusBar style="light" />
-                <CloseButton navigation={navigation} />
+                <CloseButton navigation={navigation} backdrop />
                 <Text style={{ color: '#fff', fontSize: 18, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
                 <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
             </View>
@@ -601,7 +601,7 @@ const handleDelete = (id: string) => {
                     style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}
                     pointerEvents={headerInteractive ? 'auto' : 'none'}
                 >
-                    <CloseButton navigation={navigation} />
+                    <CloseButton navigation={navigation} backdrop />
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}
                 </Animated.Text>
@@ -1052,7 +1052,7 @@ const handleDelete = (id: string) => {
             {/* Back button */}
             {!showRatingModal && (
                 <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
-                    <CloseButton navigation={navigation} />
+                    <CloseButton navigation={navigation} backdrop />
                 </View>
             )}
 

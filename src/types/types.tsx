@@ -25,8 +25,8 @@ export type RootStackParamList = {
     AppSettingsScreen: undefined;
     SearchScreen: undefined;
     Waiting: undefined;
-    WelcomePref: undefined;
-    WelcomeTaste: { birthdate: string | null; genres: string[] };
+    WelcomePref: { name: string; age: number };
+    WelcomeTaste: { name: string; age: number; genres: string[] };
     EroticHome: undefined;
     ContentBlocked: undefined;
   };

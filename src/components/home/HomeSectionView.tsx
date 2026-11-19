@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/common/AppText';
@@ -12,6 +12,8 @@ import HorizontalList from '../story/HorizontalList';
 import ContinueListening from '../story/ContinueListening';
 import BecauseYouFinished from '../story/BecauseYouFinished';
 import TagRow from '../story/TagRow';
+import PickOfDayCard from '../story/PickOfDayCard';
+import { pickIndexForDay, pickCardHeight } from '../../lib/pickOfDay';
 
 import { useForYouStories } from '../../hooks/queries/useForYouStories';
 import { useEnrichedStories } from '../../hooks/queries/useEnrichedStories';
@@ -37,7 +39,7 @@ import type { HomeSectionRow } from '../../lib/homeLayout';
 import useTypography from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, layout } from '@/theme/tokens';
 import SectionTitle from '@/components/common/SectionTitle';
 
 type Props = { section: HomeSectionRow; index: number };
@@ -127,6 +129,29 @@ export const HandPickedSection = ({ section, index }: Props) => {
   const { stories } = useStoriesByIds(ids);
   useSettleAfter(1200);
   return <StoryRow title={section.title || 'Hand-picked'} stories={stories} index={index} />;
+};
+
+// One story on a full-width card. The CMS can queue several (one shows per day, rotating); with none queued, today's
+// top trending story is used. Shows nothing, and keeps no space, when there is no story to show.
+const PickOfDaySection = ({ section, index }: Props) => {
+  const { width } = useWindowDimensions();
+  const queued = useMemo(() => (section.storyIds ?? []).filter(Boolean) as string[], [section.storyIds]);
+  const todaysId = useMemo(() => (queued.length ? [queued[pickIndexForDay(queued.length)]] : []), [queued]);
+  const queuedQ = useStoriesByIds(todaysId);
+  const trendingQ = useTrendingSection(7, 1);
+  const source = queued.length ? queuedQ.stories : (trendingQ.data ?? []);
+  const loading = queued.length ? queuedQ.isLoading : trendingQ.isLoading;
+  const { stories } = useEnrichedStories(source.slice(0, 1));
+  useSettleWhen(!loading);
+  if (!stories.length) {
+    return loading ? <View style={{ height: pickCardHeight(width - spacing.margin * 2, layout.tileWidth, layout.tileHeight) }} /> : null;
+  }
+  return (
+    <Reveal index={index}>
+      <SectionTitle text={section.title || 'Pick of the Day'} />
+      <PickOfDayCard story={stories[0]} />
+    </Reveal>
+  );
 };
 
 // The newest stories from the genres the listener follows. Nothing is shown (and no space is kept) for guests or
@@ -241,6 +266,7 @@ const SectionContent = ({ section, index }: Props) => {
     case 'trending':          return <TrendingSection section={section} index={reveal} />;
     case 'pickedToday':       return <PickedTodaySection section={section} index={reveal} />;
     case 'followedGenres':    return <FollowedGenresSection section={section} index={reveal} />;
+    case 'pickOfDay':         return <PickOfDaySection section={section} index={reveal} />;
     default:                  return null;
   }
 };
