@@ -97,6 +97,20 @@
               "isRequired": false,
               "attributes": []
             },
+            "age": {
+              "name": "age",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "ageEnteredOn": {
+              "name": "ageEnteredOn",
+              "isArray": false,
+              "type": "AWSDate",
+              "isRequired": false,
+              "attributes": []
+            },
             "isPublisher": {
               "name": "isPublisher",
               "isArray": false,
@@ -1760,6 +1774,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "notify": {
+              "name": "notify",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
             "user": {
               "name": "user",
               "isArray": false,
@@ -1892,6 +1913,13 @@
               "name": "notify",
               "isArray": false,
               "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
+            "lastSeenAt": {
+              "name": "lastSeenAt",
+              "isArray": false,
+              "type": "AWSDateTime",
               "isRequired": false,
               "attributes": []
             },
@@ -3689,6 +3717,13 @@
               "isRequired": false,
               "attributes": []
             },
+            "latestStoryAt": {
+              "name": "latestStoryAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
             "tagType": {
               "name": "tagType",
               "isArray": false,
@@ -4144,6 +4179,13 @@
               "name": "muteAuthors",
               "isArray": false,
               "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
+            "lastAuthorPushStoryId": {
+              "name": "lastAuthorPushStoryId",
+              "isArray": false,
+              "type": "String",
               "isRequired": false,
               "attributes": []
             },

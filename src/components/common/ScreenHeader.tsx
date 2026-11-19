@@ -2,11 +2,11 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { Text } from '@/components/common/AppText';
 import { colors } from '../../theme/colors';
 import { fontSizes, iconSize, layout } from '../../theme/tokens';
+import Icon from '@/components/common/Icon';
 
 type Props = {
   title?: string;
@@ -35,7 +35,7 @@ const ScreenHeader = ({ title, children, right, onBack, capitalize }: Props) => 
         accessibilityRole="button"
         accessibilityLabel="Go back"
       >
-        <FontAwesome5 name="chevron-left" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+        <Icon name="chevron-left" size={iconSize.md} color={colors.textPrimary} />
       </TouchableOpacity>
       {children ?? (
         <Text style={[styles.title, capitalize && { textTransform: 'capitalize' }]} numberOfLines={1} accessibilityRole="header">{title}</Text>

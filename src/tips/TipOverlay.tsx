@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
-  Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, cancelAnimation,
+  Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, withDelay, withSpring, cancelAnimation,
 } from 'react-native-reanimated';
+import Svg, { Defs, Mask, Rect } from 'react-native-svg';
 import { Text } from '@/components/common/AppText';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import {
@@ -14,8 +15,8 @@ import { TIPS, type Tip } from './tips';
 import { colors } from '@/theme/colors';
 
 const SETTLE_MS = 600;          // let the screen finish animating before measuring
-const PAD = 8;                  // breathing room around the highlighted control
-const DIM = 'rgba(0,0,0,0.78)';
+const PAD = 10;                 // breathing room around the highlighted control
+const DIM = 'rgba(0,0,0,0.6)';   // a gentle dim, so the screen is still readable behind the spotlight
 const ACCENT = '#00ffff';
 
 type Active = { tip: Tip; x: number; y: number; w: number; h: number };
@@ -24,8 +25,10 @@ type Active = { tip: Tip; x: number; y: number; w: number; h: number };
 const liveRoute = (): string | null =>
   navigationRef.current?.isReady() ? navigationRef.current.getCurrentRoute()?.name ?? null : null;
 
-// One tip at a time, pointing at a real control. Dims the screen, leaves a spotlight around the control,
-// pulses a ring (static with Reduce Motion), and shows a card with "Got it" / "Turn off tips".
+// One tip at a time, pointing at a real control, as a small animated spotlight: the screen dims gently, the control is
+// left lit inside a soft lens that pops up slightly, a teal ring expands and fades around it, and a speech bubble with
+// a tail pointing at the control appears next to it ("Got it" / "Turn off tips"). With Reduce Motion everything
+// appears at once and the ring stays still.
 export default function TipOverlay({ blocked }: { blocked: boolean }) {
   const { loaded, enabled, seen, route, flags, version } = useTipsState();
   const reduceMotion = useReduceMotion();
@@ -35,9 +38,11 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
   const rootRef = useRef<View>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  const fade = useSharedValue(0);
-  const pulse = useSharedValue(0);
-  const lift = useSharedValue(12);
+  const fade = useSharedValue(0);       // the dim
+  const pop = useSharedValue(0);        // the lens around the control
+  const ringA = useSharedValue(0);      // two rings, half a cycle apart
+  const ringB = useSharedValue(0);
+  const bubble = useSharedValue(0);     // the speech bubble
 
   useEffect(() => { loadTips(); }, []);
 
@@ -91,28 +96,33 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
 
   // Animate in / announce.
   useEffect(() => {
-    if (!active) { fade.value = 0; return; }
-    lift.value = reduceMotion ? 0 : 12;
-    fade.value = reduceMotion ? 1 : withTiming(1, { duration: 280 });
-    lift.value = reduceMotion ? 0 : withTiming(0, { duration: 320, easing: Easing.out(Easing.cubic) });
-    if (!reduceMotion) {
-      pulse.value = 0;
-      pulse.value = withRepeat(
-        withSequence(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }),
-                     withTiming(0, { duration: 900, easing: Easing.inOut(Easing.quad) })),
+    if (!active) { fade.value = 0; pop.value = 0; bubble.value = 0; ringA.value = 0; ringB.value = 0; return; }
+    if (reduceMotion) {
+      fade.value = 1; pop.value = 1; bubble.value = 1; ringA.value = 0; ringB.value = 0;
+    } else {
+      fade.value = withTiming(1, { duration: 420 });                                         // the screen gently darkens
+      pop.value = withDelay(120, withSpring(1, { damping: 11, stiffness: 150, mass: 0.7 })); // the control scales up slightly
+      bubble.value = withDelay(380, withSpring(1, { damping: 14, stiffness: 160 }));         // then the bubble appears
+      const cycle = (delay: number) => withDelay(delay, withRepeat(
+        withSequence(withTiming(1, { duration: 1500, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 0 }), withTiming(0, { duration: 300 })),
         -1,
-      );
+      ));
+      ringA.value = 0; ringB.value = 0;
+      ringA.value = cycle(250);
+      ringB.value = cycle(1050);
     }
     AccessibilityInfo.announceForAccessibility(`${active.tip.title}. ${active.tip.body}`);
-    return () => cancelAnimation(pulse);
+    return () => { cancelAnimation(ringA); cancelAnimation(ringB); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.tip.id, reduceMotion]);
 
-  const overlayStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
-  const cardStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: reduceMotion ? 1 : 0.95 - pulse.value * 0.55,
-    transform: [{ scale: reduceMotion ? 1 : 1 + pulse.value * 0.1 }],
+  const dimStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
+  const lensStyle = useAnimatedStyle(() => ({ opacity: pop.value, transform: [{ scale: 0.82 + pop.value * 0.18 }] }));
+  const ringAStyle = useAnimatedStyle(() => ({ opacity: reduceMotion ? 0.9 : (1 - ringA.value) * 0.85, transform: [{ scale: reduceMotion ? 1 : 1 + ringA.value * 0.75 }] }));
+  const ringBStyle = useAnimatedStyle(() => ({ opacity: reduceMotion ? 0 : (1 - ringB.value) * 0.6, transform: [{ scale: 1 + ringB.value * 0.75 }] }));
+  const bubbleStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, bubble.value),
+    transform: [{ translateY: (1 - bubble.value) * 10 }, { scale: 0.9 + bubble.value * 0.1 }],
   }));
 
   const frame = (children: React.ReactNode) => (
@@ -134,27 +144,47 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
   const hy = Math.max(0, active.y - PAD);
   const hw = Math.min(W - hx, active.w + PAD * 2);
   const hh = Math.min(H - hy, active.h + PAD * 2);
+  // A squarish control (an icon) gets a round spotlight; a wide one (a bar) gets a rounded rectangle.
+  const squarish = Math.max(hw, hh) / Math.min(hw, hh) < 1.3;
+  const r = squarish ? Math.min(hw, hh) / 2 : Math.min(18, Math.min(hw, hh) / 2);
 
-  const cardW = Math.min(W - 32, 360);
+  const cardW = Math.min(W - 32, 340);
   const cardLeft = Math.min(Math.max(16, hx + hw / 2 - cardW / 2), W - cardW - 16);
   const below = hy + hh / 2 < H / 2;
-  const cardPos = below ? { top: hy + hh + 16 } : { bottom: H - hy + 16 };
+  const GAP = 18;
+  const cardPos = below ? { top: hy + hh + GAP } : { bottom: H - hy + GAP };
+  // The tail points at the middle of the control, kept inside the bubble's rounded corners.
+  const tailX = Math.min(Math.max(hx + hw / 2 - cardLeft - TAIL / 2, 22), cardW - 22 - TAIL);
 
   const dismiss = () => { markTipSeen(active.tip.id); setActive(null); };
   const turnOff = () => { markTipSeen(active.tip.id); setTipsEnabled(false); setActive(null); };
 
   return frame(
-    <Animated.View style={[styles.root, overlayStyle]} accessibilityViewIsModal pointerEvents="auto">
-      {/* Dim everything except the spotlight (four rectangles around it). */}
+    <View style={styles.root} accessibilityViewIsModal pointerEvents="auto">
+      {/* The dim, with a rounded hole where the control is. A tap anywhere closes the tip. */}
+      <Animated.View style={[StyleSheet.absoluteFill, dimStyle]} pointerEvents="none">
+        <Svg width={W} height={H}>
+          <Defs>
+            <Mask id="spot">
+              <Rect x={0} y={0} width={W} height={H} fill="white" />
+              <Rect x={hx} y={hy} width={hw} height={hh} rx={r} ry={r} fill="black" />
+            </Mask>
+          </Defs>
+          <Rect x={0} y={0} width={W} height={H} fill={DIM} mask="url(#spot)" />
+        </Svg>
+      </Animated.View>
       <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} accessibilityRole="none" accessibilityElementsHidden importantForAccessibility="no" />
-      <View pointerEvents="none" style={[styles.dim, { top: 0, left: 0, right: 0, height: hy }]} />
-      <View pointerEvents="none" style={[styles.dim, { top: hy + hh, left: 0, right: 0, bottom: 0 }]} />
-      <View pointerEvents="none" style={[styles.dim, { top: hy, left: 0, width: hx, height: hh }]} />
-      <View pointerEvents="none" style={[styles.dim, { top: hy, left: hx + hw, right: 0, height: hh }]} />
 
-      <Animated.View pointerEvents="none" style={[styles.ring, { left: hx, top: hy, width: hw, height: hh }, ringStyle]} />
+      {/* The lens (a soft light that pops up slightly) and two teal rings that expand and fade. */}
+      <Animated.View pointerEvents="none" style={[styles.lens, { left: hx, top: hy, width: hw, height: hh, borderRadius: r }, lensStyle]} />
+      <Animated.View pointerEvents="none" style={[styles.ring, { left: hx, top: hy, width: hw, height: hh, borderRadius: r }, ringAStyle]} />
+      <Animated.View pointerEvents="none" style={[styles.ring, { left: hx, top: hy, width: hw, height: hh, borderRadius: r }, ringBStyle]} />
 
-      <Animated.View style={[styles.card, { width: cardW, left: cardLeft }, cardPos, cardStyle]}>
+      <Animated.View style={[styles.bubble, { width: cardW, left: cardLeft }, cardPos, bubbleStyle]}>
+        <View
+          pointerEvents="none"
+          style={[styles.tail, { left: tailX }, below ? styles.tailTop : styles.tailBottom]}
+        />
         <Text style={styles.title} accessibilityRole="header">{active.tip.title}</Text>
         <Text style={styles.body}>{active.tip.body}</Text>
         <View style={styles.actions}>
@@ -166,23 +196,33 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
           </TouchableOpacity>
         </View>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 }
+
+const TAIL = 16;
 
 const styles = StyleSheet.create({
   frame: { ...StyleSheet.absoluteFillObject, zIndex: 9000, elevation: 9000 },
   root: { ...StyleSheet.absoluteFillObject },
-  dim: { position: 'absolute', backgroundColor: DIM },
-  ring: { position: 'absolute', borderRadius: 18, borderWidth: 2, borderColor: ACCENT },
-  card: {
+  lens: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.10)' },
+  ring: { position: 'absolute', borderWidth: 2.5, borderColor: ACCENT },
+  bubble: {
     position: 'absolute',
     backgroundColor: '#161819',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.18)',
+    shadowColor: ACCENT, shadowOpacity: 0.25, shadowRadius: 18, shadowOffset: { width: 0, height: 0 }, elevation: 12,
   },
+  // A square turned 45 degrees, half hidden behind the bubble: its two outer edges make the tail.
+  tail: {
+    position: 'absolute', width: TAIL, height: TAIL, backgroundColor: '#161819',
+    transform: [{ rotate: '45deg' }], borderColor: 'rgba(255,255,255,0.18)',
+  },
+  tailTop: { top: -TAIL / 2, borderTopWidth: StyleSheet.hairlineWidth, borderLeftWidth: StyleSheet.hairlineWidth },
+  tailBottom: { bottom: -TAIL / 2, borderBottomWidth: StyleSheet.hairlineWidth, borderRightWidth: StyleSheet.hairlineWidth },
   title: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
   body: { fontSize: 14, lineHeight: 20, color: 'rgba(255,255,255,0.8)' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },

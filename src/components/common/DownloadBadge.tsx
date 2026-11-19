@@ -2,12 +2,12 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useDownloadState } from '../../hooks/useDownloadState';
 import { retryDownload } from '../../hooks/queries/useDownloads';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // The "saved" icon is hidden for now: on story tiles it pushed the genre tags off the tile. Set this to true to bring
 // it back. The progress bar while saving and the retry button after a failure still show.
@@ -22,7 +22,7 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
     if (!SHOW_SAVED_ICON) return null;
     return (
       <View style={styles.row} accessible accessibilityLabel="Saved for offline listening">
-        <FontAwesome5 name="download" size={iconSize.xs} color={colors.accent} iconStyle="solid" />
+        <Icon name="download" size={iconSize.xs} color={colors.accent} />
       </View>
     );
   }
@@ -45,7 +45,7 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
       accessibilityRole="button"
       accessibilityLabel="Download failed. Retry"
     >
-      <FontAwesome5 name="redo" size={iconSize.xs} color="#ff8a80" iconStyle="solid" />
+      <Icon name="redo" size={iconSize.xs} color="#ff8a80" />
       <Text style={[styles.text, { color: '#ff8a80' }]}>Retry download</Text>
     </TouchableOpacity>
   );

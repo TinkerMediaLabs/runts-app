@@ -13,7 +13,7 @@ import Animated, {
 import Carousel       from 'react-native-reanimated-carousel';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Icon from '@/components/common/Icon';
 
 import { useOpenStory } from '@/hooks/useStorySource';
 
@@ -31,7 +31,7 @@ import { CachedImageBackground } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
-import { iconSize } from '@/theme/tokens';
+import { iconSize, layout } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
 import PremiumBadge from '@/components/common/PremiumBadge';
 // ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ import PremiumBadge from '@/components/common/PremiumBadge';
 const { width, height } = Dimensions.get('window');
 
 const CARD_WIDTH  = width * 0.9;
-const CARD_HEIGHT = height * 0.40;
+const CARD_HEIGHT = Math.max(layout.heroMinHeight, Math.round(height * layout.heroRatio));
 const EXPAND_H    = 120;
 const TIMING_CFG  = { duration: 200, easing: Easing.out(Easing.quad) };
 const LISTENS_THRESHOLD = 1000;
@@ -155,11 +155,11 @@ const CarouselItem = ({
                     {/* Duration / progress pill — top right */}
                     {duration > 0 && (
                         <View style={styles.durationPill} pointerEvents="none">
-                            <FontAwesome5
+                            <Icon
                                 name={durationDisplay.icon}
-                                size={9}
+                                size={11}
                                 color={durationDisplay.color}
-                                iconStyle="solid"
+                               
                             />
                             <Text style={[styles.durationText, { color: durationDisplay.color }]}>
                                 {durationDisplay.text}
@@ -207,32 +207,32 @@ const CarouselItem = ({
                         <View style={styles.titleRow}>
                             <Text style={styles.title} numberOfLines={2}>{title}</Text>
                             <Animated.View style={[styles.chevron, chevronStyle]}>
-                                <FontAwesome5
+                                <Icon
                                     name="chevron-down"
                                     size={iconSize.xs}
                                     color={colors.textSecondary}
-                                    iconStyle="solid"
+                                   
                                 />
                             </Animated.View>
                         </View>
 
                         {/* Author + Narrator */}
                         <View style={[styles.metaRow, styles.authorRow]}>
-                            <FontAwesome5
-                                name="book-open"
+                            <Icon
+                                name="book-open" weight="fill"
                                 size={10}
                                 color={colors.textSecondary}
-                                iconStyle="solid"
+                               
                             />
                             <Text style={styles.metaText}>{author}</Text>
                             {narratorDisplay ? (
                                 <>
                                     <View style={styles.metaDot} />
-                                    <FontAwesome5
+                                    <Icon
                                         name="microphone"
                                         size={10}
                                         color={colors.textSecondary}
-                                        iconStyle="solid"
+                                       
                                     />
                                     <Text style={styles.metaText}>{narratorDisplay}</Text>
                                 </>
@@ -255,10 +255,10 @@ const CarouselItem = ({
                             {hasRating && (
                                 <>
                                     <View style={styles.metaDot} />
-                                    <FontAwesome5
-                                        name={'star' as any}
+                                    <Icon
+                                        name="star" weight="fill"
                                         size={10}
-                                        color={colors.gold} iconStyle="solid" />
+                                        color={colors.gold} />
                                     <Text style={[styles.metaText, { color: colors.gold }]}>
                                         {(avgRating as number).toFixed(1)}
                                     </Text>
@@ -275,11 +275,11 @@ const CarouselItem = ({
                             {showListens && (
                                 <>
                                     <View style={styles.metaDot} />
-                                    <FontAwesome5
+                                    <Icon
                                         name="headphones"
                                         size={10}
                                         color={colors.textSecondary}
-                                        iconStyle="solid"
+                                       
                                     />
                                     <Text style={styles.metaText}>{fmtListens(numListens)}</Text>
                                 </>
@@ -313,7 +313,7 @@ const CarouselItem = ({
                                             accessibilityLabel="Share story"
                                             hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                                         >
-                                            <FontAwesome5 name="share" size={iconSize.md} color={colors.textStrong} iconStyle="solid" />
+                                            <Icon name="share" size={iconSize.md} color={colors.textStrong} />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -396,7 +396,6 @@ const styles = StyleSheet.create({
 
     container: {
         alignItems: 'center',
-        marginTop: 20,
     },
     itemWrapper: {
         flex: 1,

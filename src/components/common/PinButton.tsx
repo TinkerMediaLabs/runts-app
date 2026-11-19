@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Icon from './Icon';
 import { useIsPinned, useTogglePin } from '../../hooks/queries/usePinnedStories';
 import { useTipTarget } from '../../tips/useTipTarget';
 import { tapHaptic, successHaptic } from '../../lib/haptics';
@@ -36,14 +36,14 @@ const PinButton = ({
       style={{ padding: 0 }}
       hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
       accessibilityRole="button"
-      accessibilityLabel={isPinned ? 'Unpin story from playlist' : 'Pin story to playlist'}
+      accessibilityLabel={isPinned ? 'Unpin story from library' : 'Pin story to library'}
       accessibilityState={{ selected: isPinned }}
     >
-      <FontAwesome5
-        iconStyle="solid"
-        name="thumbtack"
+      <Icon
+        name="pin"
         size={size}
         color={isPinned ? activeColor : inactiveColor}
+        weight={isPinned ? 'fill' : 'regular'}
       />
     </TouchableOpacity>
   );

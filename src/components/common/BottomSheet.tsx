@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Modal, TouchableOpacity, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 type Props = {
   visible: boolean;
@@ -38,7 +38,7 @@ export default function BottomSheet({ visible, onClose, title, children }: Props
               accessibilityRole="button"
               accessibilityLabel={`Close ${title}`}
             >
-              <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+              <Icon name="close" size={iconSize.sm} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
           {children}

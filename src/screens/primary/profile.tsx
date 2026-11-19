@@ -4,7 +4,6 @@ import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -18,11 +17,12 @@ import { useFollowingCount } from '../../hooks/queries/useAuthorFollowing';
 
 import { CachedImage } from '../../components/common/CachedImage';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionLabel from '@/components/common/SectionLabel';
 import EditNameSheet from '@/components/settings/EditNameSheet';
+import Icon from '@/components/common/Icon';
 const { width } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
@@ -54,14 +54,14 @@ const NavRow = ({ icon, title, description, onPress }: Omit<NavTile, 'id'>) => (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={description ? `${title}, ${description}` : title}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+                <Icon name={icon} size={iconSize.lg} color={colors.textSecondary} />
             </View>
             <View>
                 <Text style={styles.rowLabel}>{title}</Text>
                 <Text style={styles.rowDescription}>{description}</Text>
             </View>
         </View>
-        <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
     </TouchableOpacity>
 );
 
@@ -88,7 +88,13 @@ const ProfileScreen = ({ navigation }: any) => {
 
     const scrollY = useRef(new Animated.Value(0)).current;
 
-    const AVATAR_SIZE   = 88;
+    // The avatar takes whatever width is left beside the stats, so the gap between the card's left edge and the
+    // picture matches the gap between the last stat label and the card's right edge.
+    const [heroW, setHeroW]   = useState(0);
+    const [statsW, setStatsW] = useState(0);
+    const AVATAR_SIZE = heroW && statsW
+        ? Math.max(64, Math.min(112, Math.floor(heroW - 34 - 25 - statsW)))
+        : 64;
     const FADE_START    = 80;
     const FADE_END      = 160;
 
@@ -204,7 +210,7 @@ const ProfileScreen = ({ navigation }: any) => {
         {
             id: '3b',
             icon: 'tags',
-            title: 'Your Taste',
+            title: "Today's Listening Mood",
             description: 'Genres, moods and lengths for For You',
             onPress: () => navigation.navigate('EditGenresScreen'),
         },
@@ -225,7 +231,7 @@ const ProfileScreen = ({ navigation }: any) => {
         {
             id: '6',
             icon: 'user-friends',
-            title: 'Following',
+            title: 'Followed Authors',
             description: `${followingCount} author${followingCount !== 1 ? 's' : ''} followed`,
             onPress: () => navigation.navigate('AuthorFollowing'),
         },
@@ -239,7 +245,7 @@ const ProfileScreen = ({ navigation }: any) => {
         <Screen>
             <StatusBar style="light" />
             <LinearGradient
-                colors={['#0a0a14', '#0f1112', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -260,9 +266,9 @@ const ProfileScreen = ({ navigation }: any) => {
                     </View>
 
                     {/* ── Hero ── */}
-                    <Animated.View style={[
+                    <Animated.View onLayout={e => setHeroW(e.nativeEvent.layout.width)} style={[
                         styles.hero,
-                        { paddingTop: 20, opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }
+                        { marginTop: 20, opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }
                     ]}>
 
                         {/* Avatar */}
@@ -302,10 +308,13 @@ const ProfileScreen = ({ navigation }: any) => {
                                 accessibilityState={{ busy: uploadingPhoto }}
                                 hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
                             >
-                                <FontAwesome5 name="camera" size={iconSize.xs} color={colors.textOnAccent} iconStyle="solid" />
+                                <Icon name="camera" size={iconSize.xs} color={colors.textOnAccent} />
                             </TouchableOpacity>
                         </View>
 
+                        <View style={styles.heroDivider} />
+
+                        <View style={styles.heroRight}>
                         <TouchableOpacity
                             style={styles.heroNameRow}
                             activeOpacity={0.7}
@@ -314,14 +323,14 @@ const ProfileScreen = ({ navigation }: any) => {
                             accessibilityLabel={`Display name ${profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}. Edit`}
                             hitSlop={{ top: 10, bottom: 10, left: 14, right: 14 }}
                         >
-                            <Text style={styles.heroName}>
+                            <Text style={styles.heroName} numberOfLines={1}>
                                 {profile?.name && profile.name !== 'user' ? profile.name : 'Listener'}
                             </Text>
-                            <FontAwesome5 name="pen" size={iconSize.xs} color={colors.textTertiary} iconStyle="solid" />
+                            <Icon name="pen" size={iconSize.md} color={colors.textTertiary} />
                         </TouchableOpacity>
 
                         {/* Stats row */}
-                        <View style={styles.statsRow}>
+                        <View style={styles.heroStats} onLayout={e => setStatsW(e.nativeEvent.layout.width)}>
                             <View style={styles.statItem}>
                                 <Text style={styles.statValue}>
                                     {profile?.totalStoriesFinished ?? 0}
@@ -337,6 +346,7 @@ const ProfileScreen = ({ navigation }: any) => {
                                 </Text>
                                 <Text style={styles.statLabel}>Hours Listened</Text>
                             </View>
+                        </View>
                         </View>
 
                     </Animated.View>
@@ -375,13 +385,32 @@ const styles = StyleSheet.create({
 
     // ── Hero ──────────────────────────────────────────────────────────────────
     hero: {
+        flexDirection: 'row',
         alignItems: 'center',
-        paddingBottom: 28,
-        paddingHorizontal: spacing.margin,
+        marginHorizontal: spacing.margin,
+        padding: 16,
+        backgroundColor: colors.surface2,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     avatarWrapper: {
         position: 'relative',
-        marginBottom: 14,
+    },
+    heroDivider: {
+        width: StyleSheet.hairlineWidth,
+        alignSelf: 'stretch',
+        backgroundColor: colors.surface3,
+        marginHorizontal: 12,
+    },
+    heroRight: {
+        flex: 1,
+    },
+    heroStats: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',   // numbers stay on one line however the labels wrap
+        alignSelf: 'flex-start',
+        maxWidth: '100%',
     },
     avatar: {
         backgroundColor: colors.surface3,
@@ -404,11 +433,12 @@ const styles = StyleSheet.create({
     heroNameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         gap: 8,
-        marginBottom: 20,
+        marginBottom: 12,
     },
     heroName: {
+        flexShrink: 1,
         fontSize: fontSizes.title,
         fontWeight: '700',
         color: colors.textPrimary,
@@ -425,17 +455,17 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
     },
     statItem: {
-        flex: 1,
-        alignItems: 'center',
+        flexShrink: 1,              // on a narrow screen the label wraps instead of overflowing
+        alignItems: 'flex-start',
     },
     statValue: {
         fontSize: fontSizes.title,
-        fontWeight: '700',
+        fontWeight: '600',
         color: colors.accent,
-        opacity: 0.85,
     },
     statLabel: {
-        fontSize: fontSizes.caption,
+        fontSize: fontSizes.micro,
+        textAlign: 'left',
         color: colors.textSecondary,
         marginTop: 2,
         fontWeight: '500',
@@ -443,7 +473,9 @@ const styles = StyleSheet.create({
     statSeparator: {
         width: StyleSheet.hairlineWidth,
         backgroundColor: colors.surface3,
+        alignSelf: 'stretch',
         marginVertical: 4,
+        marginHorizontal: 6,
     },
 
     // ── Sections ──────────────────────────────────────────────────────────────
@@ -475,10 +507,8 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     rowIcon: {
-        width: 30,
-        height: 30,
-        borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
+        width: 32,
+        height: 32,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

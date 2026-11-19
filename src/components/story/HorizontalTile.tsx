@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
+import Icon from '@/components/common/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useOpenStory } from '@/hooks/useStorySource';
@@ -15,10 +15,10 @@ import { getDurationDisplay, getSpiceDisplay, type ProgressStatus } from '../../
 import { CachedImageBackground } from '../common/CachedImage';
 import PremiumBadge from '../common/PremiumBadge';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, layout } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
-const CARD_WIDTH  = 200;
-const CARD_HEIGHT = 240;
+const CARD_WIDTH  = layout.tileWidth;
+const CARD_HEIGHT = layout.tileHeight;
 
 
 // ---------------------------------------------------------------------------
@@ -85,11 +85,11 @@ const HorzStoryTile = ({
                     {/* Duration / progress pill — top right */}
                     {duration > 0 && (
                         <View style={styles.durationPill} pointerEvents="none">
-                            <FontAwesome5
+                            <Icon
                                 name={durationDisplay.icon}
-                                size={8}
+                                size={10}
                                 color={durationDisplay.color}
-                                iconStyle="solid"
+                               
                             />
                             <Text style={[styles.durationText, { color: durationDisplay.color }]}>
                                 {durationDisplay.text}
@@ -118,11 +118,11 @@ const HorzStoryTile = ({
                         {/* Author */}
                         {author ? (
                             <View style={styles.authorRow}>
-                                <FontAwesome5
-                                    name="book-open"
-                                    size={9}
+                                <Icon
+                                    name="book-open" weight="fill"
+                                    size={11}
                                     color={colors.textSecondary}
-                                    iconStyle="solid"
+                                   
                                 />
                                 <Text style={styles.authorText} numberOfLines={1}>{author}</Text>
                             </View>
@@ -151,10 +151,10 @@ const HorzStoryTile = ({
                         {hasRating && (
                             <View style={styles.statsRow}>
                                 <View style={styles.ratingRow}>
-                                    <FontAwesome5
-                                        name={'star' as any}
+                                    <Icon
+                                        name="star" weight="fill"
                                         size={9}
-                                        color={colors.gold} iconStyle="solid" />
+                                        color={colors.gold} />
                                     <Text style={styles.ratingText}>
                                         {(avgRating as number).toFixed(1)}
                                     </Text>

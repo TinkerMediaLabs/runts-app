@@ -11,10 +11,10 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 
-import Feather from '@react-native-vector-icons/feather';
 import { useTipTarget } from '../../tips/useTipTarget';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -144,7 +144,7 @@ export default function OptionsModal({
     position: 'absolute',
   }));
 
-  const sleepValue = sleepEndOfStory ? 'End of story' : sleepMinutesLeft !== null ? `${sleepMinutesLeft} min left` : 'Off';
+  const sleepValue = sleepEndOfStory ? 'End of story' : sleepMinutesLeft !== null ? `${sleepMinutesLeft}m left` : 'Off';
   const run = (fn: () => void) => () => { onClose(); fn(); };
 
   return (
@@ -188,7 +188,7 @@ export default function OptionsModal({
             accessibilityRole="button"
             accessibilityLabel="Close player"
           >
-            <Feather name="x-circle" size={16} color="#ff6b6b" />
+            <Icon name="x-circle" size={16} color="#ff6b6b" />
             <Text style={styles.dismissText}>Close Player</Text>
           </TouchableOpacity>
 
@@ -208,10 +208,10 @@ export default function OptionsModal({
         accessibilityState={{ expanded: visible }}
       >
         <Animated.View style={menuIconStyle}>
-          <Feather name="more-vertical" size={24} color={colors.textPrimary} />
+          <Icon name="more-vertical" size={24} color={colors.textPrimary} />
         </Animated.View>
         <Animated.View style={closeIconStyle}>
-          <Feather name="x" size={22} color={colors.textPrimary} />
+          <Icon name="close" size={22} color={colors.textPrimary} />
         </Animated.View>
       </TouchableOpacity>
 

@@ -14,6 +14,8 @@ import { CachedImageBackground } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
+import FollowBadge from '../common/FollowBadge';
+import { useIsTagFollowed } from '../../hooks/queries/useTagFollowing';
 const CARD_WIDTH  = 200;
 const CARD_HEIGHT = 240;
 
@@ -36,6 +38,7 @@ const HorzTagTile = ({
     );
     const displayImageUri = resolvedImageUri ?? heroImageUri;
 
+    const followed = useIsTagFollowed(id);
     const countLabel = `${storyCount ?? 0} ${(storyCount ?? 0) === 1 ? 'story' : 'stories'}`;
 
     return (
@@ -44,9 +47,10 @@ const HorzTagTile = ({
             onPress={() => navigation.navigate('TagHomeScreen', { id, name })}
             style={styles.wrapper}
             accessibilityRole="button"
-            accessibilityLabel={`${name}, ${countLabel}`}
+            accessibilityLabel={`${name}, ${countLabel}${followed ? ', following' : ''}`}
             accessibilityHint="Opens this tag"
         >
+            {followed ? <FollowBadge size={18} style={{ zIndex: 2 }} /> : null}
             {displayImageUri ? (
                 <CachedImageBackground
                     source={{ uri: displayImageUri }}

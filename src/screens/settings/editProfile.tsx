@@ -29,8 +29,8 @@ const EditProfile = () => {
     const navigation = useNavigation();
 
     return (
-        <Screen>
-            <View style={styles.container}>
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
                 <MenuHeader title='Edit Profile' navigation={navigation}/>
             </View>
         </Screen>

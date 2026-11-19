@@ -1,10 +1,16 @@
-import { fmtDuration, formatNarratorDisplay, getDurationDisplay, getSpiceDisplay, isRecentlyPublished } from '../lib/storyDisplay';
+import { fmtDuration, fmtTimeLeft, formatNarratorDisplay, getDurationDisplay, getSpiceDisplay, isRecentlyPublished } from '../lib/storyDisplay';
 
 describe('fmtDuration', () => {
   it('formats minutes', () => expect(fmtDuration(25 * 60)).toBe('25m'));
   it('formats hours and minutes', () => expect(fmtDuration(95 * 60)).toBe('1h 35m'));
   it('formats whole hours', () => expect(fmtDuration(120 * 60)).toBe('2h'));
   it('is empty for no duration', () => expect(fmtDuration(0)).toBe(''));
+});
+
+describe('fmtTimeLeft', () => {
+  it('uses the short form', () => expect(fmtTimeLeft(24 * 60)).toBe('24m left'));
+  it('handles hours', () => expect(fmtTimeLeft(65 * 60)).toBe('1h 5m left'));
+  it('says almost done under a minute', () => expect(fmtTimeLeft(30)).toBe('Almost done'));
 });
 
 describe('formatNarratorDisplay', () => {

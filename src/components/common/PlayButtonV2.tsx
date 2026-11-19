@@ -1,10 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import useOnPlay from '@/components/functions/OnPlay';
 import { useApp } from '@/context/AppContext';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 function TimeConversion(duration: number): string {
     if (!duration) return '';
@@ -45,12 +45,11 @@ const PlayButtonV2 = ({ id, duration, author, imageUri, audioUri, title, isPremi
     return (
         <TouchableOpacity onPress={handlePress} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Play story">
             <View style={styles.pill}>
-                <FontAwesome5
+                <Icon
                     name="play"
                     color="#00ffffa6"
                     size={10}
                     style={{ marginRight: 10 }}
-                    iconStyle="solid"
                 />
                 {/* <Text style={styles.time}>{TimeConversion(duration)}</Text> */}
                 <Text style={styles.time}>PLAY</Text>

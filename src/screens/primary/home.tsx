@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, TouchableWithoutFeedback, View, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import { Ionicons } from '@react-native-vector-icons/ionicons';
+import Icon from '@/components/common/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
@@ -10,11 +10,12 @@ import useStyles from '../../theme/styles';
 import useTypography from '../../theme/typography';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { layout } from '../../theme/tokens';
 
 import Screen from '@/components/common/Screen';
 import { useRequireAccount } from '../../hooks/useRequireAccount';
 import Reveal from '../../components/common/Reveal';
-import { SkeletonCarousel, SkeletonCardRow } from '../../components/common/Skeleton';
+import { SkeletonCarousel, SkeletonTileRow, SkeletonPickCard, SkeletonContinueCard } from '../../components/common/Skeleton';
 
 import HomeSectionView from '../../components/home/HomeSectionView';
 import { useHomeLayout } from '../../hooks/queries/useHomeLayout';
@@ -80,8 +81,8 @@ const HomeScreen = ({ navigation }: any) => {
                     <View style={{
                         flexDirection: 'row',
                         justifyContent: 'space-between',
-                        marginTop: getStatusBarHeight() + 20,
-                        marginBottom: 10,
+                        marginTop: getStatusBarHeight() + layout.screenTopGap,
+                        marginBottom: layout.screenTopGap + 6,
                         marginHorizontal: spacing.margin,
                     }}>
                         <Text style={[{ color: colors.text }, typo.h1]}>
@@ -89,7 +90,7 @@ const HomeScreen = ({ navigation }: any) => {
                         </Text>
                         <TouchableWithoutFeedback hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => requireAccount('see your profile', () => navigation.navigate('UserScreen'), { kind: 'profile' })} accessibilityRole="button" accessibilityLabel="Your account">
                             <View style={{ paddingLeft: 30, justifyContent: 'center' }}>
-                                <Ionicons name="person" size={20} color={colors.textPrimary} />
+                                <Icon name="user" size={24} color={colors.textPrimary} />
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
@@ -105,8 +106,11 @@ const HomeScreen = ({ navigation }: any) => {
 
                     {(topLoading || firstUnsettled !== -1) && (
                         <View>
-                            {waitingOn === 'forYou' ? <SkeletonCarousel /> : <SkeletonCardRow />}
-                            {firstUnsettled <= 0 ? <SkeletonCardRow titleWidth={120} /> : null}
+                            {waitingOn === 'forYou' ? <SkeletonCarousel />
+                                : waitingOn === 'pickOfDay' ? <SkeletonPickCard />
+                                : waitingOn === 'continueListening' ? <SkeletonContinueCard />
+                                : <SkeletonTileRow />}
+                            {firstUnsettled <= 0 ? <SkeletonTileRow titleWidth={120} /> : null}
                         </View>
                     )}
 

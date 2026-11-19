@@ -1,150 +1,166 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-
-import { useStoryImage }   from '../../hooks/queries/useStoryImage';
-import { useDeleteBookmark } from '../../hooks/queries/useBookmarks';
+import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { spacing } from '../../theme/spacing';
 
 import { CachedImage } from '../common/CachedImage';
+import SwipeActionRow, { type SwipeAction } from '../common/SwipeActionRow';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
-import { radius } from '@/theme/tokens';
-import { iconSize } from '@/theme/tokens';
+import { fontSizes, radius } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatPosition(seconds: number): string {
+export function formatPosition(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
-function formatDuration(seconds: number): string {
-  if (!seconds) return '—';
-  const m = Math.floor(seconds / 60);
-  return `${m} min`;
-}
+const BOOKMARK_ICON = 18;
+
+const useActions = (bookmark: any, onEdit: (b: any) => void, onDelete: (b: any) => void): SwipeAction[] => [
+  { key: 'delete', label: 'Delete', icon: 'trash', color: colors.dangerSolid, onPress: () => onDelete(bookmark) },
+  { key: 'edit',   label: 'Edit',   icon: 'pen',   color: '#4a5568',           onPress: () => onEdit(bookmark) },
+];
+
+const useStoryArt = (story: any) => {
+  const { data } = useStoryImage(story?.imageUri?.startsWith('stories/') ? story.imageUri : null);
+  return data ?? story?.imageUri ?? '';
+};
+
+const metaLine = (story: any, authorMap: Record<string, string>, tagMap: Record<string, string>) =>
+  [authorMap[story?.authorId ?? ''], tagMap[story?.primaryTagId ?? '']].filter(Boolean).join(' · ');
 
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
-interface BookmarkTileProps {
-  bookmark:   any;
-  story:      any;
-  authorMap:  Record<string, string>;
-  tagMap:     Record<string, string>;
-  onPlay:     (storyId: string, positionSeconds: number) => void;
-}
+type CommonProps = {
+  story:     any;
+  authorMap: Record<string, string>;
+  tagMap:    Record<string, string>;
+  onPlay:    (story: any, positionSeconds: number) => void;
+  onEdit:    (bookmark: any) => void;
+  onDelete:  (bookmark: any) => void;
+};
 
 // ---------------------------------------------------------------------------
-// Component
+// One bookmark on its own story: artwork, bookmark name, story, where it is saved, and a grabber that swipes open
+// Delete and Edit.
 // ---------------------------------------------------------------------------
 
-export default function BookmarkTile({
-  bookmark,
-  story,
-  authorMap,
-  tagMap,
-  onPlay,
-}: BookmarkTileProps) {
-  const { mutate: deleteBookmark, isPending: deleting } = useDeleteBookmark();
-
-  const { data: resolvedImageUri } = useStoryImage(
-    story?.imageUri?.startsWith('stories/') ? story.imageUri : null
-  );
-  const displayImageUri = resolvedImageUri ?? story?.imageUri ?? '';
-
-  const authorName = authorMap[story?.authorId ?? ''] ?? '';
-  const tagName    = tagMap[story?.primaryTagId ?? ''] ?? '';
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Bookmark',
-      `Delete "${bookmark.name || 'My Bookmark'}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text:    'Delete',
-          style:   'destructive',
-          onPress: () => deleteBookmark(bookmark.id),
-        },
-      ]
-    );
-  };
+export default function BookmarkTile({ bookmark, story, authorMap, tagMap, onPlay, onEdit, onDelete }: CommonProps & { bookmark: any }) {
+  const art = useStoryArt(story);
+  const actions = useActions(bookmark, onEdit, onDelete);
+  const name = bookmark.name || 'My Bookmark';
+  const meta = metaLine(story, authorMap, tagMap);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => onPlay(story.id, bookmark.positionSeconds)}
-      style={styles.tile}
-      accessibilityRole="button"
-      accessibilityLabel={`${bookmark.name || 'My Bookmark'}, at ${formatPosition(bookmark.positionSeconds)} in ${story.title}${authorName ? `, by ${authorName}` : ''}`}
-      accessibilityHint="Plays from this bookmark"
-      accessibilityActions={[{ name: 'delete', label: 'Delete bookmark' }]}
-      onAccessibilityAction={(e) => {
-        if (e.nativeEvent.actionName === 'delete') handleDelete();
-      }}
-    >
-      {/* Artwork */}
-      <CachedImage source={{ uri: displayImageUri }} style={styles.artwork} />
-
-      {/* Content */}
-      <View style={styles.content}>
-
-        {/* Bookmark name + position */}
-        <View style={styles.topRow}>
-          <View style={styles.bookmarkBadge}>
-            <FontAwesome5 name={'bookmark' as any} size={9} color={colors.accent} iconStyle="solid" />
-            <Text style={styles.bookmarkName} numberOfLines={1}>
-              {bookmark.name || 'My Bookmark'}
-            </Text>
-          </View>
-          <Text style={styles.position}>{formatPosition(bookmark.positionSeconds)}</Text>
-        </View>
-
-        {/* Story title */}
-        <Text style={styles.storyTitle} numberOfLines={1}>{story.title}</Text>
-
-        {/* Meta row */}
-        <View style={styles.metaRow}>
-          {authorName ? <Text style={styles.metaText}>{authorName}</Text> : null}
-          {authorName && tagName ? <Text style={styles.metaDot}>·</Text> : null}
-          {tagName ? <Text style={styles.metaText}>{tagName}</Text> : null}
-          {(authorName || tagName) && story.duration ? (
-            <Text style={styles.metaDot}>·</Text>
-          ) : null}
-          {story.duration ? (
-            <Text style={styles.metaText}>{formatDuration(story.duration)}</Text>
-          ) : null}
-        </View>
-
-      </View>
-
-      {/* Delete button */}
+    <SwipeActionRow actions={actions}>
       <TouchableOpacity
-        onPress={handleDelete}
-        disabled={deleting}
+        activeOpacity={0.8}
+        onPress={() => onPlay(story, bookmark.positionSeconds)}
+        style={styles.tile}
         accessibilityRole="button"
-        accessibilityLabel="Delete bookmark"
-        style={styles.deleteBtn}
-        hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+        accessibilityLabel={`${name}, at ${formatPosition(bookmark.positionSeconds)} in ${story.title}${meta ? `, ${meta}` : ''}`}
+        accessibilityHint="Plays from this bookmark"
+        accessibilityActions={[{ name: 'delete', label: 'Delete bookmark' }, { name: 'edit', label: 'Rename bookmark' }]}
+        onAccessibilityAction={(e) => {
+          if (e.nativeEvent.actionName === 'delete') onDelete(bookmark);
+          if (e.nativeEvent.actionName === 'edit') onEdit(bookmark);
+        }}
       >
-        <FontAwesome5
-          name={'times' as any}
-          size={iconSize.xs}
-          color={colors.textTertiary}
-          iconStyle="solid"
-        />
-      </TouchableOpacity>
+        <CachedImage source={{ uri: art }} style={styles.artwork} />
 
-    </TouchableOpacity>
+        <View style={styles.content}>
+          <View style={styles.nameRow}>
+            <Icon name="bookmark" size={BOOKMARK_ICON} color={colors.accent} weight="fill" />
+            <Text style={styles.bookmarkName} numberOfLines={1}>{name}</Text>
+          </View>
+          <Text style={styles.storyTitle} numberOfLines={1}>{story.title}</Text>
+          {meta ? <Text style={styles.metaText} numberOfLines={1}>{meta}</Text> : null}
+        </View>
+
+        <Text style={styles.position}>{formatPosition(bookmark.positionSeconds)}</Text>
+      </TouchableOpacity>
+    </SwipeActionRow>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Several bookmarks on one story: the story once, a count, and the bookmarks underneath when opened.
+// ---------------------------------------------------------------------------
+
+export function BookmarkGroup({ bookmarks, expanded, onToggle, story, authorMap, tagMap, onPlay, onEdit, onDelete }:
+  CommonProps & { bookmarks: any[]; expanded: boolean; onToggle: () => void }) {
+  const art = useStoryArt(story);
+  const meta = metaLine(story, authorMap, tagMap);
+  const count = `${bookmarks.length} bookmarks`;
+
+  return (
+    <View>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onToggle}
+        style={styles.tile}
+        accessibilityRole="button"
+        accessibilityLabel={`${story.title}, ${count}`}
+        accessibilityState={{ expanded }}
+        accessibilityHint={expanded ? 'Hides the bookmarks' : 'Shows the bookmarks'}
+      >
+        <CachedImage source={{ uri: art }} style={styles.artwork} />
+        <View style={styles.content}>
+          <Text style={styles.storyTitle} numberOfLines={1}>{story.title}</Text>
+          {meta ? <Text style={styles.metaText} numberOfLines={1}>{meta}</Text> : null}
+          <View style={styles.nameRow}>
+            <Icon name="bookmark" size={BOOKMARK_ICON} color={colors.accent} weight="fill" />
+            <Text style={styles.bookmarkName}>{count}</Text>
+          </View>
+        </View>
+        <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} style={styles.toggle} />
+      </TouchableOpacity>
+
+      {expanded && bookmarks.map(b => (
+        <BookmarkRow key={b.id} bookmark={b} story={story} onPlay={onPlay} onEdit={onEdit} onDelete={onDelete} />
+      ))}
+    </View>
+  );
+}
+
+// A bookmark inside an opened group (the story is shown once, above).
+const BookmarkRow = ({ bookmark, story, onPlay, onEdit, onDelete }:
+  { bookmark: any; story: any; onPlay: CommonProps['onPlay']; onEdit: CommonProps['onEdit']; onDelete: CommonProps['onDelete'] }) => {
+  const actions = useActions(bookmark, onEdit, onDelete);
+  const name = bookmark.name || 'My Bookmark';
+  return (
+    <SwipeActionRow actions={actions}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => onPlay(story, bookmark.positionSeconds)}
+        style={styles.childRow}
+        accessibilityRole="button"
+        accessibilityLabel={`${name}, at ${formatPosition(bookmark.positionSeconds)} in ${story.title}`}
+        accessibilityHint="Plays from this bookmark"
+        accessibilityActions={[{ name: 'delete', label: 'Delete bookmark' }, { name: 'edit', label: 'Rename bookmark' }]}
+        onAccessibilityAction={(e) => {
+          if (e.nativeEvent.actionName === 'delete') onDelete(bookmark);
+          if (e.nativeEvent.actionName === 'edit') onEdit(bookmark);
+        }}
+      >
+        <View style={styles.nameRow}>
+          <Icon name="bookmark" size={BOOKMARK_ICON} color={colors.accent} weight="fill" />
+          <Text style={styles.bookmarkName} numberOfLines={1}>{name}</Text>
+        </View>
+        <Text style={styles.position}>{formatPosition(bookmark.positionSeconds)}</Text>
+      </TouchableOpacity>
+    </SwipeActionRow>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -154,11 +170,13 @@ const styles = StyleSheet.create({
   tile: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.margin,
+    paddingLeft: spacing.margin,
+    paddingRight: 12,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderSubtle,
     gap: 12,
+    backgroundColor: colors.surface0,
   },
   artwork: {
     width: 64,
@@ -167,56 +185,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface3,
     flexShrink: 0,
   },
-  content: {
-    flex: 1,
-    gap: 4,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  bookmarkBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    flex: 1,
-  },
-  bookmarkName: {
-    fontSize: fontSizes.small,
-    fontWeight: '600',
-    color: colors.accent,
-    flex: 1,
-  },
+  content: { flex: 1, gap: 4 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  bookmarkName: { fontSize: fontSizes.small, fontWeight: '600', color: colors.accent, flexShrink: 1 },
+  storyTitle: { fontSize: fontSizes.small, fontWeight: '700', color: colors.textPrimary, lineHeight: 18 },
+  metaText: { fontSize: fontSizes.caption, color: colors.textSecondary },
   position: {
     fontSize: fontSizes.caption,
     color: colors.textSecondary,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
-  storyTitle: {
-    fontSize: fontSizes.small,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    lineHeight: 18,
-  },
-  metaRow: {
+  toggle: { marginRight: 4 },
+  childRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 4,
-  },
-  metaText: {
-    fontSize: fontSizes.caption,
-    color: colors.textSecondary,
-  },
-  metaDot: {
-    fontSize: fontSizes.caption,
-    color: colors.textSecondary,
-  },
-  deleteBtn: {
-    padding: 8,
-    flexShrink: 0,
+    justifyContent: 'space-between',
+    // lines up under the story text: gutter + artwork + gap
+    paddingLeft: spacing.margin + 64 + 12,
+    paddingRight: 12,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSubtle,
+    backgroundColor: colors.surface0,
+    gap: 12,
   },
 });

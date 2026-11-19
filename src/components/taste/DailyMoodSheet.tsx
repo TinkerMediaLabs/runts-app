@@ -18,7 +18,7 @@ import { fontSizes } from '@/theme/tokens';
 
 const SETTLE_MS = 2500;   // let the app finish starting, resume a story and handle a shared link before deciding
 
-// "What are you in the mood for?" Asked on its own the first time the app opens each local day (see shouldPromptMood
+// "What are you in the mood for today?" Asked on its own the first time the app opens each local day (see shouldPromptMood
 // for when it stays away), and again whenever the Today chip's Change is tapped. Everything is optional.
 // `onOpenChange` lets the shell hold back first-use tips while it is open.
 const DailyMoodSheet = ({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) => {
@@ -78,22 +78,22 @@ const DailyMoodSheet = ({ onOpenChange }: { onOpenChange?: (open: boolean) => vo
   const any = moods.length + genres.length + lengths.length > 0;
 
   return (
-    <BottomSheet visible={visible} onClose={close} title="What are you in the mood for?">
+    <BottomSheet visible={visible} onClose={close} title="What are you in the mood for today?">
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {!isEmptyChoice(last) && (
           <View style={styles.sameRow}>
             <Button label="Same as last time" variant="outline" size="small" onPress={same} />
           </View>
         )}
-        <Text style={styles.q}>How long do you have?</Text>
-        <TasteChoices
-          choices={(lengthQ.data ?? []).map((o: any) => ({ id: o.key, title: o.label, subtitle: o.subtitle }))}
-          selected={lengths} onChange={setLengths} loading={lengthQ.isLoading} emptyText="No lengths yet."
-        />
         <Text style={styles.q}>What mood?</Text>
         <TasteChoices
           choices={(moodQ.data ?? []).map((t: any) => ({ id: t.id, title: t.name, color: t.color }))}
           selected={moods} onChange={setMoods} max={3} loading={moodQ.isLoading} emptyText="No moods yet."
+        />
+        <Text style={styles.q}>How long do you have?</Text>
+        <TasteChoices
+          choices={(lengthQ.data ?? []).map((o: any) => ({ id: o.key, title: o.label, subtitle: o.subtitle }))}
+          selected={lengths} onChange={setLengths} loading={lengthQ.isLoading} emptyText="No lengths yet."
         />
         <Text style={styles.q}>Any specific genres?</Text>
         <TasteChoices choices={genreChoices} selected={genres} onChange={setGenres} max={3} loading={genreQ.isLoading} emptyText="No genres yet." />

@@ -5,7 +5,6 @@ import { Text } from '@/components/common/AppText';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import Animated, {
   useSharedValue,
@@ -30,6 +29,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const EROTIC_ORANGE = '#ff7c2a';
 const HEADER_MAX_HEIGHT = 56;
@@ -209,7 +209,7 @@ const headerTitleStyle = useAnimatedStyle(() => ({
           accessibilityLabel="Go back"
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          <FontAwesome5 name="chevron-left" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+          <Icon name="chevron-left" size={iconSize.md} color={colors.textPrimary} />
         </TouchableOpacity>
 
         <Animated.Text style={[styles.headerTitle, headerTitleStyle]}>

@@ -9,7 +9,6 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Modal, TouchableWithoutFeedback, StyleSheet, ActivityIndicator, Alert, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -21,6 +20,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -98,7 +98,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.lockBadge}>
-                        <FontAwesome5 name="lock" size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+                        <Icon name="lock" size={iconSize.sm} color={colors.accent} />
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.title}>Premium Story</Text>
@@ -109,7 +109,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                         )}
                     </View>
                     <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                        <FontAwesome5 name="times" size={iconSize.sm} color="#ffffff99" iconStyle="solid" />
+                        <Icon name="close" size={iconSize.sm} color="#ffffff99" />
                     </TouchableOpacity>
                 </View>
 
@@ -118,7 +118,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                     {FEATURES.map(f => (
                         <View key={f.icon} style={styles.featureRow}>
                             <View style={styles.featureIcon}>
-                                <FontAwesome5 name={f.icon as any} size={iconSize.xs} color={colors.accent} iconStyle="solid" />
+                                <Icon name={f.icon as any} size={iconSize.xs} color={colors.accent} />
                             </View>
                             <Text style={styles.featureText}>{f.text}</Text>
                         </View>

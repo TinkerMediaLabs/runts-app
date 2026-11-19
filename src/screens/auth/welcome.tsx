@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { View, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Image, Dimensions, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import Screen from "@/components/common/Screen";
 import useStyles from "@/theme/styles";
-import { format } from "date-fns";
-
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 import Animated, {
     useSharedValue,
@@ -23,16 +19,20 @@ import { useApp } from '@/context/AppContext';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
-import { isOldEnough, MIN_AGE } from '@/lib/age';
+import { parseAgeInput, isOldEnoughAge, MIN_AGE } from '@/lib/age';
+import { TextInput } from '@/components/common/AppTextInput';
+import { fields } from '@/theme/fields';
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 const Welcome = ({ navigation }: any) => {
     const styles = useStyles();
 
-    const [date, setDate] = useState(new Date());
-    const [isPickerVisible, setPickerVisible] = useState(false);
-    const { logout } = useApp();
+    const { logout, profile } = useApp();
+    // Start from the name the sign-in already has (Apple and Google accounts), unless it is only a placeholder.
+    const [name, setName] = useState(profile?.name && profile.name !== 'user' ? profile.name : '');
+    const [ageText, setAgeText] = useState('');
+    const [tried, setTried] = useState(false);
     const [tooYoung, setTooYoung] = useState(false);
     const [removing, setRemoving] = useState(false);
     const [removeError, setRemoveError] = useState('');
@@ -85,14 +85,15 @@ const Welcome = ({ navigation }: any) => {
     const buttonOpacityStyle  = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
     const buttonScaleStyle    = useAnimatedStyle(() => ({ transform: [{ scale: buttonScale.value }] }));
 
-    // -----------------------
-    // DATE PICKER
-    // -----------------------
-   const onConfirmDate = (selectedDate: Date) => {
-        setTimeout(() => {
-            setPickerVisible(false);
-            setDate(selectedDate);
-        }, 100);
+    const age = parseAgeInput(ageText);
+    const nameOk = name.trim().length > 0;
+
+    const onNext = () => {
+        setTried(true);
+        if (!nameOk || age === null) return;
+        if (!isOldEnoughAge(age)) { setTooYoung(true); return; }
+        setTooYoung(false);
+        navigation.navigate('WelcomePref', { name: name.trim(), age });
     };
 
     return (
@@ -100,7 +101,7 @@ const Welcome = ({ navigation }: any) => {
             <View style={[styles.container, { flex: 1, justifyContent: "space-between" }]}>
 
                 {/* CENTER CONTENT */}
-                <View style={{ alignItems: "center", marginTop: SCREEN_HEIGHT * 0.15 }}>
+                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ alignItems: "center", paddingTop: SCREEN_HEIGHT * 0.1, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
                     {/* LOGO */}
                     <Animated.View style={logoOpacityStyle}>
@@ -128,33 +129,48 @@ const Welcome = ({ navigation }: any) => {
                     {/* DIVIDER */}
                     <View style={{ width: "60%", height: 1, backgroundColor: colors.surface3, marginVertical: 30 }} />
 
-                    {/* BIRTHDATE */}
-                    <Text style={{ color: colors.textPrimary, fontSize: fontSizes.body, textAlign: "center" }}>
-                        Select your birthdate to continue
-                    </Text>
-                    <Text style={{ color: "#ffffff99", fontSize: fontSizes.small, textAlign: "center", marginTop: 8, paddingHorizontal: 30, lineHeight: 18 }}>
-                        We ask for your birthdate to confirm you're 18 or older before showing mature content. It's private and never shown to other listeners.
-                    </Text>
+                    {/* NAME + AGE */}
+                    <View style={local.form}>
+                        <Text style={local.label}>What should we call you?</Text>
+                        <View style={[fields.box, tried && !nameOk && local.boxError]}>
+                            <TextInput
+                                style={fields.text}
+                                value={name}
+                                onChangeText={setName}
+                                placeholder="Your display name"
+                                placeholderTextColor={colors.textSecondary}
+                                maxLength={30}
+                                autoCapitalize="words"
+                                returnKeyType="next"
+                                accessibilityLabel="Display name"
+                            />
+                        </View>
 
-                    <TouchableOpacity
-                        onPress={() => setPickerVisible(true)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Birthdate, ${format(date, "MMMM do, yyyy")}`}
-                        accessibilityHint="Opens date picker"
-                        style={{
-                            marginTop: 15,
-                            paddingVertical: 12,
-                            paddingHorizontal: 20,
-                            borderRadius: radius.md,
-                            backgroundColor: colors.surface2,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                        }}
-                    >
-                        <Text style={{ color: colors.textPrimary, fontSize: fontSizes.body }}>
-                            {format(date, "MMMM do, yyyy")}
-                        </Text>
-                    </TouchableOpacity>
+                        <Text style={[local.label, { marginTop: 18 }]}>How old are you?</Text>
+                        <View style={[fields.box, tried && age === null && local.boxError]}>
+                            <TextInput
+                                style={fields.text}
+                                value={ageText}
+                                onChangeText={t => { setAgeText(t.replace(/[^0-9]/g, '').slice(0, 3)); setTooYoung(false); }}
+                                placeholder="Your age"
+                                placeholderTextColor={colors.textSecondary}
+                                keyboardType="number-pad"
+                                maxLength={3}
+                                returnKeyType="done"
+                                onSubmitEditing={onNext}
+                                accessibilityLabel="Your age"
+                            />
+                        </View>
+                        {tried && (!nameOk || age === null) ? (
+                            <Text style={local.error} accessibilityLiveRegion="polite">
+                                {!nameOk ? 'Please enter a name.' : 'Please enter your age as a number.'}
+                            </Text>
+                        ) : (
+                            <Text style={local.note}>
+                                Your name shows on comments. We ask your age to keep mature content for adults. Your age is private and never shown to other listeners.
+                            </Text>
+                        )}
+                    </View>
 
                     {tooYoung ? (
                         <View accessibilityLiveRegion="polite" style={{ marginTop: 20, paddingHorizontal: 30, alignItems: 'center' }}>
@@ -177,7 +193,7 @@ const Welcome = ({ navigation }: any) => {
                             </TouchableOpacity>
                         </View>
                     ) : null}
-                </View>
+                </ScrollView>
 
                 {/* FOOTER CTA */}
                 <Animated.View style={[{ paddingBottom: 40 }, buttonOpacityStyle]}>
@@ -185,11 +201,7 @@ const Welcome = ({ navigation }: any) => {
                     <TouchableOpacity
                         accessibilityRole="button"
                         accessibilityLabel="Next"
-                        onPress={() => {
-                            const birthdate = format(date, 'yyyy-MM-dd');
-                            if (!isOldEnough(birthdate)) { setTooYoung(true); return; }
-                            navigation.navigate('WelcomePref', { birthdate });
-                        }}
+                        onPress={onNext}
                         style={{
                             backgroundColor: "#00C2C2",
                             paddingVertical: 14,
@@ -204,25 +216,17 @@ const Welcome = ({ navigation }: any) => {
                 </Animated.View>
                 </Animated.View>
 
-                {/* DATE PICKER */}
-               {isPickerVisible && (
-                    <DateTimePicker
-                        value={date}
-                        mode="date"
-                        display="spinner"
-                        onChange={(event, selectedDate) => {
-                            setPickerVisible(false);
-                            if (event.type === 'set' && selectedDate) {
-                                setTimeout(() => setDate(selectedDate), 100);
-                            }
-                        }}
-                        themeVariant="dark"
-                        maximumDate={new Date()}
-                    />
-                )}
             </View>
         </Screen>
     );
 };
+
+const local = StyleSheet.create({
+    form: { alignSelf: 'stretch', paddingHorizontal: 30 },
+    label: { color: colors.textPrimary, fontSize: fontSizes.body, fontWeight: '600', marginBottom: 8 },
+    note: { color: '#ffffff99', fontSize: fontSizes.small, lineHeight: 18, marginTop: 12 },
+    error: { color: '#ff6b6b', fontSize: fontSizes.small, marginTop: 12 },
+    boxError: { borderColor: '#ff6b6b' },
+});
 
 export default Welcome;

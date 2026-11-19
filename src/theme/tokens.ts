@@ -31,4 +31,17 @@ export const layout = {
   gutter: 20,       // horizontal screen padding
   sectionGap: 32,   // vertical space between sections
   headerHeight: 56,
+  screenTopGap: 12,   // gap above and below the Home greeting (status bar to greeting, greeting to first content)
+  titlePadTop: 16,    // space above a row title
+  titlePadBottom: 12, // space between a row title and its tiles
+  heroRatio: 0.34,    // For You carousel card height, as a share of screen height
+  heroMinHeight: 260, // ...but never shorter than this
+  tileWidth: 200,     // story tile in a Home row
+  tileHeight: 240,
+  tabBarHeight: 58,   // bottom tab bar (icon + label), before the safe-area inset
+} as const;
+
+// The one screen background: Discover, Profile and every screen linked from Profile use it.
+export const gradients = {
+  screen: { colors: ['#000', '#0f1112', '#000'] as const, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
 } as const;

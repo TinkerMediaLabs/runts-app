@@ -5,10 +5,10 @@ import { Text } from '@/components/common/AppText';
 import Screen from '@/components/common/Screen';
 import MenuHeader from '../../components/common/MenuHeader';
 import EmptyState from '../../components/common/EmptyState';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useFollowedTags, useSetTagNotify, useIsFollowingTag } from '../../hooks/queries/useTagFollowing';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // One switch per followed genre. Pages of 30 so the list stays light however many genres are followed.
 // Reads the follow state seeded by the list (no extra request) so the switch updates instantly when toggled.
@@ -35,8 +35,8 @@ const GenreNotificationsScreen = ({ navigation }: any) => {
     const items: any[] = ((data as any)?.pages ?? []).flatMap((p: any) => p.items ?? []);
 
     return (
-        <Screen>
-            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
                 <MenuHeader title="Genre notifications" navigation={navigation} />
                 {isLoading ? (
                     <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
@@ -56,7 +56,7 @@ const GenreNotificationsScreen = ({ navigation }: any) => {
                         ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color={colors.accent} style={{ margin: 16 }} /> : null}
                         ListEmptyComponent={
                             <EmptyState
-                                icon={<FontAwesome5 name="tags" size={40} color={colors.textTertiary} iconStyle="solid" />}
+                                icon={<Icon name="tags" size={40} color={colors.textTertiary} />}
                                 title="No followed genres yet"
                                 body="Follow a genre from its page and it will show up here, with a switch for its notifications."
                             />

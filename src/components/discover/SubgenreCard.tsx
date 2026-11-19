@@ -11,6 +11,8 @@ import { Analytics } from '@/lib/analytics';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
+import FollowBadge from '../common/FollowBadge';
+import { useIsTagFollowed } from '../../hooks/queries/useTagFollowing';
 
 export const CARD_W = 156;
 export const CARD_H = 100;   // minimum height: cards grow with the user's font size instead of clipping
@@ -22,6 +24,7 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
 }) => {
   const navigation = useNavigation<any>();
   const { data: uri } = useStoryImage(image ?? null);
+  const followed = useIsTagFollowed(id);
   const count = liveCount && liveCount > 0 ? `${liveCount} ${liveCount === 1 ? 'story' : 'stories'}` : null;
 
   return (
@@ -30,7 +33,7 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
       onPress={() => { Analytics.genreTapped(id, name); navigation.push('TagHomeScreen', { id, name }); }}
       style={[styles.card, { width, minHeight: height }]}
       accessibilityRole="button"
-      accessibilityLabel={count ? `${name}, tag, ${count}` : `${name}, tag`}
+      accessibilityLabel={`${name}, tag${count ? `, ${count}` : ''}${followed ? ', following' : ''}`}
       accessibilityHint="Opens this tag"
     >
       {uri ? (
@@ -44,6 +47,7 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
           <Text style={styles.letter} accessible={false} importantForAccessibility="no" accessibilityElementsHidden>{letterOf(name)}</Text>
         </>
       )}
+      {followed ? <FollowBadge size={18} /> : null}
       <View style={styles.text}>
         <Text style={styles.name} numberOfLines={2}>{name}</Text>
         {count ? <Text style={styles.count}>{count}</Text> : null}

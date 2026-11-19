@@ -1,11 +1,11 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import BottomSheet from '@/components/common/BottomSheet';
 import { selectHaptic } from '../../lib/haptics';
 import { colors } from '@/theme/colors';
 import { fontSizes, iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // The two bottom sheets opened from the player's action bar: playback speed and sleep timer.
 
@@ -32,7 +32,7 @@ const Row = ({ label, selected, onPress, a11yLabel }: { label: string; selected:
     accessibilityLabel={a11yLabel}
   >
     <Text style={[styles.rowText, selected && styles.rowTextActive]}>{label}</Text>
-    {selected ? <FontAwesome5 name="check" size={iconSize.sm} color={colors.accent} iconStyle="solid" /> : null}
+    {selected ? <Icon name="check" size={iconSize.sm} color={colors.accent} /> : null}
   </TouchableOpacity>
 );
 

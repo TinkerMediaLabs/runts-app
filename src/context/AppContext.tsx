@@ -1,4 +1,4 @@
-import { ageOn, ADULT_AGE } from '../lib/age';
+import { userAge, ADULT_AGE } from '../lib/age';
 import {
     createContext,
     useContext,
@@ -49,6 +49,8 @@ type UserProfile = {
     isPublisher?: boolean | null;
     plan?: string | null;
     birthdate?: string | null;
+    age?: number | null;
+    ageEnteredOn?: string | null;
     onboardingComplete?: boolean | null;
     preferredTagIds?: string[] | null;
     preferredMoodTagIds?: string[] | null;
@@ -95,9 +97,8 @@ const GUEST_KEY = 'runts_guest_v1';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function calculateIsUnderAge(birthdate: string | null | undefined): boolean {
-    if (!birthdate) return false;
-    const age = ageOn(birthdate);
+function calculateIsUnderAge(src: { birthdate?: string | null; age?: number | null; ageEnteredOn?: string | null } | null | undefined): boolean {
+    const age = userAge(src);
     return age !== null && age < ADULT_AGE;
 }
 
@@ -151,7 +152,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             // must run as the user. (The guest screens stay up until sign-in has fully succeeded, so nothing flashes.)
             setDataAccess('user');
             const dbUser = await getOrCreateUser() as any;
-            const isNew  = !dbUser?.onboardingComplete && !dbUser?.birthdate;
+            const isNew  = !dbUser?.onboardingComplete && !dbUser?.birthdate && dbUser?.age == null;
 
             let profilePicUri = dbUser?.profilePicUri ?? null;
             if (profilePicUri && profilePicUri.startsWith('profile-pictures/')) {
@@ -163,7 +164,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             }
 
             // Age gate — if under 18, force erotic off regardless of saved setting
-            const underAge = calculateIsUnderAge(dbUser?.birthdate);
+            const underAge = calculateIsUnderAge(dbUser);
             setIsUnderAge(underAge);
             if (underAge) {
                 setEroticEnabledState(false);
@@ -192,6 +193,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 isPublisher:          dbUser?.isPublisher,
                 plan:                 dbUser?.plan,
                 birthdate:            dbUser?.birthdate,
+                age:                  dbUser?.age,
+                ageEnteredOn:         dbUser?.ageEnteredOn,
                 onboardingComplete:   dbUser?.onboardingComplete,
                 preferredTagIds:      (dbUser?.preferredTagIds ?? []).filter(Boolean),
                 preferredMoodTagIds:  (dbUser?.preferredMoodTagIds ?? []).filter(Boolean),

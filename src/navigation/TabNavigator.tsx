@@ -2,9 +2,7 @@ import React, { useEffect } from "react";
 
 import {Dimensions} from 'react-native';
 
-import { Ionicons } from '@react-native-vector-icons/ionicons';
-import { Octicons } from '@react-native-vector-icons/octicons';
-import { MaterialDesignIcons } from '@react-native-vector-icons/material-design-icons';
+import Icon from '@/components/common/Icon';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -18,6 +16,7 @@ import PlaylistScreen from '@/screens/primary/playlist';
 import PremiumScreen from '@/screens/primary/premium';
 
 import { useApp } from '@/context/AppContext';
+import { fontSizes, layout } from '@/theme/tokens';
 
 import { 
         BottomTabParamList, 
@@ -41,13 +40,13 @@ export default function BottomTabNavigator() {
   const { isPremium } = useApp();
 
   useEffect(() => {
-    const height = 60 + insets.bottom;
+    const height = layout.tabBarHeight + 10 + insets.bottom;
     setTabBarHeight(height);
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      setTabBarHeight(70 + insets.bottom);
+      setTabBarHeight(layout.tabBarHeight + 20 + insets.bottom);
 
       return () => {
         setTabBarHeight(0); // 🔥 reset when leaving
@@ -60,15 +59,12 @@ export default function BottomTabNavigator() {
       initialRouteName="Discover"
       screenOptions={{ 
         tabBarActiveTintColor: '#fff',
-        tabBarShowLabel: false,
-        tabBarIconStyle: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
+        tabBarShowLabel: true,
+        tabBarLabelStyle: { fontSize: fontSizes.micro, fontWeight: '600', marginTop: 2 },
         tabBarStyle: {
-            paddingBottom: insets.bottom,
-            height: 50 + insets.bottom,
+            paddingTop: 4,
+            paddingBottom: (insets.bottom > 0 ? insets.bottom : 6) + 2,
+            height: layout.tabBarHeight + insets.bottom,
             backgroundColor: '#0a0a0a',
         }
     }}>
@@ -78,12 +74,7 @@ export default function BottomTabNavigator() {
   options={{
     tabBarLabel: 'For You',
     tabBarIcon: ({ focused, color }) => (
-      <Ionicons
-        name={focused ? 'sparkles' : 'sparkles-outline'}
-        size={28}
-        style={{ marginTop: 0 }}
-        color={color}
-      />
+      <Icon name="sparkles" size={24} color={color} weight={focused ? 'fill' : 'light'} />
     ),
     headerShown: false,
   }}
@@ -92,14 +83,9 @@ export default function BottomTabNavigator() {
   name="Browse"
   component={DiscoverNavigator}
   options={{
-    tabBarLabel: 'Browse',
+    tabBarLabel: 'Discover',
     tabBarIcon: ({ focused, color }) => (
-      <Ionicons
-        name={focused ? 'compass' : 'compass-outline'}
-        size={31}
-        style={{ marginTop: 0 }}
-        color={color}
-      />
+      <Icon name="compass" size={24} color={color} weight={focused ? 'fill' : 'light'} />
     ),
     headerShown: false,
   }}
@@ -110,12 +96,7 @@ export default function BottomTabNavigator() {
   options={{
     tabBarLabel: 'Library',
     tabBarIcon: ({ focused, color }) => (
-      <Ionicons
-        name={focused ? 'library-sharp' : 'library-outline'}
-        size={28}
-        style={{ marginTop: 0 }}
-        color={color}
-      />
+      <Icon name="library" size={24} color={color} weight={focused ? 'fill' : 'light'} />
     ),
     headerShown: false,
   }}
@@ -127,12 +108,7 @@ export default function BottomTabNavigator() {
     options={{
       tabBarLabel: 'Premium',
       tabBarIcon: ({ focused, color }) => (
-        <MaterialDesignIcons
-          name={focused ? 'crown' : 'crown-outline'}
-          size={31}
-          style={{ marginTop: 0 }}
-          color={color}
-        />
+        <Icon name="crown" size={24} color={color} weight={focused ? 'fill' : 'light'} />
       ),
       headerShown: false,
     }}

@@ -3,7 +3,6 @@ import { Pressable, View, ActivityIndicator, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withTiming, withDelay, Easing, cancelAnimation,
 } from 'react-native-reanimated';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { Text } from '@/components/common/AppText';
 import { usePlayer } from '@/context/PlayerContext';
@@ -12,6 +11,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { showChip } from '@/lib/chip';
 import { colors } from '@/theme/colors';
 import { fontSizes, iconSize, radius } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // Four bars that bounce while the preview plays (the "it is playing" signal). Still when Reduce Motion is on.
 function Bar({ index, active, color }: { index: number; active: boolean; color: string }) {
@@ -67,7 +67,7 @@ export default function PreviewButton({ story, isErotic = false }: { story: any;
         ) : playing ? (
           <View style={styles.bars}>{[0, 1, 2, 3].map(i => <Bar key={i} index={i} active color={soft} />)}</View>
         ) : (
-          <FontAwesome5 name="play" size={iconSize.xs} color={soft} iconStyle="solid" />
+          <Icon name="play" size={iconSize.xs} color={soft} />
         )}
       </View>
       <Text style={[styles.label, { color: soft }]}>{label}</Text>

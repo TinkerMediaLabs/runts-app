@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useIsLocked }   from '../../hooks/useIsLocked';
 import PaywallModal      from '../../components/common/PaywallModal';
-import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 
 import Animated, {
     useSharedValue,
@@ -28,7 +27,6 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { formatRelative, parseISO } from 'date-fns';
 import TimeConversion from '../../components/functions/TimeConversion';
@@ -86,6 +84,7 @@ import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
+import Icon from '@/components/common/Icon';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -116,7 +115,7 @@ const REACTION_EMOJIS: Record<string, string> = {
 
     const StatPill = ({ icon, value, color }: { icon: any; value: string; color?: string }) => (
         <View style={styles.statPill}>
-            <FontAwesome5 name={icon} size={iconSize.xs} color={color ?? colors.textSecondary} iconStyle="solid" />
+            <Icon name={icon} size={iconSize.xs} color={color ?? colors.textSecondary} />
             <Text style={[styles.statText, color ? { color } : null]}>{value}</Text>
         </View>
     );
@@ -198,7 +197,7 @@ const REACTION_EMOJIS: Record<string, string> = {
         <View style={styles.commentCard}>
             <View style={styles.commentHeader}>
             <View style={styles.commentAvatar}>
-                <FontAwesome5 name="user" size={iconSize.sm} color={colors.textTertiary} iconStyle="solid" />
+                <Icon name="user" size={iconSize.sm} color={colors.textTertiary} />
             </View>
             <View style={{ flex: 1 }}>
                 <Text style={styles.commentUser}>{item.userName ?? 'Anonymous'}</Text>
@@ -218,7 +217,7 @@ const REACTION_EMOJIS: Record<string, string> = {
                     accessibilityRole="button"
                     accessibilityLabel={`Report or block ${item.userName ?? 'this commenter'}`}
                 >
-                    <FontAwesome5 name="ellipsis-h" size={iconSize.sm} color={colors.textStrong} iconStyle="solid" />
+                    <Icon name="ellipsis-h" size={iconSize.sm} color={colors.textStrong} />
                 </TouchableOpacity>
             )}
             </View>
@@ -571,7 +570,7 @@ const handleDelete = (id: string) => {
         return (
             <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
                 <StatusBar style="light" />
-                <CloseButton navigation={navigation} />
+                <CloseButton navigation={navigation} backdrop />
                 <Text style={{ color: '#fff', fontSize: 18, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
                 <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
             </View>
@@ -602,7 +601,7 @@ const handleDelete = (id: string) => {
                     style={[styles.stickyHeader, headerStyle, { paddingTop: insets.top }]}
                     pointerEvents={headerInteractive ? 'auto' : 'none'}
                 >
-                    <CloseButton navigation={navigation} />
+                    <CloseButton navigation={navigation} backdrop />
                 <Animated.Text style={[styles.stickyTitle, headerTitleStyle]} numberOfLines={1}>
                     {story?.title}
                 </Animated.Text>
@@ -649,13 +648,13 @@ const handleDelete = (id: string) => {
                         accessibilityLabel={`Author ${author?.name ?? ''}`}
                         accessibilityHint="Opens author page"
                     >
-                        <FontAwesome5 name="book-open" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                        <Icon name="book-open" size={iconSize.xs} color={colors.textSecondary} />
                         <Text style={styles.author}>{author?.name ?? ''}</Text>
                     </TouchableOpacity>
 
                     {narratorDisplay ? (
                         <View style={[styles.authorRow, { marginTop: 4 }]}>
-                            <FontAwesome5 name="microphone" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                            <Icon name="microphone" size={iconSize.xs} color={colors.textSecondary} />
                             <Text style={styles.author}>{narratorDisplay}</Text>
                         </View>
                     ) : null}
@@ -726,8 +725,9 @@ const handleDelete = (id: string) => {
                                         accessibilityLabel={userRating ? `Your rating ${userRating.rating} out of 10` : 'Rate this story'}
                                         accessibilityHint="Opens the rating form"
                                     >
-                                        <MaterialDesignIcons
-                                            name={userRating ? 'account-star' : 'account-star-outline'}
+                                        <Icon
+                                            name="star"
+                                            weight={userRating ? 'fill' : 'regular'}
                                             size={24}
                                             color={colors.gold}
                                         />
@@ -738,7 +738,7 @@ const handleDelete = (id: string) => {
 )}
 
                            <TouchableOpacity onPress={handleShare} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Share story" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                                <FontAwesome5 name="share" size={22} color={colors.textPrimary} iconStyle="solid" />
+                                <Icon name="share" size={22} color={colors.textPrimary} />
                             </TouchableOpacity>
                         </View>
 
@@ -970,7 +970,7 @@ const handleDelete = (id: string) => {
             >
             <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
                 {postAnonymously && (
-                <FontAwesome5 name="check" size={9} color={colors.textOnAccent} iconStyle="solid" />
+                <Icon name="check" size={9} color={colors.textOnAccent} />
                 )}
             </View>
             <Text style={styles.anonLabel}>Post anonymously</Text>
@@ -1037,7 +1037,7 @@ const handleDelete = (id: string) => {
     accessibilityLabel="Spoiler warning. Show comments"
     accessibilityHint="Comments may reveal the story"
   >
-    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff8888" iconStyle="solid" />
+    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff8888" />
     <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
     <Text style={styles.spoilerSub}>Tap to view comments</Text>
   </TouchableOpacity>
@@ -1052,7 +1052,7 @@ const handleDelete = (id: string) => {
             {/* Back button */}
             {!showRatingModal && (
                 <View style={[styles.backButtonAbsolute, { top: insets.top + 10 }]}>
-                    <CloseButton navigation={navigation} />
+                    <CloseButton navigation={navigation} backdrop />
                 </View>
             )}
 

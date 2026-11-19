@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ScrollView, StyleSheet, Dimensions, Platform, Image, Linking } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, Platform, Image, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import Constants from 'expo-constants';
 
 import MenuHeader from '../../components/common/MenuHeader';
@@ -29,14 +28,14 @@ import { SIGN_IN_METHOD_KEY } from '../../lib/signInMethod';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Sheet from '@/components/common/BottomSheet';
 import EditNameSheet from '@/components/settings/EditNameSheet';
+import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
-const { width } = Dimensions.get('window');
 
 
 
@@ -86,7 +85,7 @@ const SettingRow = ({
         accessibilityLabel={value ? `${label}, ${value}` : badge ? `${label}, ${badge}` : label}
     >
         <View style={styles.rowLeft}>
-            <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
+            <View style={styles.rowIcon}>
                 {icon === 'google' ? (
                     <Image
                         source={require('../../../assets/images/google-logo.png')}
@@ -98,11 +97,10 @@ const SettingRow = ({
                         style={{ width: 28, height: 28 }}
                     />
                 ) : (
-                    <FontAwesome5
+                    <Icon
                         name={icon}
                         size={iconSize.sm}
                         color={colors.textSecondary}
-                        iconStyle="solid"
                     />
                 )}
             </View>
@@ -120,11 +118,10 @@ const SettingRow = ({
                 <Text style={styles.rowValue} numberOfLines={1}>{value}</Text>
             ) : null}
             {chevron && onPress && (
-                <FontAwesome5
+                <Icon
                     name="chevron-right"
                     size={iconSize.xs}
                     color={colors.textSecondary}
-                    iconStyle="solid"
                 />
             )}
         </View>
@@ -173,11 +170,10 @@ const PasswordField = ({
                     autoCapitalize="none"
                 />
                 <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.inputEye} accessibilityRole="button" accessibilityLabel={hidden ? `Show ${label}` : `Hide ${label}`} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                    <FontAwesome5
+                    <Icon
                         name={hidden ? 'eye-slash' : 'eye'}
                         size={iconSize.sm}
                         color={colors.textSecondary}
-                        iconStyle="solid"
                     />
                 </TouchableOpacity>
             </View>
@@ -210,21 +206,21 @@ const ActionButton = ({
 
 const SuccessBanner = ({ message }: { message: string }) => (
     <View style={styles.successBanner} accessibilityLiveRegion="polite">
-        <FontAwesome5 name="check-circle" size={iconSize.sm} color={colors.accent} iconStyle="solid" />
+        <Icon name="check-circle" size={iconSize.sm} color={colors.accent} />
         <Text style={styles.successBannerText}>{message}</Text>
     </View>
 );
 
 const ErrorBanner = ({ message }: { message: string }) => (
     <View style={styles.dangerBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-        <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
+        <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
         <Text style={styles.dangerBannerText}>{message}</Text>
     </View>
 );
 
 const InfoBanner = ({ message }: { message: string }) => (
     <View style={styles.infoBanner}>
-        <FontAwesome5 name="info-circle" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name="info-circle" size={iconSize.sm} color={colors.textSecondary} />
         <Text style={styles.infoBannerText}>{message}</Text>
     </View>
 );
@@ -450,7 +446,7 @@ const AccountScreen = ({ navigation }: any) => {
     return (
         <Screen>
             <LinearGradient
-                colors={['#000', '#12121a', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -466,7 +462,7 @@ const AccountScreen = ({ navigation }: any) => {
                     <Section title="Account">
                         <SettingRow
                             icon="crown"
-                            label="Plan"
+                            label="Subscription"
                             value={isPremium ? 'Premium' : 'Free'}
                             badge={isPremium ? 'Active' : undefined}
                             onPress={() => {
@@ -493,6 +489,7 @@ const AccountScreen = ({ navigation }: any) => {
                         <SettingRow
                             icon="envelope"
                             label="Email"
+                            value={accountEmail || undefined}
                             badge={providerLabel ?? undefined}
                             onPress={isSocialUser ? undefined : () => open('email')}
                             chevron={!isSocialUser}
@@ -713,7 +710,7 @@ const AccountScreen = ({ navigation }: any) => {
             {/* ── Delete Account sheet ── */}
             <Sheet visible={activeModal === 'delete'} onClose={close} title="Delete Account">
                 <View style={styles.dangerBanner}>
-                    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
+                    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
                     <Text style={styles.dangerBannerText}>
                         This action is permanent and cannot be undone. All account data will be removed.
                     </Text>
@@ -794,19 +791,15 @@ const styles = StyleSheet.create({
     rowLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        flexShrink: 0,
     },
     rowIcon: {
         width: 30,
         height: 30,
         borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
-    },
-    rowIconDestructive: {
-        backgroundColor: colors.surface3,
     },
     rowLabel: {
         fontSize: fontSizes.body,
@@ -819,12 +812,16 @@ const styles = StyleSheet.create({
     rowRight: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-end',
         gap: 8,
-        maxWidth: width * 0.4,
+        flex: 1,
+        marginLeft: 12,
     },
     rowValue: {
         fontSize: fontSizes.small,
         color: colors.textSecondary,
+        flexShrink: 1,
+        textAlign: 'right',
     },
     divider: {
         height: StyleSheet.hairlineWidth,

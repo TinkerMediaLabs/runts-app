@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { StyleSheet, Dimensions, TouchableOpacity, View, FlatList, ImageBackground } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import useStyles from '../../theme/styles';
@@ -15,7 +14,15 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { CachedImageBackground } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/tokens';
+import FollowBadge from '../common/FollowBadge';
+import { useIsTagFollowed } from '../../hooks/queries/useTagFollowing';
 const { width } = Dimensions.get('window');
+
+// One scrim for every genre tile: 65% black across the bottom third, fading to clear at the top.
+const TILE_SCRIM = ['#000000a5', '#000000a5', 'transparent'] as const;
+const TILE_SCRIM_AT = [0.0, 0.33, 1.0] as const;
+// The erotica picture is the most saturated of the set, so it reads brighter under the same scrim.
+const EROTIC_EXTRA_DIM = 'rgba(0,0,0,0.22)';
 
 // ---------------------------------------------------------------------------
 // Local tile images — keyed by tileImageUri value stored in DynamoDB
@@ -46,6 +53,7 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
     );
     const remoteSource = resolvedUri ? { uri: resolvedUri } : null;
     const imageSource  = bgSource ?? remoteSource;
+    const followed = useIsTagFollowed(id);
 
     return (
         <TouchableOpacity
@@ -56,8 +64,9 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
             }}
             style={styles_local.tileWrapper}
             accessibilityRole="button"
-            accessibilityLabel={`Genre ${name}`}
+            accessibilityLabel={followed ? `Genre ${name}, following` : `Genre ${name}`}
         >
+            {followed ? <FollowBadge style={{ zIndex: 2 }} /> : null}
             {imageSource ? (
                 <CachedImageBackground
                     source={imageSource}
@@ -65,8 +74,8 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
                     imageStyle={{ borderRadius: radius.lg }}
                 >
                     <LinearGradient
-                        colors={['#000000a5', '#000000a5', 'transparent']}
-                        locations={[0.0, 0.33, 1.0]}
+                        colors={TILE_SCRIM}
+                        locations={TILE_SCRIM_AT}
                         start={{ x: 0, y: 1 }}
                         end={{ x: 0, y: 0 }}
                         style={styles_local.tileGradient}
@@ -140,9 +149,10 @@ const GenreTilesList = ({ primaryTags, navigation, eroticEnabled }: any) => {
                                                 style={styles_local.tileImage}
                                                 imageStyle={{ borderRadius: radius.lg }}
                                             >
+                                                <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: EROTIC_EXTRA_DIM, borderRadius: radius.lg }]} />
                                                 <LinearGradient
-                                                    colors={['#000000a5', '#000000a5', 'transparent']}
-                                                    locations={[0.0, 0.33, 1.0]}
+                                                    colors={TILE_SCRIM}
+                                                    locations={TILE_SCRIM_AT}
                                                     start={{ x: 0, y: 1 }}
                                                     end={{ x: 0, y: 0 }}
                                                     style={styles_local.tileGradient}

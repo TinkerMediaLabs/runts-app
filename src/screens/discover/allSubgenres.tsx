@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useCallback } from 'react';
 import { SkeletonRows } from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { View, SectionList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { groupByLetter, type ListedTag } from '../../lib/discoverTags';
 import { Analytics } from '@/lib/analytics';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // Every subgenre that has live stories, in alphabetical sections with a letter strip down the side. Loads more as
 // you scroll; tapping a letter jumps to it when that part of the list is loaded.
@@ -74,7 +74,7 @@ const AllSubgenresScreen = () => {
           <SkeletonRows count={9} />
         ) : items.length === 0 ? (
           <EmptyState
-            icon={<FontAwesome5 name="tags" size={40} color={colors.textSecondary} iconStyle="solid" />}
+            icon={<Icon name="tags" size={40} color={colors.textSecondary} />}
             title="No tags yet"
             body="Check back soon."
           />

@@ -16,7 +16,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser } from 'aws-amplify/auth';
@@ -33,6 +32,7 @@ import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 const client = generateClient<Schema>();
 const { width } = Dimensions.get('window');
 
@@ -281,9 +281,9 @@ const handleSubmit = async () => {
                   accessibilityLabel={`${star} out of 10`}
                   accessibilityState={{ checked: selectedRating === star }}
                 >
-                  <FontAwesome5
+                  <Icon
                     name="star"
-                    iconStyle={selectedRating !== null && star <= selectedRating ? 'solid' : 'regular'}
+                    weight={selectedRating !== null && star <= selectedRating ? 'fill' : 'regular'}
                     size={iconSize.md}
                     color={colors.gold}
                   />
@@ -352,7 +352,7 @@ const handleSubmit = async () => {
               >
                 <View style={[styles.anonCheckbox, postAnonymously && styles.anonCheckboxActive]}>
                   {postAnonymously && (
-                    <FontAwesome5 name="check" size={9} color={colors.textOnAccent} iconStyle="solid" />
+                    <Icon name="check" size={9} color={colors.textOnAccent} />
                   )}
                 </View>
                 <Text style={styles.anonLabel}>Post anonymously</Text>

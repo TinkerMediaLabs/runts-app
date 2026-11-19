@@ -6,7 +6,6 @@ import Reanimated, { FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTileList from '../../components/story/StoryTileList';
 import { useApp } from '@/context/AppContext';
@@ -24,6 +23,7 @@ import { useTipTarget } from '../../tips/useTipTarget';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +39,7 @@ const TABS: Tab[] = [
 const EmptyState = ({ icon, title, subtitle }: { icon: any; title: string; subtitle: string }) => (
     <View style={styles.emptyState}>
         <View style={styles.emptyIconWrap}>
-            <FontAwesome5 name={icon} size={28} color={colors.textSecondary} iconStyle="solid" />
+            <Icon name={icon} size={28} color={colors.textSecondary} />
         </View>
         <Text style={styles.emptyTitle}>{title}</Text>
         <Text style={styles.emptySubtitle}>{subtitle}</Text>
@@ -96,11 +96,10 @@ const SignedInPlaylist = () => {
                                 accessibilityLabel={reorderEnabled ? 'Finish reordering' : 'Reorder pinned stories'}
                                 accessibilityState={{ selected: reorderEnabled }}
                             >
-                                <FontAwesome5
+                                <Icon
                                 name="sort"
                                 size={iconSize.sm}
                                 color={reorderEnabled ? '#000' : colors.textSecondary}
-                                iconStyle="solid"
                                 />
                                 <Text style={[styles.reorderLabel, reorderEnabled && styles.reorderLabelActive]}>
                                 {reorderEnabled ? 'Done' : 'Reorder'}
@@ -142,7 +141,7 @@ const SignedInPlaylist = () => {
                 {/* Reorder hint */}
                 {activeTab === 'pinned' && reorderEnabled && (
                     <View style={styles.reorderHint}>
-                        <FontAwesome5 name="grip-lines" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                        <Icon name="grip-lines" size={iconSize.xs} color={colors.textSecondary} />
                         <Text style={styles.reorderHintText}>Hold and drag items to reorder</Text>
                     </View>
                 )}
@@ -299,7 +298,7 @@ const GuestPlaylist = () => {
     return (
         <View style={{ flex: 1, paddingTop: insets.top + 20 }}>
             <BaseEmptyState
-                icon={<FontAwesome5 name="bookmark" size={36} color={colors.textSecondary} iconStyle="solid" />}
+                icon={<Icon name="bookmark" size={36} color={colors.textSecondary} />}
                 title="Your playlist lives here"
                 body="Pin stories to listen later, follow the genres you love, and pick up where you left off. A free account unlocks it."
                 actionLabel="Create a free account"

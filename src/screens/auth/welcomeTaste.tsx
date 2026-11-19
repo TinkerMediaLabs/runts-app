@@ -4,8 +4,8 @@ import { Text } from '@/components/common/AppText';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
-import { getCurrentUser } from 'aws-amplify/auth';
+import { getCurrentUser, updateUserAttribute } from 'aws-amplify/auth';
+import { format } from 'date-fns';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 
@@ -19,16 +19,18 @@ import { Analytics } from '@/lib/analytics';
 import { markPromptedToday } from '@/lib/todayChoice';
 import { colors } from '@/theme/colors';
 import { fontSizes, iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // Sign-up steps 2 and 3, after the genres: "What do you reach for?" (up to 3 moods) and "How long is your usual
 // listen?" (any lengths). Both are optional; the friendly skip buttons save an empty answer so we know they were asked.
-// The account is saved once, at the end, together with the genres and birthdate passed from the earlier screens.
+// The account is saved once, at the end, together with the name, age and genres passed from the earlier screens.
 export const TASTE_VERSION = 1;
 
 const WelcomeTaste = ({ route }: any) => {
   const insets = useSafeAreaInsets();
   const { refreshAuth } = useApp();
-  const birthdate: string | null = route?.params?.birthdate ?? null;
+  const name: string = route?.params?.name ?? '';
+  const age: number | null = route?.params?.age ?? null;
   const genres: string[] = route?.params?.genres ?? [];
 
   const [step, setStep] = useState<'moods' | 'lengths'>('moods');
@@ -47,13 +49,17 @@ const WelcomeTaste = ({ route }: any) => {
       const { userId } = await getCurrentUser();
       unwrap(await client.models.User.update({
         id: userId,
-        birthdate,
+        ...(name ? { name } : {}),
+        age,
+        ageEnteredOn: format(new Date(), 'yyyy-MM-dd'),
         onboardingComplete: true,
         preferredTagIds: genres,
         preferredMoodTagIds: finalMoods,
         preferredLengths: finalLengths,
         tasteVersion: TASTE_VERSION,
       }), 'Save your preferences');
+      // The sign-in profile keeps the name too (the Account screen updates both the same way). Not worth failing for.
+      if (name) { try { await updateUserAttribute({ userAttribute: { attributeKey: 'name', value: name } }); } catch {} }
       await markPromptedToday();   // they just answered these questions; the daily sheet starts tomorrow
       Analytics.onboardingCompleted();
       await refreshAuth();
@@ -118,7 +124,7 @@ const WelcomeTaste = ({ route }: any) => {
                 label="Continue"
                 disabled={!moods.length}
                 onPress={() => onMoodsDone(moods)}
-                icon={<FontAwesome5 name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} iconStyle="solid" />}
+                icon={<Icon name="arrow-right" size={iconSize.sm} color={colors.textOnAccent} />}
               />
               <Button label="Surprise me" variant="text" onPress={() => onMoodsDone([])} />
             </>

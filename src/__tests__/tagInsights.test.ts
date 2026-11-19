@@ -1,4 +1,4 @@
-import { computeInsights, discoverFields, staleInsightIds } from '../../amplify/functions/tag-insights/insights';
+import { computeInsights, discoverFields, staleInsightIds, latestByTag, latestChanges } from '../../amplify/functions/tag-insights/insights';
 
 // stories: storyId -> [tagIds], with a publish date so "newest first" is testable
 const links = (spec: Record<string, { tags: string[]; pub: string }>) =>
@@ -97,5 +97,39 @@ describe('discoverFields', () => {
 describe('staleInsightIds', () => {
   it('returns rows whose genre is gone', () => {
     expect(staleInsightIds(['a', 'b', 'c'], new Set(['a', 'c']))).toEqual(['b']);
+  });
+});
+
+
+describe('latestByTag', () => {
+  it('keeps the newest publish date per tag', () => {
+    const m = latestByTag([
+      { storyId: 's1', tagId: 'a', publishedAt: '2026-01-01T00:00:00.000Z' },
+      { storyId: 's2', tagId: 'a', publishedAt: '2026-03-01T00:00:00.000Z' },
+      { storyId: 's3', tagId: 'b', publishedAt: '2026-02-01T00:00:00.000Z' },
+    ]);
+    expect(m.get('a')).toBe('2026-03-01T00:00:00.000Z');
+    expect(m.get('b')).toBe('2026-02-01T00:00:00.000Z');
+  });
+  it('skips links with no usable date', () => {
+    const m = latestByTag([{ storyId: 's1', tagId: 'a', publishedAt: null }, { storyId: 's2', tagId: 'b', publishedAt: 'nope' }]);
+    expect(m.size).toBe(0);
+  });
+});
+
+describe('latestChanges', () => {
+  const latest = new Map([['a', '2026-03-01T00:00:00.000Z'], ['b', '2026-02-01T00:00:00.000Z'], ['gone', '2026-01-01T00:00:00.000Z']]);
+  it('writes only what changed', () => {
+    const stored = new Map<string, string | undefined>([['a', '2026-03-01T00:00:00.000Z'], ['b', '2026-01-15T00:00:00.000Z']]);
+    expect(latestChanges(latest, stored)).toEqual([['b', '2026-02-01T00:00:00.000Z']]);
+  });
+  it('writes a tag that has no stored value yet', () => {
+    expect(latestChanges(new Map([['a', '2026-03-01T00:00:00.000Z']]), new Map([['a', undefined]]))).toEqual([['a', '2026-03-01T00:00:00.000Z']]);
+  });
+  it('treats the same moment in a different format as unchanged', () => {
+    expect(latestChanges(new Map([['a', '2026-03-01T00:00:00Z']]), new Map([['a', '2026-03-01T00:00:00.000Z']]))).toEqual([]);
+  });
+  it('skips tags that no longer exist', () => {
+    expect(latestChanges(latest, new Map([['a', undefined]])).map(x => x[0])).toEqual(['a']);
   });
 });

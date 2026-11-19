@@ -3,7 +3,6 @@ import { View, Switch, TouchableOpacity, ScrollView, Modal, StyleSheet, Dimensio
 import { Text } from '@/components/common/AppText';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import MenuHeader from '../../components/common/MenuHeader';
@@ -45,9 +44,10 @@ import PINSetupModal from '../../components/settings/PINSetupModal';
 import { resetTips } from '../../tips/tipsStore';
 import { showChip } from '../../lib/chip';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -96,12 +96,11 @@ const ToggleRow = ({
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
         >
-            <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
-                <FontAwesome5
+            <View style={styles.rowIcon}>
+                <Icon
                     name={icon}
                     size={iconSize.sm}
                     color={iconColor ?? colors.textSecondary}
-                    iconStyle="solid"
                 />
             </View>
             <View style={{ flex: 1 }}>
@@ -144,13 +143,13 @@ const SelectRow = ({
     >
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <FontAwesome5 name={icon} size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+                <Icon name={icon} size={iconSize.sm} color={colors.textSecondary} />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
         <View style={styles.rowRight}>
             <Text style={styles.rowValue}>{value}</Text>
-            <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+            <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
         </View>
     </TouchableOpacity>
 );
@@ -181,12 +180,11 @@ const ActionRow = ({
         accessibilityHint={description}
     >
         <View style={styles.rowLeft}>
-            <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
-                <FontAwesome5
+            <View style={styles.rowIcon}>
+                <Icon
                     name={icon}
                     size={iconSize.sm}
                     color={iconColor ?? colors.textSecondary}
-                    iconStyle="solid"
                 />
             </View>
             <View style={{ flex: 1 }}>
@@ -200,7 +198,7 @@ const ActionRow = ({
                     <Text style={styles.badgeText}>{badge}</Text>
                 </View>
             ) : null}
-            <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+            <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
         </View>
     </TouchableOpacity>
 );
@@ -237,7 +235,7 @@ const Sheet = ({
                         accessibilityRole="button"
                         accessibilityLabel="Close"
                     >
-                        <FontAwesome5 name="times" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+                        <Icon name="close" size={iconSize.sm} color={colors.textSecondary} />
                     </TouchableOpacity>
                 </View>
                 {children}
@@ -267,7 +265,7 @@ const OptionPill = ({
             {label}
         </Text>
         {active && (
-            <FontAwesome5 name="check" size={iconSize.xs} color={colors.accent} iconStyle="solid" style={{ marginLeft: 8 }} />
+            <Icon name="check" size={iconSize.xs} color={colors.accent} style={{ marginLeft: 8 }} />
         )}
     </TouchableOpacity>
 );
@@ -310,8 +308,8 @@ const EroticSection = ({
                     accessibilityLabel="Locked. Enter your PIN to change erotic content settings"
                 >
                     <View style={styles.rowLeft}>
-                        <View style={[styles.rowIcon, { backgroundColor: `${EROTIC_ORANGE}22` }]}>
-                            <FontAwesome5 name="lock" size={iconSize.sm} color={EROTIC_ORANGE} iconStyle="solid" />
+                        <View style={styles.rowIcon}>
+                            <Icon name="lock" size={iconSize.sm} color={EROTIC_ORANGE} />
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.rowLabel}>Locked</Text>
@@ -320,7 +318,7 @@ const EroticSection = ({
                             </Text>
                         </View>
                     </View>
-                    <FontAwesome5 name="chevron-right" size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+                    <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
                 </TouchableOpacity>
             </Section>
         );
@@ -488,7 +486,7 @@ const AppSettings = ({ navigation }: any) => {
     return (
         <Screen>
             <LinearGradient
-                colors={['#000', '#12121a', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -531,7 +529,7 @@ const AppSettings = ({ navigation }: any) => {
                         <View style={styles.row}>
                             <View style={styles.rowLeft}>
                                 <View style={styles.rowIcon}>
-                                    <FontAwesome5 name="hdd" size={iconSize.sm} color={colors.textSecondary} iconStyle="solid" />
+                                    <Icon name="hdd" size={iconSize.sm} color={colors.textSecondary} />
                                 </View>
                                 <Text style={styles.rowLabel}>Storage Used</Text>
                             </View>
@@ -750,7 +748,6 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

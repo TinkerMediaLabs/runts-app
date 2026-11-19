@@ -17,7 +17,6 @@ import Animated, {
     Extrapolation,
 } from 'react-native-reanimated';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTile   from '../../components/story/StoryTile';
 import SocialBlock from '../../components/story/SocialBlock';
@@ -43,6 +42,7 @@ import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { useIsGuest } from '../../lib/dataAccess';
 import { askForAccount } from '../../lib/requireAccount';
+import Icon from '@/components/common/Icon';
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE   = 100;
 const HEADER_H      = 260;
@@ -54,7 +54,7 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 const StatPill = ({ icon, label }: { icon: any; label: string }) => (
     <View style={styles.statPill}>
-        <FontAwesome5 name={icon} size={iconSize.xs} color={colors.textSecondary} iconStyle="solid" />
+        <Icon name={icon} size={iconSize.xs} color={colors.textSecondary} />
         <Text style={styles.statText}>{label}</Text>
     </View>
 );
@@ -218,7 +218,7 @@ const CreatorProfile = () => {
                 topBarStyle,
             ]}>
                 <TouchableOpacity hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={() => navigation.goBack()} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
-                    <FontAwesome5 name="times" size={iconSize.md} color={colors.textPrimary} iconStyle="solid" />
+                    <Icon name="close" size={iconSize.md} color={colors.textPrimary} />
                 </TouchableOpacity>
 
                 <Animated.Text numberOfLines={1} style={[styles.topBarTitle, titleStyle]}>
@@ -254,7 +254,7 @@ const CreatorProfile = () => {
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
                 ListEmptyComponent={
                     <EmptyState
-                        icon={<FontAwesome5 name="book-open" size={40} color={colors.textSecondary} iconStyle="solid" />}
+                        icon={<Icon name="book-open" size={40} color={colors.textSecondary} />}
                         title="No stories yet"
                         body="Check back soon for new stories from this author."
                     />

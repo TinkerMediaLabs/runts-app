@@ -2,11 +2,11 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Animated, { FadeInDown, Layout, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // A selectable genre tile (onboarding and the edit-your-genres screen).
 
@@ -48,18 +48,17 @@ const GenreChip = ({
                 style={[styles.chip, { backgroundColor: bgColor, borderColor }]}
             >
                 {icon && (
-                    <FontAwesome5
+                    <Icon
                         name={icon as any}
                         size={iconSize.sm}
                         color={iconColor}
-                        iconStyle="solid"
                         style={{ marginBottom: 6 }}
                     />
                 )}
                 <Text style={[styles.chipText, { color: textColor }]}>{name}</Text>
                 {selected && (
                     <View style={styles.chipCheck}>
-                        <FontAwesome5 name="check" size={8} color={colors.textOnAccent} iconStyle="solid" />
+                        <Icon name="check" size={8} color={colors.textOnAccent} />
                     </View>
                 )}
             </TouchableOpacity>

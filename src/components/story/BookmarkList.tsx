@@ -1,19 +1,23 @@
-import React, { useMemo } from 'react';
-import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { getStoryImageUrl } from '../../services/auth';
+import { getLocalCoverPath } from '../../lib/offlineStorage';
+import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
 import { SkeletonRows } from '../common/Skeleton';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
-import BookmarkTile        from './BookmarkTile';
+import BookmarkTile, { BookmarkGroup } from './BookmarkTile';
+import EditBookmarkSheet from './EditBookmarkSheet';
 import EmptyState from '../common/EmptyState';
-import { useBookmarks }    from '../../hooks/queries/useBookmarks';
+import { useBookmarks, useDeleteBookmark } from '../../hooks/queries/useBookmarks';
 import { useAuthorNames } from '../../hooks/queries/useAuthorNames';
 import { useTagNames } from '../../hooks/queries/useTagNames';
 import { usePlayer }       from '../../context/PlayerContext';
 import { useStoryImage }   from '../../hooks/queries/useStoryImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -30,6 +34,7 @@ interface BookmarkListProps {
 export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
 
   const { playTrackAt } = usePlayer();
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -48,18 +53,48 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
     items.flatMap((i: any) => [i.story?.primaryTagId, i.story?.secondaryTagId])
   );
 
-  const handlePlay = (storyId: string, positionSeconds: number) => {
-    // Find the story from our loaded items
-    const item = items.find(i => i.story?.id === storyId);
-    if (!item?.story) return;
-    const story = item.story;
+  // One entry per story, newest bookmark first; the bookmarks inside a story run in the order they sit in the audio.
+  const groups = useMemo(() => {
+    const byStory = new Map<string, { story: any; bookmarks: any[] }>();
+    for (const it of items as any[]) {
+      let g = byStory.get(it.story.id);
+      if (!g) { g = { story: it.story, bookmarks: [] }; byStory.set(it.story.id, g); }
+      g.bookmarks.push(it.bookmark);
+    }
+    return Array.from(byStory.values()).map(g => ({ ...g, bookmarks: [...g.bookmarks].sort((a, b) => a.positionSeconds - b.positionSeconds) }));
+  }, [items]);
 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<any | null>(null);
+  const { mutate: deleteBookmark } = useDeleteBookmark();
+
+  const confirmDelete = (bookmark: any) => {
+    Alert.alert('Delete Bookmark', `Delete "${bookmark.name || 'My Bookmark'}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteBookmark(bookmark.id) },
+    ]);
+  };
+
+  const handlePlay = async (story: any, positionSeconds: number) => {
+    // The player shows the artwork as a plain link, so a stored cover path ('stories/...') is turned into one first
+    // (the tile already did this for its own thumbnail, so it normally comes straight from the cache).
+    const path: string = story.imageUri ?? '';
+    let artwork = path;
+    if (path.startsWith('stories/')) {
+      try {
+        artwork = await queryClient.fetchQuery({
+          queryKey: ['storyImage', 'v3', path],
+          queryFn: async () => (await getLocalCoverPath(path)) ?? getStoryImageUrl(path),
+          staleTime: 1000 * 60 * 60 * 24 * 5,
+        });
+      } catch { artwork = ''; }
+    }
     playTrackAt(
       {
         id:      story.id,
         title:   story.title ?? '',
         url:     story.audioUri ?? '',
-        artwork: story.imageUri ?? '',
+        artwork,
         artist:  authorMap[story.authorId ?? ''] ?? '',
       },
       positionSeconds
@@ -69,16 +104,32 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
   if (isLoading) return <SkeletonRows count={6} />;
 
   return (
+    <>
     <FlatList
-      data={items}
-      keyExtractor={item => item.bookmark.id}
-      renderItem={({ item }) => (
+      data={groups}
+      keyExtractor={g => g.story.id}
+      extraData={expanded}
+      renderItem={({ item: g }) => g.bookmarks.length === 1 ? (
         <BookmarkTile
-          bookmark={item.bookmark}
-          story={item.story}
+          bookmark={g.bookmarks[0]}
+          story={g.story}
           authorMap={authorMap}
           tagMap={tagMap}
           onPlay={handlePlay}
+          onEdit={setEditing}
+          onDelete={confirmDelete}
+        />
+      ) : (
+        <BookmarkGroup
+          bookmarks={g.bookmarks}
+          expanded={!!expanded[g.story.id]}
+          onToggle={() => setExpanded(e => ({ ...e, [g.story.id]: !e[g.story.id] }))}
+          story={g.story}
+          authorMap={authorMap}
+          tagMap={tagMap}
+          onPlay={handlePlay}
+          onEdit={setEditing}
+          onDelete={confirmDelete}
         />
       )}
       onEndReached={() => {
@@ -97,12 +148,14 @@ export default function BookmarkList({ tabBarHeight }: BookmarkListProps) {
       }
       ListEmptyComponent={
         <EmptyState
-          icon={<FontAwesome5 name={'bookmark' as any} size={40} color={colors.textSecondary} iconStyle="solid" />}
+          icon={<Icon name="bookmark" size={40} color={colors.textSecondary} />}
           title="Save your place"
           body="While a story plays, tap the bookmark icon to mark a moment. Come back here to jump straight to it."
         />
       }
     />
+    <EditBookmarkSheet bookmark={editing} onClose={() => setEditing(null)} />
+    </>
   );
 }
 

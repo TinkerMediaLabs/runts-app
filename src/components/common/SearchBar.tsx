@@ -1,7 +1,6 @@
 import { Dimensions, TouchableWithoutFeedback, View } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import useStyles from '../../theme/styles';
 import useTypography from '../../theme/typography';
@@ -13,6 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/types';
 import { useTipTarget } from '../../tips/useTipTarget';
 import { radius } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const SearchBar = () => {
 
@@ -36,17 +36,18 @@ const SearchBar = () => {
                     paddingHorizontal: 10, 
                     borderRadius: radius.sm, 
                     flexDirection: 'row', 
-                    backgroundColor: '#e0e0e0', 
+                    backgroundColor: colors.inputBg,
+                    borderWidth: 1,
+                    borderColor: colors.inputBorder,
                     height: 40, 
                     width: Dimensions.get('window').width - 40}}
                 >
-                <FontAwesome5 
-                    name='search'
-                    color='#000000a5'
+                <Icon 
+                    name="search"
+                    color={colors.inputPlaceholder}
                     size={18}
-                    iconStyle="solid"
                 />
-                <Text style={{marginLeft: 20, color: '#000000a5'}}>
+                <Text style={{marginLeft: 20, color: colors.inputPlaceholder}}>
                     Search stories, authors, tags
                 </Text>
                 </View>

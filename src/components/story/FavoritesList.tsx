@@ -4,7 +4,6 @@ import { Text } from '@/components/common/AppText';
 
 import { useFocusEffect } from '@react-navigation/native';
 import { SkeletonRows } from '../common/Skeleton';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import StoryTile from './StoryTile';
 import EmptyState from '../common/EmptyState';
@@ -20,6 +19,7 @@ import { useTagNames }    from '../../hooks/queries/useTagNames';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 // The star rating on each favorite is hidden for now. Set this to true to bring it back.
 const SHOW_RATING_BADGE = false;
@@ -55,7 +55,7 @@ const FavoriteStoryRow = ({ story, authorMap, tagMap }: any) => {
       {/* Rating badge */}
       {SHOW_RATING_BADGE && (
         <View style={styles.ratingBadge}>
-          <FontAwesome5 name="star" size={iconSize.xs} color={colors.gold} iconStyle="solid" />
+          <Icon name="star" size={iconSize.xs} color={colors.gold} />
           <Text style={styles.ratingText}>{story.userRating} / 10</Text>
         </View>
       )}
@@ -130,7 +130,7 @@ const { data: tagMap = {} } = useTagNames(allTagIds);
       contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
       ListEmptyComponent={
         <EmptyState
-          icon={<FontAwesome5 name="star" size={40} color={colors.textSecondary} iconStyle="regular" />}
+          icon={<Icon name="star" size={40} color={colors.textSecondary} />}
           title="Your favorites will live here"
           body={`Rate a story ${threshold} stars or higher after you listen and it shows up here, so your best ones are easy to find again.`}
           actionLabel="Find a story"

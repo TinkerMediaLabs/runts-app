@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 import { updateUserAttribute } from 'aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
@@ -15,6 +14,7 @@ import { showChip } from '@/lib/chip';
 import { fields } from '@/theme/fields';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
 
@@ -58,7 +58,7 @@ export default function EditNameSheet({ visible, onClose }: { visible: boolean; 
         <Sheet visible={visible} onClose={onClose} title="Update Display Name">
             {error ? (
                 <View style={styles.errorBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-                    <FontAwesome5 name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" iconStyle="solid" />
+                    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
             ) : null}

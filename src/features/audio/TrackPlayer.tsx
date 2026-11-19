@@ -31,8 +31,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 
-import Feather from '@react-native-vector-icons/feather';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { colors } from '@/theme/colors';
 
@@ -59,9 +57,11 @@ import { useCreateBookmark } from '../../hooks/queries/useBookmarks';
 
 import { CachedImage } from '../../components/common/CachedImage';
 import { fontSizes } from '@/theme/tokens';
+import { useTipTarget } from '../../tips/useTipTarget';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
+import Icon from '@/components/common/Icon';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MINI_PLAYER_HEIGHT = 70;
 const HERO_HEIGHT_RATIO = 0.46; // hero image takes ~46% of screen height
@@ -257,6 +257,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
   // The play/pause icon shows for 3s every time the player opens or is maximized from the mini player (and when
   // playback starts), then fades, so people notice the artwork is a button. While paused it stays visible.
   const heroControlsOpacity = useSharedValue(1);
+  const artTipRef = useTipTarget('player-art');
 
   useEffect(() => {
     if (!track) return;
@@ -424,13 +425,16 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       accessibilityRole="button"
                       accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
                   >
-                      <Animated.View style={[heroControlsStyle]}>
-                          <FontAwesome5
+                      {/* The tip for this control points at the play/pause icon's spot, which stays put even while the icon is faded. */}
+                      <View ref={artTipRef} collapsable={false} pointerEvents="none" style={styles.artTipSpot}>
+                        <Animated.View style={[heroControlsStyle]}>
+                          <Icon
                               name={optimisticPlaying ? 'pause' : 'play'}
                               size={72}
                               color={colors.textPrimary}
-                              style={{ opacity: 0.5 }} iconStyle="solid" />
-                      </Animated.View>
+                              style={{ opacity: 0.5 }} />
+                        </Animated.View>
+                      </View>
                   </TouchableOpacity>
               </View>
 
@@ -553,7 +557,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       <Text numberOfLines={1} style={styles.upNextMeta}>
                         {nextTrackInfo.artist ?? ''}{nextTrackInfo.duration ? ` · ${fmtDuration(nextTrackInfo.duration)}` : ''}                      </Text>
                     </View>
-                    <Feather name="skip-forward" size={20} color={colors.textPrimary} />
+                    <Icon name="skip-forward" size={20} color={colors.textPrimary} />
                   </View>
                 </TouchableOpacity>
               ) : null}
@@ -582,7 +586,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
               accessibilityRole="button"
               accessibilityLabel="Minimize player"
             >
-              <Feather name="chevron-down" size={28} color={colors.textPrimary} />
+              <Icon name="chevron-down" size={28} color={colors.textPrimary} />
             </TouchableOpacity>
 
             {/* Options modal — rendered outside scroll so it overlays
@@ -659,12 +663,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
             accessibilityRole="button"
             accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
           >
-            <FontAwesome5
+            <Icon
                 name={optimisticPlaying ? 'pause' : 'play'}
                 size={iconSize.sm}
                 color="#171717"
                 style={!optimisticPlaying ? { marginLeft: 2 } : undefined}
-                iconStyle="solid"
             />
         </TouchableOpacity>
         </Animated.View>
@@ -706,7 +709,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
                 accessibilityRole="button"
                 accessibilityLabel={optimisticPlaying ? 'Pause' : 'Play'}
               >
-                <Feather
+                <Icon
                   name={optimisticPlaying ? 'pause' : 'play'}
                   size={22}
                   color={colors.textPrimary}
@@ -860,6 +863,7 @@ mini: {
     position: 'absolute',
     bottom: 0,
   },
+  artTipSpot: { width: 96, height: 96, alignItems: 'center', justifyContent: 'center' },
   heroTouch: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',

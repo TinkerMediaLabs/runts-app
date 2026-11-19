@@ -17,7 +17,9 @@ const schema = a.schema({
       type: a.string(),
       name: a.string(),
       profilePicUri: a.string(),
-      birthdate: a.date(),
+      birthdate: a.date(),                      // older accounts; new accounts give an age instead (below)
+      age: a.integer(),                        // the age the person gave at sign-up
+      ageEnteredOn: a.date(),                  // the day they gave it; the age moves on from there (see lib/age.ts)
       isPublisher: a.boolean(),
       plan: a.string(),
       onboardingComplete: a.boolean(),
@@ -271,6 +273,7 @@ Comment: a
       tagId: a.string().required(),
       followedAt: a.datetime(),
       notify: a.boolean(),   // new-story push for this tag; switched per tag in app settings. Missing counts as ON.
+      lastSeenAt: a.datetime(), // when the person last opened this tag's page; a story newer than this (or than followedAt) shows the "new stories" dot
     })
     .secondaryIndexes(index => [
       index('userId').sortKeys(['tagId']).name('byUserAndTag'),
@@ -531,6 +534,7 @@ Comment: a
       description: a.string(),
       useHeroLayout: a.boolean().default(false),
       isErotic: a.boolean().default(false),
+      latestStoryAt: a.datetime(),   // publish date of the newest live story with this tag. Written by tag-insights (every 3h), only when it changes.
       // What kind of tag this is, beyond genre. Absent = ordinary genre tag. Values: 'setting' (where a story
       // takes place), 'mood' (what the listener is in the mood for; drives the daily picker), 'tone' (how the
       // story reads), 'universe' (a shared world). Indexed (byTypeAndName, byTypeAndOrder) so the CMS and the app can

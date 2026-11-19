@@ -124,3 +124,24 @@ export function useDeleteBookmark() {
         },
     });
 }
+
+// ---------------------------------------------------------------------------
+// Rename a bookmark
+// ---------------------------------------------------------------------------
+
+export function useUpdateBookmark() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ bookmarkId, name }: { bookmarkId: string; name: string }) => {
+      const client = generateClient<Schema>();
+            return unwrap(
+                await client.models.UserBookmark.update({ id: bookmarkId, name: name.trim() || 'My Bookmark' }),
+                'Rename bookmark',
+            );
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+            showChip('Bookmark renamed');
+        },
+    });
+}

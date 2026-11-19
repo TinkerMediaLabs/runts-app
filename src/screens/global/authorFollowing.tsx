@@ -7,12 +7,12 @@ import MenuHeader from '../../components/common/MenuHeader';
 import Screen from '../../components/common/Screen';
 import AuthorTile from '../../components/story/AuthorTile';
 import { useFollowedAuthors } from '../../hooks/queries/useAuthorFollowing';
-import FontAwesome5 from '@react-native-vector-icons/fontawesome5';
 
 import { useStories } from '../../hooks/queries/useStories';
 import { useTagNames } from '@/hooks/queries/useTagNames';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
+import Icon from '@/components/common/Icon';
 
 export default function AuthorFollowingScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -61,7 +61,7 @@ const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
 };
 
   return (
-    <Screen>
+    <Screen gradient>
       <MenuHeader title="Following" navigation={navigation} />
 
       {isLoading ? (
@@ -86,7 +86,7 @@ const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <FontAwesome5 name="user-friends" size={36} color={colors.textSecondary} iconStyle="solid" />
+              <Icon name="user-friends" size={36} color={colors.textSecondary} />
               <Text style={styles.emptyTitle}>Not following anyone yet</Text>
               <Text style={styles.emptySub}>
                 Follow authors from their profile page to see them here.
