@@ -11,6 +11,8 @@ import SearchBar              from '../../components/common/SearchBar';
 import { SkeletonGenreTiles, SkeletonCardRow } from '../../components/common/Skeleton';
 import Reveal                 from '../../components/common/Reveal';
 import { SubgenreRow, ExploreSubgenres, CatalogLinks } from '../../components/discover/DiscoverSections';
+import WorldBuilding, { WorldBuildingPlaceholder } from '../../components/discover/WorldBuilding';
+import { useWorldsPreview } from '../../hooks/queries/useWorlds';
 
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 import {
@@ -45,6 +47,8 @@ const BrowseScreen = ({ navigation }: any) => {
         [sections],
     );
     const featuredQ = useFeaturedTags(featuredIds);
+    const worldsSection = sections.find(s => s.type === 'discoverWorlds');
+    const worldsQ = useWorldsPreview(worldsSection?.limit ?? 4, !!worldsSection);
 
     const [gaveUp, setGaveUp] = useState(false);
     useEffect(() => { const t = setTimeout(() => setGaveUp(true), GIVE_UP_MS); return () => clearTimeout(t); }, []);
@@ -58,6 +62,7 @@ const BrowseScreen = ({ navigation }: any) => {
             case 'discoverShuffle':  return exploreQ.isLoading;
             case 'discoverBecause':  return tasteQ.isLoading || becauseQ.isLoading;
             case 'discoverTryNew':   return popularQ.isLoading || tasteQ.isLoading;
+            case 'discoverWorlds':   return worldsQ.isLoading;
             default:                 return false;
         }
     };
@@ -70,6 +75,7 @@ const BrowseScreen = ({ navigation }: any) => {
         switch (s.type) {
             case 'discoverGenres':  return <SkeletonGenreTiles key={s.id} />;
             case 'discoverCatalog': return null;
+            case 'discoverWorlds':  return <WorldBuildingPlaceholder key={s.id} />;
             default:                return <SkeletonCardRow key={s.id} cardWidth={156} cardHeight={100} />;
         }
     };
@@ -100,6 +106,8 @@ const BrowseScreen = ({ navigation }: any) => {
                 const list = pickTryNew(popularQ.data ?? [], tasteQ.data?.listenedTagIds ?? [], picked, s.limit ?? 10);
                 return list.length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Try something new'} tags={list} /></Reveal> : null;
             }
+            case 'discoverWorlds':
+                return (worldsQ.data ?? []).length ? <Reveal key={s.id} duration={350}><WorldBuilding worlds={worldsQ.data!} title={s.title} /></Reveal> : null;
             case 'discoverCatalog':
                 return <Reveal key={s.id} duration={350}><CatalogLinks title={s.title} /></Reveal>;
             default:

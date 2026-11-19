@@ -14,6 +14,7 @@ export type RootStackParamList = {
     TagHomeScreen: { id: string; name: string };
     BrowseByTitle: undefined;
     AllSubgenres: undefined;
+    Worlds: undefined;
     AuthorDetails: undefined;
     InProgressScreen: undefined;
     HistoryScreen: undefined;
