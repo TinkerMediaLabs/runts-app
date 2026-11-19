@@ -2,9 +2,9 @@ import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import {
   ArrowClockwise, ArrowCounterClockwise, ArrowRight, ArrowsClockwise, ArrowsDownUp, Book, BookOpen, BookmarkSimple,
-  Books, Bug, Buildings, Camera, CaretDown, CaretLeft, CaretRight, Check, CheckCircle, Clock, ClockCounterClockwise,
+  Books, Bug, Buildings, Camera, CaretDown, CaretLeft, CaretUp, CaretRight, Check, CheckCircle, Clock, ClockCounterClockwise,
   Compass, Crown, DeviceMobile, DotsSixVertical, DotsThree, DotsThreeVertical, DownloadSimple, Envelope, Eye,
-  EyeSlash, FileText, Fire, Gauge, Gear, GitBranch, Globe, HardDrives, Headphones, InfinityIcon, Info, InstagramLogo,
+  EyeSlash, FileText, Fire, Gauge, Gear, GitBranch, Globe, HardDrives, Headphones, Heart, InfinityIcon, Info, InstagramLogo,
   Key, Lightbulb, Lightning, List, Lock, LockOpen, MagnifyingGlass, Microphone, Moon, Pause, PencilSimple, Play,
   PlayCircle, Prohibit, PushPin, Question, ShareNetwork, ShieldCheck, SignOut, SkipForward, Sparkle, SpeakerHigh,
   Star, Tag, Trash, User, UserGear, UserMinus, UserPlus, Users, Warning, WarningCircle, WifiHigh, X, XCircle,
@@ -47,6 +47,8 @@ const ICONS = {
   'exclamation-triangle': Warning,
   'exclamation-circle': WarningCircle,
   'chevron-left': CaretLeft,
+  'chevron-up': CaretUp,
+  'heart': Heart,
   'envelope': Envelope,
   'key': Key,
   'sign-out-alt': SignOut,

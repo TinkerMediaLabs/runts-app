@@ -8,6 +8,7 @@ import { localAssets } from '../story/PrimaryGenreTiles';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { tagTileColors, tileInitial } from '@/lib/tagTileColors';
 import { Analytics } from '@/lib/analytics';
+import NewDot from '../common/NewDot';
 import { navigate } from '@/navigation/RootNavigator';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius } from '@/theme/tokens';
@@ -18,7 +19,7 @@ const TILE_HEIGHT = 160;   // same as the primary genre tiles
 // A followed genre as a full-width tile, the same size and feel as the primary genre tiles. With a picture it looks
 // like them. Without one (most genres) it gets a deep gradient, a big faint initial and the story count, so it
 // still looks designed rather than empty.
-const FollowedTagTile = ({ tag }: { tag: any }) => {
+const FollowedTagTile = ({ tag, hasNew = false }: { tag: any; hasNew?: boolean }) => {
   const typo = useTypography();
   const key: string | null = tag.tileImageUri ?? tag.heroImageUri ?? tag.imageUri ?? null;
   const local = key && localAssets[key] ? localAssets[key] : null;
@@ -40,8 +41,9 @@ const FollowedTagTile = ({ tag }: { tag: any }) => {
       onPress={open}
       style={styles.wrapper}
       accessibilityRole="button"
-      accessibilityLabel={countLabel ? `Genre ${tag.name}, ${countLabel}` : `Genre ${tag.name}`}
+      accessibilityLabel={`Genre ${tag.name}${countLabel ? `, ${countLabel}` : ''}${hasNew ? ', new stories' : ''}`}
     >
+      {hasNew ? <NewDot style={{ zIndex: 2 }} /> : null}
       {source ? (
         <CachedImageBackground source={source} style={styles.tile} imageStyle={{ borderRadius: radius.lg }}>
           <LinearGradient

@@ -100,3 +100,28 @@ export function discoverFields(tag: TagMeta, liveCount: number): { name: string;
 export function staleInsightIds(insightIds: string[], tagIds: Set<string>): string[] {
   return insightIds.filter(id => !tagIds.has(id));
 }
+
+
+// The newest publish date among each tag's live links. Tags with no dated link are left out.
+export function latestByTag(links: TagLink[]): Map<string, string> {
+  const best = new Map<string, { at: string; ms: number }>();
+  for (const l of links) {
+    if (!l.tagId || !l.publishedAt) continue;
+    const ms = Date.parse(l.publishedAt);
+    if (!Number.isFinite(ms)) continue;
+    const cur = best.get(l.tagId);
+    if (!cur || ms > cur.ms) best.set(l.tagId, { at: l.publishedAt, ms });
+  }
+  return new Map(Array.from(best, ([id, v]) => [id, v.at]));
+}
+
+// Only the tags whose stored latestStoryAt is missing or different, so a run writes next to nothing once the data settles.
+export function latestChanges(latest: Map<string, string>, stored: Map<string, string | undefined | null>): [string, string][] {
+  const out: [string, string][] = [];
+  for (const [id, at] of latest) {
+    const was = stored.get(id);
+    if (!stored.has(id)) continue;                     // the tag itself was deleted: nothing to write to
+    if (!was || Date.parse(was) !== Date.parse(at)) out.push([id, at]);
+  }
+  return out;
+}

@@ -14,6 +14,8 @@ import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { CachedImageBackground } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/tokens';
+import FollowBadge from '../common/FollowBadge';
+import { useIsTagFollowed } from '../../hooks/queries/useTagFollowing';
 const { width } = Dimensions.get('window');
 
 // One scrim for every genre tile: 65% black across the bottom third, fading to clear at the top.
@@ -51,6 +53,7 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
     );
     const remoteSource = resolvedUri ? { uri: resolvedUri } : null;
     const imageSource  = bgSource ?? remoteSource;
+    const followed = useIsTagFollowed(id);
 
     return (
         <TouchableOpacity
@@ -61,8 +64,9 @@ const Item = ({ name, id, tileImageUri, navigation }: any) => {
             }}
             style={styles_local.tileWrapper}
             accessibilityRole="button"
-            accessibilityLabel={`Genre ${name}`}
+            accessibilityLabel={followed ? `Genre ${name}, following` : `Genre ${name}`}
         >
+            {followed ? <FollowBadge style={{ zIndex: 2 }} /> : null}
             {imageSource ? (
                 <CachedImageBackground
                     source={imageSource}

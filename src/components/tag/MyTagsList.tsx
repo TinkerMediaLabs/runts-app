@@ -5,6 +5,7 @@ import EmptyState from '../common/EmptyState';
 import FollowedTagTile from './FollowedTagTile';
 import { useFollowedTags } from '../../hooks/queries/useTagFollowing';
 import { navigate } from '@/navigation/RootNavigator';
+import { hasNewStories } from '../../lib/newStories';
 import { colors } from '@/theme/colors';
 import Icon from '@/components/common/Icon';
 
@@ -25,7 +26,12 @@ export default function MyTagsList({ tabBarHeight }: { tabBarHeight: number }) {
     <FlatList
       data={items}
       keyExtractor={item => item.tag.id}
-      renderItem={({ item }) => <FollowedTagTile tag={item.tag} />}
+      renderItem={({ item }) => (
+        <FollowedTagTile
+          tag={item.tag}
+          hasNew={hasNewStories(item.tag?.latestStoryAt, item.followRecord?.lastSeenAt, item.followRecord?.followedAt)}
+        />
+      )}
       onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
       onEndReachedThreshold={1.5}
       initialNumToRender={8}

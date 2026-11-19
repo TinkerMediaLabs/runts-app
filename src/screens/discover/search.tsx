@@ -29,6 +29,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Screen      from '@/components/common/Screen';
 import StoryTile   from '../../components/story/StoryTile';
 import SearchInput from '../../components/common/SearchInput';
+import FollowBadge from '../../components/common/FollowBadge';
+import { useIsTagFollowed } from '../../hooks/queries/useTagFollowing';
 import ScreenHeader from '../../components/common/ScreenHeader';
 
 import { useStoryImage }  from '../../hooks/queries/useStoryImage';
@@ -185,20 +187,24 @@ const SearchAuthorItem = React.memo(({
 // GenreTile
 // ---------------------------------------------------------------------------
 
-const GenreTile = React.memo(({ item, onPress }: { item: any; onPress: () => void }) => (
+const GenreTile = React.memo(({ item, onPress }: { item: any; onPress: () => void }) => {
+  const followed = useIsTagFollowed(item.id);
+  return (
   <TouchableOpacity
     activeOpacity={0.7}
     onPress={onPress}
     style={styles.genreTile}
     accessibilityRole="button"
-    accessibilityLabel={`${item.name}, ${item.storyCount ?? 0} ${(item.storyCount ?? 0) === 1 ? 'story' : 'stories'}`}
+    accessibilityLabel={`${item.name}, ${item.storyCount ?? 0} ${(item.storyCount ?? 0) === 1 ? 'story' : 'stories'}${followed ? ', following' : ''}`}
   >
-    <Text style={styles.genreTileName} numberOfLines={1}>{item.name}</Text>
+    {followed ? <FollowBadge size={18} /> : null}
+    <Text style={[styles.genreTileName, followed && { paddingRight: 22 }]} numberOfLines={1}>{item.name}</Text>
     <Text style={styles.genreTileCount}>
       {item.storyCount ?? 0} {(item.storyCount ?? 0) === 1 ? 'story' : 'stories'}
     </Text>
   </TouchableOpacity>
-));
+  );
+});
 
 // ---------------------------------------------------------------------------
 // FilterChip

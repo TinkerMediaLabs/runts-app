@@ -30,6 +30,7 @@ import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionTitle from '@/components/common/SectionTitle';
 import Icon from '@/components/common/Icon';
+import { useMarkTagSeen } from '../../hooks/queries/useTagFollowing';
 
 const HERO_HEIGHT = 340;
 const HEADER_THRESHOLD_START = HERO_HEIGHT - 120;
@@ -43,6 +44,7 @@ const GenreHome = ({ navigation }: any) => {
     const insets = useSafeAreaInsets();
 
     const { data: tag } = useTag(tagId);
+    useMarkTagSeen(tagId, (tag as any)?.latestStoryAt);
     const { data: heroUri } = useStoryImage(tag?.heroImageUri);
     const home = useTagHome(tagId, tagName ?? '', !!tag?.isErotic);
 

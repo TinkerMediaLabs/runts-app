@@ -258,7 +258,7 @@ tagInsightsFn.addEnvironment('STORYTAG_TABLE_NAME', storyTagTable.tableName);
 tagInsightsFn.addEnvironment('TAG_TABLE_NAME', tagTable.tableName);
 tagInsightsFn.addEnvironment('TAG_INSIGHT_TABLE_NAME', tagInsightTable.tableName);
 storyTagTable.grantReadData(tagInsightsFn);
-tagTable.grantReadData(tagInsightsFn);
+tagTable.grantReadWriteData(tagInsightsFn);   // writes Tag.latestStoryAt (only when it changes)
 tagInsightTable.grantReadWriteData(tagInsightsFn);
 // Scanning the live-links index needs the index grant spelled out (see trending-snapshot above).
 tagInsightsFn.addToRolePolicy(new iam.PolicyStatement({

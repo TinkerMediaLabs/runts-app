@@ -1,6 +1,6 @@
 import { DynamoDBClient, ScanCommand, UpdateItemCommand, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
-import { computeInsights, discoverFields, staleInsightIds, TagLink } from './insights';
+import { computeInsights, discoverFields, staleInsightIds, latestByTag, latestChanges, TagLink } from './insights';
 
 // Every few hours: reads every LIVE tag link once (the sparse byLiveTagAndPublishedAt index only holds links of
 // live stories) and writes one TagInsight row per tag: how many live stories it has, its related genres and
@@ -29,7 +29,7 @@ export const handler = async () => {
     ProjectionExpression: 'storyId, tagId, publishedAt',
   })) as TagLink[];
 
-  const tags = await scanAll({ TableName: TAG_TABLE, ProjectionExpression: 'id, #n, isPrimary, isErotic, tagType', ExpressionAttributeNames: { '#n': 'name' } });
+  const tags = await scanAll({ TableName: TAG_TABLE, ProjectionExpression: 'id, #n, isPrimary, isErotic, tagType, latestStoryAt', ExpressionAttributeNames: { '#n': 'name' } });
   const erotic = new Set<string>(tags.filter(t => t.isErotic).map(t => t.id));
   const typed = new Set<string>(tags.filter(t => t.tagType).map(t => t.id));   // settings, moods, tones, universes: not genres
   const insights = computeInsights(links, erotic, undefined, typed);
@@ -69,6 +69,27 @@ export const handler = async () => {
     }));
   }
 
+  // The newest live story of each tag, written onto the Tag itself so the app gets it with the tag it already
+  // reads (the "new stories" dot on followed tags). Only tags whose value changed are written.
+  const changes = latestChanges(latestByTag(links), new Map(tags.map(t => [t.id as string, t.latestStoryAt as string | undefined])));
+  let latestWritten = 0;
+  for (let i = 0; i < changes.length; i += 25) {
+    await Promise.all(changes.slice(i, i + 25).map(async ([id, at]) => {
+      try {
+        await dynamo.send(new UpdateItemCommand({
+          TableName: TAG_TABLE,
+          Key: { id: { S: id } },
+          UpdateExpression: 'SET latestStoryAt = :l',
+          ConditionExpression: 'attribute_exists(id)',
+          ExpressionAttributeValues: { ':l': { S: at } },
+        }));
+        latestWritten++;
+      } catch (e: any) {
+        if (e?.name !== 'ConditionalCheckFailedException') throw e;   // a tag deleted mid-run is fine
+      }
+    }));
+  }
+
   // Rows of genres that were deleted in the CMS.
   const existing = (await scanAll({ TableName: INSIGHT_TABLE, ProjectionExpression: 'id' })).map(r => r.id as string);
   const stale = staleInsightIds(existing, new Set(ids));
@@ -77,5 +98,5 @@ export const handler = async () => {
       RequestItems: { [INSIGHT_TABLE]: stale.slice(i, i + 25).map(id => ({ DeleteRequest: { Key: { id: { S: id } } } })) },
     }));
   }
-  console.log(`tag-insights: ${links.length} live links, ${tags.length} tags, ${written} rows written, ${stale.length} stale rows removed`);
+  console.log(`tag-insights: ${links.length} live links, ${tags.length} tags, ${written} rows written, ${latestWritten} newest-story dates written, ${stale.length} stale rows removed`);
 };
