@@ -1,4 +1,5 @@
 import React from 'react';
+import { radius } from '@/theme/tokens';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { audioEngine } from '../audio/audioEngine';
@@ -54,7 +55,7 @@ export default function PlayerControls({ isPlaying, pause, resume, hasNext, onNe
           <Icon
             name={isPlaying ? 'pause' : 'play'}
             size={36}
-            color="#ffff"
+            color={colors.textPrimary}
           />
         </TouchableOpacity>
         ) : <View style={styles.gap} />}
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
   },
   play: {
     paddingHorizontal: 20,
-    borderRadius:      40,
+    borderRadius:      radius.pill,
   },
   skip: {
     width:          64,

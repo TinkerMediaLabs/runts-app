@@ -142,13 +142,13 @@ export const CatalogLinks = ({ title }: { title?: string | null }) => {
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: layout.gutter },
   shuffleBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 22,
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: radius.pill,
     backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border,
   },
   shuffleText: { fontSize: fontSizes.caption, fontWeight: '600', color: colors.textSecondary },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 22, minHeight: 44, justifyContent: 'center', backgroundColor: colors.fillFaint,
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, minHeight: 44, justifyContent: 'center', backgroundColor: colors.fillFaint,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
   },
   chipText: { fontSize: fontSizes.small, color: colors.textSecondary, fontWeight: '500' },

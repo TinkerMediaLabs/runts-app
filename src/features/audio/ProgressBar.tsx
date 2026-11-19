@@ -154,7 +154,7 @@ export default function ProgressBar({ progress, isErotic = false, loading = fals
         renderThumb={() => <View style={{    
           width:           14,
           height:          14,
-          borderRadius:    20,
+          borderRadius:    radius.xl,
           overflow:        'hidden',
           backgroundColor: isErotic ? '#ff7c2a' : colors.accent,  // ← orange or cyan
         }} />}
@@ -166,10 +166,10 @@ export default function ProgressBar({ progress, isErotic = false, loading = fals
           ) : null
         }
        theme={{
-          maximumTrackTintColor: '#2a2a2a',
+          maximumTrackTintColor: colors.surface3,
           minimumTrackTintColor: isErotic ? '#ff7c2a' : colors.accent,  // ← orange or cyan
-          bubbleBackgroundColor: '#000',
-          bubbleTextColor:       '#fff',
+          bubbleBackgroundColor: colors.background,
+          bubbleTextColor:       colors.textPrimary,
           cacheTrackTintColor:   'rgba(255,255,255,0.2)',
       }}
       />
@@ -201,14 +201,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   time: {
-    color: '#aaa',
+    color: colors.grayAA,
     fontSize: fontSizes.headline,
     fontWeight: 'bold',
   },
   customThumb: {
     width: 14,
     height: 14,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     backgroundColor: colors.accent,
   },

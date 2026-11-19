@@ -1,3 +1,4 @@
+import { colors } from '../theme/colors';
 // Shared helpers for story card display logic (ForYouCarousel, HorizontalTile,
 // StoryDetails, etc.)
 
@@ -38,7 +39,7 @@ export type ProgressStatus = 'none' | 'in_progress' | 'completed';
 // everywhere a duration is shown.
 export function getDurationDisplay(duration: number, progressStatus: ProgressStatus, progressSeconds: number) {
   if (progressStatus === 'completed') {
-    return { text: fmtDuration(duration), color: '#4ADE80', icon: 'check-circle' as const };
+    return { text: fmtDuration(duration), color: colors.success, icon: 'check-circle' as const };
   }
   if (progressStatus === 'in_progress') {
     const remaining = Math.max(0, duration - (progressSeconds ?? 0));

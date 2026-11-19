@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useContext} from 'react';
+import { radius } from '@/theme/tokens';
 import { View, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -41,11 +42,11 @@ const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any)
             <View style={{ 
                 flexDirection: 'row', 
                 alignItems: 'center', 
-                borderRadius: 30,
+                borderRadius: radius.pill,
                 paddingVertical: 2,
                 paddingHorizontal: 8,
-                backgroundColor: '#171717a5',
-                borderColor: '#ffffffCC',
+                backgroundColor: colors.inkSoft,
+                borderColor: colors.white80,
                 margin: 10,
                 alignSelf: 'flex-start',
                 
@@ -60,7 +61,7 @@ const TilePlayButton = ({duration, id, title, audioUri, imageUri, author} : any)
                     <Text style={{
                         fontSize: fontSizes.small,
                         fontWeight: 'normal',
-                        color: '#ffffffCC',
+                        color: colors.white80,
                     
                     }}>
                         {TimeConversion(duration)}

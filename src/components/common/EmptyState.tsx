@@ -1,4 +1,5 @@
 import React from 'react';
+import { radius } from '@/theme/tokens';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { colors } from '@/theme/colors';
@@ -40,7 +41,7 @@ const styles = StyleSheet.create({
   title: { fontSize: fontSizes.subtitle, fontWeight: '700', color: colors.textStrong, textAlign: 'center' },
   body: { fontSize: fontSizes.small, color: colors.textStrong, textAlign: 'center', lineHeight: 21 },
   button: {
-    marginTop: 8, minHeight: 48, paddingHorizontal: 24, borderRadius: 24,
+    marginTop: 8, minHeight: 48, paddingHorizontal: 24, borderRadius: radius.pill,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: colors.accent, backgroundColor: 'rgba(0,255,255,0.08)',
   },

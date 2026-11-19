@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { radius } from '@/theme/tokens';
 import { View, TouchableOpacity, TouchableWithoutFeedback, StyleSheet, Dimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -188,7 +189,7 @@ export default function OptionsModal({
             accessibilityRole="button"
             accessibilityLabel="Close player"
           >
-            <Icon name="x-circle" size={16} color="#ff6b6b" />
+            <Icon name="x-circle" size={16} color={colors.danger} />
             <Text style={styles.dismissText}>Close Player</Text>
           </TouchableOpacity>
 
@@ -242,14 +243,14 @@ const styles = StyleSheet.create({
   card: {
     position: 'absolute',
     backgroundColor: colors.surface0,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     paddingTop: OPTIONS_BUTTON_SIZE + 8,
     paddingBottom: 16,
     paddingHorizontal: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    shadowColor: '#000',
+    shadowColor: colors.background,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.55,
     shadowRadius: 24,

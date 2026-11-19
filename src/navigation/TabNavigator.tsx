@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 
+import { colors } from '@/theme/colors';
 import {Dimensions} from 'react-native';
 
 import Icon from '@/components/common/Icon';
@@ -58,14 +59,14 @@ export default function BottomTabNavigator() {
     <BottomTab.Navigator
       initialRouteName="Discover"
       screenOptions={{ 
-        tabBarActiveTintColor: '#fff',
+        tabBarActiveTintColor: colors.textPrimary,
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: fontSizes.micro, fontWeight: '600', marginTop: 2 },
         tabBarStyle: {
             paddingTop: 4,
             paddingBottom: (insets.bottom > 0 ? insets.bottom : 6) + 2,
             height: layout.tabBarHeight + insets.bottom,
-            backgroundColor: '#0a0a0a',
+            backgroundColor: colors.tabBar,
         }
     }}>
       <BottomTab.Screen

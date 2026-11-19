@@ -120,7 +120,7 @@ const Welcome = ({ navigation }: any) => {
                             Welcome to Runts
                         </Text>
 
-                        <Text style={{ color: "#aaa", fontSize: fontSizes.body, marginTop: 10, textAlign: "center" }}>
+                        <Text style={{ color: colors.grayAA, fontSize: fontSizes.body, marginTop: 10, textAlign: "center" }}>
                             Your home for audio short stories
                         </Text>
                     </Animated.View>
@@ -178,7 +178,7 @@ const Welcome = ({ navigation }: any) => {
                                 Runts is for listeners {MIN_AGE} and older, so we can't create your account.
                             </Text>
                             {removeError ? (
-                                <Text style={{ color: '#ff6b6b', fontSize: fontSizes.small, textAlign: 'center', marginTop: 8 }}>{removeError}</Text>
+                                <Text style={{ color: colors.danger, fontSize: fontSizes.small, textAlign: 'center', marginTop: 8 }}>{removeError}</Text>
                             ) : null}
                             <TouchableOpacity
                                 onPress={removeAccount}
@@ -203,7 +203,7 @@ const Welcome = ({ navigation }: any) => {
                         accessibilityLabel="Next"
                         onPress={onNext}
                         style={{
-                            backgroundColor: "#00C2C2",
+                            backgroundColor: colors.teal,
                             paddingVertical: 14,
                             borderRadius: radius.lg,
                             marginHorizontal: 40,
@@ -224,9 +224,9 @@ const Welcome = ({ navigation }: any) => {
 const local = StyleSheet.create({
     form: { alignSelf: 'stretch', paddingHorizontal: 30 },
     label: { color: colors.textPrimary, fontSize: fontSizes.body, fontWeight: '600', marginBottom: 8 },
-    note: { color: '#ffffff99', fontSize: fontSizes.small, lineHeight: 18, marginTop: 12 },
-    error: { color: '#ff6b6b', fontSize: fontSizes.small, marginTop: 12 },
-    boxError: { borderColor: '#ff6b6b' },
+    note: { color: colors.white60, fontSize: fontSizes.small, lineHeight: 18, marginTop: 12 },
+    error: { color: colors.danger, fontSize: fontSizes.small, marginTop: 12 },
+    boxError: { borderColor: colors.danger },
 });
 
 export default Welcome;

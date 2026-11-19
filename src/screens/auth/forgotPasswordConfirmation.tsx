@@ -123,9 +123,9 @@ const ForgotPasswordConfirmation = ({ navigation, route }: any) => {
                                     entering={FadeIn.duration(250)}
                                     accessibilityRole="alert"
                                     accessibilityLiveRegion="assertive"
-                                    style={{ backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: radius.xl, padding: 14, marginBottom: 24 }}
+                                    style={{ backgroundColor: colors.dangerFill, borderWidth: 1, borderColor: colors.dangerBorder, borderRadius: radius.xl, padding: 14, marginBottom: 24 }}
                                 >
-                                    <Text style={{ color: '#ff8a8a', fontSize: fontSizes.small, textAlign: 'center' }}>{error}</Text>
+                                    <Text style={{ color: colors.dangerText, fontSize: fontSizes.small, textAlign: 'center' }}>{error}</Text>
                                 </Animated.View>
                             ) : null}
 

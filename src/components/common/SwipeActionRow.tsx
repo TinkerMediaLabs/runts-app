@@ -36,7 +36,7 @@ const SwipeActionRow = ({ children, actions, gap = 0 }: { children: React.ReactN
           accessibilityLabel={a.label}
         >
           <Icon name={a.icon} size={22} color={a.danger ? '#ff8888' : '#fff'} />
-          <Text style={[styles.actionLabel, a.danger && { color: '#ff8888' }]}>{a.label}</Text>
+          <Text style={[styles.actionLabel, a.danger && { color: colors.dangerText }]}>{a.label}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row' },
   actionDanger: { backgroundColor: 'rgba(255,100,100,0.06)' },
   action: { width: ACTION_WIDTH, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  actionLabel: { color: '#fff', fontSize: fontSizes.caption, fontWeight: '600' },
+  actionLabel: { color: colors.textPrimary, fontSize: fontSizes.caption, fontWeight: '600' },
 });
 
 export default SwipeActionRow;

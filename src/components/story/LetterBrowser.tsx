@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
         borderColor:     colors.accent,
     },
     chipText: {
-        color:    '#aaa',
+        color:    colors.grayAA,
         fontSize: fontSizes.small,
     },
     chipTextActive: {
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     modalOptionText: {
         fontWeight: '500',
         fontSize:   fontSizes.body,
-        color:      '#ccc',
+        color:      colors.grayCC,
     },
     modalOptionTextActive: {
         color:      colors.accent,

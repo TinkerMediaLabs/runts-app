@@ -59,10 +59,10 @@ const SubgenreCard = ({ id, name, image, liveCount, width = CARD_W, height = CAR
 const styles = StyleSheet.create({
   card: {
     borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderSubtle, backgroundColor: '#15181a',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderSubtle, backgroundColor: colors.cardDark,
   },
   letter: {
-    position: 'absolute', right: 8, top: -14, fontSize: 92, fontWeight: '800', color: colors.textPrimary, opacity: 0.07,
+    position: 'absolute', right: 8, top: -14, fontSize: fontSizes.giant, fontWeight: '800', color: colors.textPrimary, opacity: 0.07,
   },
   text: { padding: 10, gap: 2 },
   name: { fontSize: fontSizes.body, fontWeight: '700', color: colors.textPrimary },

@@ -30,6 +30,8 @@ import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
 
+const FILTER_LOAD_CAP = 600;   // most pins loaded in the background for a search or filter
+
 type StoryTileListProps = {
     reorderEnabled?: boolean;
     tabBarHeight?: number;
@@ -151,8 +153,9 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80, filterOpen =
     useEffect(() => { if (!filterOpen) setFilter(NO_PINNED_FILTER); }, [filterOpen]);
     const filtering = filterOpen && pinnedFilterActive(filter);
     useEffect(() => {
-        if (filtering && hasNextPage && !isFetchingNextPage) fetchNextPage();
-    }, [filtering, hasNextPage, isFetchingNextPage, fetchNextPage]);
+        // Capped: a list of many hundreds of pins stops loading ahead here (more still load as you scroll).
+        if (filtering && hasNextPage && !isFetchingNextPage && allData.length < FILTER_LOAD_CAP) fetchNextPage();
+    }, [filtering, hasNextPage, isFetchingNextPage, fetchNextPage, allData.length]);
 
     const storyOf = (id: string) => queryClient.getQueryData<any>(['story', id]);
     const tagIds = useMemo(() => allData.flatMap((p: any) => {

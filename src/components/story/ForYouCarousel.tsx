@@ -422,7 +422,7 @@ card: {
         position:       'absolute',
         top:            12,
         left:           12,
-        backgroundColor: '#141f1fa5',
+        backgroundColor: colors.tealScrim,
         borderRadius: radius.xl,
         paddingHorizontal: 10,
         paddingVertical: 5,

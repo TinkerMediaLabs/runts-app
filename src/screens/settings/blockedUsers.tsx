@@ -1,4 +1,5 @@
 import React from 'react';
+import { radius } from '@/theme/tokens';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import { Text } from '@/components/common/AppText';
@@ -43,7 +44,7 @@ const BlockedUsersScreen = ({ navigation }: any) => {
                         )}
                         ListEmptyComponent={
                             <EmptyState
-                                icon={<Icon name="user-slash" size={40} color="#ffffff40" />}
+                                icon={<Icon name="user-slash" size={40} color={colors.white40} />}
                                 title="No one is blocked"
                                 body="If someone's comments bother you, tap the three dots on a comment and choose Block. Their comments will be hidden from you."
                             />
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
     },
     name: { color: colors.textPrimary, fontSize: fontSizes.body, flex: 1, marginRight: 12 },
     button: {
-        minHeight: 44, paddingHorizontal: 18, borderRadius: 22, justifyContent: 'center',
+        minHeight: 44, paddingHorizontal: 18, borderRadius: radius.pill, justifyContent: 'center',
         borderWidth: 1, borderColor: colors.accent,
     },
     buttonText: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '600' },

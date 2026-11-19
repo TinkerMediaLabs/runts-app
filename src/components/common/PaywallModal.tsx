@@ -109,7 +109,7 @@ export default function PaywallModal({ visible, onClose, storyTitle }: Props) {
                         )}
                     </View>
                     <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
-                        <Icon name="close" size={iconSize.sm} color="#ffffff99" />
+                        <Icon name="close" size={iconSize.sm} color={colors.white60} />
                     </TouchableOpacity>
                 </View>
 
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
         width:           36,
         height:          4,
         borderRadius:    2,
-        backgroundColor: '#ffffff30',
+        backgroundColor: colors.white30,
         alignSelf:       'center',
         marginBottom:    20,
     },

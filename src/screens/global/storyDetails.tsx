@@ -559,8 +559,8 @@ const handleDelete = (id: string) => {
             <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
                 <StatusBar style="light" />
                 <CloseButton navigation={navigation} backdrop />
-                <Text style={{ color: '#fff', fontSize: 18, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
-                <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: fontSizes.subtitle, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
+                <Text style={{ color: colors.grayAA, fontSize: fontSizes.small, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
             </View>
         );
     }
@@ -1039,7 +1039,7 @@ const handleDelete = (id: string) => {
     accessibilityLabel="Spoiler warning. Show comments"
     accessibilityHint="Comments may reveal the story"
   >
-    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff8888" />
+    <Icon name="exclamation-triangle" size={iconSize.sm} color={colors.dangerText} />
     <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
     <Text style={styles.spoilerSub}>Tap to view comments</Text>
   </TouchableOpacity>
@@ -1249,7 +1249,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: radius.xl,
-        backgroundColor: '#1A4851a5',
+        backgroundColor: colors.tealPanel,
         borderWidth: 0.5,
         borderColor: colors.accentSoft,
     },
@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     spoilerTitle: {
-        color: '#ff8888',
+        color: colors.dangerText,
         fontSize: fontSizes.body,
         fontWeight: '700',
     },
@@ -1350,7 +1350,7 @@ const styles = StyleSheet.create({
     commentAvatar: {
         width: 32,
         height: 32,
-        borderRadius: 16,
+        borderRadius: radius.lg,
         backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
@@ -1424,7 +1424,7 @@ const styles = StyleSheet.create({
         borderColor:     'rgba(255,124,42,0.5)',
     },
     tagChipTextErotic: {
-        color: '#ff7c2a',
+        color: colors.warning,
     },
     metaLineRow: {
     flexDirection: 'row',
@@ -1469,7 +1469,7 @@ warningChip: {
     borderColor: 'rgba(255,68,68,0.4)',
 },
 warningChipText: {
-    color: '#ff8888',
+    color: colors.dangerText,
     fontSize: fontSizes.small,
 },
 personalRatingPill: {

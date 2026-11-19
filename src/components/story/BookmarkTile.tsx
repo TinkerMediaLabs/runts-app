@@ -25,7 +25,7 @@ const BOOKMARK_ICON = 18;
 
 const useActions = (bookmark: any, onEdit: (b: any) => void, onDelete: (b: any) => void): SwipeAction[] => [
   { key: 'delete', label: 'Delete', icon: 'trash', danger: true, onPress: () => onDelete(bookmark) },
-  { key: 'edit',   label: 'Edit',   icon: 'pen',   color: '#4a5568',           onPress: () => onEdit(bookmark) },
+  { key: 'edit',   label: 'Edit',   icon: 'pen',   color: colors.slate,           onPress: () => onEdit(bookmark) },
 ];
 
 const useStoryArt = (story: any) => {

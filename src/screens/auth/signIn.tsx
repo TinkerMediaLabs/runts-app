@@ -146,9 +146,9 @@ const SignIn = ({ navigation }: any) => {
                                 <Animated.View
                                     entering={FadeIn.duration(250)}
                                     style={{
-                                        backgroundColor: '#ff444415',
+                                        backgroundColor: colors.dangerFill,
                                         borderWidth: 1,
-                                        borderColor: '#ff444440',
+                                        borderColor: colors.dangerBorder,
                                         borderRadius: radius.xl,
                                         padding: 14,
                                         marginBottom: 16,
@@ -156,7 +156,7 @@ const SignIn = ({ navigation }: any) => {
                                 >
                                     <Text
                                         style={{
-                                            color: '#ff8a8a',
+                                            color: colors.dangerText,
                                             fontSize: fontSizes.small,
                                             textAlign: 'center',
                                         }}
@@ -281,7 +281,7 @@ const SignIn = ({ navigation }: any) => {
                                                 marginVertical: 10,
                                                 backgroundColor: colors.surface0,
                                                 borderWidth: 1,
-                                                borderColor: '#ffffff22',
+                                                borderColor: colors.white22,
                                                 justifyContent: 'center',
                                                 borderRadius: radius.xl,
                                             },
@@ -319,7 +319,7 @@ const SignIn = ({ navigation }: any) => {
                                 style={{
                                     alignSelf: 'center',
                                     width: width - 60,
-                                    borderColor: '#ffffff12',
+                                    borderColor: colors.white12,
                                     paddingTop: 20,
                                 }}
                             >

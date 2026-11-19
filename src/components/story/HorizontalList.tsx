@@ -1,4 +1,5 @@
 import React from 'react';
+import { radius } from '@/theme/tokens';
 import { View, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/common/AppText';
 
@@ -47,7 +48,7 @@ const HorizontalList = ({ stories, tagId, tagName, showSeeMore }: HorizontalList
                 <Icon
                     name="chevron-right"
                     size={iconSize.md}
-                    color="#888"
+                    color={colors.gray88}
                    
                 />
             </View>
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
     seeMoreBubble: {
         width: 52,
         height: 52,
-        borderRadius: 26,
+        borderRadius: radius.pill,
         backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     seeMoreText: {
         fontSize: fontSizes.caption,
         fontWeight: '500',
-        color: '#888',
+        color: colors.gray88,
         textAlign: 'center',
     },
 });

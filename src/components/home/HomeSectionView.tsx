@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { radius } from '@/theme/tokens';
 import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -317,7 +318,7 @@ const HomeSectionView = ({ section, index, visible, onSettled }: Props & { visib
 export default HomeSectionView;
 
 const styles = StyleSheet.create({
-  todayChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)' },
+  todayChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.06)' },
   todayText: { flex: 1, color: colors.textPrimary, fontSize: fontSizes.small, marginRight: 12 },
   todayChange: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '700' },
   hidden: { position: 'absolute', left: 0, right: 0, opacity: 0 },
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     marginTop: 28, marginBottom: 20, paddingTop: 24,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
   },
-  authorPhoto: { width: 64, height: 64, borderRadius: 32 },
+  authorPhoto: { width: 64, height: 64, borderRadius: radius.pill },
   authorLabel: { fontSize: fontSizes.caption, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 },
   authorBlurb: { fontSize: fontSizes.small, color: colors.textStrong, marginTop: 2 },
 });

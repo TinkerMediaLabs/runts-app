@@ -991,7 +991,7 @@ tabCountActive: {
   authorAvatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface3,
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.15)',

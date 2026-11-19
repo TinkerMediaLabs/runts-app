@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.xl,
     overflow: 'hidden',
-    backgroundColor: '#07151a',
+    backgroundColor: colors.worldBg,
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.22)',
     justifyContent: 'space-between',

@@ -118,7 +118,7 @@ const ToggleRow = ({
             disabled={disabled}
             trackColor={{ false: '#333', true: iconColor ? `${iconColor}66` : 'rgba(0,255,255,0.4)' }}
             thumbColor={value ? (iconColor ?? colors.accent) : '#888'}
-            ios_backgroundColor="#333"
+            ios_backgroundColor={colors.gray33}
         />
     </View>
 );
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,124,42,0.3)',
     },
     badgeText: {
-        color: '#ff7c2a',
+        color: colors.warning,
         fontSize: fontSizes.caption,
         fontWeight: '600',
     },
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#ffffff30',
+        backgroundColor: colors.white30,
         alignSelf: 'center',
         marginBottom: 20,
     },
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     },
     optionPillText: {
         fontSize: fontSizes.body,
-        color: '#ccc',
+        color: colors.grayCC,
         fontWeight: '500',
     },
     optionPillTextActive: {

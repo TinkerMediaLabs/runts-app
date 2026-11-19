@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     planBadge: {
         position: 'absolute',
         top: -10,
-        backgroundColor: '#8F7900',
+        backgroundColor: colors.goldDeep,
         borderRadius: radius.xl,
         paddingHorizontal: 10,
         paddingVertical: 3,
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
         right: 10,
         width: 18,
         height: 18,
-        borderRadius: 9,
+        borderRadius: radius.pill,
         backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',

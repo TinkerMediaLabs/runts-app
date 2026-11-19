@@ -423,12 +423,12 @@ const styles = StyleSheet.create({
         right: 0,
         width: 26,
         height: 26,
-        borderRadius: 13,
+        borderRadius: radius.pill,
         backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#12121a',
+        borderColor: colors.ringDark,
     },
     heroNameRow: {
         flexDirection: 'row',
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
         borderRadius: radius.lg,
         backgroundColor: colors.surface2,
         borderWidth: 1,
-        borderColor: '#1a1a1a',
+        borderColor: colors.ringDarker,
     },
     signOutText: {
         fontSize: fontSizes.body,

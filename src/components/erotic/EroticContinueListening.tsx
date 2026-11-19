@@ -109,7 +109,7 @@ const EroticContinueListening = () => {
     if (isLoading) {
         return (
             <View style={styles.loadingRow}>
-                <ActivityIndicator color="#ff7c2a" size="small" />
+                <ActivityIndicator color={colors.warning} size="small" />
             </View>
         );
     }
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height:          3,
-        backgroundColor: '#ff7c2a',
+        backgroundColor: colors.warning,
     },
     tileInfo: {
         position:        'absolute',

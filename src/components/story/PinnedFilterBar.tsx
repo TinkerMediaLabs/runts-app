@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { colors } from '@/theme/colors';
 import { View, ScrollView, StyleSheet } from 'react-native';
 
 import SearchInput from '@/components/common/SearchInput';
@@ -70,5 +71,5 @@ const styles = StyleSheet.create({
   wrap: { paddingTop: 12, paddingBottom: 4, gap: 10 },
   search: { paddingHorizontal: spacing.margin },
   chips: { paddingHorizontal: spacing.margin, gap: 4, flexDirection: 'row', alignItems: 'center' },
-  divider: { width: StyleSheet.hairlineWidth, height: 20, backgroundColor: '#333', marginHorizontal: 4 },
+  divider: { width: StyleSheet.hairlineWidth, height: 20, backgroundColor: colors.gray33, marginHorizontal: 4 },
 });

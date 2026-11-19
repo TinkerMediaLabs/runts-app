@@ -213,7 +213,7 @@ const SuccessBanner = ({ message }: { message: string }) => (
 
 const ErrorBanner = ({ message }: { message: string }) => (
     <View style={styles.dangerBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-        <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
+        <Icon name="exclamation-triangle" size={iconSize.sm} color={colors.dangerIcon} />
         <Text style={styles.dangerBannerText}>{message}</Text>
     </View>
 );
@@ -710,7 +710,7 @@ const AccountScreen = ({ navigation }: any) => {
             {/* ── Delete Account sheet ── */}
             <Sheet visible={activeModal === 'delete'} onClose={close} title="Delete Account">
                 <View style={styles.dangerBanner}>
-                    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
+                    <Icon name="exclamation-triangle" size={iconSize.sm} color={colors.dangerIcon} />
                     <Text style={styles.dangerBannerText}>
                         This action is permanent and cannot be undone. All account data will be removed.
                     </Text>
@@ -723,7 +723,7 @@ const AccountScreen = ({ navigation }: any) => {
                 )}
                 {error ? <ErrorBanner message={error} /> : null}
                 <Text style={styles.fieldLabel}>
-                    Type <Text style={{ color: '#ff4444bf' }}>delete</Text> to confirm
+                    Type <Text style={{ color: colors.dangerIcon }}>delete</Text> to confirm
                 </Text>
                 <TextInput
                     style={[styles.input, { marginBottom: 24, color: colors.textPrimary, borderColor: deleteConfirm.toLowerCase() === 'delete' ? '#ff4444' : colors.border }]}
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
 
     // ── Badge ─────────────────────────────────────────────────────────────────
     badge: {
-        backgroundColor: '#00ffff18',
+        backgroundColor: colors.accentWash,
         borderRadius: 6,
         borderWidth: 1,
         borderColor: colors.accentFaint,
@@ -880,10 +880,10 @@ const styles = StyleSheet.create({
     dangerBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#2d1111',
+        backgroundColor: colors.dangerSurface,
         borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: '#ff444440',
+        borderColor: colors.dangerBorder,
         padding: 12,
         marginBottom: 24,
         gap: 10,
@@ -891,13 +891,13 @@ const styles = StyleSheet.create({
     dangerBannerText: {
         flex: 1,
         fontSize: fontSizes.small,
-        color: '#ff8888',
+        color: colors.dangerText,
         lineHeight: 19,
     },
     successBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#00ffff12',
+        backgroundColor: colors.accentWash,
         borderRadius: radius.md,
         borderWidth: 1,
         borderColor: colors.accentFaint,
@@ -914,10 +914,10 @@ const styles = StyleSheet.create({
     infoBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#ffffff08',
+        backgroundColor: colors.white08,
         borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: '#ffffff20',
+        borderColor: colors.white20,
         padding: 12,
         marginBottom: 24,
         gap: 10,

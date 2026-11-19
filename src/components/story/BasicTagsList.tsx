@@ -19,7 +19,7 @@ const BasicTagsList = ({ tags }: any) => {
                 color:        colors.textPrimary,
                 fontSize:     fontSizes.title,
                 fontWeight:   'bold',
-                borderColor:  '#5f5f5f',
+                borderColor:  colors.grayBorder,
             }}>
                 Tags
             </Text>

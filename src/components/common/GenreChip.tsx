@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
         right: 8,
         width: 18,
         height: 18,
-        borderRadius: 9,
+        borderRadius: radius.pill,
         backgroundColor: 'rgba(0,0,0,0.3)',
         justifyContent: 'center',
         alignItems: 'center',

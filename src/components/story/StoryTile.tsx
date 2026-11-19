@@ -271,7 +271,7 @@ const StoryTile = ({
                                         accessibilityRole="button"
                                         accessibilityLabel="Share story"
                                     >
-                                        <Icon name="share" size={iconSize.md} color="#ffffff70" />
+                                        <Icon name="share" size={iconSize.md} color={colors.white70} />
                                     </TouchableOpacity>
                                 </View>
                                     <PlayButtonV2
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     universeText: {
-        fontSize: 12.5,
+        fontSize: fontSizes.caption,
         fontWeight: '700',
         color: colors.textSecondary,
         textTransform: 'uppercase',

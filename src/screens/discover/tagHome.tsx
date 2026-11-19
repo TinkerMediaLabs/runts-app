@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     heroTitle: {
-        fontSize: 40,
+        fontSize: fontSizes.hero,
         fontWeight: '900',
         color: colors.textPrimary,
         letterSpacing: 1,

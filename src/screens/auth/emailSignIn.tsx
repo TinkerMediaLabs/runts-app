@@ -113,8 +113,8 @@ const EmailSignIn = ({ navigation }: any) => {
 const s = StyleSheet.create({
     scroll:      { minHeight: height, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
     heading:     { fontSize: fontSizes.display, marginBottom: 32 },
-    errorBox:    { backgroundColor: '#ff444415', borderWidth: 1, borderColor: '#ff444440', borderRadius: radius.lg, padding: 14, marginBottom: 24 },
-    errorText:   { color: '#ff8a8a', fontSize: fontSizes.small, textAlign: 'center' },
+    errorBox:    { backgroundColor: colors.dangerFill, borderWidth: 1, borderColor: colors.dangerBorder, borderRadius: radius.lg, padding: 14, marginBottom: 24 },
+    errorText:   { color: colors.dangerText, fontSize: fontSizes.small, textAlign: 'center' },
     button:     { alignSelf: 'center', width: width * 0.86 },
     linkText:    { fontSize: fontSizes.small, color: colors.textSecondary, alignSelf: 'center', marginTop: 28 },
     linkAccent:  { color: colors.accent },

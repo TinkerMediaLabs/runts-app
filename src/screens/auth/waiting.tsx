@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { radius } from '@/theme/tokens';
 import { View } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { StatusBar } from 'expo-status-bar';
@@ -104,8 +105,8 @@ const Waiting = () => {
                                     position: 'absolute',
                                     width: 16,
                                     height: 16,
-                                    borderRadius: 80,
-                                    backgroundColor: '#18d7ff',
+                                    borderRadius: radius.pill,
+                                    backgroundColor: colors.cyanBright,
                                     opacity: 0.25,
                                 },
                             ]}
@@ -121,11 +122,11 @@ const Waiting = () => {
                         />
 
                         <View style={{
-                            backgroundColor: '#d0d0d0',
+                            backgroundColor: colors.grayD0,
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             flexDirection: 'row',
-                            borderRadius: 100,
+                            borderRadius: radius.pill,
                             width: 40,
                             bottom: 80,
                         }}>
@@ -136,7 +137,7 @@ const Waiting = () => {
                                         width: 14,
                                         height: 14,
                                         backgroundColor: colors.surface0,
-                                        borderRadius: 9,
+                                        borderRadius: radius.pill,
                                     },
                                 ]}
                             />
@@ -147,7 +148,7 @@ const Waiting = () => {
                                         width: 14,
                                         height: 14,
                                         backgroundColor: colors.surface0,
-                                        borderRadius: 9,
+                                        borderRadius: radius.pill,
                                     },
                                 ]}
                             />
