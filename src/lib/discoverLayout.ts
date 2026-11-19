@@ -4,11 +4,11 @@ import { isSectionActive, type HomeSectionRow } from './homeLayout';
 
 export type DiscoverSectionType =
   | 'discoverGenres' | 'discoverPopular' | 'discoverFeatured' | 'discoverShuffle'
-  | 'discoverBecause' | 'discoverTryNew' | 'discoverCatalog' | 'discoverWorlds';
+  | 'discoverBecause' | 'discoverTryNew' | 'discoverCatalog' | 'discoverWorlds' | 'discoverSettings';
 
 export const DISCOVER_SECTION_TYPES: DiscoverSectionType[] = [
   'discoverGenres', 'discoverPopular', 'discoverFeatured', 'discoverShuffle',
-  'discoverBecause', 'discoverTryNew', 'discoverCatalog', 'discoverWorlds',
+  'discoverBecause', 'discoverTryNew', 'discoverCatalog', 'discoverWorlds', 'discoverSettings',
 ];
 
 export const MAX_DISCOVER_SECTIONS = 20;
@@ -16,6 +16,7 @@ export const MAX_DISCOVER_SECTIONS = 20;
 export const DEFAULT_DISCOVER_LAYOUT: HomeSectionRow[] = [
   { id: 'default-genres',  type: 'discoverGenres',  sortOrder: 10 },
   { id: 'default-worlds',  type: 'discoverWorlds',  sortOrder: 15, limit: 4 },
+  { id: 'default-settings', type: 'discoverSettings', sortOrder: 17, limit: 20 },
   { id: 'default-popular', type: 'discoverPopular', sortOrder: 20, limit: 12 },
   { id: 'default-because', type: 'discoverBecause', sortOrder: 30 },
   { id: 'default-tryNew',  type: 'discoverTryNew',  sortOrder: 40, limit: 10 },

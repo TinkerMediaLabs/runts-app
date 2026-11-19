@@ -13,6 +13,8 @@ import Reveal                 from '../../components/common/Reveal';
 import { SubgenreRow, ExploreSubgenres, CatalogLinks } from '../../components/discover/DiscoverSections';
 import WorldBuilding, { WorldBuildingPlaceholder } from '../../components/discover/WorldBuilding';
 import { useWorldsPreview } from '../../hooks/queries/useWorlds';
+import type { ListedTag } from '../../lib/discoverTags';
+import { useSettingTags } from '../../hooks/queries/useSettingTags';
 
 import { usePrimaryTags } from '../../hooks/queries/useTags';
 import {
@@ -49,6 +51,8 @@ const BrowseScreen = ({ navigation }: any) => {
     const featuredQ = useFeaturedTags(featuredIds);
     const worldsSection = sections.find(s => s.type === 'discoverWorlds');
     const worldsQ = useWorldsPreview(worldsSection?.limit ?? 4, !!worldsSection);
+    const settingsSection = sections.find(s => s.type === 'discoverSettings');
+    const settingsQ = useSettingTags(settingsSection?.limit ?? 20, !!settingsSection);
 
     const [gaveUp, setGaveUp] = useState(false);
     useEffect(() => { const t = setTimeout(() => setGaveUp(true), GIVE_UP_MS); return () => clearTimeout(t); }, []);
@@ -63,6 +67,7 @@ const BrowseScreen = ({ navigation }: any) => {
             case 'discoverBecause':  return tasteQ.isLoading || becauseQ.isLoading;
             case 'discoverTryNew':   return popularQ.isLoading || tasteQ.isLoading;
             case 'discoverWorlds':   return worldsQ.isLoading;
+            case 'discoverSettings': return settingsQ.isLoading;
             default:                 return false;
         }
     };
@@ -108,6 +113,8 @@ const BrowseScreen = ({ navigation }: any) => {
             }
             case 'discoverWorlds':
                 return (worldsQ.data ?? []).length ? <Reveal key={s.id} duration={350}><WorldBuilding worlds={worldsQ.data!} title={s.title} /></Reveal> : null;
+            case 'discoverSettings':
+                return (settingsQ.data ?? []).length ? <Reveal key={s.id} duration={350}><SubgenreRow title={s.title || 'Settings'} tags={settingsQ.data!.map((t: any) => ({ id: t.id, name: t.name, liveCount: t.storyCount ?? 0 }) as ListedTag)} /></Reveal> : null;
             case 'discoverCatalog':
                 return <Reveal key={s.id} duration={350}><CatalogLinks title={s.title} /></Reveal>;
             default:
