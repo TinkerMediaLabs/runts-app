@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SkeletonStoryPage } from '../../components/common/Skeleton';
+import { Skeleton, SkeletonStoryPage } from '../../components/common/Skeleton';
 import { View, StyleSheet, Dimensions, ScrollView, TouchableOpacity, FlatList, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator, Image } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import Button from '@/components/common/Button';
@@ -85,6 +85,7 @@ import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { shareStory } from '@/lib/shareStory';
 import Icon from '@/components/common/Icon';
+import TagPill from '@/components/common/TagPill';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -131,27 +132,8 @@ const REACTION_EMOJIS: Record<string, string> = {
         </TouchableOpacity>
     );
 
-    const TagChip = ({
-        name,
-        onPress,
-        isErotic = false,
-    }: {
-        name:      string;
-        onPress:   () => void;
-        isErotic?: boolean;
-    }) => (
-        <TouchableOpacity
-            onPress={onPress}
-            activeOpacity={0.7}
-            style={[styles.tagChip, isErotic && styles.tagChipErotic]}
-            accessibilityRole="button"
-            accessibilityLabel={`Tag ${name}`}
-            accessibilityHint="Opens stories with this tag"
-        >
-            <Text style={[styles.tagChipText, isErotic && styles.tagChipTextErotic]}>
-                #{name}
-            </Text>
-        </TouchableOpacity>
+    const TagChip = ({ name, onPress, isErotic = false, kind = 'tag' }: { name: string; onPress: () => void; isErotic?: boolean; kind?: 'tag' | 'mood' }) => (
+        <TagPill name={name} onPress={onPress} erotic={isErotic} kind={kind} />
     );
 
     const CommentItem = ({
@@ -271,6 +253,10 @@ const StoryScreen = ({ navigation }: any) => {
 
     // ── Story tags ────────────────────────────────────────────────────────────
     const [storyTags, setStoryTags] = useState<any[]>([]);
+    // False until the story's tags have been looked up, so the tag sections hold their place (placeholders) instead
+    // of popping in later and pushing the page down.
+    const [tagsReady, setTagsReady] = useState(false);
+    useEffect(() => { setTagsReady(false); setStoryTags([]); }, [storyID]);
 
      const primaryTag = storyTags.find((t: any) => t.id === story?.primaryTagId) ?? storyTags[0] ?? null;
      const isLocked   = useIsLocked(story, primaryTag);
@@ -312,6 +298,8 @@ const StoryScreen = ({ navigation }: any) => {
                 }
             } catch (e) {
                 console.log('Error fetching story tags:', e);
+            } finally {
+                setTagsReady(true);
             }
         }
         fetchTags();
@@ -571,8 +559,8 @@ const handleDelete = (id: string) => {
             <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
                 <StatusBar style="light" />
                 <CloseButton navigation={navigation} backdrop />
-                <Text style={{ color: '#fff', fontSize: 18, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
-                <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: fontSizes.subtitle, textAlign: 'center', marginBottom: 8 }}>This story isn't available</Text>
+                <Text style={{ color: colors.grayAA, fontSize: fontSizes.small, textAlign: 'center' }}>It may have been removed, or the link may be wrong.</Text>
             </View>
         );
     }
@@ -771,7 +759,18 @@ const handleDelete = (id: string) => {
                                 <Text style={styles.universeDot}>·</Text>
                             ) : null}
                             {universe?.name ? (
-                                <Text style={styles.universeText}>{universe.name}</Text>
+                                <TouchableOpacity
+                                    disabled={!worldTag}
+                                    activeOpacity={0.7}
+                                    onPress={() => worldTag && navigation.navigate('TagHomeScreen', { id: worldTag.id, name: worldTag.name })}
+                                    style={styles.worldTap}
+                                    accessibilityRole={worldTag ? 'button' : 'text'}
+                                    accessibilityLabel={`World: ${universe.name}`}
+                                    accessibilityHint={worldTag ? 'Opens stories in this world' : undefined}
+                                >
+                                    <Text style={styles.worldLabel}>World:</Text>
+                                    <Text style={styles.universeText}>{universe.name}</Text>
+                                </TouchableOpacity>
                             ) : null}
                             {universe?.name && story?.sequenceNumber ? (
                                 <Text style={styles.universeDot}>·</Text>
@@ -808,15 +807,30 @@ const handleDelete = (id: string) => {
                         <Text style={styles.summary}>{story.summary}</Text>
                     ) : null}
 
-                     {/* Tags */}
-                                        {/* Tags */}
-                    {moodTone.length > 0 && (
+                    {/* While the tags load, hold their place so nothing shifts when they arrive. */}
+                    {!tagsReady && (
+                        <View style={styles.tagsSection} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                            <Skeleton width={120} height={14} style={{ marginBottom: 12 }} />
+                            <View style={styles.tagsWrap}>
+                                <Skeleton width={110} height={36} radius={radius.xl} />
+                                <Skeleton width={90} height={36} radius={radius.xl} />
+                            </View>
+                            <Skeleton width={60} height={14} style={{ marginTop: 28, marginBottom: 12 }} />
+                            <View style={styles.tagsWrap}>
+                                <Skeleton width={90} height={36} radius={radius.xl} />
+                                <Skeleton width={120} height={36} radius={radius.xl} />
+                                <Skeleton width={100} height={36} radius={radius.xl} />
+                            </View>
+                        </View>
+                    )}
+                    {tagsReady && moodTone.length > 0 && (
                         <View style={styles.tagsSection}>
                             <Text style={styles.sectionLabel}>Mood and tone</Text>
                             <View style={styles.tagsWrap}>
                                 {moodTone.map((tag: any) => (
                                     <TagChip
                                         key={tag.id}
+                                        kind="mood"
                                         name={tag.name}
                                         isErotic={tag.isErotic === true}
                                         onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
@@ -825,19 +839,7 @@ const handleDelete = (id: string) => {
                             </View>
                         </View>
                     )}
-                    {worldTag && (
-                        <View style={styles.tagsSection}>
-                            <Text style={styles.sectionLabel}>World</Text>
-                            <View style={styles.tagsWrap}>
-                                <TagChip
-                                    name={worldTag.name}
-                                    isErotic={worldTag.isErotic === true}
-                                    onPress={() => navigation.navigate('TagHomeScreen', { id: worldTag.id, name: worldTag.name })}
-                                />
-                            </View>
-                        </View>
-                    )}
-                    {otherTags.length > 0 && (
+                    {tagsReady && otherTags.length > 0 && (
                         <View style={styles.tagsSection}>
                             <Text style={styles.sectionLabel}>Tags</Text>
                             <View style={styles.tagsWrap}>
@@ -1037,7 +1039,7 @@ const handleDelete = (id: string) => {
     accessibilityLabel="Spoiler warning. Show comments"
     accessibilityHint="Comments may reveal the story"
   >
-    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff8888" />
+    <Icon name="exclamation-triangle" size={iconSize.sm} color={colors.dangerText} />
     <Text style={styles.spoilerTitle}>Spoiler Warning</Text>
     <Text style={styles.spoilerSub}>Tap to view comments</Text>
   </TouchableOpacity>
@@ -1247,7 +1249,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: radius.xl,
-        backgroundColor: '#1A4851a5',
+        backgroundColor: colors.tealPanel,
         borderWidth: 0.5,
         borderColor: colors.accentSoft,
     },
@@ -1322,7 +1324,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     spoilerTitle: {
-        color: '#ff8888',
+        color: colors.dangerText,
         fontSize: fontSizes.body,
         fontWeight: '700',
     },
@@ -1348,7 +1350,7 @@ const styles = StyleSheet.create({
     commentAvatar: {
         width: 32,
         height: 32,
-        borderRadius: 16,
+        borderRadius: radius.lg,
         backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
@@ -1422,7 +1424,7 @@ const styles = StyleSheet.create({
         borderColor:     'rgba(255,124,42,0.5)',
     },
     tagChipTextErotic: {
-        color: '#ff7c2a',
+        color: colors.warning,
     },
     metaLineRow: {
     flexDirection: 'row',
@@ -1452,6 +1454,8 @@ universeText: {
     textTransform: 'uppercase',
     letterSpacing: 0.5,
 },
+worldTap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+worldLabel: { fontSize: fontSizes.small, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
 universeDot: {
     color: 'rgba(0,255,255,0.4)',
     fontSize: fontSizes.small,
@@ -1465,7 +1469,7 @@ warningChip: {
     borderColor: 'rgba(255,68,68,0.4)',
 },
 warningChipText: {
-    color: '#ff8888',
+    color: colors.dangerText,
     fontSize: fontSizes.small,
 },
 personalRatingPill: {

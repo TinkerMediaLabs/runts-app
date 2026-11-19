@@ -666,7 +666,7 @@ export default function TrackPlayerWidget({ expanded }: any) {
             <Icon
                 name={optimisticPlaying ? 'pause' : 'play'}
                 size={iconSize.sm}
-                color="#171717"
+                color={colors.ink}
                 style={!optimisticPlaying ? { marginLeft: 2 } : undefined}
             />
         </TouchableOpacity>
@@ -751,7 +751,7 @@ mini: {
     height: 64,
     left: 16,
     right: 16,
-    borderRadius: 32,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.accent,
     justifyContent: 'center',
@@ -768,7 +768,7 @@ mini: {
   miniImage: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: radius.pill,
   },
   miniTint: {
     ...StyleSheet.absoluteFillObject,
@@ -790,11 +790,11 @@ mini: {
     fontWeight: '700',
   },
   artist: {
-    color: '#aaa',
+    color: colors.grayAA,
     marginTop: 4,
   },
   narrator: {
-    color: '#888',
+    color: colors.gray88,
     marginTop: 2,
     fontSize: fontSizes.small,
   },
@@ -839,7 +839,7 @@ mini: {
   },
   headerbutton: {
     backgroundColor: 'rgba(0,0,0,0.45)',
-    borderRadius: 20,
+    borderRadius: radius.xl,
     width: 40,
     height: 40,
     justifyContent: 'center',
@@ -903,7 +903,7 @@ mini: {
     textTransform: 'capitalize',
   },
   genrePillTextErotic: {
-    color: '#ff7c2a',
+    color: colors.warning,
   },
   controlbox: {
     marginTop: 20,
@@ -958,11 +958,11 @@ mini: {
   floatingPlayButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.background,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

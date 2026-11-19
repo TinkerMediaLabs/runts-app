@@ -99,7 +99,7 @@ const ToggleRow = ({
             <View style={styles.rowIcon}>
                 <Icon
                     name={icon}
-                    size={iconSize.sm}
+                    size={iconSize.lg}
                     color={iconColor ?? colors.textSecondary}
                 />
             </View>
@@ -118,7 +118,7 @@ const ToggleRow = ({
             disabled={disabled}
             trackColor={{ false: '#333', true: iconColor ? `${iconColor}66` : 'rgba(0,255,255,0.4)' }}
             thumbColor={value ? (iconColor ?? colors.accent) : '#888'}
-            ios_backgroundColor="#333"
+            ios_backgroundColor={colors.gray33}
         />
     </View>
 );
@@ -143,7 +143,7 @@ const SelectRow = ({
     >
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <Icon name={icon} size={iconSize.sm} color={colors.textSecondary} />
+                <Icon name={icon} size={iconSize.lg} color={colors.textSecondary} />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
@@ -183,7 +183,7 @@ const ActionRow = ({
             <View style={styles.rowIcon}>
                 <Icon
                     name={icon}
-                    size={iconSize.sm}
+                    size={iconSize.lg}
                     color={iconColor ?? colors.textSecondary}
                 />
             </View>
@@ -309,7 +309,7 @@ const EroticSection = ({
                 >
                     <View style={styles.rowLeft}>
                         <View style={styles.rowIcon}>
-                            <Icon name="lock" size={iconSize.sm} color={EROTIC_ORANGE} />
+                            <Icon name="lock" size={iconSize.lg} color={EROTIC_ORANGE} />
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.rowLabel}>Locked</Text>
@@ -529,7 +529,7 @@ const AppSettings = ({ navigation }: any) => {
                         <View style={styles.row}>
                             <View style={styles.rowLeft}>
                                 <View style={styles.rowIcon}>
-                                    <Icon name="hdd" size={iconSize.sm} color={colors.textSecondary} />
+                                    <Icon name="hdd" size={iconSize.lg} color={colors.textSecondary} />
                                 </View>
                                 <Text style={styles.rowLabel}>Storage Used</Text>
                             </View>
@@ -745,8 +745,8 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     rowIcon: {
-        width: 30,
-        height: 30,
+        width: 32,
+        height: 32,
         borderRadius: radius.sm,
         justifyContent: 'center',
         alignItems: 'center',
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,124,42,0.3)',
     },
     badgeText: {
-        color: '#ff7c2a',
+        color: colors.warning,
         fontSize: fontSizes.caption,
         fontWeight: '600',
     },
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#ffffff30',
+        backgroundColor: colors.white30,
         alignSelf: 'center',
         marginBottom: 20,
     },
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     },
     optionPillText: {
         fontSize: fontSizes.body,
-        color: '#ccc',
+        color: colors.grayCC,
         fontWeight: '500',
     },
     optionPillTextActive: {

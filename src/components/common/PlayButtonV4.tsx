@@ -1,4 +1,5 @@
 import { View, TouchableOpacity } from 'react-native';
+import { radius } from '@/theme/tokens';
 import { Text } from '@/components/common/AppText';
 
 import useStyles from '@/theme/styles';
@@ -35,7 +36,7 @@ const PlayButtonV4 = ({ style, id, title, audioUri, imageUri, author, isLocked =
                 paddingHorizontal: 30,
                 backgroundColor: isLocked ? '#2a2a2a' : colors.accent,
                 margin: 10,
-                borderRadius: 30,
+                borderRadius: radius.pill,
             }}>
                 <Icon
                     name={isLocked ? 'lock' : 'play'}

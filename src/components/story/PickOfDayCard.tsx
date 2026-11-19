@@ -39,7 +39,7 @@ const PickOfDayCard = ({ story }: { story: any }) => {
 
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={1}
       onPress={() => openStory(story.id)}
       style={[styles.wrap, { width: cardW, height: cardH }]}
       accessibilityRole="button"

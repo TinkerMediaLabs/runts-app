@@ -45,8 +45,8 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
       accessibilityRole="button"
       accessibilityLabel="Download failed. Retry"
     >
-      <Icon name="redo" size={iconSize.xs} color="#ff8a80" />
-      <Text style={[styles.text, { color: '#ff8a80' }]}>Retry download</Text>
+      <Icon name="redo" size={iconSize.xs} color={colors.dangerText} />
+      <Text style={[styles.text, { color: colors.dangerText }]}>Retry download</Text>
     </TouchableOpacity>
   );
 }

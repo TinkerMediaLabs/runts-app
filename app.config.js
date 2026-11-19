@@ -93,6 +93,7 @@ plugins: [
     ...(config.plugins ?? []),
     '@sentry/react-native/expo',
     './plugins/withAndroidAuto', // lists the app in Android Auto
+    './plugins/withLargeScreenOptOut', // keeps the portrait phone layout on Android 16 tablets and foldables
     [
         'expo-build-properties',
         {

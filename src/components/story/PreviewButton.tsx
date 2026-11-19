@@ -71,7 +71,6 @@ export default function PreviewButton({ story, isErotic = false }: { story: any;
         )}
       </View>
       <Text style={[styles.label, { color: soft }]}>{label}</Text>
-      {!playing && status === 'idle' ? <Text style={styles.length}>{PREVIEW_SECONDS}s</Text> : null}
     </Pressable>
   );
 }
@@ -92,5 +91,4 @@ const styles = StyleSheet.create({
   bars: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 16 },
   bar: { width: 2.5, borderRadius: 2 },
   label: { fontSize: fontSizes.small, fontWeight: '700' },
-  length: { fontSize: fontSizes.caption, color: colors.textSecondary },
 });

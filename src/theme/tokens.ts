@@ -10,6 +10,8 @@ export const fontSizes = {
   title: 22,
   headline: 24,
   display: 32,
+  hero: 40,
+  giant: 92,
 } as const;
 
 export const radius = {

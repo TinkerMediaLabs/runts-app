@@ -3,6 +3,7 @@ import {
     TouchableWithoutFeedback,
 } from 'react-native';
 
+import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import { colors } from '@/theme/colors';
 import Icon from '@/components/common/Icon';
@@ -22,7 +23,7 @@ const CloseButton = ({navigation, backdrop = false} :any) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: backdrop ? 'rgba(0,0,0,0.6)' : 'transparent',
-                borderRadius: 50,
+                borderRadius: radius.pill,
                 width: 36,
                 height: 36,
                 marginHorizontal: 10,}]}

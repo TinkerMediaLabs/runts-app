@@ -1,4 +1,5 @@
 import React from 'react';
+import { radius } from '@/theme/tokens';
 import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -63,7 +64,7 @@ export default TagRowView;
 const styles = StyleSheet.create({
   chips: { paddingHorizontal: spacing.margin, gap: 10, paddingBottom: 6 },
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 22,
+    flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: radius.pill,
     paddingHorizontal: 16, paddingVertical: 10, minHeight: 44, backgroundColor: colors.fillFaint,
   },
   dot: { width: 10, height: 10, borderRadius: 5 },

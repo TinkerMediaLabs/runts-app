@@ -98,9 +98,13 @@ export default function ProgressBar({ progress, isErotic = false, loading = fals
   return (
     <View style={styles.container}>
       {/* One adjustable control for screen readers: speaks "1:23 of 12:00"; swipe up/down to seek 15 s */}
+      {/* The slider always takes its space, so the loading line and the real bar are the same height and nothing
+          shifts when the saved place is found. While loading, the slider is invisible and untouchable and the
+          rippling line sits on top of it. */}
+      <View style={styles.track}>
       {loading ? (
-        // Finding the saved place: a rippling line instead of the bar, and nothing to drag.
         <View
+          style={styles.loader}
           accessible
           accessibilityRole="progressbar"
           accessibilityLabel="Finding your place in the story"
@@ -109,8 +113,11 @@ export default function ProgressBar({ progress, isErotic = false, loading = fals
         >
           <WavyLoader isErotic={isErotic} />
         </View>
-      ) : (
+      ) : null}
       <View
+        style={{ opacity: loading ? 0 : 1 }}
+        pointerEvents={loading ? 'none' : 'auto'}
+        importantForAccessibility={loading ? 'no-hide-descendants' : 'auto'}
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel="Playback position"
@@ -147,7 +154,7 @@ export default function ProgressBar({ progress, isErotic = false, loading = fals
         renderThumb={() => <View style={{    
           width:           14,
           height:          14,
-          borderRadius:    20,
+          borderRadius:    radius.xl,
           overflow:        'hidden',
           backgroundColor: isErotic ? '#ff7c2a' : colors.accent,  // ← orange or cyan
         }} />}
@@ -159,15 +166,15 @@ export default function ProgressBar({ progress, isErotic = false, loading = fals
           ) : null
         }
        theme={{
-          maximumTrackTintColor: '#2a2a2a',
+          maximumTrackTintColor: colors.surface3,
           minimumTrackTintColor: isErotic ? '#ff7c2a' : colors.accent,  // ← orange or cyan
-          bubbleBackgroundColor: '#000',
-          bubbleTextColor:       '#fff',
+          bubbleBackgroundColor: colors.background,
+          bubbleTextColor:       colors.textPrimary,
           cacheTrackTintColor:   'rgba(255,255,255,0.2)',
       }}
       />
       </View>
-      )}
+      </View>
 
       <View
         style={styles.row}
@@ -186,20 +193,22 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 40,
   },
+  track: { position: 'relative', justifyContent: 'center' },
+  loader: { ...StyleSheet.absoluteFillObject, justifyContent: 'center' },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
   },
   time: {
-    color: '#aaa',
+    color: colors.grayAA,
     fontSize: fontSizes.headline,
     fontWeight: 'bold',
   },
   customThumb: {
     width: 14,
     height: 14,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     backgroundColor: colors.accent,
   },

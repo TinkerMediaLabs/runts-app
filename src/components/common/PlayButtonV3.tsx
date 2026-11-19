@@ -1,4 +1,5 @@
 import { TouchableOpacity } from 'react-native';
+import { radius } from '@/theme/tokens';
 import Animated from 'react-native-reanimated';
 import { colors } from '@/theme/colors';
 import { useApp } from '@/context/AppContext';
@@ -23,14 +24,14 @@ const PlayButtonV3 = ({ style, id, title, audioUri, imageUri, author, isPremium 
                     alignItems:      'center',
                     justifyContent:  'center',
                     backgroundColor: colors.primary,
-                    borderRadius:    15,
+                    borderRadius:    radius.pill,
                     margin:          12,
                 }
             ]}>
                 <Icon
                     name="play"
                     size={iconSize.sm}
-                    color="#171717"
+                    color={colors.ink}
                     style={{ marginLeft: 2 }}
                 />
             </Animated.View>

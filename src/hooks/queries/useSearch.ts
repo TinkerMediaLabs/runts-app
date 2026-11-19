@@ -13,6 +13,13 @@ export const SEARCH_PAGE_SIZE = 20;
 export type SortOption     = 'newest' | 'popular' | 'shortest';
 export type DurationFilter = 'any' | 'short' | 'medium' | 'long';
 
+export const DURATION_OPTIONS: { value: DurationFilter; label: string }[] = [
+  { value: 'any',    label: 'Any Length' },
+  { value: 'short',  label: 'Under 15m'  },
+  { value: 'medium', label: '15–30m'     },
+  { value: 'long',   label: 'Over 30m'   },
+];
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -31,7 +38,7 @@ function storyMatchesQuery(story: any, query: string): boolean {
   );
 }
 
-function matchesDuration(story: any, filter: DurationFilter): boolean {
+export function matchesDuration(story: any, filter: DurationFilter): boolean {
   if (filter === 'any') return true;
   const mins = (story.duration ?? 0) / 60;
   if (filter === 'short')  return mins < 15;

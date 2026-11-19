@@ -58,7 +58,7 @@ export default function EditNameSheet({ visible, onClose }: { visible: boolean; 
         <Sheet visible={visible} onClose={onClose} title="Update Display Name">
             {error ? (
                 <View style={styles.errorBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-                    <Icon name="exclamation-triangle" size={iconSize.sm} color="#ff4444bf" />
+                    <Icon name="exclamation-triangle" size={iconSize.sm} color={colors.dangerIcon} />
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
             ) : null}
@@ -100,10 +100,10 @@ const styles = StyleSheet.create({
     errorBanner: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#2d1111',
+        backgroundColor: colors.dangerSurface,
         borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: '#ff444440',
+        borderColor: colors.dangerBorder,
         padding: 12,
         marginBottom: 24,
         gap: 10,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     errorText: {
         flex: 1,
         fontSize: fontSizes.small,
-        color: '#ff8888',
+        color: colors.dangerText,
         lineHeight: 19,
     },
 });

@@ -12,6 +12,7 @@ import { Analytics } from '@/lib/analytics';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize, layout } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
+import TagPill from '@/components/common/TagPill';
 
 const SectionTitle = ({ text, right }: { text: string; right?: React.ReactNode }) => {
   const typo = useTypography();
@@ -97,7 +98,7 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
           <TouchableOpacity activeOpacity={0.7} onPress={shuffle} disabled={spinning} style={styles.shuffleBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button" accessibilityLabel="Shuffle tags" accessibilityHint="Shows a different set of tags">
             <Animated.View style={{ transform: [{ rotate }] }}>
-              <Icon name="sync-alt" size={iconSize.xs} color={colors.accent} />
+              <Icon name="sync-alt" size={iconSize.xs} color={colors.textSecondary} />
             </Animated.View>
             <Text style={styles.shuffleText}>Shuffle</Text>
           </TouchableOpacity>
@@ -105,18 +106,10 @@ export const ExploreSubgenres = ({ pool, title }: { pool: ListedTag[]; title: st
       />
       <Animated.View style={[styles.chipWrap, { opacity: fade }]}>
         {visible.map(tag => (
-          <TouchableOpacity key={tag.id} activeOpacity={0.7} style={styles.chip}
-            onPress={() => { Analytics.genreTapped(tag.id, tag.name); navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name }); }}
-            accessibilityRole="button" accessibilityLabel={`${tag.name}, tag, ${tag.liveCount} ${tag.liveCount === 1 ? 'story' : 'stories'}`}>
-            <Text style={styles.chipText}>#{tag.name}</Text>
-          </TouchableOpacity>
+          <TagPill key={tag.id} name={tag.name}
+            onPress={() => { Analytics.genreTapped(tag.id, tag.name); navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name }); }} />
         ))}
       </Animated.View>
-      <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('AllSubgenres')} style={styles.seeAll}
-        accessibilityRole="button" accessibilityLabel="See all tags">
-        <Text style={styles.seeAllText}>See all tags</Text>
-        <Icon name="chevron-right" size={iconSize.xs} color={colors.accent} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -149,18 +142,16 @@ export const CatalogLinks = ({ title }: { title?: string | null }) => {
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: layout.gutter },
   shuffleBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 22,
-    backgroundColor: 'rgba(0,255,255,0.07)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,255,255,0.25)',
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: radius.pill,
+    backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border,
   },
-  shuffleText: { fontSize: fontSizes.caption, fontWeight: '600', color: colors.accent },
+  shuffleText: { fontSize: fontSizes.caption, fontWeight: '600', color: colors.textSecondary },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 22, minHeight: 44, justifyContent: 'center', backgroundColor: colors.fillFaint,
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, minHeight: 44, justifyContent: 'center', backgroundColor: colors.fillFaint,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
   },
   chipText: { fontSize: fontSizes.small, color: colors.textSecondary, fontWeight: '500' },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginTop: 8, minHeight: 44 },
-  seeAllText: { fontSize: fontSizes.small, fontWeight: '600', color: colors.accent },
   linkRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 14, marginBottom: 8,
     borderRadius: radius.lg, backgroundColor: colors.fillFaint, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderSubtle,

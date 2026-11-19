@@ -167,11 +167,11 @@ const styles = StyleSheet.create({
   card: {
     width: '85%',
     backgroundColor: colors.surface1,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000',
+    shadowColor: colors.background,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 20,

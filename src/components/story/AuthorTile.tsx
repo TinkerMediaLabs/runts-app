@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface3,
     borderWidth: 1,
     borderColor: 'rgba(0,255,255,0.15)',

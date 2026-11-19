@@ -43,11 +43,11 @@ const LinkRow = ({
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.row} accessibilityRole="link" accessibilityLabel={label}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <Icon name={icon} size={iconSize.xs} color={colors.textSecondary} />
+                <Icon name={icon} size={iconSize.lg} color={colors.textSecondary} />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
-        <Icon name="chevron-right" size={iconSize.xs} color={colors.textSecondary} />
+        <Icon name="chevron-right" size={iconSize.lg} color={colors.textSecondary} />
     </TouchableOpacity>
 );
 
@@ -55,7 +55,7 @@ const InfoRow = ({ icon, label, value }: { icon: any; label: string; value: stri
     <View style={styles.row}>
         <View style={styles.rowLeft}>
             <View style={styles.rowIcon}>
-                <Icon name={icon} size={iconSize.xs} color={colors.textSecondary} />
+                <Icon name={icon} size={iconSize.lg} color={colors.textSecondary} />
             </View>
             <Text style={styles.rowLabel}>{label}</Text>
         </View>
@@ -262,8 +262,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     rowIcon: {
-        width: 30,
-        height: 30,
+        width: 32,
+        height: 32,
         borderRadius: radius.sm,
         justifyContent: 'center',
         alignItems: 'center',

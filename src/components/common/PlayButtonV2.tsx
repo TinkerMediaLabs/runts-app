@@ -1,4 +1,6 @@
 import React from 'react';
+import { radius } from '@/theme/tokens';
+import { colors } from '@/theme/colors';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import useOnPlay from '@/components/functions/OnPlay';
@@ -47,7 +49,7 @@ const PlayButtonV2 = ({ id, duration, author, imageUri, audioUri, title, isPremi
             <View style={styles.pill}>
                 <Icon
                     name="play"
-                    color="#00ffffa6"
+                    color={colors.accentSoft}
                     size={10}
                     style={{ marginRight: 10 }}
                 />
@@ -62,15 +64,15 @@ const styles = StyleSheet.create({
     pill: {
         flexDirection:     'row',
         alignItems:        'center',
-        borderRadius:      30,
+        borderRadius:      radius.pill,
         paddingVertical:   6,
         paddingHorizontal: 10,
-        backgroundColor:   '#0027271a',
+        backgroundColor:   colors.accentDeep,
         borderWidth:       0.5,
-        borderColor:       '#00ffffa6',
+        borderColor:       colors.accentSoft,
     },
     time: {
-        color:    '#00ffffa6',
+        color:    colors.accentSoft,
         fontSize: fontSizes.caption,
     },
 });

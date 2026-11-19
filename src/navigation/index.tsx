@@ -19,6 +19,7 @@ import TagHomeScreen from '../screens/discover/tagHome';
 import AuthorDetailsScreen from '../screens/global/authorDetails';
 import BrowseByTitleScreen from '../screens/discover/browswByTitle';
 import AllSubgenresScreen from '../screens/discover/allSubgenres';
+import WorldsScreen from '../screens/discover/worlds';
 import AuthorFollowingScreen from '../screens/global/authorFollowing';
 import InProgressScreen from '@/screens/settings/inProgress';
 import EditGenresScreen from '@/screens/settings/editGenres';
@@ -109,6 +110,7 @@ function RootNavigator() {
         <Stack.Screen name="AuthorDetails" component={AuthorDetailsScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="BrowseByTitle" component={BrowseByTitleScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AllSubgenres" component={AllSubgenresScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="Worlds" component={WorldsScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="InProgressScreen" component={InProgressScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="HistoryScreen" component={HistoryScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="EditGenresScreen" component={EditGenresScreen} options={{ cardStyleInterpolator: forFade }} />
@@ -134,6 +136,7 @@ function RootNavigator() {
         <Stack.Screen name="AuthorDetails" component={AuthorDetailsScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="BrowseByTitle" component={BrowseByTitleScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AllSubgenres" component={AllSubgenresScreen} options={{ cardStyleInterpolator: forFade }} />
+        <Stack.Screen name="Worlds" component={WorldsScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="SearchScreen" component={SearchScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="AboutScreen" component={AboutScreen} options={{ cardStyleInterpolator: forFade }} />
         <Stack.Screen name="ContentBlocked" component={ContentBlocked} />

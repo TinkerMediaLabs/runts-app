@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     dot: {
         width:           18,
         height:          18,
-        borderRadius:    9,
+        borderRadius:    radius.pill,
         borderWidth:     2,
         borderColor:     colors.border,
         backgroundColor: 'transparent',
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
         marginTop:         8,
     },
     cancelText: {
-        color:      '#aaa',
+        color:      colors.grayAA,
         fontSize:   fontSizes.body,
         fontWeight: '500',
     },

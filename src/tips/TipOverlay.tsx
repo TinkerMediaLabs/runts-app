@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fontSizes } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 import { AccessibilityInfo, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, withDelay, withSpring, cancelAnimation,
@@ -46,15 +48,17 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
 
   useEffect(() => { loadTips(); }, []);
 
-  // Keep the current screen name fresh. Navigation events alone miss the first screen after sign-in,
-  // so also check twice a second (cheap: reads a name, only updates when it changed).
+  // Keep the current screen name fresh. Navigation events cover every screen change; a slow check every 3 seconds
+  // catches the first screen after sign-in, which the events can miss (it only reads a name, and updates when it changed).
   useEffect(() => {
     const sync = () => {
       if (navigationRef.current?.isReady()) setTipsRoute(navigationRef.current.getCurrentRoute()?.name);
     };
     sync();
-    const id = setInterval(sync, 500);
-    return () => clearInterval(id);
+    let off: (() => void) | undefined;
+    try { off = (navigationRef as any).addListener?.('state', sync); } catch { /* not ready yet: the slow check covers it */ }
+    const id = setInterval(sync, 3000);
+    return () => { clearInterval(id); try { off?.(); } catch {} };
   }, []);
 
   // Judged against the LIVE route and store every time, never values captured when a wait began, so a screen
@@ -72,25 +76,41 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
     if (active && eligible(active.tip)) return;      // still valid
     if (active) setActive(null);
 
-    const next = [...TIPS].sort((a, b) => a.order - b.order).find(eligible);
-    if (!next) return;
+    const candidates = [...TIPS].sort((a, b) => a.order - b.order).filter(eligible);
+    if (candidates.length === 0) return;
 
-    const timer = setTimeout(() => {
-      const ref = getTargetRef(next.target);
+    let cancelled = false;
+    // Measure one tip's control against the overlay. Resolves to the placement, or null when it is not fully on screen.
+    const measure = (tip: Tip) => new Promise<Active | null>(resolve => {
+      // measureInWindow can fail to call back at all (a view that just unmounted), so never wait on it forever.
+      const giveUp = setTimeout(() => resolve(null), 800);
+      const done = (v: Active | null) => { clearTimeout(giveUp); resolve(v); };
+      const ref = getTargetRef(tip.target);
       const root = rootRef.current;
-      if (!ref?.current?.measureInWindow || !root?.measureInWindow || size.width === 0) return;
-      // Measure the overlay and the control in the same (window) coordinates, then subtract the
-      // overlay's own origin. That cancels any status bar / edge-to-edge offset between phones.
+      if (!ref?.current?.measureInWindow || !root?.measureInWindow || size.width === 0) { done(null); return; }
+      // Same (window) coordinates for both, minus the overlay's own origin: cancels status bar / edge-to-edge offsets.
       root.measureInWindow((rx: number, ry: number) => {
         ref.current.measureInWindow((wx: number, wy: number, w: number, h: number) => {
           const x = wx - rx;
           const y = wy - ry;
           const onScreen = w > 0 && h > 0 && x >= -1 && y >= 0 && x + w <= size.width + 1 && y + h <= size.height + 1;
-          if (onScreen && eligible(next)) setActive({ tip: next, x, y, w, h });
+          done(onScreen ? { tip, x, y, w, h } : null);
         });
       });
+    });
+
+    const timer = setTimeout(async () => {
+      // In order, the first tip whose control can actually be seen. One that is mounted but off screen
+      // (inside a closed menu, say) must not hold back the tips after it.
+      for (const tip of candidates) {
+        if (cancelled) return;
+        const placed = await measure(tip);
+        if (cancelled) return;
+        if (placed && eligible(tip)) { setActive(placed); return; }
+      }
     }, SETTLE_MS);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, enabled, blocked, seen, route, flags, version, active?.tip.id, size.width]);
 
@@ -209,8 +229,8 @@ const styles = StyleSheet.create({
   ring: { position: 'absolute', borderWidth: 2.5, borderColor: ACCENT },
   bubble: {
     position: 'absolute',
-    backgroundColor: '#161819',
-    borderRadius: 20,
+    backgroundColor: colors.tipBg,
+    borderRadius: radius.xl,
     padding: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.18)',
@@ -218,15 +238,15 @@ const styles = StyleSheet.create({
   },
   // A square turned 45 degrees, half hidden behind the bubble: its two outer edges make the tail.
   tail: {
-    position: 'absolute', width: TAIL, height: TAIL, backgroundColor: '#161819',
+    position: 'absolute', width: TAIL, height: TAIL, backgroundColor: colors.tipBg,
     transform: [{ rotate: '45deg' }], borderColor: 'rgba(255,255,255,0.18)',
   },
   tailTop: { top: -TAIL / 2, borderTopWidth: StyleSheet.hairlineWidth, borderLeftWidth: StyleSheet.hairlineWidth },
   tailBottom: { bottom: -TAIL / 2, borderBottomWidth: StyleSheet.hairlineWidth, borderRightWidth: StyleSheet.hairlineWidth },
-  title: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
-  body: { fontSize: 14, lineHeight: 20, color: 'rgba(255,255,255,0.8)' },
+  title: { fontSize: fontSizes.subtitle, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  body: { fontSize: fontSizes.small, lineHeight: 20, color: 'rgba(255,255,255,0.8)' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
-  off: { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
-  gotIt: { backgroundColor: ACCENT, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 22 },
-  gotItText: { color: colors.textOnAccent, fontWeight: '700', fontSize: 14 },
+  off: { fontSize: fontSizes.caption, color: 'rgba(255,255,255,0.65)' },
+  gotIt: { backgroundColor: ACCENT, borderRadius: radius.pill, paddingVertical: 10, paddingHorizontal: 22 },
+  gotItText: { color: colors.textOnAccent, fontWeight: '700', fontSize: fontSizes.small },
 });
