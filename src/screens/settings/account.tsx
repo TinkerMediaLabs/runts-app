@@ -99,7 +99,7 @@ const SettingRow = ({
                 ) : (
                     <Icon
                         name={icon}
-                        size={iconSize.sm}
+                        size={iconSize.lg}
                         color={colors.textSecondary}
                     />
                 )}
@@ -794,8 +794,8 @@ const styles = StyleSheet.create({
         flexShrink: 0,
     },
     rowIcon: {
-        width: 30,
-        height: 30,
+        width: 32,
+        height: 32,
         borderRadius: radius.sm,
         justifyContent: 'center',
         alignItems: 'center',

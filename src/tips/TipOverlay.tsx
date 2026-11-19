@@ -72,25 +72,38 @@ export default function TipOverlay({ blocked }: { blocked: boolean }) {
     if (active && eligible(active.tip)) return;      // still valid
     if (active) setActive(null);
 
-    const next = [...TIPS].sort((a, b) => a.order - b.order).find(eligible);
-    if (!next) return;
+    const candidates = [...TIPS].sort((a, b) => a.order - b.order).filter(eligible);
+    if (candidates.length === 0) return;
 
-    const timer = setTimeout(() => {
-      const ref = getTargetRef(next.target);
+    let cancelled = false;
+    // Measure one tip's control against the overlay. Resolves to the placement, or null when it is not fully on screen.
+    const measure = (tip: Tip) => new Promise<Active | null>(resolve => {
+      const ref = getTargetRef(tip.target);
       const root = rootRef.current;
-      if (!ref?.current?.measureInWindow || !root?.measureInWindow || size.width === 0) return;
-      // Measure the overlay and the control in the same (window) coordinates, then subtract the
-      // overlay's own origin. That cancels any status bar / edge-to-edge offset between phones.
+      if (!ref?.current?.measureInWindow || !root?.measureInWindow || size.width === 0) { resolve(null); return; }
+      // Same (window) coordinates for both, minus the overlay's own origin: cancels status bar / edge-to-edge offsets.
       root.measureInWindow((rx: number, ry: number) => {
         ref.current.measureInWindow((wx: number, wy: number, w: number, h: number) => {
           const x = wx - rx;
           const y = wy - ry;
           const onScreen = w > 0 && h > 0 && x >= -1 && y >= 0 && x + w <= size.width + 1 && y + h <= size.height + 1;
-          if (onScreen && eligible(next)) setActive({ tip: next, x, y, w, h });
+          resolve(onScreen ? { tip, x, y, w, h } : null);
         });
       });
+    });
+
+    const timer = setTimeout(async () => {
+      // In order, the first tip whose control can actually be seen. One that is mounted but off screen
+      // (inside a closed menu, say) must not hold back the tips after it.
+      for (const tip of candidates) {
+        if (cancelled) return;
+        const placed = await measure(tip);
+        if (cancelled) return;
+        if (placed && eligible(tip)) { setActive(placed); return; }
+      }
     }, SETTLE_MS);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, enabled, blocked, seen, route, flags, version, active?.tip.id, size.width]);
 

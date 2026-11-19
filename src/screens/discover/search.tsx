@@ -43,7 +43,9 @@ import {
   useSearchTags,
   type SortOption,
   type DurationFilter,
+  DURATION_OPTIONS,
 } from '../../hooks/queries/useSearch';
+import FilterChip from '../../components/common/FilterChip';
 
 import { useAuthorImage } from '../../hooks/queries/useAuthorImage';
 
@@ -81,12 +83,6 @@ const SORT_OPTIONS: { value: SortOption; label: string; icon: any }[] = [
   { value: 'shortest', label: 'Shortest First', icon: 'bolt'  },
 ];
 
-const DURATION_OPTIONS: { value: DurationFilter; label: string }[] = [
-  { value: 'any',    label: 'Any Length' },
-  { value: 'short',  label: 'Under 15m'  },
-  { value: 'medium', label: '15–30m'     },
-  { value: 'long',   label: 'Over 30m'   },
-];
 
 const DEBOUNCE_MS = 300;
 const SCRUNCH_END = 60; // scrollY value at which scrunch is complete
@@ -205,43 +201,6 @@ const GenreTile = React.memo(({ item, onPress }: { item: any; onPress: () => voi
   </TouchableOpacity>
   );
 });
-
-// ---------------------------------------------------------------------------
-// FilterChip
-// ---------------------------------------------------------------------------
-
-const FilterChip = ({
-  label,
-  active,
-  onPress,
-  icon,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-  icon?: any;
-}) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.7}
-    style={[styles.filterChip, active && styles.filterChipActive]}
-    accessibilityRole="button"
-    accessibilityLabel={label}
-    accessibilityState={{ selected: active }}
-  >
-    {icon ? (
-      <Icon
-        name={icon}
-        size={10}
-        color={active ? '#000' : colors.textSecondary}
-        style={{ marginRight: 5 }}
-      />
-    ) : null}
-    <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
 
 // ---------------------------------------------------------------------------
 // SwipeableSheet — shared bottom-sheet shell with swipe-down-to-close,

@@ -18,6 +18,10 @@ import { usePinnedStories } from '../../hooks/queries/usePinnedStories';
 import { useStoryImage } from '../../hooks/queries/useStoryImage';
 import { useAuthor } from '../../hooks/queries/useAuthors';
 import { useStory } from '../../hooks/queries/useStories';
+import { useTagNames } from '../../hooks/queries/useTagNames';
+import PinnedFilterBar from './PinnedFilterBar';
+import { filterPinned, pinnedFilterActive, NO_PINNED_FILTER, type PinnedFilter } from '@/lib/pinnedFilter';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTag } from '../../hooks/queries/useTagNames';
 import { unwrap } from '@/lib/amplifyResult';
 import { colors } from '@/theme/colors';
@@ -29,6 +33,7 @@ const client = generateClient<Schema>();
 type StoryTileListProps = {
     reorderEnabled?: boolean;
     tabBarHeight?: number;
+    filterOpen?: boolean;      // the search + filter row under the tabs
 };
 
 // ---------------------------------------------------------------------------
@@ -91,7 +96,7 @@ const PinnedStoryTile = ({
 // Main list
 // ---------------------------------------------------------------------------
 
-const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileListProps) => {
+const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80, filterOpen = false }: StoryTileListProps) => {
 
     const { userId } = useApp();
 
@@ -137,7 +142,30 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     // Draw straight from the loaded pins until a drag-to-reorder makes a local copy, so the list never lags a frame
     // behind the data (that gap was the empty-state flash).
-    const listData = localData.length > 0 ? localData : (pinnedStories ?? []);
+    const allData = localData.length > 0 ? localData : (pinnedStories ?? []);
+
+    // Search and filters work on the phone over the pins loaded so far (their stories are already in the cache).
+    // While a filter is on, the rest of the pages load in the background so the answer is complete.
+    const queryClient = useQueryClient();
+    const [filter, setFilter] = useState<PinnedFilter>(NO_PINNED_FILTER);
+    useEffect(() => { if (!filterOpen) setFilter(NO_PINNED_FILTER); }, [filterOpen]);
+    const filtering = filterOpen && pinnedFilterActive(filter);
+    useEffect(() => {
+        if (filtering && hasNextPage && !isFetchingNextPage) fetchNextPage();
+    }, [filtering, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const storyOf = (id: string) => queryClient.getQueryData<any>(['story', id]);
+    const tagIds = useMemo(() => allData.flatMap((p: any) => {
+        const st = queryClient.getQueryData<any>(['story', p.storyId]);
+        return [st?.primaryTagId, st?.secondaryTagId];
+    }), [allData, queryClient]);
+    const { data: tagMap } = useTagNames(filterOpen ? tagIds : []);
+    const tagName = (id?: string | null) => (id ? tagMap[id] ?? '' : '');
+    const genres = useMemo(
+        () => Object.entries(tagMap).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)),
+        [tagMap],
+    );
+    const listData = filterOpen ? filterPinned(allData, filter, storyOf, tagName) : allData;
 
     const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<any>) => (
         <ScaleDecorator activeScale={1.02}>
@@ -153,7 +181,17 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     // The empty message is only for a list that finished loading and really has no pins. While the first load is
     // under way (or has not started) the person sees placeholder rows, never "Build your playlist".
-    const ListEmpty = () => isPending ? <SkeletonRows count={6} /> : (
+    const ListEmpty = () => isPending ? <SkeletonRows count={6} /> : filtering ? (
+        <View style={styles.emptyContainer}>
+            <EmptyState
+                icon={<Icon name="search" size={40} color={colors.textSecondary} />}
+                title="No pinned stories match"
+                body="Try different words or clear a filter."
+                actionLabel="Clear filters"
+                onAction={() => setFilter(NO_PINNED_FILTER)}
+            />
+        </View>
+    ) : (
         <View style={styles.emptyContainer}>
             {isError ? (
                 <EmptyState
@@ -177,6 +215,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
 
     return (
         <View style={{ flex: 1 }}>
+            {filterOpen && <PinnedFilterBar filter={filter} onChange={setFilter} genres={genres} />}
             <DraggableFlatList
                 data={listData}
                 onDragEnd={onDragEnd}
@@ -192,6 +231,7 @@ const StoryTileList = ({ reorderEnabled = false, tabBarHeight = 80 }: StoryTileL
                     />
                 }
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
                 ListEmptyComponent={<ListEmpty />}
                 ListFooterComponent={

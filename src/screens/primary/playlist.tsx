@@ -55,6 +55,7 @@ const SignedInPlaylist = () => {
 
     const [activeTab, setActiveTab]         = useState<TabId>('pinned');
     const [reorderEnabled, setReorderEnabled] = useState(false);
+    const [filterOpen, setFilterOpen]         = useState(false);
 
     const indicatorX = useRef(new Animated.Value(0)).current;
     const TAB_WIDTH  = width / TABS.length;
@@ -62,6 +63,7 @@ const SignedInPlaylist = () => {
     const handleTabPress = (tab: TabId, index: number) => {
         setActiveTab(tab);
         setReorderEnabled(false); // reset reorder when switching tabs
+        setFilterOpen(false);
         Animated.spring(indicatorX, {
             toValue: index * TAB_WIDTH,
             damping: 20,
@@ -84,28 +86,35 @@ const SignedInPlaylist = () => {
                     <View style={styles.headerRow}>
                         <Text style={styles.headerTitle}>My Library</Text>
 
-                        {/* Reorder toggle — only shown on list tabs */}
-                        {/* Reorder toggle — only shown on pinned tab */}
-                            {activeTab === 'pinned' && (
-                            <TouchableOpacity
-                                ref={reorderTipRef as any}
-                                activeOpacity={0.7}
-                                onPress={() => setReorderEnabled(!reorderEnabled)}
-                                style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}
-                                accessibilityRole="button"
-                                accessibilityLabel={reorderEnabled ? 'Finish reordering' : 'Reorder pinned stories'}
-                                accessibilityState={{ selected: reorderEnabled }}
-                            >
-                                <Icon
-                                name="sort"
-                                size={iconSize.sm}
-                                color={reorderEnabled ? '#000' : colors.textSecondary}
-                                />
-                                <Text style={[styles.reorderLabel, reorderEnabled && styles.reorderLabelActive]}>
-                                {reorderEnabled ? 'Done' : 'Reorder'}
-                                </Text>
-                            </TouchableOpacity>
-                            )}
+                        {/* Filter and reorder — only on the pinned tab. They are exclusive: dragging is off while a list is filtered. */}
+                        {activeTab === 'pinned' && (
+                            <View style={styles.headerActions}>
+                                <TouchableOpacity
+                                    activeOpacity={0.7}
+                                    onPress={() => { setFilterOpen(!filterOpen); setReorderEnabled(false); }}
+                                    style={[styles.filterButton, filterOpen && styles.reorderButtonActive]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={filterOpen ? 'Close search and filters' : 'Search and filter pinned stories'}
+                                    accessibilityState={{ selected: filterOpen }}
+                                >
+                                    <Icon name="filter" size={iconSize.sm} color={filterOpen ? '#000' : colors.textSecondary} />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    ref={reorderTipRef as any}
+                                    activeOpacity={0.7}
+                                    onPress={() => { setReorderEnabled(!reorderEnabled); setFilterOpen(false); }}
+                                    style={[styles.reorderButton, reorderEnabled && styles.reorderButtonActive]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={reorderEnabled ? 'Finish reordering' : 'Reorder pinned stories'}
+                                    accessibilityState={{ selected: reorderEnabled }}
+                                >
+                                    <Icon name="sort" size={iconSize.sm} color={reorderEnabled ? '#000' : colors.textSecondary} />
+                                    <Text style={[styles.reorderLabel, reorderEnabled && styles.reorderLabelActive]}>
+                                        {reorderEnabled ? 'Done' : 'Reorder'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
 
                     {/* ── Tab bar ── */}
@@ -151,7 +160,7 @@ const SignedInPlaylist = () => {
                 <Reanimated.View key={activeTab} entering={FadeIn.duration(180)} style={styles.content}>
 
                     {activeTab === 'pinned' && (
-                        <StoryTileList reorderEnabled={reorderEnabled} tabBarHeight={tabBarHeight} />
+                        <StoryTileList reorderEnabled={reorderEnabled} tabBarHeight={tabBarHeight} filterOpen={filterOpen} />
                     )}
 
                     {activeTab === 'mytags' && (
@@ -189,6 +198,11 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
 
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    filterButton: {
+        width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
+        borderRadius: radius.xl, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border,
+    },
     reorderButton: {
         flexDirection: 'row',
         alignItems: 'center',
