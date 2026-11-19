@@ -53,7 +53,7 @@ const TasteChoices = ({ choices, selected, onChange, max, loading, emptyText }: 
 
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { borderWidth: 1, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 16, minHeight: 48, justifyContent: 'center' },
+  chip: { width: '47%', borderWidth: 1, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 16, minHeight: 48, justifyContent: 'center' },
   title: { fontSize: fontSizes.body, fontWeight: '600' },
   sub: { fontSize: fontSizes.small, marginTop: 2 },
   center: { paddingVertical: 24, alignItems: 'center' },

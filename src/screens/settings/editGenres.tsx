@@ -93,10 +93,34 @@ const EditGenresScreen = ({ navigation }: any) => {
     };
 
     return (
-        <Screen>
-            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
-                <MenuHeader title="Your taste" navigation={navigation} />
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
+                <MenuHeader title="Today's Listening Mood" navigation={navigation} />
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+                    <Text style={styles.heading}>What do you reach for?</Text>
+                    <Text style={styles.subtitle}>Pick up to 3 moods, or none to be surprised.</Text>
+                    <View style={styles.section}>
+                        <TasteChoices
+                            choices={(moodQ.data ?? []).map((t: any) => ({ id: t.id, title: t.name, color: t.color }))}
+                            selected={moods}
+                            onChange={setMoods}
+                            max={3}
+                            loading={moodQ.isLoading}
+                            emptyText="No moods to choose from yet."
+                        />
+                    </View>
+
+                    <Text style={styles.heading}>How long is your usual listen?</Text>
+                    <Text style={styles.subtitle}>Pick as many as you like, or none if any length works.</Text>
+                    <View style={styles.section}>
+                        <TasteChoices
+                            choices={(lengthQ.data ?? []).map((o: any) => ({ id: o.key, title: o.label, subtitle: o.subtitle }))}
+                            selected={lengths}
+                            onChange={setLengths}
+                            loading={lengthQ.isLoading}
+                            emptyText="No lengths to choose from yet."
+                        />
+                    </View>
                     <Text style={styles.heading}>Genres</Text>
                     <Text style={styles.subtitle}>Pick up to 3. They shape the For You list on Home.</Text>
                     {learned.length > 0 && (
@@ -122,30 +146,6 @@ const EditGenresScreen = ({ navigation }: any) => {
                         </View>
                     )}
 
-                    <Text style={styles.heading}>What do you reach for?</Text>
-                    <Text style={styles.subtitle}>Pick up to 3 moods, or none to be surprised.</Text>
-                    <View style={styles.section}>
-                        <TasteChoices
-                            choices={(moodQ.data ?? []).map((t: any) => ({ id: t.id, title: t.name, color: t.color }))}
-                            selected={moods}
-                            onChange={setMoods}
-                            max={3}
-                            loading={moodQ.isLoading}
-                            emptyText="No moods to choose from yet."
-                        />
-                    </View>
-
-                    <Text style={styles.heading}>How long is your usual listen?</Text>
-                    <Text style={styles.subtitle}>Pick as many as you like, or none if any length works.</Text>
-                    <View style={styles.section}>
-                        <TasteChoices
-                            choices={(lengthQ.data ?? []).map((o: any) => ({ id: o.key, title: o.label, subtitle: o.subtitle }))}
-                            selected={lengths}
-                            onChange={setLengths}
-                            loading={lengthQ.isLoading}
-                            emptyText="No lengths to choose from yet."
-                        />
-                    </View>
                 </ScrollView>
                 <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
                     <Text style={styles.count}>{selected.length}/3 genres selected</Text>

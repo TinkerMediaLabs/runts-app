@@ -17,7 +17,7 @@ import { useFollowingCount } from '../../hooks/queries/useAuthorFollowing';
 
 import { CachedImage } from '../../components/common/CachedImage';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import SectionLabel from '@/components/common/SectionLabel';
@@ -204,7 +204,7 @@ const ProfileScreen = ({ navigation }: any) => {
         {
             id: '3b',
             icon: 'tags',
-            title: 'Your Taste',
+            title: "Today's Listening Mood",
             description: 'Genres, moods and lengths for For You',
             onPress: () => navigation.navigate('EditGenresScreen'),
         },
@@ -225,7 +225,7 @@ const ProfileScreen = ({ navigation }: any) => {
         {
             id: '6',
             icon: 'user-friends',
-            title: 'Following',
+            title: 'Followed Authors',
             description: `${followingCount} author${followingCount !== 1 ? 's' : ''} followed`,
             onPress: () => navigation.navigate('AuthorFollowing'),
         },
@@ -239,7 +239,7 @@ const ProfileScreen = ({ navigation }: any) => {
         <Screen>
             <StatusBar style="light" />
             <LinearGradient
-                colors={['#0a0a14', '#0f1112', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}

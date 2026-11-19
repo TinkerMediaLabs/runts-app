@@ -37,3 +37,8 @@ export const layout = {
   heroRatio: 0.34,    // For You carousel card height, as a share of screen height
   tabBarHeight: 58,   // bottom tab bar (icon + label), before the safe-area inset
 } as const;
+
+// The one screen background: Discover, Profile and every screen linked from Profile use it.
+export const gradients = {
+  screen: { colors: ['#000', '#0f1112', '#000'] as const, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
+} as const;

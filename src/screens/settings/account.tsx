@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ScrollView, StyleSheet, Dimensions, Platform, Image, Linking } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, Platform, Image, Linking } from 'react-native';
 import { Text } from '@/components/common/AppText';
 import { TextInput } from '@/components/common/AppTextInput';
 
@@ -28,7 +28,7 @@ import { SIGN_IN_METHOD_KEY } from '../../lib/signInMethod';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Sheet from '@/components/common/BottomSheet';
@@ -36,7 +36,6 @@ import EditNameSheet from '@/components/settings/EditNameSheet';
 import Icon from '@/components/common/Icon';
 
 const client = generateClient<Schema>();
-const { width } = Dimensions.get('window');
 
 
 
@@ -86,7 +85,7 @@ const SettingRow = ({
         accessibilityLabel={value ? `${label}, ${value}` : badge ? `${label}, ${badge}` : label}
     >
         <View style={styles.rowLeft}>
-            <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
+            <View style={styles.rowIcon}>
                 {icon === 'google' ? (
                     <Image
                         source={require('../../../assets/images/google-logo.png')}
@@ -447,7 +446,7 @@ const AccountScreen = ({ navigation }: any) => {
     return (
         <Screen>
             <LinearGradient
-                colors={['#000', '#12121a', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -463,7 +462,7 @@ const AccountScreen = ({ navigation }: any) => {
                     <Section title="Account">
                         <SettingRow
                             icon="crown"
-                            label="Plan"
+                            label="Subscription"
                             value={isPremium ? 'Premium' : 'Free'}
                             badge={isPremium ? 'Active' : undefined}
                             onPress={() => {
@@ -490,6 +489,7 @@ const AccountScreen = ({ navigation }: any) => {
                         <SettingRow
                             icon="envelope"
                             label="Email"
+                            value={accountEmail || undefined}
                             badge={providerLabel ?? undefined}
                             onPress={isSocialUser ? undefined : () => open('email')}
                             chevron={!isSocialUser}
@@ -791,19 +791,15 @@ const styles = StyleSheet.create({
     rowLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        flexShrink: 0,
     },
     rowIcon: {
         width: 30,
         height: 30,
         borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
-    },
-    rowIconDestructive: {
-        backgroundColor: colors.surface3,
     },
     rowLabel: {
         fontSize: fontSizes.body,
@@ -816,12 +812,16 @@ const styles = StyleSheet.create({
     rowRight: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-end',
         gap: 8,
-        maxWidth: width * 0.4,
+        flex: 1,
+        marginLeft: 12,
     },
     rowValue: {
         fontSize: fontSizes.small,
         color: colors.textSecondary,
+        flexShrink: 1,
+        textAlign: 'right',
     },
     divider: {
         height: StyleSheet.hairlineWidth,

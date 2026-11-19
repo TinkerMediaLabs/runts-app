@@ -18,8 +18,8 @@ const BlockedUsersScreen = ({ navigation }: any) => {
     const { mutate: unblock } = useUnblockUser();
 
     return (
-        <Screen>
-            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
                 <MenuHeader title="Blocked commenters" navigation={navigation} />
                 {isLoading ? (
                     <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>

@@ -28,8 +28,8 @@ const InProgress = ({navigation} : any) => {
     const typo = useTypography();
 
     return (
-        <Screen>
-            <View style={styles.container}>
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
                 <MenuHeader title='Continue Listening' navigation={navigation}/>
                 <ProgressTileList />
             </View>

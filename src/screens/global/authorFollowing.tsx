@@ -61,7 +61,7 @@ const { data: tagMap = {} } = useTagNames(allAuthorTagIds);
 };
 
   return (
-    <Screen>
+    <Screen gradient>
       <MenuHeader title="Following" navigation={navigation} />
 
       {isLoading ? (

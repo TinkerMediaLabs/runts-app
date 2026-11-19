@@ -57,7 +57,7 @@ import { useApp } from '@/context/AppContext';
 
 import { CachedImage } from '../../components/common/CachedImage';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
@@ -687,7 +687,7 @@ const filteredTagResults = useMemo(() => {
   return (
     <Screen>
       <LinearGradient
-        colors={['#000', '#0f1112', '#000']}
+        colors={gradients.screen.colors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ flex: 1 }}

@@ -35,8 +35,8 @@ const GenreNotificationsScreen = ({ navigation }: any) => {
     const items: any[] = ((data as any)?.pages ?? []).flatMap((p: any) => p.items ?? []);
 
     return (
-        <Screen>
-            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
                 <MenuHeader title="Genre notifications" navigation={navigation} />
                 {isLoading ? (
                     <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>

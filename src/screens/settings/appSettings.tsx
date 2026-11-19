@@ -44,7 +44,7 @@ import PINSetupModal from '../../components/settings/PINSetupModal';
 import { resetTips } from '../../tips/tipsStore';
 import { showChip } from '../../lib/chip';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
@@ -96,7 +96,7 @@ const ToggleRow = ({
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
         >
-            <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
+            <View style={styles.rowIcon}>
                 <Icon
                     name={icon}
                     size={iconSize.sm}
@@ -180,7 +180,7 @@ const ActionRow = ({
         accessibilityHint={description}
     >
         <View style={styles.rowLeft}>
-            <View style={[styles.rowIcon, iconColor ? { backgroundColor: `${iconColor}22` } : null]}>
+            <View style={styles.rowIcon}>
                 <Icon
                     name={icon}
                     size={iconSize.sm}
@@ -308,7 +308,7 @@ const EroticSection = ({
                     accessibilityLabel="Locked. Enter your PIN to change erotic content settings"
                 >
                     <View style={styles.rowLeft}>
-                        <View style={[styles.rowIcon, { backgroundColor: `${EROTIC_ORANGE}22` }]}>
+                        <View style={styles.rowIcon}>
                             <Icon name="lock" size={iconSize.sm} color={EROTIC_ORANGE} />
                         </View>
                         <View style={{ flex: 1 }}>
@@ -486,7 +486,7 @@ const AppSettings = ({ navigation }: any) => {
     return (
         <Screen>
             <LinearGradient
-                colors={['#000', '#12121a', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -748,7 +748,6 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

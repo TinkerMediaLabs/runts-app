@@ -32,11 +32,11 @@ async function fetchInProgressPage(erotic: boolean, token: string | null) {
   // A row whose story is gone (deleted) can't be shown, and would still count as a card; so leave it out, and
   // show each story once.
   const seen = new Set<string>();
-  const items = rows.filter((r, i) => {
-    const story = storyResults[i]?.data;
-    if (!story || seen.has(r.storyId)) return false;
+  // Each item carries its story, so a list row does not have to fetch it again.
+  const items = rows.map((r, i) => ({ ...r, story: storyResults[i]?.data })).filter(r => {
+    if (!r.story || seen.has(r.storyId)) return false;
     seen.add(r.storyId);
-    return (story.isErotic === 'true') === erotic;
+    return (r.story.isErotic === 'true') === erotic;
   });
   return { items, nextToken: (res.nextToken ?? null) as string | null };
 }

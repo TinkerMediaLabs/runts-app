@@ -120,8 +120,8 @@ const History = ({ navigation }: any) => {
     );
 
     return (
-        <Screen>
-            <View style={{ flex: 1, backgroundColor: colors.surface0 }}>
+        <Screen gradient>
+            <View style={{ flex: 1 }}>
                 <MenuHeader title="History" navigation={navigation} />
 
                 <View style={styles.tabBar}>

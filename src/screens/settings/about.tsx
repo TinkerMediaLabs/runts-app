@@ -13,7 +13,7 @@ import { spacing } from '../../theme/spacing';
 
 import Constants from 'expo-constants';
 import { colors } from '@/theme/colors';
-import { fontSizes } from '@/theme/tokens';
+import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
@@ -77,7 +77,7 @@ const AboutScreen = ({ navigation }: any) => {
         <Screen>
             <StatusBar style="light" />
             <LinearGradient
-                colors={['#000', '#12121a', '#000']}
+                colors={gradients.screen.colors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
@@ -265,7 +265,6 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         borderRadius: radius.sm,
-        backgroundColor: colors.surface3,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
