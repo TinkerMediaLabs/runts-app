@@ -336,6 +336,7 @@ const styles = StyleSheet.create({
     },
     textBlock: {
         flex: 1,
+        minWidth: 0,   // lets long text wrap inside the tile instead of pushing the title off it
         gap: 4,
     },
     title: {
@@ -351,8 +352,10 @@ const styles = StyleSheet.create({
     },
     infoRow: {
         flexDirection: 'row',
+        flexWrap: 'wrap',   // duration, download state and genres drop to the next line rather than overflow
         alignItems: 'center',
-        gap: 5,
+        columnGap: 5,
+        rowGap: 4,
     },
     author: {
         fontSize: fontSizes.caption,
@@ -370,9 +373,12 @@ const styles = StyleSheet.create({
     tagRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
+        flexShrink: 1,
+        maxWidth: '100%',
         gap: 6,
     },
     tagPill: {
+        maxWidth: '100%',
         backgroundColor: colors.fillFaint,
         borderRadius: radius.md,
         paddingHorizontal: 8,

@@ -52,7 +52,7 @@ export default function DownloadBadge({ storyId }: { storyId: string }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   track: { width: 44, height: 4, borderRadius: 2, backgroundColor: colors.fillStrong, overflow: 'hidden' },
   fill: { height: 4, backgroundColor: colors.accent },
   text: { color: colors.textStrong, fontSize: fontSizes.micro },
