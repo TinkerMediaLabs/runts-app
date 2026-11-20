@@ -318,7 +318,7 @@ const HomeSectionView = ({ section, index, visible, onSettled }: Props & { visib
 export default HomeSectionView;
 
 const styles = StyleSheet.create({
-  todayChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.06)' },
+  todayChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: layout.titlePadTop + 10, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 14, minHeight: 44, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.06)' },
   todayText: { flex: 1, color: colors.textPrimary, fontSize: fontSizes.small, marginRight: 12 },
   todayChange: { color: colors.accent, fontSize: fontSizes.small, fontWeight: '700' },
   hidden: { position: 'absolute', left: 0, right: 0, opacity: 0 },

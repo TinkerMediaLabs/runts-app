@@ -20,6 +20,8 @@ import Animated, {
 import { useProgress } from '@rntp/player';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
+import { useApp } from '@/context/AppContext';
+import PaywallModal from '@/components/common/PaywallModal';
 import { navigate } from '@/navigation/RootNavigator';
 import { registerPlayerControls } from '@/features/audio/Playerref';
 
@@ -129,6 +131,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
 
   const insets = useSafeAreaInsets();
   const { tabBarHeight } = usePlayerUI();
+  // Playback speed and the sleep timer are Premium features: free listeners get the upgrade sheet instead.
+  const { isPremium } = useApp();
+  const [showPaywall, setShowPaywall] = useState(false);
+  const openSpeed = () => { if (isPremium) setShowSpeed(true); else setShowPaywall(true); };
+  const openSleep = () => { if (isPremium) setShowSleep(true); else setShowPaywall(true); };
 
   const containerHeight = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -324,6 +331,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
       const combined = expandedAmount * scrolledPast;
       return {
         opacity: combined,
+        // Invisible must also mean untouchable: this button sits over the last tab (Premium) while minimized.
+        pointerEvents: combined > 0.5 ? 'box-none' : 'none',
         transform: [{ scale: interpolate(combined, [0, 1], [0.8, 1]) }],
       };
     });
@@ -495,10 +504,11 @@ export default function TrackPlayerWidget({ expanded }: any) {
                       storyId={track.id}
                       onInfo={openStoryDetails}
                       playbackRate={state.playbackRate}
-                      onSpeed={() => setShowSpeed(true)}
+                      onSpeed={openSpeed}
                       sleepMinutesLeft={sleepMinutesLeft}
                       sleepEndOfStory={sleepEndOfStory}
-                      onSleep={() => setShowSleep(true)}
+                      onSleep={openSleep}
+                      premiumLocked={!isPremium}
                       onShare={handleShare}
                       onBookmark={handleBookmarkPress}
                     />
@@ -606,8 +616,9 @@ export default function TrackPlayerWidget({ expanded }: any) {
               isPinned={isPinned}
               onInfo={openStoryDetails}
               onTogglePin={() => togglePin(track.id, isPinned)}
-              onSpeed={() => setShowSpeed(true)}
-              onSleep={() => setShowSleep(true)}
+              onSpeed={openSpeed}
+              onSleep={openSleep}
+              premiumLocked={!isPremium}
               onShare={handleShare}
               onBookmark={handleBookmarkPress}
             />
@@ -719,6 +730,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
           </TouchableWithoutFeedback>
         </Animated.View>
       )}
+
+      <PaywallModal visible={showPaywall} onClose={() => setShowPaywall(false)} />
 
       {/* Rating modal — rendered independently of player/track state so it
           keeps working correctly even after the player fully closes on

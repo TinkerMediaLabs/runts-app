@@ -52,6 +52,7 @@ export const colors = {
   dangerSurface: '#2d1111',
   warning: '#ff7c2a',
   success: '#4ADE80',
+  accentTint: 'rgba(0,255,255,0.18)',
   accentWash: '#00ffff15',
   accentDeep: '#0027271a',
   white08: '#ffffff08',

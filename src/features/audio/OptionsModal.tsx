@@ -49,18 +49,19 @@ interface OptionsModalProps {
   onSleep: () => void;
   onShare: () => void;
   onBookmark: () => void;
+  premiumLocked?: boolean;
 }
 
-const MenuRow = ({ label, value, onPress }: { label: string; value?: string; onPress: () => void }) => (
+const MenuRow = ({ label, value, onPress, locked = false }: { label: string; value?: string; onPress: () => void; locked?: boolean }) => (
   <TouchableOpacity
     style={styles.menuRow}
     activeOpacity={0.6}
     onPress={onPress}
     accessibilityRole="button"
-    accessibilityLabel={value ? `${label}, ${value}` : label}
+    accessibilityLabel={locked ? `${label}, Premium feature` : value ? `${label}, ${value}` : label}
   >
     <Text style={styles.menuText}>{label}</Text>
-    {value ? <Text style={styles.menuValue}>{value}</Text> : null}
+    {locked ? <Icon name="lock" size={14} color={colors.accent} /> : value ? <Text style={styles.menuValue}>{value}</Text> : null}
   </TouchableOpacity>
 );
 
@@ -84,6 +85,7 @@ export default function OptionsModal({
   onSleep,
   onShare,
   onBookmark,
+  premiumLocked = false,
 }: OptionsModalProps) {
 
   const tipRef = useTipTarget('player-options');
@@ -175,8 +177,8 @@ export default function OptionsModal({
         >
           <MenuRow label="Story details" onPress={run(onInfo)} />
           <MenuRow label={isPinned ? 'Unpin story' : 'Pin story'} onPress={run(onTogglePin)} />
-          <MenuRow label="Playback speed" value={`${playbackRate}x`} onPress={run(onSpeed)} />
-          <MenuRow label="Sleep timer" value={sleepValue} onPress={run(onSleep)} />
+          <MenuRow label="Playback speed" value={`${playbackRate}x`} onPress={run(onSpeed)} locked={premiumLocked} />
+          <MenuRow label="Sleep timer" value={sleepValue} onPress={run(onSleep)} locked={premiumLocked} />
           <MenuRow label="Share story" onPress={run(onShare)} />
           <MenuRow label="Add bookmark" onPress={run(onBookmark)} />
 

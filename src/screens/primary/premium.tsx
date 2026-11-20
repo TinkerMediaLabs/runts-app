@@ -30,6 +30,7 @@ import SectionLabel from '@/components/common/SectionLabel';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { unwrap } from '@/lib/amplifyResult';
+import { savingsPercent } from '@/lib/savings';
 import { useFreePremiumOffer } from '@/hooks/queries/useFreePremiumOffer';
 import { askForAccount } from '@/lib/requireAccount';
 import Icon from '@/components/common/Icon';
@@ -52,29 +53,14 @@ type Feature = {
 
 const FEATURES: Feature[] = [
     {
-        icon: 'headphones',
-        title: 'Unlimited Listening',
-        description: 'Access every story in the full catalogue, anytime.',
-    },
-    {
-        icon: 'star',
-        title: 'Curated Content',
-        description: 'Exclusive picks from editors and top authors.',
-    },
-    {
-        icon: 'moon',
-        title: 'Sleep Timer',
-        description: 'Fall asleep to stories without burning through the night.',
-    },
-    {
-        icon: 'tachometer-alt',
-        title: 'Variable Playback Speed',
-        description: 'Listen at your own pace from 0.75× to 2×.',
+        icon: 'infinity',
+        title: 'Unlimited Story Access',
+        description: 'Access the entire Runts story catalog. Discover new stories, explore different genres, and immerse yourself in worlds of storytelling.',
     },
     {
         icon: 'fire',
-        title: 'Mature Content',
-        description: 'Opt in to after-dark stories when you are ready.',
+        title: 'Mature & Erotica Content',
+        description: 'Unlock our collection of after-dark stories, including adult themes, romance, and erotica.',
     },
 ];
 
@@ -87,11 +73,13 @@ const PlanCard = ({
     selected,
     onPress,
     isAnnual,
+    savings = 0,
 }: {
     pkg:      PurchasesPackage;
     selected: boolean;
     onPress:  () => void;
     isAnnual: boolean;
+    savings?: number;
 }) => {
     const product    = pkg.product;
     const price      = product.priceString;
@@ -107,11 +95,11 @@ const PlanCard = ({
             style={[styles.planCard, selected && styles.planCardSelected]}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}
-            accessibilityLabel={`${isAnnual ? 'Annual plan, best value' : 'Monthly plan'}, ${price}, ${perMonth}`}
+            accessibilityLabel={`${isAnnual ? (savings > 0 ? `Annual plan, save ${savings} percent` : 'Annual plan') : 'Monthly plan'}, ${price}, ${perMonth}`}
         >
-            {isAnnual && (
+            {isAnnual && savings > 0 && (
                 <View style={styles.planBadge}>
-                    <Text style={styles.planBadgeText}>BEST VALUE</Text>
+                    <Text style={styles.planBadgeText}>SAVE {savings}%</Text>
                 </View>
             )}
 
@@ -139,7 +127,7 @@ const PlanCard = ({
 const FeatureRow = ({ icon, title, description }: Feature) => (
     <View style={styles.featureRow}>
         <View style={styles.featureIcon}>
-            <Icon name={icon} size={iconSize.sm} color={colors.accent} />
+            <Icon name={icon} size={iconSize.lg} color={colors.accent} />
         </View>
         <View style={{ flex: 1 }}>
             <Text style={styles.featureTitle}>{title}</Text>
@@ -179,6 +167,7 @@ const PremiumScreen = () => {
     // Find the selected package from the offering
     const annualPkg  = offering?.availablePackages.find(p => p.packageType === 'ANNUAL')  ?? null;
     const monthlyPkg = offering?.availablePackages.find(p => p.packageType === 'MONTHLY') ?? null;
+    const savings = savingsPercent(annualPkg?.product.price, monthlyPkg?.product.price);
     const selectedPkg: PurchasesPackage | null =
         selectedPlan === 'annual' ? annualPkg : monthlyPkg;
 
@@ -296,6 +285,7 @@ const PremiumScreen = () => {
                                     selected={selectedPlan === 'annual'}
                                     onPress={() => setSelectedPlan('annual')}
                                     isAnnual
+                                    savings={savings}
                                 />
                             )}
                             {monthlyPkg && (
@@ -325,17 +315,24 @@ const PremiumScreen = () => {
                     {/* ── Free offer: below the paid plans (open while the CMS end date has not passed) ── */}
                     {offerOpen && !claimed && (
                         <View style={styles.freeOffer}>
-                            <Text style={styles.freeOfferTitle}>3 months of Premium, free</Text>
+                            <View style={styles.freeOfferBadge}>
+                                <Text style={styles.freeOfferBadgeText}>BETA EXCLUSIVE</Text>
+                            </View>
+                            <Text style={styles.freeOfferTitle}>Your first 3 months are on us.</Text>
                             <Text style={styles.freeOfferText}>
-                                No payment needed. It ends on its own after 3 months and never charges you.
+                                Enjoy the complete Runts Premium experience while we're building something special.
                             </Text>
                             <Button
-                                label="Start 3 months free"
+                                label="Activate Free Beta Access"
                                 loading={claiming}
                                 disabled={claiming || isLoading}
                                 onPress={handleClaimFree}
-                                style={{ marginTop: 12 }}
+                                glow
+                                style={{ marginTop: 16, alignSelf: 'stretch' }}
                             />
+                            <Text style={styles.freeOfferNote}>
+                                No payment information required. Access ends automatically after 3 months.
+                            </Text>
                         </View>
                     )}
 
@@ -388,30 +385,51 @@ const styles = StyleSheet.create({
     },
 
     freeOffer: {
-        backgroundColor: colors.surface2,
-        marginTop: 8,
-        borderRadius: radius.lg,
+        backgroundColor: colors.surface0,
+        borderRadius: radius.xl,
         borderWidth: 1,
         borderColor: colors.accent,
-        padding: 16,
+        paddingVertical: 20,
+        paddingHorizontal: 16,
         marginBottom: 20,
+        alignItems: 'center',
+    },
+    freeOfferBadge: {
+        backgroundColor: colors.accentWash,
+        borderRadius: radius.pill,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        marginBottom: 12,
+    },
+    freeOfferBadgeText: {
+        color: colors.accent,
+        fontSize: fontSizes.caption,
+        fontWeight: '700',
+        letterSpacing: 1,
     },
     freeOfferTitle: {
         color: colors.textPrimary,
-        fontSize: fontSizes.body,
-        fontWeight: '700',
+        fontSize: fontSizes.title,
+        fontWeight: '800',
         textAlign: 'center',
     },
     freeOfferText: {
         color: colors.textSecondary,
         fontSize: fontSizes.small,
         textAlign: 'center',
-        marginTop: 6,
-        lineHeight: 18,
+        marginTop: 8,
+        lineHeight: 20,
+    },
+    freeOfferNote: {
+        color: colors.textTertiary,
+        fontSize: fontSizes.caption,
+        textAlign: 'center',
+        marginTop: 12,
+        lineHeight: 17,
     },
 
     scrollContent: {
-        paddingHorizontal: spacing.margin * 2,
+        paddingHorizontal: spacing.margin,
     },
 
     hero: {
@@ -456,8 +474,15 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     planCardSelected: {
-        backgroundColor: 'rgba(0,255,255,0.08)',
+        backgroundColor: colors.accentTint,
         borderColor: colors.accent,
+        borderWidth: 2,
+        padding: 15,
+        shadowColor: colors.accent,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.45,
+        shadowRadius: 10,
+        elevation: 6,
     },
     planBadge: {
         position: 'absolute',
@@ -492,7 +517,7 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
     },
     planPerMonthSelected: {
-        color: 'rgba(0,255,255,0.6)',
+        color: colors.accent,
     },
     planTextSelected: {
         color: colors.accent,
@@ -537,13 +562,8 @@ const styles = StyleSheet.create({
     featureIcon: {
         width: 32,
         height: 32,
-        borderRadius: radius.sm,
-        backgroundColor: 'rgba(0,255,255,0.08)',
-        borderWidth: 1,
-        borderColor: 'rgba(0,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 1,
     },
     featureTitle: {
         fontSize: fontSizes.body,
