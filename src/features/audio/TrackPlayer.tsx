@@ -324,6 +324,8 @@ export default function TrackPlayerWidget({ expanded }: any) {
       const combined = expandedAmount * scrolledPast;
       return {
         opacity: combined,
+        // Invisible must also mean untouchable: this button sits over the last tab (Premium) while minimized.
+        pointerEvents: combined > 0.5 ? 'box-none' : 'none',
         transform: [{ scale: interpolate(combined, [0, 1], [0.8, 1]) }],
       };
     });

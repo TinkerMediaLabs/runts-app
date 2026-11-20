@@ -194,6 +194,11 @@ class AudioEngine {
 async play(track: Track, startAt: number = 0) {
   try {
     if (this.currentTrack?.id === track.id) {
+      // Already loaded: if a place was asked for (a bookmark), go there first so nothing plays from the old spot.
+      if (startAt > 0) {
+        try { await TrackPlayer.seekTo(startAt); } catch (e) { console.warn('audioEngine: seek before play failed', e); }
+        await this.waitForPosition(startAt, 1500);
+      }
       await TrackPlayer.play();
       return;
     }
@@ -203,6 +208,9 @@ async play(track: Track, startAt: number = 0) {
     this.playingLocal = resolvedUrl.startsWith('file://') || resolvedUrl.startsWith('/');
 
     await TrackPlayer.stop();
+    // Make sure nothing starts by itself when the new file is ready: the player can still be set to "play when
+    // ready" from the story before, which would start this one from 0:00 before our seek lands.
+    try { await TrackPlayer.pause(); } catch { /* not playing */ }
     await new Promise(resolve => setTimeout(resolve, 100));
 
     await TrackPlayer.setMediaItems([{

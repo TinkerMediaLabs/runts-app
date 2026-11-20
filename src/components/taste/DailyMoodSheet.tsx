@@ -78,7 +78,7 @@ const DailyMoodSheet = ({ onOpenChange }: { onOpenChange?: (open: boolean) => vo
   const any = moods.length + genres.length + lengths.length > 0;
 
   return (
-    <BottomSheet visible={visible} onClose={close} title="What are you in the mood for today?">
+    <BottomSheet visible={visible} onClose={close} title="What are you in the mood for today?" titleSize={fontSizes.headline}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {!isEmptyChoice(last) && (
           <View style={styles.sameRow}>

@@ -318,6 +318,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const handleSetEroticEnabled = async (value: boolean) => {
         // Under-18 users cannot enable erotic content
         if (value && isUnderAge) return;
+        // Erotic content is a Premium feature (the screen that offers the switch shows the paywall first).
+        if (value && !isPremium) return;
 
         if (!value) {
             // Disabling keeps the account PIN, so it can't be turned back on without it.
@@ -462,11 +464,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 refreshProfile,
                 // Erotic
                 isUnderAge,
-                // Guests never see erotic content, whatever this phone had saved from an earlier account.
-                eroticEnabled: eroticEnabled && !isGuest,
+                // Guests and non-Premium accounts never see erotic content, whatever this phone had saved. The saved
+                // choice is kept, so a lapsed subscriber who renews gets their setting back without re-enabling it.
+                eroticEnabled: eroticEnabled && !isGuest && isPremium,
                 eroticPinEnabled,
                 eroticUnlockedThisSession,
-                eroticInPlaylist: eroticInPlaylist && !isGuest,
+                eroticInPlaylist: eroticInPlaylist && !isGuest && isPremium,
                 setEroticEnabled:       handleSetEroticEnabled,
                 setEroticPin:           handleSetEroticPin,
                 removeEroticPin:        handleRemoveEroticPin,

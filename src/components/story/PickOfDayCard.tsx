@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/common/AppText';
@@ -13,11 +13,55 @@ import LoadingItem from '../common/LoadingItem';
 import PremiumBadge from '../common/PremiumBadge';
 import { spacing } from '../../theme/spacing';
 import { pickCardHeight } from '../../lib/pickOfDay';
+import { fitItems } from '../../lib/chipFlow';
 import { colors } from '@/theme/colors';
 import { fontSizes, layout, radius } from '@/theme/tokens';
 
 // "Pick of the Day": one story on a card as wide as the screen with the same shape as a row tile, with room for a short
 // summary. It sits under a normal section title. Meant to break up the rows on For You.
+
+type TagItem = { key: string; kind: 'text' | 'chip' | 'dot'; label?: string };
+const TAG_GAP = 6;
+const MAX_TAG_LINES = 3;
+
+const TagElement = ({ item }: { item: TagItem }) => {
+  if (item.kind === 'dot') return <View style={styles.tagDot} />;
+  if (item.kind === 'text') return <Text style={styles.tagText}>{item.label}</Text>;
+  return <View style={styles.tag}><Text style={styles.tagText}>{item.label}</Text></View>;
+};
+
+// The tag list, at most three lines. Every chip is measured off-screen first; the row is shown once the real widths
+// are known, ending with a "+N more" chip when some do not fit.
+const TagFlow = ({ items }: { items: TagItem[] }) => {
+  const [containerW, setContainerW] = useState(0);
+  const [widths, setWidths] = useState<Record<string, number>>({});
+  const totalChips = items.filter(i => i.kind === 'chip').length;
+  const moreLabel = (n: number) => `+${n} more`;
+  const moreKey = '__more';
+  const measured = containerW > 0 && widths[moreKey] != null && items.every(i => widths[i.key] != null);
+  const fit = measured
+    ? fitItems(items.map(i => ({ kind: i.kind, width: widths[i.key] })), containerW, TAG_GAP, MAX_TAG_LINES, widths[moreKey])
+    : null;
+  const measure = (key: string) => (e: any) => {
+    const w = e.nativeEvent.layout.width;
+    setWidths(prev => (prev[key] === w ? prev : { ...prev, [key]: w }));
+  };
+
+  return (
+    <View>
+      <View style={styles.measurer} pointerEvents="none" onLayout={e => setContainerW(e.nativeEvent.layout.width)} accessible={false} importantForAccessibility="no-hide-descendants">
+        {items.map(i => <View key={i.key} onLayout={measure(i.key)}><TagElement item={i} /></View>)}
+        <View onLayout={measure(moreKey)}><TagElement item={{ key: moreKey, kind: 'chip', label: moreLabel(totalChips) }} /></View>
+      </View>
+      {fit ? (
+        <View style={styles.tagRow}>
+          {items.slice(0, fit.visible).map(i => <TagElement key={i.key} item={i} />)}
+          {fit.hidden > 0 ? <TagElement item={{ key: moreKey, kind: 'chip', label: moreLabel(fit.hidden) }} /> : null}
+        </View>
+      ) : null}
+    </View>
+  );
+};
 
 const PickOfDayCard = ({ story }: { story: any }) => {
   const openStory = useOpenStory();
@@ -36,6 +80,14 @@ const PickOfDayCard = ({ story }: { story: any }) => {
   const restIds = (tagIds ?? []).filter(id => id !== story.primaryTagId && id !== story.secondaryTagId);
   const { data: restNames } = useTagNames(restIds);
   const rest = restIds.map(id => ({ id, name: restNames[id] })).filter(t => !!t.name).sort((a, b) => a.name.localeCompare(b.name));
+
+  const tagItems: TagItem[] = [
+    ...(spice ? [{ key: 'spice', kind: 'text' as const, label: spice }] : []),
+    ...(story.primaryTagName ? [{ key: 'primary', kind: 'chip' as const, label: story.primaryTagName }] : []),
+    ...(story.secondaryTagName ? [{ key: 'secondary', kind: 'chip' as const, label: story.secondaryTagName }] : []),
+    ...(rest.length > 0 && (story.primaryTagName || story.secondaryTagName) ? [{ key: 'dot', kind: 'dot' as const }] : []),
+    ...rest.map(t => ({ key: `t-${t.id}`, kind: 'chip' as const, label: t.name })),
+  ];
 
   return (
     <TouchableOpacity
@@ -73,17 +125,7 @@ const PickOfDayCard = ({ story }: { story: any }) => {
               </View>
             ) : null}
             {summary ? <Text style={styles.summary} numberOfLines={3}>{summary}</Text> : null}
-            {(story.primaryTagName || story.secondaryTagName || spice || rest.length > 0) ? (
-              <View style={styles.tagRow}>
-                {spice ? <Text style={styles.tagText}>{spice}</Text> : null}
-                {story.primaryTagName ? <View style={styles.tag}><Text style={styles.tagText}>{story.primaryTagName}</Text></View> : null}
-                {story.secondaryTagName ? <View style={styles.tag}><Text style={styles.tagText}>{story.secondaryTagName}</Text></View> : null}
-                {rest.length > 0 && (story.primaryTagName || story.secondaryTagName) ? <View style={styles.tagDot} /> : null}
-                {rest.map(t => (
-                  <View key={t.id} style={styles.tag}><Text style={styles.tagText}>{t.name}</Text></View>
-                ))}
-              </View>
-            ) : null}
+            {tagItems.length > 0 ? <TagFlow items={tagItems} /> : null}
           </View>
         </CachedImageBackground>
       ) : (
@@ -108,7 +150,8 @@ const styles = StyleSheet.create({
   authorRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   author: { fontSize: fontSizes.small, color: colors.textSecondary, flexShrink: 1 },
   summary: { fontSize: fontSizes.small, color: colors.textStrong, lineHeight: 19 },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: TAG_GAP, marginTop: 2 },
+  measurer: { position: 'absolute', left: 0, right: 0, top: 0, opacity: 0, flexDirection: 'row', flexWrap: 'wrap', gap: TAG_GAP },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.fill, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 3 },
   tagDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.textTertiary, alignSelf: 'center' },   // sets the extra tags apart
   tagText: { fontSize: fontSizes.caption, fontWeight: '600', color: colors.textStrong, textTransform: 'capitalize' },

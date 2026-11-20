@@ -15,6 +15,9 @@ import { CachedImage } from '../common/CachedImage';
 import { colors } from '@/theme/colors';
 import { fontSizes } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import { useSheetDrag } from '@/hooks/useSheetDrag';
 const MAX_ROWS = 4;
 
 const REASON_TEXT: Record<string, string> = {
@@ -57,6 +60,7 @@ const KeepGoingSheet = () => {
     const { state, keepGoingStoryId, dismissKeepGoing } = usePlayer();
     const { eroticEnabled } = useApp();
     const insets = useSafeAreaInsets();
+    const { gesture, sheetStyle } = useSheetDrag(dismissKeepGoing, !!keepGoingStoryId);
 
     const { data: story } = useStory(keepGoingStoryId ?? '');
     const { items, isLoading } = useRecommendations(keepGoingStoryId ? story : null, eroticEnabled, MAX_ROWS);
@@ -81,15 +85,20 @@ const KeepGoingSheet = () => {
 
     return (
         <Modal visible transparent animationType="slide" onRequestClose={dismissKeepGoing}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <TouchableWithoutFeedback onPress={dismissKeepGoing} accessibilityRole="button" accessibilityLabel="Close suggestions">
                 <View style={styles.backdrop} />
             </TouchableWithoutFeedback>
-            <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]} accessibilityViewIsModal>
-                <View style={styles.handle} />
-                <Text style={styles.title} accessibilityRole="header">Keep going</Text>
-                <Text style={styles.subtitle} numberOfLines={2}>
-                    You just finished {story?.title ?? 'a story'}. Here is what to listen to next.
-                </Text>
+            <Animated.View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }, sheetStyle]} accessibilityViewIsModal>
+                <GestureDetector gesture={gesture}>
+                    <View collapsable={false}>
+                        <View style={styles.handle} />
+                        <Text style={styles.title} accessibilityRole="header">Keep going</Text>
+                        <Text style={styles.subtitle} numberOfLines={2}>
+                            You just finished {story?.title ?? 'a story'}. Here is what to listen to next.
+                        </Text>
+                    </View>
+                </GestureDetector>
                 {items.slice(0, MAX_ROWS).map((item: any) => (
                     <Row
                         key={item.id}
@@ -108,7 +117,8 @@ const KeepGoingSheet = () => {
                 >
                     <Text style={styles.notNowText}>Not now</Text>
                 </TouchableOpacity>
-            </View>
+            </Animated.View>
+          </GestureHandlerRootView>
         </Modal>
     );
 };

@@ -23,6 +23,8 @@ import type { Schema } from '../../../amplify/data/resource';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { usePlayerUI } from '@/context/PlayerUIContext';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 
 import { Analytics } from '@/lib/analytics';
 import { unwrap } from '@/lib/amplifyResult';
@@ -105,6 +107,14 @@ export default function RatingModal({
   const cardStyle    = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
+
+  // Grab the story header and swipe down to dismiss (same as "Not now").
+  const dragGesture = Gesture.Pan()
+    .onUpdate((e) => { translateY.value = e.translationY > 0 ? e.translationY : 0; })
+    .onEnd((e) => {
+      if (e.translationY > 100 || e.velocityY > 800) runOnJS(onClose)();
+      else translateY.value = withSpring(0, { damping: 26, stiffness: 220 });
+    });
 
   useEffect(() => {
     if (visible) {
@@ -250,7 +260,10 @@ const handleSubmit = async () => {
       >
         <Animated.View style={[styles.card, cardStyle]} accessibilityViewIsModal>
 
-          {/* ── Story header ── */}
+          {/* ── Story header (drag handle) ── */}
+          <GestureDetector gesture={dragGesture}>
+          <View collapsable={false}>
+          <View style={styles.grabHandle} />
           <View style={styles.storyHeader}>
             {artwork ? (
               <CachedImage source={{ uri: artwork }} style={styles.artwork} />
@@ -260,6 +273,8 @@ const handleSubmit = async () => {
               <Text style={styles.storyTitle} numberOfLines={2}>{storyTitle}</Text>
             </View>
           </View>
+          </View>
+          </GestureDetector>
 
           <ScrollView
             ref={scrollRef}
@@ -409,6 +424,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
+  },
+
+  grabHandle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.fillStrong,
+    marginTop: 10,
   },
 
   // ── Story header ──────────────────────────────────────────────────────────

@@ -5,20 +5,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import { useSheetDrag } from '@/hooks/useSheetDrag';
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   title: string;
+  titleSize?: number;   // a larger heading for a sheet that asks a question
   children: React.ReactNode;
 };
 
 // The app's one bottom sheet: dim backdrop (tap to close), grab handle, title with a close button, content. Used by
 // Account and by the player's speed and sleep timer sheets so every sheet looks and behaves the same.
-export default function BottomSheet({ visible, onClose, title, children }: Props) {
+export default function BottomSheet({ visible, onClose, title, titleSize, children }: Props) {
   const insets = useSafeAreaInsets();
+  const { gesture, sheetStyle } = useSheetDrag(onClose, visible);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+     <GestureHandlerRootView style={styles.root}>
       <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
@@ -28,10 +34,12 @@ export default function BottomSheet({ visible, onClose, title, children }: Props
         style={styles.wrapper}
         pointerEvents="box-none"
       >
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]} accessibilityViewIsModal>
+        <Animated.View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }, sheetStyle]} accessibilityViewIsModal>
+          <GestureDetector gesture={gesture}>
+            <View collapsable={false}>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <Text style={styles.title} accessibilityRole="header">{title}</Text>
+            <Text style={[styles.title, titleSize ? { fontSize: titleSize } : null]} accessibilityRole="header">{title}</Text>
             <TouchableOpacity
               onPress={onClose}
               hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
@@ -41,14 +49,18 @@ export default function BottomSheet({ visible, onClose, title, children }: Props
               <Icon name="close" size={iconSize.sm} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
+            </View>
+          </GestureDetector>
           {children}
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
+     </GestureHandlerRootView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
   wrapper: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
@@ -67,5 +79,5 @@ const styles = StyleSheet.create({
     alignSelf: 'center', marginBottom: 20,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  title: { fontSize: fontSizes.subtitle, fontWeight: '700', color: colors.textPrimary },
+  title: { flex: 1, marginRight: 12, fontSize: fontSizes.subtitle, fontWeight: '700', color: colors.textPrimary },
 });

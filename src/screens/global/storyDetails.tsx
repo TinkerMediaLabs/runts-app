@@ -263,7 +263,8 @@ const StoryScreen = ({ navigation }: any) => {
     // Mood, tone and world are tags of their own type: shown apart from the genre-style tags.
     const moodTone   = storyTags.filter((t: any) => t.tagType === 'mood' || t.tagType === 'tone');
     const worldTag   = storyTags.find((t: any) => t.tagType === 'universe') ?? null;
-    const otherTags  = storyTags.filter((t: any) => !t.tagType || t.tagType === 'setting');
+    const settingTags = storyTags.filter((t: any) => t.tagType === 'setting');
+    const otherTags  = storyTags.filter((t: any) => !t.tagType);
     // Pills come from two cached tag lookups (usually already cached from the tile that opened this screen), so they
     // show with the story instead of after the whole link chain below.
     const pillTags = useTagsByIds([story?.primaryTagId, story?.secondaryTagId].filter(Boolean) as string[]);
@@ -852,6 +853,22 @@ const handleDelete = (id: string) => {
                                             id:   tag.id,
                                             name: tag.name,
                                         })}
+                                    />
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
+                    {tagsReady && settingTags.length > 0 && (
+                        <View style={styles.tagsSection}>
+                            <Text style={styles.sectionLabel}>Setting</Text>
+                            <View style={styles.tagsWrap}>
+                                {settingTags.map((tag: any) => (
+                                    <TagChip
+                                        key={tag.id}
+                                        name={tag.name}
+                                        isErotic={tag.isErotic === true}
+                                        onPress={() => navigation.navigate('TagHomeScreen', { id: tag.id, name: tag.name })}
                                     />
                                 ))}
                             </View>
