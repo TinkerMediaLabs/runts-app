@@ -5,6 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/theme/colors';
 import { fontSizes, radius, iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import { useSheetDrag } from '@/hooks/useSheetDrag';
 
 type Props = {
   visible: boolean;
@@ -18,8 +21,10 @@ type Props = {
 // Account and by the player's speed and sleep timer sheets so every sheet looks and behaves the same.
 export default function BottomSheet({ visible, onClose, title, titleSize, children }: Props) {
   const insets = useSafeAreaInsets();
+  const { gesture, sheetStyle } = useSheetDrag(onClose, visible);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+     <GestureHandlerRootView style={styles.root}>
       <TouchableWithoutFeedback onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
@@ -29,7 +34,9 @@ export default function BottomSheet({ visible, onClose, title, titleSize, childr
         style={styles.wrapper}
         pointerEvents="box-none"
       >
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]} accessibilityViewIsModal>
+        <Animated.View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }, sheetStyle]} accessibilityViewIsModal>
+          <GestureDetector gesture={gesture}>
+            <View collapsable={false}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text style={[styles.title, titleSize ? { fontSize: titleSize } : null]} accessibilityRole="header">{title}</Text>
@@ -42,14 +49,18 @@ export default function BottomSheet({ visible, onClose, title, titleSize, childr
               <Icon name="close" size={iconSize.sm} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
+            </View>
+          </GestureDetector>
           {children}
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
+     </GestureHandlerRootView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
   wrapper: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
