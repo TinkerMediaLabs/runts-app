@@ -11,6 +11,8 @@ import { Hub } from 'aws-amplify/utils';
 import { getDefaultPlaybackSpeed, getAutoplayEnabled } from '@/lib/audioSettings';
 import { useApp } from '@/context/AppContext';
 import { navigate } from '@/navigation/RootNavigator';
+import { storyBlock, type StoryBlock } from '@/lib/storyAccess';
+import { showChip } from '@/lib/chip';
 
 import { Analytics } from '@/lib/analytics';
 import { findFinished, findPinned, findInProgress, findRating } from '@/lib/userStoryLookups';
@@ -259,6 +261,17 @@ export const PlayerProvider = ({ children }: any) => {
     const playTrack = async (track: Track, startOverride?: number) => {
         // Guests cannot play full stories (every normal entry point asks first; this is the backstop).
         if (getDataAccess() === 'guest') { askForAccount('listen to the full story', track?.id ? { kind: 'story', id: track.id } : undefined); return; }
+        // Backstop for a lapsed subscriber: pinned, downloaded or bookmarked Premium / erotic stories do not start.
+        if (track?.id) {
+            try {
+                // The story is almost always cached already (tiles and the story page fill ['story', id]).
+                const storyRow: any = queryClient.getQueryData(['story', track.id])
+                    ?? (await client.models.Story.get({ id: track.id })).data;
+                const blocked = await blockFor(storyRow);
+                if (blocked === 'erotic') { showChip('Erotic content is a Premium feature. Turn it on in Settings.', 'error'); return; }
+                if (blocked === 'premium') { navigate('StoryScreen', { storyID: track.id, source: 'blocked_play' }); return; }
+            } catch { /* offline: fall through, downloaded stories must still play for Premium users */ }
+        }
         stopPreview();   // a story preview and the main player never play together
         setKeepGoingStoryId(null);
         setState(prev => ({ ...prev, playError: null }));
@@ -605,6 +618,19 @@ export const PlayerProvider = ({ children }: any) => {
         }, totalMs);
     };
 
+    // Is this story off limits for the current account? (Premium story on a free account, or erotic with it off.)
+    // One story read and, only when needed, one genre read.
+    const blockFor = async (story: any): Promise<StoryBlock> => {
+        let genrePremium = false;
+        if (!isPremiumRef.current && story && story.isPremium == null && story.primaryTagId) {
+            try {
+                const { data } = await client.models.Tag.get({ id: story.primaryTagId });
+                genrePremium = data?.isPremiumGenre === true;
+            } catch { /* treat as not premium: the story page still locks it */ }
+        }
+        return storyBlock(story, genrePremium, isPremiumRef.current, eroticEnabledRef.current);
+    };
+
     // ── Playlist — filters erotic based on current settings ───────────────────
     // A WINDOW of the pinned list: the given track and the next pins after it (by sortOrder).
     // Never loads all pins, so it stays cheap with thousands. The track must be pinned to have a
@@ -638,7 +664,7 @@ export const PlayerProvider = ({ children }: any) => {
                 if (r.data?.id && r.data?.name) authorMap[r.data.id] = r.data.name;
             });
 
-            const enriched = stories
+            const withAuthors = stories
                 .map((s: any) => ({
                     ...s,
                     authorName: authorMap[s.authorId ?? ''] ?? '',
@@ -649,6 +675,9 @@ export const PlayerProvider = ({ children }: any) => {
                     if (!eroticInPlaylistRef.current) return false;      // erotic not in playlist: exclude
                     return true;
                 });
+            // Pinned Premium stories are skipped when the account is no longer Premium.
+            const blocks = await Promise.all(withAuthors.map((s: any) => blockFor(s)));
+            const enriched = withAuthors.filter((_: any, i: number) => blocks[i] !== 'premium');
 
             playlistRef.current = enriched;
             return enriched;

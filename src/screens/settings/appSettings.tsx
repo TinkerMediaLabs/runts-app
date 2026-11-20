@@ -48,6 +48,7 @@ import { fontSizes, gradients } from '@/theme/tokens';
 import { radius } from '@/theme/tokens';
 import { iconSize } from '@/theme/tokens';
 import Icon from '@/components/common/Icon';
+import PaywallModal from '@/components/common/PaywallModal';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSheetDrag } from '@/hooks/useSheetDrag';
 import Animated from 'react-native-reanimated';
@@ -301,7 +302,9 @@ const EroticSection = ({
         eroticInPlaylist,
         setEroticEnabled,
         setEroticInPlaylist,
+        isPremium,
     } = useApp();
+    const [paywallOpen, setPaywallOpen] = useState(false);
 
     const EROTIC_ORANGE = '#ff7c2a';
     const isLocked = eroticPinEnabled && !eroticUnlockedThisSession;
@@ -344,10 +347,12 @@ const EroticSection = ({
                 description={
                     isUnderAge
                         ? 'Not available for users under 18'
-                        : 'Allow erotic stories to appear in the app'
+                        : isPremium
+                            ? 'Allow erotic stories to appear in the app'
+                            : 'A Premium feature. Tap to see Premium.'
                 }
                 value={eroticEnabled}
-                onChange={setEroticEnabled}
+                onChange={(on: boolean) => (on && !isPremium ? setPaywallOpen(true) : setEroticEnabled(on))}
                 disabled={isUnderAge}
                 iconColor={EROTIC_ORANGE}
             />
@@ -393,6 +398,7 @@ const EroticSection = ({
                     />
                 </>
             )}
+            <PaywallModal visible={paywallOpen} onClose={() => setPaywallOpen(false)} />
         </Section>
     );
 };
