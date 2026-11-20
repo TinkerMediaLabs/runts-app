@@ -18,13 +18,12 @@ type Props = {
   onSleep: () => void;
   onShare: () => void;
   onBookmark: () => void;
-  premiumLocked?: boolean;   // speed and sleep timer are Premium: shown with a small lock
 };
 
 // One quiet pill across the player: story info, pin, speed, sleep timer, share, bookmark, spread evenly. Every
 // item is the same size and weight, and every item is also in the player menu as plain text.
 export default function PlayerActionsBar({
-  storyId, onInfo, playbackRate, onSpeed, sleepMinutesLeft, sleepEndOfStory, onSleep, onShare, onBookmark, premiumLocked = false,
+  storyId, onInfo, playbackRate, onSpeed, sleepMinutesLeft, sleepEndOfStory, onSleep, onShare, onBookmark,
 }: Props) {
   const tipRef = useTipTarget('player-actions');
   const bookmarkTipRef = useTipTarget('player-bookmark');
@@ -45,15 +44,12 @@ export default function PlayerActionsBar({
       </View>
 
       <TouchableOpacity style={styles.item} onPress={onSpeed} activeOpacity={0.7}
-        accessibilityRole="button" accessibilityLabel={premiumLocked ? 'Playback speed, Premium feature' : `Playback speed, ${playbackRate} times`}
-        accessibilityHint={premiumLocked ? 'Opens the upgrade screen' : 'Opens speed choices'}>
+        accessibilityRole="button" accessibilityLabel={`Playback speed, ${playbackRate} times`} accessibilityHint="Opens speed choices">
         <Text style={[styles.text, playbackRate !== 1 && styles.textActive]}>{speedLabel(playbackRate)}</Text>
-        {premiumLocked ? <Icon name="lock" size={iconSize.xs} color={colors.accent} style={styles.badge} /> : null}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.item} onPress={onSleep} activeOpacity={0.7}
-        accessibilityRole="button" accessibilityLabel={premiumLocked ? 'Sleep timer, Premium feature' : sleepLabel}
-        accessibilityHint={premiumLocked ? 'Opens the upgrade screen' : 'Opens sleep timer choices'}>
+        accessibilityRole="button" accessibilityLabel={sleepLabel} accessibilityHint="Opens sleep timer choices">
         {sleepMinutesLeft !== null ? (
           <View style={styles.sleepActive}>
             <Text style={[styles.text, styles.textActive]}>
@@ -64,7 +60,6 @@ export default function PlayerActionsBar({
         ) : (
           <Icon name="moon" size={iconSize.md} color={sleepOn ? colors.accent : colors.textPrimary} />
         )}
-        {premiumLocked ? <Icon name="lock" size={iconSize.xs} color={colors.accent} style={styles.badge} /> : null}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.item} onPress={onShare} activeOpacity={0.7}

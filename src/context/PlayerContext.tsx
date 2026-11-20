@@ -250,13 +250,13 @@ export const PlayerProvider = ({ children }: any) => {
         }
     };
 
+    // Play from a chosen place (a bookmark): the player moves there before any sound, like a resume.
     const playTrackAt = async (track: Track, seekSeconds: number) => {
-        await playTrack(track);
-        setTimeout(() => audioEngine.seek(seekSeconds), 700);
+        await playTrack(track, seekSeconds);
     };
 
     // ── Play ──────────────────────────────────────────────────────────────────
-    const playTrack = async (track: Track) => {
+    const playTrack = async (track: Track, startOverride?: number) => {
         // Guests cannot play full stories (every normal entry point asks first; this is the backstop).
         if (getDataAccess() === 'guest') { askForAccount('listen to the full story', track?.id ? { kind: 'story', id: track.id } : undefined); return; }
         stopPreview();   // a story preview and the main player never play together
@@ -277,6 +277,8 @@ export const PlayerProvider = ({ children }: any) => {
             expand();
 
             const savedSeconds = await getInProgressSeconds(track.id);
+            // A chosen place (bookmark) wins over the saved resume place.
+            const seekTarget = startOverride ?? savedSeconds;
 
             // ── Pre-roll ad for new stories (not resume, not premium) ─────────────
             const isNewStory = track.id !== lastPlayedStoryIdRef.current;
@@ -288,15 +290,15 @@ export const PlayerProvider = ({ children }: any) => {
 
             // Resuming a story that is not already loaded: go to the saved place before any audio plays, and
             // show the loading line on the progress bar until the player confirms the position.
-            const needsSeek = savedSeconds > 0 && audioEngine.currentId !== track.id;
+            const needsSeek = seekTarget > 0 && audioEngine.currentId !== track.id;
             if (needsSeek) setState(prev => ({ ...prev, isResuming: true }));
 
-            await audioEngine.play(track, needsSeek ? savedSeconds : 0);
+            await audioEngine.play(track, needsSeek ? seekTarget : (startOverride ?? 0));
             if (needsSeek) {
-                let there = await audioEngine.waitForPosition(savedSeconds, 4000);
+                let there = await audioEngine.waitForPosition(seekTarget, 4000);
                 if (!there) {
-                    await audioEngine.seek(savedSeconds);                       // the first seek was too early
-                    there = await audioEngine.waitForPosition(savedSeconds, 2500);
+                    await audioEngine.seek(seekTarget);                         // the first seek was too early
+                    there = await audioEngine.waitForPosition(seekTarget, 2500);
                 }
                 setState(prev => ({ ...prev, isResuming: false }));
             }
