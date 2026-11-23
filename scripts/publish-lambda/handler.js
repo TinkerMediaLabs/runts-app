@@ -51,6 +51,24 @@ async function createIfNotExists(table, item) {
     }
 }
 
+// Production can already hold the same tag or universe under a different id (the production CMS creates them by
+// name). Copying the staging row by id would then add a second one with the same name. This finds that existing
+// row so the publish reuses it. Tag: same name, same type and same erotic flag. Universe: same name.
+async function prodTwinByName(model, row) {
+    if (!row?.nameLower) return null;
+    const pk = row.searchPk ?? (model === 'Tag' ? (row.isErotic ? 'EROTIC' : 'REGULAR') : 'ALL');
+    const res = await dynamo.send(new QueryCommand({
+        TableName: prod(model),
+        IndexName: 'byName',
+        KeyConditionExpression: 'searchPk = :p AND nameLower = :n',
+        ExpressionAttributeValues: marshall({ ':p': pk, ':n': row.nameLower }),
+        Limit: 25,
+    }));
+    const hits = (res.Items || []).map(i => unmarshall(i)).filter(r => r.id !== row.id &&
+        (model !== 'Tag' || ((r.tagType || null) === (row.tagType || null) && !!r.isErotic === !!row.isErotic)));
+    return hits[0] ?? null;
+}
+
 async function deleteItem(table, id) {
     await dynamo.send(new DeleteItemCommand({ TableName: table, Key: marshall({ id }) }));
 }
@@ -289,17 +307,38 @@ exports.handler = async (event) => {
         const narrators = (await Promise.all(narratorIds.map(id => getItem(stg('Narrator'), id)))).filter(Boolean);
         log.push(`Found ${tags.length} tag(s), ${narrators.length} narrator(s)`);
 
+        // Staging tag id -> the id production should use (its own copy if it already has one by that name).
+        const tagIdMap = new Map();
+        for (const t of tags) {
+            const sameId = await getItem(prod('Tag'), t.id);
+            const twin = sameId ? null : await prodTwinByName('Tag', t);
+            tagIdMap.set(t.id, twin ? twin.id : t.id);
+            if (twin) log.push(`Tag "${t.name}": production already has it (${twin.id}), reusing it`);
+        }
+        const mapTag = (id) => (id && tagIdMap.get(id)) || id;
+        let universeProdId = story.universeId;
+
         // 6. Copy reference records (create only if missing; never overwrite production edits)
         if (author) {
             log.push(`Author: ${await createIfNotExists(prod('Author'), author)}`);
             if (author.profilePicUri) await copyS3Asset(author.profilePicUri);
         }
-        if (universe) log.push(`Universe: ${await createIfNotExists(prod('Universe'), universe)}`);
+        if (universe) {
+            const sameId = await getItem(prod('Universe'), universe.id);
+            const twin = sameId ? null : await prodTwinByName('Universe', universe);
+            if (twin) {
+                universeProdId = twin.id;
+                log.push(`Universe "${universe.name}": production already has it (${twin.id}), reusing it`);
+            } else {
+                log.push(`Universe: ${await createIfNotExists(prod('Universe'), universe)}`);
+            }
+        }
         for (const n of narrators) {
             log.push(`Narrator "${n.name}": ${await createIfNotExists(prod('Narrator'), n)}`);
             if (n.profilePicUri) await copyS3Asset(n.profilePicUri);
         }
         for (const tag of tags) {
+            if (tagIdMap.get(tag.id) !== tag.id) continue;   // production's own copy is reused (see above)
             // storyCount is maintained by the tag-count-aggregator from StoryTag inserts in production;
             // copying staging's count would double-count, so new tags start at 0.
             const res = await createIfNotExists(prod('Tag'), { ...tag, storyCount: 0 });
@@ -321,6 +360,9 @@ exports.handler = async (event) => {
         const { liveTagId: _liveTagId, ...storyFields } = story;
         await upsertItem(prod('Story'), {
             ...storyFields,
+            primaryTagId:   mapTag(story.primaryTagId),
+            secondaryTagId: mapTag(story.secondaryTagId),
+            universeId:     universeProdId,
             live: 'false',
             numListens:  existingProd?.numListens  ?? 0,
             numRatings:  existingProd?.numRatings  ?? 0,
@@ -330,7 +372,7 @@ exports.handler = async (event) => {
         log.push(`Story upserted to production (live: false${existingProd ? ', production counters kept' : ''})`);
 
         // 9. Links mirror staging exactly (removed tags/narrators and duplicates are cleaned up)
-        await syncLinks('StoryTag', 'tagId', storyId, storyTagLinks, log);
+        await syncLinks('StoryTag', 'tagId', storyId, storyTagLinks.map(l => ({ ...l, tagId: mapTag(l.tagId) })), log);
         await syncLinks('StoryNarrator', 'narratorId', storyId, storyNarratorLinks, log);
 
         // 10. Picture-book scenes mirror staging exactly (rows, images, removed scenes)
